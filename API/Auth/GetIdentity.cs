@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Threading.Tasks;
@@ -39,7 +38,7 @@ namespace API.Auth
             // Create claims List
             var claims = new List<Claim>()
             {
-                new Claim(Constants.Strings.JwtClaimIdentifiers.Id, user.Id),
+                new Claim(APIConstants.JwtClaimIdentifiers.Id, user.Id),
             };
 
             // Retrieve user claims
@@ -50,7 +49,7 @@ namespace API.Auth
             claims.AddRange(userClaims);
             foreach (var userRole in userRoles)
             {
-                claims.Add(new Claim(Constants.Strings.JwtClaimIdentifiers.Role, userRole));
+                claims.Add(new Claim(APIConstants.JwtClaimIdentifiers.Role, userRole));
                 var role = await _roleManager.FindByNameAsync(userRole);
                 if (role != null)
                 {

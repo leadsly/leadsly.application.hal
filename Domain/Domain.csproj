@@ -8,4 +8,10 @@
       <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="5.0.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Converters\" />
+      <Folder Include="ViewModels\" />
+      <Folder Include="Repositories\" />
+    </ItemGroup>
+
 </Project>
