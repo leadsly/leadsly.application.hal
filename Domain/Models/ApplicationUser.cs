@@ -3,7 +3,7 @@ using System;
 
 namespace Domain.Models
 {
-    public class ApplicationUser : IdentityUser<Guid>
+    public class ApplicationUser : IdentityUser
     {
     }
 }

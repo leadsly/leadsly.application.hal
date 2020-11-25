@@ -42,7 +42,7 @@ namespace API.Configurations
                 options.Password.RequireNonAlphanumeric = true;
             })
             .AddDefaultTokenProviders()
-            .AddTokenProvider("DataProtector", typeof(DataProtectorTokenProvider<ApplicationUser>))
+            //.AddTokenProvider("DataProtector", typeof(DataProtectorTokenProvider<ApplicationUser>))
             .AddRoles<IdentityRole>()
             .AddUserManager<UserManager<ApplicationUser>>()
             .AddRoleManager<RoleManager<IdentityRole>>()
