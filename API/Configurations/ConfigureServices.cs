@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Mvc.Formatters;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Domain.Supervisor;
+using Newtonsoft.Json.Converters;
 
 namespace API.Configurations
 {
@@ -155,6 +156,9 @@ namespace API.Configurations
             builder.AddNewtonsoftJson(options =>
             {
                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+
+                // Serialize the name of enum values rather than their integer value
+                options.SerializerSettings.Converters.Add(new StringEnumConverter());
             });
 
             return builder;

@@ -1,18 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using API;
 using API.Configurations;
+using API.Middlewares;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace API
 {
@@ -29,7 +21,7 @@ namespace API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers()
-                    .AddJsonOptionsConfiguration();
+                    .AddJsonOptionsConfiguration();                    
 
             services.AddConnectionProviders(Configuration)
                     .AddJsonWebTokenConfiguration(Configuration)
@@ -38,6 +30,7 @@ namespace API
                     .AddSupervisorConfiguration()
                     .AddIdentityConfiguration()                    
                     .AddRemoveNull204FormatterConfigration();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -46,7 +39,7 @@ namespace API
             if (env.IsDevelopment())
             {
                 app.UseCors(APIConstants.Cors.AllowAll);
-                app.UseDeveloperExceptionPage();
+                //app.UseDeveloperExceptionPage();
             }
             else
             {
@@ -55,10 +48,15 @@ namespace API
                 app.UseHsts();                
             }
 
-            app.UseHttpsRedirection();            
+            app.UsePathBase("/api");
 
-            app.UseRouting()              
-               .UseAuthentication();
+            app.UseMiddleware<ErrorHandlingMiddleware>();
+
+            app.UseHttpsRedirection();
+
+            app.UseRouting();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
