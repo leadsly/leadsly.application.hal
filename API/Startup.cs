@@ -1,10 +1,21 @@
 using API.Configurations;
+using API.Filters;
 using API.Middlewares;
+using Domain.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Net.Http.Headers;
+using System;
 
 namespace API
 {
@@ -12,24 +23,39 @@ namespace API
     {
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            Configuration = configuration;            
         }
 
         public IConfiguration Configuration { get; }
+        public IAuthorizationPolicyProvider Policy { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
             services.AddControllers()
                     .AddJsonOptionsConfiguration();                    
 
-            services.AddConnectionProviders(Configuration)
+            services.AddConnectionProviders(Configuration)                    
                     .AddJsonWebTokenConfiguration(Configuration)
+                    .AddAuthorizationConfiguration()
                     .AddCorsConfiguration(Configuration)
+                    .AddApiBehaviorOptionsConfiguration()
                     .AddRepositoriesConfiguration()
                     .AddSupervisorConfiguration()
                     .AddIdentityConfiguration()                    
-                    .AddRemoveNull204FormatterConfigration();
+                    .AddRemoveNull204FormatterConfigration();           
+
+            // Configure application authorization filter
+            services.Configure<MvcOptions>(options =>
+            {
+                options.Filters.Clear();
+
+                options.Filters.Add<BearerTokenAuthorizeFilter>();
+
+                options.Filters.Add<InvalidModelStateFilter>(FilterOrders.RequestValidationFilter);
+
+            });
 
         }
 

@@ -38,7 +38,7 @@ namespace API.Auth
             // Create claims List
             var claims = new List<Claim>()
             {
-                new Claim(APIConstants.JwtClaimIdentifiers.Id, user.Id),
+                new Claim(APIConstants.Jwt.ClaimIdentifiers.Id, user.Id),
             };
 
             // Retrieve user claims
@@ -49,7 +49,7 @@ namespace API.Auth
             claims.AddRange(userClaims);
             foreach (var userRole in userRoles)
             {
-                claims.Add(new Claim(APIConstants.JwtClaimIdentifiers.Role, userRole));
+                claims.Add(new Claim(APIConstants.Jwt.ClaimIdentifiers.Role, userRole));
                 var role = await _roleManager.FindByNameAsync(userRole);
                 if (role != null)
                 {

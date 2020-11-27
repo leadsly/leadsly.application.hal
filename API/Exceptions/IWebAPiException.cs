@@ -1,6 +1,6 @@
 ﻿namespace API.Exceptions
 {
-    interface IWebAPiException
+    interface IWebApiException
     {
         string Type { get; }
         string Title { get; }

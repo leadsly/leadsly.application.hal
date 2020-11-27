@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using API.Controllers;
 using API.Exceptions;
+using API.Filters;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -17,8 +19,9 @@ namespace API.Controllers
         public string Name { get; set; }
     }
 
-    [ApiController]
+    [ApiController]    
     [Route("[controller]")]
+    //[Authorize]
     public class WeatherForecastController : APIControllerBase
     {
         private static readonly string[] Summaries = new[]
@@ -39,7 +42,7 @@ namespace API.Controllers
             return Ok();
         }
 
-        [HttpGet]
+        [HttpGet]        
         public IActionResult Get()
         {
             //return new ObjectResult(new ProblemDetails
@@ -74,7 +77,7 @@ namespace API.Controllers
         }
     }
 
-    public class TestException : Exception, IWebAPiException
+    public class TestException : Exception, IWebApiException
     {
         public TestException(string? message) : base(message)
         {

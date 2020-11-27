@@ -13,12 +13,18 @@
             public const string AllowAll = "AllowAll";
         }
 
-        public class JwtClaimIdentifiers
+        public class Jwt
         {
-            public const string Role = "role";
-            public const string Id = "id";
-            public const string UserName = "username";
-            public const string Permission = "permission";
+            public const string DefaultAuthorizationPolicy = "Bearer";
+
+            public class ClaimIdentifiers
+            {
+                public const string Role = "role";
+                public const string Id = "id";
+                public const string UserName = "username";
+                public const string Permission = "permission";
+            }
+
         }
     }
 }

@@ -17,6 +17,9 @@ using Newtonsoft.Json;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Domain.Supervisor;
 using Newtonsoft.Json.Converters;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 
 namespace API.Configurations
 {
@@ -55,8 +58,8 @@ namespace API.Configurations
             {
                 options.TokenLifespan = TimeSpan.FromDays(7);
             });
-
-            services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            
+            services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.Password.RequireDigit = true;
                 options.Password.RequiredLength = 8;
@@ -67,7 +70,7 @@ namespace API.Configurations
             .AddDefaultTokenProviders()
             //.AddTokenProvider("DataProtector", typeof(DataProtectorTokenProvider<ApplicationUser>))
             .AddRoles<IdentityRole>()
-            .AddUserManager<UserManager<ApplicationUser>>()
+            //.AddUserManager<UserManager<ApplicationUser>>() // AddIdentityCore already adds this in
             .AddRoleManager<RoleManager<IdentityRole>>()
             .AddEntityFrameworkStores<DatabaseContext>(); // Tell identity which EF DbContext to use;
 
@@ -110,12 +113,8 @@ namespace API.Configurations
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
             };
-
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
+            
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(configureOptions =>
             {
                 configureOptions.ClaimsIssuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)];
@@ -140,6 +139,19 @@ namespace API.Configurations
             return services;
         }
 
+        public static IServiceCollection AddAuthorizationConfiguration(this IServiceCollection services)
+        {
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy(APIConstants.Jwt.DefaultAuthorizationPolicy, new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
+                                    .AddRequirements(new DenyAnonymousAuthorizationRequirement())
+                                    .Build());
+            });
+
+            return services;
+
+        }
+
         public static IServiceCollection AddRemoveNull204FormatterConfigration(this IServiceCollection services)
         {
             services.AddControllers(opt =>
@@ -149,7 +161,8 @@ namespace API.Configurations
             });
 
             return services;
-        }        
+        }
+
 
         public static IMvcBuilder AddJsonOptionsConfiguration(this IMvcBuilder builder)
         {
@@ -182,6 +195,18 @@ namespace API.Configurations
                                                      .AllowAnyHeader()
                                                      .AllowAnyMethod()
                                                      .Build());
+            });
+
+            return services;
+        }
+
+        public static IServiceCollection AddApiBehaviorOptionsConfiguration(this IServiceCollection services)
+        {
+            // Required to surpress automatic problem details returned by asp.net core framework when ModelState.IsValid == false.
+            // Allows for custom IActionFilter implementation and response. See InvalidModelStateFilter.
+            services.Configure<ApiBehaviorOptions>(options =>
+            {
+                options.SuppressModelStateInvalidFilter = true;
             });
 
             return services;

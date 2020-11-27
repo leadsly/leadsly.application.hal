@@ -4,11 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace API.Filters
 {
@@ -18,7 +13,7 @@ namespace API.Filters
         public override void OnException(ExceptionContext context)
         {
             // All user exceptions implement IWebApiException
-            if (context.Exception is IWebAPiException webApiException)
+            if (context.Exception is IWebApiException webApiException)
             {
                 // Then return a problem detail
                 ObjectResult result = new ObjectResult(new ProblemDetails

@@ -30,7 +30,7 @@ namespace API.Middlewares
         private static Task HandleException(HttpContext context, Exception ex)
         {
             // If the exception is not user based
-            if (ex is not IWebAPiException)
+            if (ex is not IWebApiException)
             {
                 // 500 if unexpected
                 HttpStatusCode code = HttpStatusCode.InternalServerError; 
@@ -41,7 +41,6 @@ namespace API.Middlewares
             }
 
             return context.Response.WriteAsync("Status Code: 500; Internal Server Error");
-
         }
     }
 }

@@ -23,8 +23,7 @@ namespace API
             {
                 Log.Fatal(ex, "Fatal error occured when invoking CreateWebHostBuilder");
                 throw;
-            }
-            
+            }            
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args)
