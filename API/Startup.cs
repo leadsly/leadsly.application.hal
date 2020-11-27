@@ -8,11 +8,13 @@ using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Net.Http.Headers;
 using System;
@@ -27,12 +29,10 @@ namespace API
         }
 
         public IConfiguration Configuration { get; }
-        public IAuthorizationPolicyProvider Policy { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddControllers()
                     .AddJsonOptionsConfiguration();                    
 
@@ -44,19 +44,17 @@ namespace API
                     .AddRepositoriesConfiguration()
                     .AddSupervisorConfiguration()
                     .AddIdentityConfiguration()                    
-                    .AddRemoveNull204FormatterConfigration();           
+                    .AddRemoveNull204FormatterConfigration();
 
             // Configure application authorization filter
             services.Configure<MvcOptions>(options =>
             {
                 options.Filters.Clear();
-
-                options.Filters.Add<BearerTokenAuthorizeFilter>();
-
                 options.Filters.Add<InvalidModelStateFilter>(FilterOrders.RequestValidationFilter);
-
             });
 
+            // Add BearerTokenAuthorizeFilter to every controller that doesn't have it
+            services.AddTransient<IApplicationModelProvider, APIApplicationModelProvider>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

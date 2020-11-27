@@ -20,8 +20,7 @@ namespace API.Controllers
     }
 
     [ApiController]    
-    [Route("[controller]")]
-    //[Authorize]
+    [Route("[controller]")]    
     public class WeatherForecastController : APIControllerBase
     {
         private static readonly string[] Summaries = new[]

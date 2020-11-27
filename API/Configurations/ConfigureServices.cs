@@ -143,9 +143,13 @@ namespace API.Configurations
         {
             services.AddAuthorization(options =>
             {
-                options.AddPolicy(APIConstants.Jwt.DefaultAuthorizationPolicy, new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
-                                    .AddRequirements(new DenyAnonymousAuthorizationRequirement())
-                                    .Build());
+                options.DefaultPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
+                                .AddRequirements(new DenyAnonymousAuthorizationRequirement())
+                                .Build();
+
+                //options.AddPolicy(APIConstants.Jwt.DefaultAuthorizationPolicy, new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
+                //                    .AddRequirements(new DenyAnonymousAuthorizationRequirement())
+                //                    .Build());
             });
 
             return services;

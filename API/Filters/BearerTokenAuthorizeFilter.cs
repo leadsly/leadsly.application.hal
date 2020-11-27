@@ -13,8 +13,8 @@ namespace API.Filters
 {
     public class BearerTokenAuthorizeFilter : AuthorizeFilter
     {
-        public BearerTokenAuthorizeFilter(IAuthorizationPolicyProvider policyProvider) 
-            : base(policyProvider, new[] { new AuthorizeAttribute(APIConstants.Jwt.DefaultAuthorizationPolicy) } ) { }        
+        public BearerTokenAuthorizeFilter(AuthorizationPolicy policy)
+            : base(policy) { }
 
         public override async Task OnAuthorizationAsync(AuthorizationFilterContext context)
         {
