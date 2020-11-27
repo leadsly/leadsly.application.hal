@@ -1,23 +1,14 @@
 using API.Configurations;
 using API.Filters;
 using API.Middlewares;
-using Domain.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using Microsoft.AspNetCore.Mvc.Authorization;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Net.Http.Headers;
-using System;
 
 namespace API
 {
@@ -46,15 +37,15 @@ namespace API
                     .AddIdentityConfiguration()                    
                     .AddRemoveNull204FormatterConfigration();
 
-            // Configure application authorization filter
+            // Configure application filters and conventions
             services.Configure<MvcOptions>(options =>
             {
                 options.Filters.Clear();
                 options.Filters.Add<InvalidModelStateFilter>(FilterOrders.RequestValidationFilter);
-            });
 
-            // Add BearerTokenAuthorizeFilter to every controller that doesn't have it
-            services.AddTransient<IApplicationModelProvider, APIApplicationModelProvider>();
+                AuthorizationPolicy defaultPolicy = new AuthorizationOptions().DefaultPolicy;
+                options.Conventions.Add(new ControllerModelConvention(defaultPolicy));
+            });            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -62,8 +53,7 @@ namespace API
         {
             if (env.IsDevelopment())
             {
-                app.UseCors(APIConstants.Cors.AllowAll);
-                //app.UseDeveloperExceptionPage();
+                app.UseCors(APIConstants.Cors.AllowAll);                
             }
             else
             {
