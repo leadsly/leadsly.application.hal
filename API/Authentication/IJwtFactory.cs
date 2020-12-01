@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace API.Auth.Jwt
+namespace API.Authentication.Jwt
 {
     public interface IJwtFactory
     {

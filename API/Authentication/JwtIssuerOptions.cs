@@ -2,7 +2,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace API.Auth
+namespace API.Authentication
 {
     public class JwtIssuerOptions
     {

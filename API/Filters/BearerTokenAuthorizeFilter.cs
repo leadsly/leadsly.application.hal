@@ -38,7 +38,18 @@ namespace API.Filters
             }
             else if (context.Result is ForbidResult)
             {
-                context.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
+                // Then return a problem detail
+                ObjectResult result = new ObjectResult(new ProblemDetails
+                {
+                    Type = ProblemDetailsTypes.Forbidden,
+                    Title = ReasonPhrases.GetReasonPhrase(StatusCodes.Status403Forbidden),
+                    Status = StatusCodes.Status403Forbidden,
+                    Detail = ProblemDetailsDescriptions.ForbiddenDetail
+                });
+
+                result.ContentTypes.Add(new MediaTypeHeaderValue(new Microsoft.Extensions.Primitives.StringSegment("application/problem+json")));
+
+                context.Result = result;
                 await context.HttpContext.ForbidAsync();
             }
 

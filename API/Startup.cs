@@ -1,13 +1,11 @@
 using API.Configurations;
-using API.Filters;
 using API.Middlewares;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
 namespace API
@@ -16,7 +14,7 @@ namespace API
     {
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;            
+            Configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
@@ -37,20 +35,15 @@ namespace API
                     .AddIdentityConfiguration()                    
                     .AddRemoveNull204FormatterConfigration();
 
-            // Configure application filters and conventions
-            services.Configure<MvcOptions>(options =>
-            {
-                options.Filters.Clear();
-                options.Filters.Add<InvalidModelStateFilter>(FilterOrders.RequestValidationFilter);
-
-                AuthorizationPolicy defaultPolicy = new AuthorizationOptions().DefaultPolicy;
-                options.Conventions.Add(new ControllerModelConvention(defaultPolicy));
-            });            
+            services.Configure<MvcOptions>(ApiDefaults.Configure);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // if request does not contain api it will also work
+            app.UsePathBase("/api");
+
             if (env.IsDevelopment())
             {
                 app.UseCors(APIConstants.Cors.AllowAll);                
@@ -61,8 +54,6 @@ namespace API
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();                
             }
-
-            app.UsePathBase("/api");
 
             app.UseMiddleware<ErrorHandlingMiddleware>();
 

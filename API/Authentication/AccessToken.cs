@@ -1,8 +1,8 @@
-﻿using API.Auth.Jwt;
+﻿using API.Authentication.Jwt;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace API.Auth
+namespace API.Authentication
 {
     public class AccessToken : IAccessToken
     {

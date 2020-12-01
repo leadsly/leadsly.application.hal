@@ -6,7 +6,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace API.Auth.Jwt
+namespace API.Authentication.Jwt
 {
     public class JwtFactory : IJwtFactory
     {

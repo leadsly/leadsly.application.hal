@@ -1,4 +1,4 @@
-﻿namespace API.Auth
+﻿namespace API.Authentication
 {
     public class ApplicationAccessToken
     {

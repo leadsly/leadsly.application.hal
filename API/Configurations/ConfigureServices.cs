@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Domain.DbInfo;
 using Microsoft.AspNetCore.Identity;
 using Domain.Models;
-using API.Auth;
-using API.Auth.Jwt;
+using API.Authentication;
+using API.Authentication.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -20,6 +20,9 @@ using Newtonsoft.Json.Converters;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
+using Microsoft.Extensions.Logging;
+using System.Linq;
+using Serilog;
 
 namespace API.Configurations
 {
@@ -27,12 +30,15 @@ namespace API.Configurations
     {
         public static IServiceCollection AddRepositoriesConfiguration(this IServiceCollection services)
         {
+            Log.Information("Registering repository services.");
 
             return services;
         }
 
         public static IServiceCollection AddSupervisorConfiguration(this IServiceCollection services)
         {
+            Log.Information("Registering supervisor services.");
+
             services.AddScoped<ISupervisor, Supervisor>();
 
             return services;
@@ -40,13 +46,15 @@ namespace API.Configurations
 
         public static IServiceCollection AddConnectionProviders(this IServiceCollection services, IConfiguration configuration)
         {
+            Log.Information("Configuring default connection string and database context.");
+
             string defaultConnection = configuration.GetConnectionString("DefaultConnection");
 
             services.AddDbContext<DatabaseContext>(options =>
             {                
                 options.UseSqlServer(defaultConnection);
             }, ServiceLifetime.Scoped);
-
+            
             services.AddSingleton(new DbInfo(defaultConnection));
 
             return services;
@@ -54,6 +62,8 @@ namespace API.Configurations
 
         public static IServiceCollection AddIdentityConfiguration(this IServiceCollection services)
         {
+            Log.Information("Adding identity services.");
+
             services.Configure<DataProtectionTokenProviderOptions>(options =>
             {
                 options.TokenLifespan = TimeSpan.FromDays(7);
@@ -67,10 +77,8 @@ namespace API.Configurations
                 options.Password.RequireUppercase = true;
                 options.Password.RequireNonAlphanumeric = true;
             })
-            .AddDefaultTokenProviders()
-            //.AddTokenProvider("DataProtector", typeof(DataProtectorTokenProvider<ApplicationUser>))
-            .AddRoles<IdentityRole>()
-            //.AddUserManager<UserManager<ApplicationUser>>() // AddIdentityCore already adds this in
+            .AddDefaultTokenProviders()            
+            .AddRoles<IdentityRole>()            
             .AddRoleManager<RoleManager<IdentityRole>>()
             .AddEntityFrameworkStores<DatabaseContext>(); // Tell identity which EF DbContext to use;
 
@@ -82,6 +90,8 @@ namespace API.Configurations
 
         public static IServiceCollection AddJsonWebTokenConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
+            Log.Information("Configuring JWT services.");
+
             services.AddSingleton<IJwtFactory, JwtFactory>();
 
             IConfigurationSection jwtAppSettingOptions = configuration.GetSection(nameof(JwtIssuerOptions));
@@ -89,7 +99,7 @@ namespace API.Configurations
             // retrieve private key from user secrets or azure vault
             string privateKey = configuration[nameof(VaultKeys.JwtSecret)];
             SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(privateKey));
-
+            
             services.Configure<JwtIssuerOptions>(options =>
             {
                 options.Issuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)];
@@ -141,35 +151,39 @@ namespace API.Configurations
 
         public static IServiceCollection AddAuthorizationConfiguration(this IServiceCollection services)
         {
+            Log.Information("Configuring authorization options.");
+
             services.AddAuthorization(options =>
             {
                 options.DefaultPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
                                 .AddRequirements(new DenyAnonymousAuthorizationRequirement())
                                 .Build();
-
-                //options.AddPolicy(APIConstants.Jwt.DefaultAuthorizationPolicy, new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
-                //                    .AddRequirements(new DenyAnonymousAuthorizationRequirement())
-                //                    .Build());
             });
 
             return services;
-
         }
 
         public static IServiceCollection AddRemoveNull204FormatterConfigration(this IServiceCollection services)
         {
+            Log.Information("Configuring output formatters.");
+
             services.AddControllers(opt =>
             {
                 // remove formatter that turns nulls into 204 - Angular http client treats 204s as failed requests
-                opt.OutputFormatters.RemoveType<HttpNoContentOutputFormatter>();
+                HttpNoContentOutputFormatter noContentFormatter = opt.OutputFormatters.OfType<HttpNoContentOutputFormatter>().FirstOrDefault();
+                if(noContentFormatter != null)
+                {
+                    noContentFormatter.TreatNullValueAsNoContent = false;
+                }
             });
 
             return services;
         }
 
-
         public static IMvcBuilder AddJsonOptionsConfiguration(this IMvcBuilder builder)
         {
+            Log.Information("Configuring NewtonsoftJson options.");
+
             builder.AddNewtonsoftJson(options =>
             {
                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
@@ -183,6 +197,7 @@ namespace API.Configurations
 
         public static IServiceCollection AddCorsConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
+            Log.Information("Configuring Cors.");
 
             services.AddCors(options =>
             {
@@ -206,6 +221,8 @@ namespace API.Configurations
 
         public static IServiceCollection AddApiBehaviorOptionsConfiguration(this IServiceCollection services)
         {
+            Log.Information("Configuring ApiBehaviorOptions.");
+
             // Required to surpress automatic problem details returned by asp.net core framework when ModelState.IsValid == false.
             // Allows for custom IActionFilter implementation and response. See InvalidModelStateFilter.
             services.Configure<ApiBehaviorOptions>(options =>

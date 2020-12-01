@@ -5,7 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace API.Auth
+namespace API.Authentication
 {
     public interface IGetIdentity
     {

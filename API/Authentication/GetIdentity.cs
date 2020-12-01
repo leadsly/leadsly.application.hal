@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Domain.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace API.Auth
+namespace API.Authentication
 {
     public class GetIdentity : IGetIdentity
     {
