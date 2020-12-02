@@ -1,5 +1,6 @@
 ﻿using API.Filters;
 using Domain.Models;
+using Domain.Supervisor;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
@@ -7,7 +8,6 @@ using Microsoft.Net.Http.Headers;
 
 namespace API.Controllers
 {
-    [GlobalControllerException]
     public class APIControllerBase : Controller
     {
         protected ObjectResult ProblemDetailsResult(ProblemDetails problemDetails)
