@@ -1,5 +1,6 @@
 ﻿using System;
 using API.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -28,6 +29,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public IActionResult Add([FromBody] User user)
         {
             return Ok();
@@ -51,7 +53,6 @@ namespace API.Controllers
             //        new MediaTypeHeaderValue(new Microsoft.Extensions.Primitives.StringSegment("application/problem+json")),
             //    }
             //};
-
 
             throw new TestException("API Test Exception");
             //throw new Exception("Test");           

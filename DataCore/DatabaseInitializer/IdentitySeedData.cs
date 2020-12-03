@@ -29,7 +29,7 @@ namespace DataCore.DatabaseInitializer
                                        DatabaseContext dbContext, 
                                        ILogger<DatabaseInitializer> logger)
         {
-            string[] roles = new string[] { "admin" };
+            string[] roles = new string[] { "admin", "user" };
 
             foreach (string role in roles)
             {
@@ -54,7 +54,7 @@ namespace DataCore.DatabaseInitializer
                         throw;
                     }
 
-                    if (role == "admin")
+                    if (role == "admin" || role == "user")
                     {
                         try
                         {

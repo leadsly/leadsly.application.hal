@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -9,23 +10,29 @@ using System.Threading.Tasks;
 namespace API.Authentication.Jwt
 {
     public class JwtFactory : IJwtFactory
-    {
-        private readonly JwtIssuerOptions _jwtOptions;
-
-        public JwtFactory(IOptions<JwtIssuerOptions> jwtOptions)
+    {   
+        public JwtFactory(IOptions<JwtIssuerOptions> jwtOptions, ILogger<IJwtFactory> logger)
         {
             _jwtOptions = jwtOptions.Value;
             ThrowIfInvalidOptions(_jwtOptions);
+            _logger = logger;
         }
 
-        public async Task<string> GenerateEncodedToken(string userId, ClaimsIdentity identity)
+        private readonly JwtIssuerOptions _jwtOptions;
+        private readonly ILogger<IJwtFactory> _logger;
+
+        public async Task<string> GenerateEncodedJwtAsync(string userId, ClaimsIdentity identity)
         {
+            _logger.LogInformation("Generating jwt for user id: {userId}", userId);
+
             List<Claim> claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Jti, await _jwtOptions.JtiGenerator()),
                 new Claim(JwtRegisteredClaimNames.Iat, ToUnixEpochDate(_jwtOptions.IssuedAt).ToString(), ClaimValueTypes.Integer64),
                 new Claim(JwtRegisteredClaimNames.Sub, userId)
             };
+
+            claims.AddRange(identity.Claims);
 
             // Create the JWT security token and encode it.
             JwtSecurityToken jwt = new JwtSecurityToken(

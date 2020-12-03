@@ -2,9 +2,12 @@
 using Domain.Models;
 using Domain.Supervisor;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace API.Controllers
 {
@@ -23,18 +26,36 @@ namespace API.Controllers
         }
 
         /// <summary>
-        /// Use as an example to show how to return user handled errors.
+        /// Bad request when there is an issue signing up a new user.
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        protected ObjectResult NotFound_ItemIdIsInvalidOrNoRights(string id)
+        protected ObjectResult BadRequest_UserNotCreated(IEnumerable<IdentityError> errors)
         {
-            return ProblemDetailsResult(new ProblemDetails()
+            Dictionary<string, string[]> errorsDictionary = errors.ToDictionary(x => x.Code, x => new[] { x.Description });
+
+            return ProblemDetailsResult(new ValidationProblemDetails(errorsDictionary)
             {
-                Type = ProblemDetailsTypes.NotFound,
-                Status = StatusCodes.Status404NotFound,
-                Title = ReasonPhrases.GetReasonPhrase(404),
-                Detail = $"The item '{id}' does not exist or you do not have rights to it",
+                Type = ProblemDetailsTypes.BadRequestType,
+                Status = StatusCodes.Status400BadRequest,
+                Title = ReasonPhrases.GetReasonPhrase(400),
+                Detail = "Missing or invalid registration data",
+                Instance = this.HttpContext.Request.Path.Value,
+            }); ;
+        }
+
+        /// <summary>
+        /// Bad request when user is not found.
+        /// </summary>        
+        /// <returns></returns>
+        protected ObjectResult BadRequest_UserNotFound()
+        {
+            return ProblemDetailsResult(new ProblemDetails
+            {
+                Type = ProblemDetailsTypes.BadRequestType,
+                Status = StatusCodes.Status400BadRequest,
+                Title = ReasonPhrases.GetReasonPhrase(400),
+                Detail = $"Cannot find user specified user",
                 Instance = this.HttpContext.Request.Path.Value,
             });
         }

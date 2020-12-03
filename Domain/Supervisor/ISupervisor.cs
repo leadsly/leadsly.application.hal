@@ -1,11 +1,11 @@
-﻿using Domain.ViewModels;
-using System.Threading;
+﻿using Domain.Models;
+using Domain.ViewModels;
+using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
 
 namespace Domain.Supervisor
 {
     public interface ISupervisor
     {
-         Task<string> CreateUserAsync(RegisterUserModel registeredModel);
     }
 }

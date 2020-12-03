@@ -5,6 +5,6 @@ namespace API.Authentication.Jwt
 {
     public interface IJwtFactory
     {
-        Task<string> GenerateEncodedToken(string userId, ClaimsIdentity identity);
+        Task<string> GenerateEncodedJwtAsync(string userId, ClaimsIdentity identity);
     }
 }

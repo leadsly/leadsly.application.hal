@@ -4,7 +4,7 @@
     {
         public class TokenOptions
         {
-            public const string ExpiredToken = "Token-Expired";
+            public const string ExpiredToken = "token-expired";
         }
 
         public class Cors
@@ -20,7 +20,6 @@
             public class ClaimIdentifiers
             {
                 public const string Role = "role";
-                public const string Id = "id";
                 public const string UserName = "username";
                 public const string Permission = "permission";
             }

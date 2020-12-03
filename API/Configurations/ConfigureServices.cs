@@ -76,6 +76,7 @@ namespace API.Configurations
                 options.Password.RequireLowercase = true;
                 options.Password.RequireUppercase = true;
                 options.Password.RequireNonAlphanumeric = true;
+                options.User.RequireUniqueEmail = true;                
             })
             .AddDefaultTokenProviders()            
             .AddRoles<IdentityRole>()            
@@ -83,14 +84,14 @@ namespace API.Configurations
             .AddEntityFrameworkStores<DatabaseContext>(); // Tell identity which EF DbContext to use;
 
             //Configure Claims Identity
-            services.AddScoped<IGetIdentity, GetIdentity>();
+            services.AddScoped<IClaimsIdentityService, ClaimsIdentityService>();
 
             return services;
         }
 
         public static IServiceCollection AddJsonWebTokenConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
-            Log.Information("Configuring JWT services.");
+            Log.Information("Configuring Jwt services.");
 
             services.AddSingleton<IJwtFactory, JwtFactory>();
 
@@ -144,7 +145,7 @@ namespace API.Configurations
                 };
             });
 
-            services.AddScoped<IAccessToken, AccessToken>();
+            services.AddScoped<IAccessTokenGenerator, AccessTokenGenerator>();
 
             return services;
         }

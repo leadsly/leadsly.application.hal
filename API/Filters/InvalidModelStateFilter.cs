@@ -24,7 +24,7 @@ namespace API.Filters
                 return;
 
             ProblemDetails problemDetails = new ValidationProblemDetails(context.ModelState)
-            {
+            {                
                 Type = ProblemDetailsTypes.BadRequest,
                 Status = 400,
                 Title = ReasonPhrases.GetReasonPhrase(400),

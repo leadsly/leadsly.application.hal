@@ -24,7 +24,7 @@ namespace API.Filters
             // All user exceptions implement IWebApiException
             if (context.Exception is IWebApiException webApiException)
             {
-                _logger.LogError(context.Exception, $"Error occured processing request: { context.Exception.Message }");
+                _logger.LogError(context.Exception, "Error occured processing request.");
 
                 // Then return a problem detail
                 ObjectResult result = new ObjectResult(new ProblemDetails
@@ -57,6 +57,8 @@ namespace API.Filters
 
                 context.Result = result;
             }
+
+            _logger.LogError("Exception occured when processing request.");
 
             base.OnException(context);
         }

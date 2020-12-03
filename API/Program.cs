@@ -3,6 +3,7 @@ using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using Serilog.Events;
 
 namespace API
 {
@@ -10,28 +11,37 @@ namespace API
     {
         public static void Main(string[] args)
         {
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+                .Enrich.FromLogContext()
+                .WriteTo.Console()               
+                .WriteTo.File(Path.Combine(Directory.GetCurrentDirectory(), "api-logs.txt"))
+                .MinimumLevel.Verbose()
+                .CreateLogger();
+
             try
             {
                 CreateHostBuilder(args).Build().Run();
             }
             catch(Exception ex)
             {
-                Log.Fatal(ex, "Fatal error occured when invoking CreateWebHostBuilder");
+                Log.Fatal(ex, "Application start-up failed.");
                 throw;
-            }            
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args)
         {
-            Log.Logger = new LoggerConfiguration()
-               .WriteTo.Console()
-               .WriteTo.File(Path.Combine(Directory.GetCurrentDirectory(), "api-logs.txt"))
-               .MinimumLevel.Verbose()
-               .CreateLogger();
+            
 
             try
             {
                 return Host.CreateDefaultBuilder(args)
+                           .UseSerilog()
                            .ConfigureWebHostDefaults(webBuilder =>
                            {
                                 webBuilder.UseStartup<Startup>();
@@ -41,10 +51,6 @@ namespace API
             {
                 Log.Fatal(ex, "Host builder error.");
                 throw;
-            }
-            finally
-            {
-                Log.Information("Finished starting up.");
             }
         }
             
