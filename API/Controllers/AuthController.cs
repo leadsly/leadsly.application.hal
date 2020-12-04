@@ -53,8 +53,8 @@ namespace API.Controllers
         private readonly ILogger<AuthController> _logger;
 
         [HttpPost]
-        [Route("login")]
-        public async Task<IActionResult> Login([FromBody] LoginUserModel login, CancellationToken ct = default)
+        [Route("signin")]
+        public async Task<IActionResult> SignIn([FromBody] LoginUserModel login, CancellationToken ct = default)
         {
             if (string.IsNullOrEmpty(login.Password)) 
             {
