@@ -22,23 +22,6 @@ namespace API.Authentication
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ILogger<IClaimsIdentityService> _logger;
 
-        public async Task<ClaimsIdentity> GetClaimsIdentityAsync(ApplicationUser userToVerify, string password)
-        {
-            if (userToVerify == null || string.IsNullOrEmpty(password))
-                return await Task.FromResult<ClaimsIdentity>(null);
-
-            if (userToVerify == null) return await Task.FromResult<ClaimsIdentity>(null);
-
-            // check the credentials
-            if (await _userManager.CheckPasswordAsync(userToVerify, password))
-            {
-                return await GenerateClaimsIdentityAsync(userToVerify);
-            }
-
-            // Credentials are invalid, or account doesn't exist
-            return await Task.FromResult<ClaimsIdentity>(null);
-        }
-
         public async Task<ClaimsIdentity> GenerateClaimsIdentityAsync(ApplicationUser user)
         {
             string email = user.Email;

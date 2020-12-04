@@ -39,8 +39,8 @@ namespace API.Controllers
                 Type = ProblemDetailsTypes.BadRequestType,
                 Status = StatusCodes.Status400BadRequest,
                 Title = ReasonPhrases.GetReasonPhrase(400),
-                Detail = "Missing or invalid registration data",
-                Instance = this.HttpContext.Request.Path.Value,
+                Detail = ProblemDetailsDescriptions.RegistrationDetail,
+                Instance = this.HttpContext.Request.Path.Value
             }); ;
         }
 
@@ -48,15 +48,32 @@ namespace API.Controllers
         /// Bad request when user is not found.
         /// </summary>        
         /// <returns></returns>
-        protected ObjectResult BadRequest_UserNotFound()
+        protected ObjectResult BadRequest_UserRegistrationError()
         {
             return ProblemDetailsResult(new ProblemDetails
             {
                 Type = ProblemDetailsTypes.BadRequestType,
                 Status = StatusCodes.Status400BadRequest,
                 Title = ReasonPhrases.GetReasonPhrase(400),
-                Detail = $"Cannot find user specified user",
-                Instance = this.HttpContext.Request.Path.Value,
+                Detail = ProblemDetailsDescriptions.RegistrationErrorDetail,
+                Instance = this.HttpContext.Request.Path.Value
+            });
+        }
+
+        /// <summary>
+        /// Bad request when cannot find user by email.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns></returns>
+        protected ObjectResult Unauthorized_InvalidCredentials()
+        {
+            return ProblemDetailsResult(new ProblemDetails
+            {
+                Type = ProblemDetailsTypes.Unauthorized,
+                Status = StatusCodes.Status401Unauthorized,
+                Title = ReasonPhrases.GetReasonPhrase(401),
+                Detail = ProblemDetailsDescriptions.UnauthorizedDetail,
+                Instance = this.HttpContext.Request.Path.Value
             });
         }
     }

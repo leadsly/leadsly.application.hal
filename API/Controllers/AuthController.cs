@@ -52,8 +52,40 @@ namespace API.Controllers
         private readonly JwtIssuerOptions _jwtOptions;
         private readonly ILogger<AuthController> _logger;
 
-        [HttpPost("signup")]
-        public async Task<IActionResult> SignUp([FromBody] RegisterUserModel registerModel)
+        [HttpPost]
+        [Route("login")]
+        public async Task<IActionResult> Login([FromBody] LoginUserModel login, CancellationToken ct = default)
+        {
+            if (string.IsNullOrEmpty(login.Password)) 
+            {
+                return Unauthorized_InvalidCredentials();
+            }
+
+            ApplicationUser appUser = await _userManager.FindByEmailAsync(login.Email);
+
+            if(appUser == null)
+            {
+                return Unauthorized_InvalidCredentials();
+            }
+
+            if (ct.IsCancellationRequested)
+                ct.ThrowIfCancellationRequested();
+
+            if(await _userManager.CheckPasswordAsync(appUser, login.Password) == false)
+            {
+                return Unauthorized_InvalidCredentials();
+            }
+
+            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
+
+            ApplicationAccessToken accessToken = await _tokenGenerator.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity, _jwtFactory, _jwtOptions);
+
+            return Ok(accessToken);
+        }
+
+        [HttpPost]
+        [Route("signup")]
+        public async Task<IActionResult> SignUp([FromBody] RegisterUserModel registerModel, CancellationToken ct = default)
         {
             _logger.LogDebug("Signup action executed.");
 
@@ -62,6 +94,9 @@ namespace API.Controllers
                 Email = registerModel.Email,
                 UserName = registerModel.Email
             };
+
+            if (ct.IsCancellationRequested)
+                ct.ThrowIfCancellationRequested();
 
             IdentityResult result = await _userManager.CreateAsync(newUser, registerModel.Password);
 
@@ -76,9 +111,9 @@ namespace API.Controllers
 
             if(registeredUser == null)
             {
-                _logger.LogError($"Unable to find user by email: { registerModel.Email }");
+                _logger.LogError($"Unable to find user by email: { registerModel.Email }. Attempted to retrieve newly registered user to generate access token.");
 
-                return BadRequest_UserNotFound();
+                return BadRequest_UserRegistrationError();
             }
 
             ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(registeredUser);
