@@ -24,8 +24,8 @@ namespace API.Controllers
     public class AuthController : APIControllerBase
     {
         public AuthController(
-            ISupervisor supervisor, 
-            IAccessTokenGenerator tokenGenerator, 
+            ISupervisor supervisor,
+            IAccessTokenGenerator tokenGenerator,
             IClaimsIdentityService claimsIdentityService,
             IJwtFactory jwtFactory,
             IOptions<JwtIssuerOptions> jwtOptions,
@@ -39,7 +39,7 @@ namespace API.Controllers
             _jwtOptions = jwtOptions.Value;
             _jwtFactory = jwtFactory;
             _userManager = userManager;
-            _roleManager = roleManager;            
+            _roleManager = roleManager;
             _logger = logger;
         }
 
@@ -56,14 +56,14 @@ namespace API.Controllers
         [Route("signin")]
         public async Task<IActionResult> SignIn([FromBody] LoginUserModel login, CancellationToken ct = default)
         {
-            if (string.IsNullOrEmpty(login.Password)) 
+            if (string.IsNullOrEmpty(login.Password))
             {
                 return Unauthorized_InvalidCredentials();
             }
 
             ApplicationUser appUser = await _userManager.FindByEmailAsync(login.Email);
 
-            if(appUser == null)
+            if (appUser == null)
             {
                 return Unauthorized_InvalidCredentials();
             }
@@ -71,7 +71,7 @@ namespace API.Controllers
             if (ct.IsCancellationRequested)
                 ct.ThrowIfCancellationRequested();
 
-            if(await _userManager.CheckPasswordAsync(appUser, login.Password) == false)
+            if (await _userManager.CheckPasswordAsync(appUser, login.Password) == false)
             {
                 return Unauthorized_InvalidCredentials();
             }
@@ -109,7 +109,7 @@ namespace API.Controllers
 
             ApplicationUser registeredUser = await _userManager.FindByEmailAsync(registerModel.Email);
 
-            if(registeredUser == null)
+            if (registeredUser == null)
             {
                 _logger.LogError($"Unable to find user by email: { registerModel.Email }. Attempted to retrieve newly registered user to generate access token.");
 
@@ -122,5 +122,16 @@ namespace API.Controllers
 
             return Ok(accessToken);
         }
+
+        [HttpGet]        
+        public async Task<IActionResult> EmailExists([FromQuery] string email)
+        {
+            _logger.LogDebug("CheckIfEmailExists action executed. Looking for: {email}", email);
+
+            ApplicationUser user = await _userManager.FindByEmailAsync(email);
+
+            return user == null ? new JsonResult(false) : new JsonResult(true);
+        }
+
     }
 }

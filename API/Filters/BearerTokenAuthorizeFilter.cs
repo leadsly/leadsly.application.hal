@@ -1,4 +1,4 @@
-﻿using Domain.Models;
+﻿using Domain;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

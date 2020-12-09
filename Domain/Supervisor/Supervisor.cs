@@ -1,10 +1,6 @@
 ﻿using Domain.Models;
-using Domain.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Domain.Supervisor
 {

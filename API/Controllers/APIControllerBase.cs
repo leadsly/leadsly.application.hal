@@ -1,6 +1,4 @@
-﻿using API.Filters;
-using Domain.Models;
-using Domain.Supervisor;
+﻿using Domain;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
