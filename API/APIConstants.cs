@@ -7,6 +7,12 @@
             public const string ExpiredToken = "token-expired";
         }
 
+        public class RefreshToken
+        {
+            public const string RefreshTokenProvider = "refresh-token-provider";
+            public const string RememberMe = "remember-me";
+        }
+
         public class Cors
         {
             public const string WithOrigins = "WithClientOrigins";

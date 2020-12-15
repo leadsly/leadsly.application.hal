@@ -83,6 +83,20 @@ namespace API.Controllers
 
             ApplicationAccessToken accessToken = await _tokenGenerator.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity, _jwtFactory, _jwtOptions);
 
+            if (signin.RememberMe == true)
+            {
+                string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, "default", "remember-me");
+
+                await _userManager.SetAuthenticationTokenAsync(appUser, "default", "refresh-token", refreshToken);
+
+                accessToken.refresh_token = refreshToken;
+            }
+            else
+            {
+                // remove refresh token
+                await _userManager.RemoveAuthenticationTokenAsync(appUser, "default", "remember-me");
+            }
+
             return Ok(accessToken);
         }
 

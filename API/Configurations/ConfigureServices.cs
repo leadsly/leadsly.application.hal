@@ -84,7 +84,8 @@ namespace API.Configurations
 
                 options.User.RequireUniqueEmail = true;                
             })
-            .AddDefaultTokenProviders()            
+            .AddDefaultTokenProviders()
+            .AddTokenProvider<DataProtectorTokenProvider<ApplicationUser>>("remember-me")
             .AddRoles<IdentityRole>()            
             .AddRoleManager<RoleManager<IdentityRole>>()
             .AddEntityFrameworkStores<DatabaseContext>(); // Tell identity which EF DbContext to use;
