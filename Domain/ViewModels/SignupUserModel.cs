@@ -3,7 +3,7 @@
 namespace Domain.ViewModels
 {
     [DataContract]
-    public class RegisterUserModel
+    public class SignupUserModel
     {   
         [DataMember(Name = "email", EmitDefaultValue = false)]
         public string Email { get; set; }

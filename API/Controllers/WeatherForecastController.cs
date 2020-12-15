@@ -69,7 +69,7 @@ namespace API.Controllers
         }
     }
 
-    public class TestException : Exception, IWebApiException
+    public class TestException : Exception, IOdmWebApiException
     {
         public TestException(string? message) : base(message)
         {

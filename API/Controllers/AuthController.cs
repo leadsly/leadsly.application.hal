@@ -1,5 +1,6 @@
 ﻿using API.Authentication;
 using API.Authentication.Jwt;
+using API.Exceptions;
 using Domain.Models;
 using Domain.Supervisor;
 using Domain.ViewModels;
@@ -54,14 +55,16 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("signin")]
-        public async Task<IActionResult> SignIn([FromBody] LoginUserModel login, CancellationToken ct = default)
+        public async Task<IActionResult> SignIn([FromBody] SigninUserModel signin, CancellationToken ct = default)
         {
-            if (string.IsNullOrEmpty(login.Password))
+            this._logger.LogDebug("SignIn action executed.");
+
+            if (string.IsNullOrEmpty(signin.Password))
             {
                 return Unauthorized_InvalidCredentials();
             }
 
-            ApplicationUser appUser = await _userManager.FindByEmailAsync(login.Email);
+            ApplicationUser appUser = await _userManager.FindByEmailAsync(signin.Email);
 
             if (appUser == null)
             {
@@ -71,7 +74,7 @@ namespace API.Controllers
             if (ct.IsCancellationRequested)
                 ct.ThrowIfCancellationRequested();
 
-            if (await _userManager.CheckPasswordAsync(appUser, login.Password) == false)
+            if (await _userManager.CheckPasswordAsync(appUser, signin.Password) == false)
             {
                 return Unauthorized_InvalidCredentials();
             }
@@ -85,20 +88,20 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("signup")]
-        public async Task<IActionResult> SignUp([FromBody] RegisterUserModel registerModel, CancellationToken ct = default)
+        public async Task<IActionResult> SignUp([FromBody] SignupUserModel signupModel, CancellationToken ct = default)
         {
             _logger.LogDebug("Signup action executed.");
 
             ApplicationUser newUser = new ApplicationUser
             {
-                Email = registerModel.Email,
-                UserName = registerModel.Email
+                Email = signupModel.Email,
+                UserName = signupModel.Email
             };
 
             if (ct.IsCancellationRequested)
                 ct.ThrowIfCancellationRequested();
 
-            IdentityResult result = await _userManager.CreateAsync(newUser, registerModel.Password);
+            IdentityResult result = await _userManager.CreateAsync(newUser, signupModel.Password);
 
             if (result.Succeeded == false)
             {
@@ -107,18 +110,18 @@ namespace API.Controllers
                 return BadRequest_UserNotCreated(result.Errors);
             }
 
-            ApplicationUser registeredUser = await _userManager.FindByEmailAsync(registerModel.Email);
+            ApplicationUser signedupUser = await _userManager.FindByEmailAsync(signupModel.Email);
 
-            if (registeredUser == null)
+            if (signedupUser == null)
             {
-                _logger.LogError($"Unable to find user by email: { registerModel.Email }. Attempted to retrieve newly registered user to generate access token.");
+                _logger.LogError($"Unable to find user by email: { signupModel.Email }. Attempted to retrieve newly registered user to generate access token.");
 
                 return BadRequest_UserRegistrationError();
             }
 
-            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(registeredUser);
+            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(signedupUser);
 
-            ApplicationAccessToken accessToken = await _tokenGenerator.GenerateApplicationTokenAsync(registeredUser.Id, claimsIdentity, _jwtFactory, _jwtOptions);
+            ApplicationAccessToken accessToken = await _tokenGenerator.GenerateApplicationTokenAsync(signedupUser.Id, claimsIdentity, _jwtFactory, _jwtOptions);
 
             return Ok(accessToken);
         }

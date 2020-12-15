@@ -22,7 +22,7 @@ namespace API.Filters
         public override void OnException(ExceptionContext context)
         {
             // All user exceptions implement IWebApiException
-            if (context.Exception is IWebApiException webApiException)
+            if (context.Exception is IOdmWebApiException webApiException)
             {
                 _logger.LogError(context.Exception, "Error occured processing request.");
 
