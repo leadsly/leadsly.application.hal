@@ -10,7 +10,8 @@
         public class RefreshToken
         {
             public const string RefreshTokenProvider = "refresh-token-provider";
-            public const string RememberMe = "remember-me";
+            public const string Purpose_RememberMe = "remember-me";
+            public const string RememberMe_RefreshToken = "refresh-token";
         }
 
         public class Cors

@@ -1,6 +1,5 @@
 ﻿using API.Authentication;
-using API.Authentication.Jwt;
-using API.Exceptions;
+using API.Extensions;
 using Domain.Models;
 using Domain.Supervisor;
 using Domain.ViewModels;
@@ -9,10 +8,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,40 +15,37 @@ using System.Threading.Tasks;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
-    [AllowAnonymous]
+    [Route("[controller]")]    
     public class AuthController : APIControllerBase
     {
         public AuthController(
             ISupervisor supervisor,
-            IAccessTokenGenerator tokenGenerator,
+            IAccessTokenService tokenService,
             IClaimsIdentityService claimsIdentityService,
-            IJwtFactory jwtFactory,
-            IOptions<JwtIssuerOptions> jwtOptions,
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
+            IOptions<JwtIssuerOptions> jwtOptions,
             ILogger<AuthController> logger)
         {
             _supervisor = supervisor;
-            _tokenGenerator = tokenGenerator;
+            _tokenService = tokenService;
             _claimsIdentityService = claimsIdentityService;
             _jwtOptions = jwtOptions.Value;
-            _jwtFactory = jwtFactory;
             _userManager = userManager;
             _roleManager = roleManager;
             _logger = logger;
         }
 
         private readonly ISupervisor _supervisor;
-        private readonly IAccessTokenGenerator _tokenGenerator;
+        private readonly IAccessTokenService _tokenService;
         private readonly IClaimsIdentityService _claimsIdentityService;
+        private readonly JwtIssuerOptions _jwtOptions;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly IJwtFactory _jwtFactory;
-        private readonly JwtIssuerOptions _jwtOptions;
         private readonly ILogger<AuthController> _logger;
 
         [HttpPost]
+        [AllowAnonymous]
         [Route("signin")]
         public async Task<IActionResult> SignIn([FromBody] SigninUserModel signin, CancellationToken ct = default)
         {
@@ -79,28 +71,24 @@ namespace API.Controllers
                 return Unauthorized_InvalidCredentials();
             }
 
-            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
+            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser, _userManager, _roleManager);
 
-            ApplicationAccessToken accessToken = await _tokenGenerator.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity, _jwtFactory, _jwtOptions);
+            ApplicationAccessToken accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
 
-            if (signin.RememberMe == true)
+            await _userManager.RemoveAuthenticationTokenAsync(appUser, APIConstants.RefreshToken.RefreshTokenProvider, APIConstants.RefreshToken.RememberMe_RefreshToken);
+
+            if(signin.RememberMe == true)
             {
-                string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, "default", "remember-me");
+                string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, APIConstants.RefreshToken.RefreshTokenProvider, APIConstants.RefreshToken.Purpose_RememberMe);
 
-                await _userManager.SetAuthenticationTokenAsync(appUser, "default", "refresh-token", refreshToken);
-
-                accessToken.refresh_token = refreshToken;
-            }
-            else
-            {
-                // remove refresh token
-                await _userManager.RemoveAuthenticationTokenAsync(appUser, "default", "remember-me");
-            }
+                await _userManager.SetAuthenticationTokenAsync(appUser, APIConstants.RefreshToken.RefreshTokenProvider, APIConstants.RefreshToken.RememberMe_RefreshToken, refreshToken);                
+            }            
 
             return Ok(accessToken);
         }
 
         [HttpPost]
+        [AllowAnonymous]
         [Route("signup")]
         public async Task<IActionResult> SignUp([FromBody] SignupUserModel signupModel, CancellationToken ct = default)
         {
@@ -133,14 +121,15 @@ namespace API.Controllers
                 return BadRequest_UserRegistrationError();
             }
 
-            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(signedupUser);
+            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(signedupUser, _userManager, _roleManager);
 
-            ApplicationAccessToken accessToken = await _tokenGenerator.GenerateApplicationTokenAsync(signedupUser.Id, claimsIdentity, _jwtFactory, _jwtOptions);
+            ApplicationAccessToken accessToken = await _tokenService.GenerateApplicationTokenAsync(signedupUser.Id, claimsIdentity);
 
             return Ok(accessToken);
         }
 
-        [HttpGet]        
+        [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> EmailExists([FromQuery] string email)
         {
             _logger.LogDebug("CheckIfEmailExists action executed. Looking for: {email}", email);
@@ -148,6 +137,24 @@ namespace API.Controllers
             ApplicationUser user = await _userManager.FindByEmailAsync(email);
 
             return user == null ? new JsonResult(false) : new JsonResult(true);
+        }
+
+        [HttpGet]
+        [Route("refresh-token")]
+        public IActionResult RefreshToken()
+        {
+            _logger.LogDebug("RefreshToken action executed.");
+
+            // JwtRefreshToken middleware will catch this request, and if the request contains jwt that is valid, then it will automatically renew jwt
+            string jwt = HttpContext.GetAccessToken();
+
+            ApplicationAccessToken accessToken = new ApplicationAccessToken
+            {
+                access_token = jwt,
+                expires_in = (long)_jwtOptions.ValidFor.TotalSeconds
+            };
+
+            return Ok(accessToken);
         }
 
     }

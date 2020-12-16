@@ -74,5 +74,17 @@ namespace API.Controllers
                 Instance = this.HttpContext.Request.Path.Value
             });
         }
+
+        protected ObjectResult Unauthorized_NoJwt()
+        {
+            return ProblemDetailsResult(new ProblemDetails 
+            {
+                Type = ProblemDetailsTypes.Unauthorized,
+                Status = StatusCodes.Status401Unauthorized,
+                Title = ReasonPhrases.GetReasonPhrase(401),
+                Detail = ProblemDetailsDescriptions.Unauthorized_MissingJwt,
+                Instance = this.HttpContext.Request.Path.Value
+            });
+        }
     }
 }

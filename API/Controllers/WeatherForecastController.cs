@@ -35,7 +35,8 @@ namespace API.Controllers
             return Ok();
         }
 
-        [HttpGet]        
+        [HttpGet]   
+        [Authorize]
         public IActionResult Get()
         {
             //return new ObjectResult(new ProblemDetails

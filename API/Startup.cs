@@ -36,6 +36,8 @@ namespace API
                     .AddIdentityConfiguration()                    
                     .AddRemoveNull204FormatterConfigration();
 
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
             services.Configure<MvcOptions>(ApiDefaults.Configure);
         }
 
@@ -55,6 +57,8 @@ namespace API
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();                
             }
+
+            app.UseMiddleware<JwtRefreshMiddleware>();
 
             app.UseMiddleware<ErrorHandlingMiddleware>();
 

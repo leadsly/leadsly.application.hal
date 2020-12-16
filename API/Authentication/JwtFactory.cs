@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using JWT;
+using JWT.Algorithms;
+using JWT.Serializers;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;

@@ -85,10 +85,16 @@ namespace API.Configurations
                 options.User.RequireUniqueEmail = true;                
             })
             .AddDefaultTokenProviders()
-            .AddTokenProvider<DataProtectorTokenProvider<ApplicationUser>>("remember-me")
+            .AddTokenProvider<DataProtectorTokenProvider<ApplicationUser>>(APIConstants.RefreshToken.RefreshTokenProvider)
             .AddRoles<IdentityRole>()            
             .AddRoleManager<RoleManager<IdentityRole>>()
             .AddEntityFrameworkStores<DatabaseContext>(); // Tell identity which EF DbContext to use;
+
+            services.Configure<DataProtectionTokenProviderOptions>(options =>
+            {
+                options.Name = APIConstants.RefreshToken.RefreshTokenProvider;
+                options.TokenLifespan = TimeSpan.FromDays(7);
+            });
 
             //Configure Claims Identity
             services.AddScoped<IClaimsIdentityService, ClaimsIdentityService>();
@@ -112,7 +118,7 @@ namespace API.Configurations
             {
                 options.Issuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)];
                 options.Audience = jwtAppSettingOptions[nameof(JwtIssuerOptions.Audience)];
-                options.SigningCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256Signature);
+                options.SigningCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256Signature);                
             });
 
             TokenValidationParameters tokenValidationParameters = new TokenValidationParameters
@@ -124,7 +130,7 @@ namespace API.Configurations
                 ValidAudience = jwtAppSettingOptions[nameof(JwtIssuerOptions.Audience)],
 
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = signingKey,
+                IssuerSigningKey = signingKey,                 
 
                 RequireSignedTokens = true,
                 RequireExpirationTime = true,
@@ -137,7 +143,7 @@ namespace API.Configurations
             {
                 configureOptions.ClaimsIssuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)];
                 configureOptions.TokenValidationParameters = tokenValidationParameters;
-                configureOptions.SaveToken = true;
+                configureOptions.SaveToken = true;                     
                 // In case of having an expired token
                 configureOptions.Events = new JwtBearerEvents
                 {
@@ -152,7 +158,7 @@ namespace API.Configurations
                 };
             });
 
-            services.AddScoped<IAccessTokenGenerator, AccessTokenGenerator>();
+            services.AddScoped<IAccessTokenService, AccessTokenService>();
 
             return services;
         }
