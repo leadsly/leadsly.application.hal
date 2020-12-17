@@ -39,6 +39,25 @@ namespace API.Controllers
 
         [HttpPost]
         [AllowAnonymous]
+        [Route("external-signin")]
+        public async Task<IActionResult> ExternalSiginOrSignup([FromBody] SocialUserModel externalUser)
+        {
+            this._logger.LogDebug("ExternalSigninOrSignup action executed.");
+
+            ApplicationUser appUser = await _userManager.FindByNameAsync(externalUser.Email);
+
+            // create user
+            if(appUser == null)
+            {
+                appUser = new ApplicationUser
+                {
+
+                }   
+            }
+        }
+
+            [HttpPost]
+        [AllowAnonymous]
         [Route("signin")]
         public async Task<IActionResult> SignIn([FromBody] SigninUserModel signin, CancellationToken ct = default)
         {
@@ -152,7 +171,7 @@ namespace API.Controllers
             }
 
             return Ok(result);
-        }
+        }        
 
     }
 }
