@@ -13,7 +13,5 @@ namespace API.Authentication
         ClaimsPrincipal GetPrincipalFromExpiredToken(string expiredAccessToken);
 
         Task<RenewAccessTokenResult> TryRenewAccessToken(string expiredAccessToken, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager);
-
-        long GetExpiryTimeStamp(string accessToken);
     }
 }

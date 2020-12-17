@@ -15,7 +15,6 @@
         public const string NotFoundDetail = "The requested resource cannot be found.";
         public const string NotFound = "The requested resource cannot be found.";
         public const string UnauthorizedDetail = "Authentication credentials are invalid.";
-        public const string Unauthorized_MissingJwt = "Missing Jwt.";
         public const string Unauthorized = "Authentication credentials are missing or invalid.";
         public const string ExpiredAccessTokenIsInvalid = "Expired access token is invalid.";
         public const string RegistrationErrorDetail = "User registration error occured.";

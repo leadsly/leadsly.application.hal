@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,28 +17,22 @@ namespace API.Controllers
     [Route("[controller]")]    
     public class AuthController : APIControllerBase
     {
-        public AuthController(
-            ISupervisor supervisor,
+        public AuthController(            
             IAccessTokenService tokenService,
             IClaimsIdentityService claimsIdentityService,
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager,
-            IOptions<JwtIssuerOptions> jwtOptions,
+            RoleManager<IdentityRole> roleManager,            
             ILogger<AuthController> logger)
-        {
-            _supervisor = supervisor;
+        {            
             _tokenService = tokenService;
-            _claimsIdentityService = claimsIdentityService;
-            _jwtOptions = jwtOptions.Value;
+            _claimsIdentityService = claimsIdentityService;            
             _userManager = userManager;
             _roleManager = roleManager;
             _logger = logger;
         }
-
-        private readonly ISupervisor _supervisor;
+        
         private readonly IAccessTokenService _tokenService;
-        private readonly IClaimsIdentityService _claimsIdentityService;
-        private readonly JwtIssuerOptions _jwtOptions;
+        private readonly IClaimsIdentityService _claimsIdentityService;        
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ILogger<AuthController> _logger;
@@ -139,22 +132,26 @@ namespace API.Controllers
             return user == null ? new JsonResult(false) : new JsonResult(true);
         }
 
-        [HttpGet]
+        [HttpPost]
+        [AllowAnonymous]
         [Route("refresh-token")]
-        public IActionResult RefreshToken()
+        public async Task<IActionResult> RefreshToken()
         {
             _logger.LogDebug("RefreshToken action executed.");
 
-            // JwtRefreshToken middleware will catch this request, and if the request contains jwt that is valid, then it will automatically renew jwt
-            string jwt = HttpContext.GetAccessToken();
+            RenewAccessTokenResult result = new RenewAccessTokenResult();
 
-            ApplicationAccessToken accessToken = new ApplicationAccessToken
+            string expiredAccessToken = HttpContext.GetAccessToken();
+
+            if(expiredAccessToken != string.Empty)
             {
-                access_token = jwt,
-                expires_in = (long)_jwtOptions.ValidFor.TotalSeconds
-            };
+                // request has token but it failed authentication. Attempt to renew the token
+                result = await _tokenService.TryRenewAccessToken(expiredAccessToken, _userManager, _roleManager);
+                bool succeeded = result.Succeeded;
+                _logger.LogDebug("Attempted to rewnew jwt. Result: {succeeded}", succeeded);
+            }
 
-            return Ok(accessToken);
+            return Ok(result);
         }
 
     }

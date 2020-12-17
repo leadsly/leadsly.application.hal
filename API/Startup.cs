@@ -24,19 +24,18 @@ namespace API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers()
-                    .AddJsonOptionsConfiguration();                    
+                    .AddJsonOptionsConfiguration();
 
-            services.AddConnectionProviders(Configuration)                    
+            services.AddConnectionProviders(Configuration)
                     .AddJsonWebTokenConfiguration(Configuration)
                     .AddAuthorizationConfiguration()
                     .AddCorsConfiguration(Configuration)
                     .AddApiBehaviorOptionsConfiguration()
                     .AddRepositoriesConfiguration()
                     .AddSupervisorConfiguration()
-                    .AddIdentityConfiguration()                    
-                    .AddRemoveNull204FormatterConfigration();
-
-            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+                    .AddIdentityConfiguration()
+                    .AddHttpContextAccessor()
+                    .AddRemoveNull204FormatterConfigration();            
 
             services.Configure<MvcOptions>(ApiDefaults.Configure);
         }
@@ -57,8 +56,6 @@ namespace API
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();                
             }
-
-            app.UseMiddleware<JwtRefreshMiddleware>();
 
             app.UseMiddleware<ErrorHandlingMiddleware>();
 

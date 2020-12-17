@@ -10,16 +10,17 @@ namespace API.Extensions
         {
             string token = string.Empty;
 
-            string authorization = context.Request.Headers["Authorization"];
+            string authorizationHeader = context.Request.Headers["Authorization"];
 
-            if (authorization == null)
+            if (authorizationHeader == null)
             {
                 return string.Empty;
             }
 
-            if(authorization.StartsWith(JwtBearerDefaults.AuthenticationScheme, StringComparison.OrdinalIgnoreCase))
+            if(authorizationHeader.StartsWith(JwtBearerDefaults.AuthenticationScheme, StringComparison.OrdinalIgnoreCase))
             {
-                token = authorization.Substring(JwtBearerDefaults.AuthenticationScheme.Length).Trim();
+                // use range operator https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-8.0/ranges
+                token = authorizationHeader[JwtBearerDefaults.AuthenticationScheme.Length..].Trim();
             }
 
             return token;
