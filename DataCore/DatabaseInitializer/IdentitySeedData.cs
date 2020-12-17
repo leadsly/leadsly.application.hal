@@ -18,15 +18,12 @@ namespace DataCore.DatabaseInitializer
             RoleManager<IdentityRole> roleManager = serviceProvider.GetService<RoleManager<IdentityRole>>();
             IConfiguration configuration = serviceProvider.GetService<IConfiguration>();
 
-            DatabaseContext dbContext = serviceProvider.GetService<DatabaseContext>();
-
-            await Seed(userManager, roleManager, configuration, dbContext, logger);
+            await Seed(userManager, roleManager, configuration, logger);
         }
 
         private async static Task Seed(UserManager<ApplicationUser> userManager, 
                                        RoleManager<IdentityRole> roleManager, 
                                        IConfiguration configuration, 
-                                       DatabaseContext dbContext, 
                                        ILogger<DatabaseInitializer> logger)
         {
             string[] roles = new string[] { "admin", "user" };
