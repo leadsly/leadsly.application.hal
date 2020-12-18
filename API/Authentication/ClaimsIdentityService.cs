@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Domain;
 using Domain.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -29,7 +30,7 @@ namespace API.Authentication
 
             foreach (string userRole in userRoles)
             {
-                userClaims.Add(new Claim(APIConstants.Jwt.ClaimIdentifiers.Role, userRole));
+                userClaims.Add(new Claim(ApiConstants.Jwt.ClaimIdentifiers.Role, userRole));
                 IdentityRole role = await roleManager.FindByNameAsync(userRole);
                 if (role != null)
                 {

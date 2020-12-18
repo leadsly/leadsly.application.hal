@@ -20,9 +20,10 @@ using Newtonsoft.Json.Converters;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
-using Microsoft.Extensions.Logging;
+using Domain;
 using System.Linq;
 using Serilog;
+using API.DataProtectorTokenProviders;
 
 namespace API.Configurations
 {
@@ -60,40 +61,53 @@ namespace API.Configurations
             return services;
         }
 
-        public static IServiceCollection AddIdentityConfiguration(this IServiceCollection services)
+        public static IServiceCollection AddIdentityConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
-            Log.Information("Adding identity services.");
-
-            services.Configure<DataProtectionTokenProviderOptions>(options =>
-            {
-                options.TokenLifespan = TimeSpan.FromDays(7);
-            });
+            Log.Information("Adding identity services.");            
             
             services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.Password.RequireDigit = true;
                 options.Password.RequiredLength = 8;
+                options.Password.RequiredUniqueChars = 3;
                 options.Password.RequireLowercase = true;
                 options.Password.RequireUppercase = true;
                 options.Password.RequireNonAlphanumeric = true;
 
                 // Lockout settings
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-                options.Lockout.MaxFailedAccessAttempts = 5;
-                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = 10;                   
 
                 options.User.RequireUniqueEmail = true;                
             })
             .AddDefaultTokenProviders()
-            .AddTokenProvider<DataProtectorTokenProvider<ApplicationUser>>(APIConstants.RefreshToken.RefreshTokenProvider)
+            .AddTokenProvider<DataProtectorTokenProvider<ApplicationUser>>(ApiConstants.DataTokenProviders.RefreshTokenProvider.Name)
+            .AddTokenProvider<FacebookDataProtectorTokenProvider<ApplicationUser>>(ApiConstants.DataTokenProviders.ExternalLoginProviders.Facebook)
+            .AddTokenProvider<GoogleDataProtectorTokenProvider<ApplicationUser>>(ApiConstants.DataTokenProviders.ExternalLoginProviders.Google)
             .AddRoles<IdentityRole>()            
             .AddRoleManager<RoleManager<IdentityRole>>()
             .AddEntityFrameworkStores<DatabaseContext>(); // Tell identity which EF DbContext to use;
-
+            
             services.Configure<DataProtectionTokenProviderOptions>(options =>
             {
-                options.Name = APIConstants.RefreshToken.RefreshTokenProvider;
+                options.Name = ApiConstants.DataTokenProviders.RefreshTokenProvider.Name;
                 options.TokenLifespan = TimeSpan.FromDays(7);
+            });
+
+            services.Configure<FacebookDataProtectionTokenProviderOptions>(options =>
+            {
+                options.Name = ApiConstants.DataTokenProviders.ExternalLoginProviders.Facebook;
+                options.TokenLifespan = TimeSpan.FromDays(120);
+                options.ClientId = configuration[ApiConstants.VaultKeys.FaceBookClientId];
+                options.ClientSecret = configuration[ApiConstants.VaultKeys.FaceBookClientSecret];
+            });
+
+            services.Configure<GoogleDataProtectionTokenProviderOptions>(options =>
+            {
+                options.Name = ApiConstants.DataTokenProviders.ExternalLoginProviders.Google;
+                options.TokenLifespan = TimeSpan.FromDays(120);
+                options.ClientId = configuration[ApiConstants.VaultKeys.GoogleClientId];
+                options.ClientSecret = configuration[ApiConstants.VaultKeys.GoogleClientSecret];
             });
 
             //Configure Claims Identity
@@ -111,7 +125,7 @@ namespace API.Configurations
             IConfigurationSection jwtAppSettingOptions = configuration.GetSection(nameof(JwtIssuerOptions));
 
             // retrieve private key from user secrets or azure vault
-            string privateKey = configuration[nameof(VaultKeys.JwtSecret)];
+            string privateKey = configuration[ApiConstants.VaultKeys.JwtSecret];
             SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(privateKey));
             
             services.Configure<JwtIssuerOptions>(options =>
@@ -151,7 +165,7 @@ namespace API.Configurations
                     {
                         if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
                         {
-                            context.Response.Headers.Add(APIConstants.TokenOptions.ExpiredToken, "true");
+                            context.Response.Headers.Add(ApiConstants.TokenOptions.ExpiredToken, "true");
                         }
                         return Task.CompletedTask;
                     }
@@ -215,7 +229,7 @@ namespace API.Configurations
 
             services.AddCors(options =>
             {
-                options.AddPolicy(APIConstants.Cors.WithOrigins, new CorsPolicyBuilder()
+                options.AddPolicy(ApiConstants.Cors.WithOrigins, new CorsPolicyBuilder()
                                                       .WithOrigins(configuration["AllowedOrigins"])
                                                       .AllowAnyHeader()
                                                       .AllowCredentials()
@@ -223,7 +237,7 @@ namespace API.Configurations
                                                       .Build());
 
 
-                options.AddPolicy(APIConstants.Cors.AllowAll, new CorsPolicyBuilder()
+                options.AddPolicy(ApiConstants.Cors.AllowAll, new CorsPolicyBuilder()
                                                      .AllowAnyOrigin()
                                                      .AllowAnyHeader()
                                                      .AllowAnyMethod()

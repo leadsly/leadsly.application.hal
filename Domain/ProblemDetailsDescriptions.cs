@@ -15,8 +15,11 @@
         public const string NotFoundDetail = "The requested resource cannot be found.";
         public const string NotFound = "The requested resource cannot be found.";
         public const string UnauthorizedDetail = "Authentication credentials are invalid.";
+        public const string UnauthorizedAccountLocked = "Account is locked.";
+        public const string UnauthorizedExternalProvider = "Invalid external provider token";
         public const string Unauthorized = "Authentication credentials are missing or invalid.";
         public const string ExpiredAccessTokenIsInvalid = "Expired access token is invalid.";
+        public const string ExternalJwtIsInvalid = "External provider jwt is invalid.";
         public const string RegistrationErrorDetail = "User registration error occured.";
         public const string RegistrationDetail = "Missing or invalid registration data.";        
     }

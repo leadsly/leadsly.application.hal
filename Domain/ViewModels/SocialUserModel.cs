@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Domain.Models;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.ViewModels
 {
     [DataContract]
-    public class SocialUserModel
+    public class SocialUserModel : IApplicationUser
     {
         [DataMember(Name = "id", EmitDefaultValue = false)]
         public string Id { get; set; }
@@ -24,6 +20,12 @@ namespace Domain.ViewModels
 
         [DataMember(Name = "photoUrl", EmitDefaultValue = false)]
         public string PhotoUrl { get; set; }
+
+        [DataMember(Name = "authToken", EmitDefaultValue = false)]
+        public string AuthToken { get; set; }
+
+        [DataMember(Name = "idToken", EmitDefaultValue = false)]
+        public string IdToken { get; set; }
 
         [DataMember(Name = "provider", EmitDefaultValue = false)]
         public string Provider { get; set; }

@@ -2,7 +2,7 @@ using API.Configurations;
 using API.Middlewares;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
+using Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,7 +33,7 @@ namespace API
                     .AddApiBehaviorOptionsConfiguration()
                     .AddRepositoriesConfiguration()
                     .AddSupervisorConfiguration()
-                    .AddIdentityConfiguration()
+                    .AddIdentityConfiguration(Configuration)
                     .AddHttpContextAccessor()
                     .AddRemoveNull204FormatterConfigration();            
 
@@ -48,11 +48,11 @@ namespace API
 
             if (env.IsDevelopment())
             {
-                app.UseCors(APIConstants.Cors.AllowAll);                
+                app.UseCors(ApiConstants.Cors.AllowAll);                
             }
             else
             {
-                app.UseCors(APIConstants.Cors.WithOrigins);
+                app.UseCors(ApiConstants.Cors.WithOrigins);
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();                
             }

@@ -12,6 +12,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Domain;
 
 namespace API.Authentication
 {
@@ -57,7 +58,7 @@ namespace API.Authentication
                 ValidIssuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)],
 
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this._configuration[nameof(VaultKeys.JwtSecret)])),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this._configuration[nameof(ApiConstants.VaultKeys.JwtSecret)])),
                 ValidateLifetime = false,
 
                 RequireSignedTokens = true,
@@ -98,9 +99,9 @@ namespace API.Authentication
                 return result;
             }
 
-            string refreshToken = await userManager.GetAuthenticationTokenAsync(appUser, APIConstants.RefreshToken.RefreshTokenProvider, APIConstants.RefreshToken.RememberMe_RefreshToken);
+            string refreshToken = await userManager.GetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe);
 
-            bool isValid = await userManager.VerifyUserTokenAsync(appUser, APIConstants.RefreshToken.RefreshTokenProvider, APIConstants.RefreshToken.Purpose_RememberMe, refreshToken);
+            bool isValid = await userManager.VerifyUserTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.Purpose, refreshToken);
 
             if (isValid == false)
             {
@@ -109,11 +110,11 @@ namespace API.Authentication
 
             ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser, userManager, roleManager);
 
-            await userManager.RemoveAuthenticationTokenAsync(appUser, APIConstants.RefreshToken.RefreshTokenProvider, APIConstants.RefreshToken.RememberMe_RefreshToken);
+            await userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe);
 
-            string newRefreshToken = await userManager.GenerateUserTokenAsync(appUser, APIConstants.RefreshToken.RefreshTokenProvider, APIConstants.RefreshToken.Purpose_RememberMe);
+            string newRefreshToken = await userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.Purpose);
 
-            IdentityResult settingNewTokenResult = await userManager.SetAuthenticationTokenAsync(appUser, APIConstants.RefreshToken.RefreshTokenProvider, APIConstants.RefreshToken.RememberMe_RefreshToken, newRefreshToken);
+            IdentityResult settingNewTokenResult = await userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe, newRefreshToken);
 
             if(settingNewTokenResult.Succeeded == false)
             {

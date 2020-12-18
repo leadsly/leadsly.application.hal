@@ -74,5 +74,46 @@ namespace API.Controllers
                 Instance = this.HttpContext.Request.Path.Value
             });
         }
+
+        /// <summary>
+        /// Bad request when cannot find user by email.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns></returns>
+        protected ObjectResult Unauthorized_InvalidCredentials(int failedAttempts)
+        {
+            return ProblemDetailsResult(new ProblemDetails
+            {
+                Type = ProblemDetailsTypes.Unauthorized,
+                Status = StatusCodes.Status401Unauthorized,
+                Title = ReasonPhrases.GetReasonPhrase(401),
+                Detail = $"{ ProblemDetailsDescriptions.UnauthorizedDetail } Failed attempt: {failedAttempts}.",
+                Instance = this.HttpContext.Request.Path.Value
+            });
+        }
+
+        protected ObjectResult Unauthorized_AccountLockedOut()
+        {
+            return ProblemDetailsResult(new ProblemDetails
+            {
+                Type = ProblemDetailsTypes.Unauthorized,
+                Status = StatusCodes.Status401Unauthorized,
+                Title = ReasonPhrases.GetReasonPhrase(401),
+                Detail = ProblemDetailsDescriptions.UnauthorizedAccountLocked,
+                Instance = this.HttpContext.Request.Path.Value
+            });
+        }
+
+        protected ObjectResult Unauthorized_InvalidExternalProviderToken()
+        {
+            return ProblemDetailsResult(new ProblemDetails
+            {
+                Type = ProblemDetailsTypes.Unauthorized,
+                Status = StatusCodes.Status401Unauthorized,
+                Title = ReasonPhrases.GetReasonPhrase(401),
+                Detail = ProblemDetailsDescriptions.UnauthorizedExternalProvider,
+                Instance = this.HttpContext.Request.Path.Value
+            });
+        }
     }
 }
