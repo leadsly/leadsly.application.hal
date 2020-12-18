@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataCore.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20201217203919_InitialCreate")]
+    [Migration("20201218184015_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -28,9 +28,6 @@ namespace DataCore.Migrations
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
-
-                    b.Property<string>("AuthToken")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -53,9 +50,6 @@ namespace DataCore.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("IdToken")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")

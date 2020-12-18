@@ -31,8 +31,6 @@ namespace DataCore.Migrations
                     Deleted = table.Column<bool>(type: "bit", nullable: false),
                     ExternalProviderUserId = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PhotoUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AuthToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    IdToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ExternalProvider = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),

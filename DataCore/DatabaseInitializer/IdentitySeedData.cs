@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using System.Security.Claims;
+using Domain;
 
 namespace DataCore.DatabaseInitializer
 {
@@ -94,7 +95,7 @@ namespace DataCore.DatabaseInitializer
                 try
                 {
                     logger.LogInformation($"Hashing { admin.UserName } password.");
-                    string hashed = passwordHasher.HashPassword(admin, configuration["Admin:Password"]);
+                    string hashed = passwordHasher.HashPassword(admin, configuration[ApiConstants.VaultKeys.AdminPassword]);
                     logger.LogInformation($"Successfully hashed { admin.UserName } password.");
                     admin.PasswordHash = hashed;                    
                 }
