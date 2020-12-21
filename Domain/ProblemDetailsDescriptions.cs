@@ -20,7 +20,8 @@
         public const string Unauthorized = "Authentication credentials are missing or invalid.";
         public const string ExpiredAccessTokenIsInvalid = "Expired access token is invalid.";
         public const string ExternalJwtIsInvalid = "External provider jwt is invalid.";
-        public const string RegistrationErrorDetail = "User registration error occured.";
-        public const string RegistrationDetail = "Missing or invalid registration data.";        
+        public const string RegistrationErrorDetail = "User registration error occured.";        
+        public const string RegistrationDetail = "Missing or invalid registration data.";
+        public const string FailedToSendEmail = "Failed to send email.";
     }
 }

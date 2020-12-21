@@ -25,6 +25,11 @@
             }
         }
 
+        public class Email
+        {
+            public const string CallbackUrlToken = "CallbackUrlToken";
+        }
+
         public class VaultKeys
         {
             public const string JwtSecret = "Jwt:Secret";
@@ -33,6 +38,8 @@
             public const string FaceBookClientId = "Facebook:ClientId";
             public const string FaceBookClientSecret = "Facebook:ClientSecret";
             public const string AdminPassword = "Admin:Password";
+            public const string SystemAdminEmailPassword = "System:Admin:Email:Password";
+            public const string SystemAdminEmail = "System:Admin:Email";
         }
 
         public class Cors

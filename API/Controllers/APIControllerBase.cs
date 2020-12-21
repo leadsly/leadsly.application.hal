@@ -58,6 +58,18 @@ namespace API.Controllers
             });
         }
 
+        protected ObjectResult BadRequest_FailedToSendEmail()
+        {
+            return ProblemDetailsResult(new ProblemDetails
+            {
+                Type = ProblemDetailsTypes.BadRequestType,
+                Status = StatusCodes.Status400BadRequest,
+                Title = ReasonPhrases.GetReasonPhrase(400),
+                Detail = ProblemDetailsDescriptions.FailedToSendEmail,
+                Instance = this.HttpContext.Request.Path.Value
+            });
+        }
+
         /// <summary>
         /// Bad request when cannot find user by email.
         /// </summary>

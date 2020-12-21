@@ -35,6 +35,7 @@ namespace API
                     .AddSupervisorConfiguration()
                     .AddIdentityConfiguration(Configuration)
                     .AddHttpContextAccessor()
+                    .AddEmailServiceConfiguration()
                     .AddRemoveNull204FormatterConfigration();            
 
             services.Configure<MvcOptions>(ApiDefaults.Configure);

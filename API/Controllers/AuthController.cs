@@ -13,6 +13,11 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using Domain;
+using System.Text.Encodings.Web;
+using API.Services;
+using MimeKit;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Auth;
 
 namespace API.Controllers
 {
@@ -25,7 +30,10 @@ namespace API.Controllers
             IClaimsIdentityService claimsIdentityService,
             IConfiguration configuration,
             UserManager<ApplicationUser> userManager,            
-            RoleManager<IdentityRole> roleManager,            
+            RoleManager<IdentityRole> roleManager,
+            UrlEncoder urlEncoder,
+            IEmailService emailService,
+            IHtmlTemplateGenerator templateGenerator,
             ILogger<AuthController> logger)
         {            
             _tokenService = tokenService;
@@ -33,15 +41,23 @@ namespace API.Controllers
             _userManager = userManager;
             _configuration = configuration;
             _roleManager = roleManager;
+            _urlEncoder = urlEncoder;
+            _emailService = emailService;
+            _templateGenerator = templateGenerator;
+            _emailServiceOptions = configuration.GetSection(nameof(EmailServiceOptions));
             _logger = logger;
         }
         
         private readonly IAccessTokenService _tokenService;
         private readonly IConfiguration _configuration;
+        private readonly UrlEncoder _urlEncoder;
         private readonly IClaimsIdentityService _claimsIdentityService;        
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly ILogger<AuthController> _logger;        
+        private readonly IEmailService _emailService;
+        private readonly IConfiguration _emailServiceOptions;
+        private readonly IHtmlTemplateGenerator _templateGenerator;
+        private readonly ILogger<AuthController> _logger;
 
         [HttpPost]
         [AllowAnonymous]
@@ -56,6 +72,18 @@ namespace API.Controllers
             }
 
             ApplicationUser appUser = await _userManager.FindByEmailAsync(signin.Email);
+
+            //await _userManager.ResetAuthenticatorKeyAsync(appUser);
+
+            //var unformattedKey = await _userManager.GetAuthenticatorKeyAsync(appUser);
+
+            //var email = await _userManager.GetEmailAsync(appUser);
+
+            //const string AuthenticatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6";
+
+            //string authenticatorUri = string.Format(AuthenticatorUriFormat, _urlEncoder.Encode("ASP.NET Core Identity"), _urlEncoder.Encode(email), unformattedKey);
+
+            //await _userManager.GenerateTwoFactorTokenAsync
 
             if (appUser == null)
             {
@@ -144,18 +172,7 @@ namespace API.Controllers
             ApplicationAccessToken accessToken = await _tokenService.GenerateApplicationTokenAsync(signedupUser.Id, claimsIdentity);
 
             return Ok(accessToken);
-        }
-
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<IActionResult> EmailExists([FromQuery] string email)
-        {
-            _logger.LogDebug("CheckIfEmailExists action executed. Looking for: {email}", email);
-
-            ApplicationUser user = await _userManager.FindByEmailAsync(email);
-
-            return user == null ? new JsonResult(false) : new JsonResult(true);
-        }
+        }        
 
         [HttpPost]
         [AllowAnonymous]
@@ -258,7 +275,7 @@ namespace API.Controllers
         {
             _logger.LogDebug("ExternalSigninFacebook action executed.");
 
-            ApplicationAccessToken accessToken = null;
+            ApplicationAccessToken accessToken;
 
             ApplicationUser appUser = await _userManager.FindByEmailAsync(externalUser.Email);
 

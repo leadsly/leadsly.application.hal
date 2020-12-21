@@ -24,6 +24,7 @@ using Domain;
 using System.Linq;
 using Serilog;
 using API.DataProtectorTokenProviders;
+using API.Services;
 
 namespace API.Configurations
 {
@@ -87,7 +88,13 @@ namespace API.Configurations
             .AddRoles<IdentityRole>()            
             .AddRoleManager<RoleManager<IdentityRole>>()
             .AddEntityFrameworkStores<DatabaseContext>(); // Tell identity which EF DbContext to use;
-            
+
+            services.Configure<DataProtectionTokenProviderOptions>(options =>
+            {
+                options.Name = TokenOptions.DefaultProvider;
+                options.TokenLifespan = TimeSpan.FromDays(1);
+            });
+
             services.Configure<DataProtectionTokenProviderOptions>(options =>
             {
                 options.Name = ApiConstants.DataTokenProviders.RefreshTokenProvider.Name;
@@ -257,6 +264,16 @@ namespace API.Configurations
             {
                 options.SuppressModelStateInvalidFilter = true;
             });
+
+            return services;
+        }
+
+        public static IServiceCollection AddEmailServiceConfiguration(this IServiceCollection services)
+        {
+            Log.Information("Configuring AddEmailServiceConfiguration.");
+
+            services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IHtmlTemplateGenerator, HtmlTemplateGenerator>();
 
             return services;
         }

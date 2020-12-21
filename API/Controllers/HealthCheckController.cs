@@ -19,7 +19,7 @@ namespace API.Controllers
 
         [HttpGet("/healthcheck")]
         [AllowAnonymous]
-        public IActionResult HealthCheck(CancellationToken cancellationToken)
+        public IActionResult HealthCheck()
         {
             _logger.LogDebug("Healthcheck action executed.");           
             return new JsonResult(new HealthCheckViewModel 
