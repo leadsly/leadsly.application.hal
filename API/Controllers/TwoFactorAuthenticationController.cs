@@ -76,7 +76,24 @@ namespace API.Controllers
             return NoContent();
         }
 
-        [HttpPost]        
+        [HttpPost]
+        [Route("reset-authenticator")]
+        public async Task<IActionResult> ResetAuthenticator()
+        {
+            ApplicationUser user = await _userManager.GetUserAsync(User);
+
+            if(user == null)
+            {
+
+            }
+
+            await _userManager.SetTwoFactorEnabledAsync(user, false);
+            await _userManager.ResetAuthenticatorKeyAsync(user);            
+
+            return Ok();
+        }
+
+        [HttpPost]
         [Route("generate-recovery-codes")]
         public async Task<IActionResult> GenerateRecoveryCodes()
         {
@@ -84,17 +101,19 @@ namespace API.Controllers
 
             var isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
 
-            if(isTwoFactorEnabled == false)
+            if (isTwoFactorEnabled == false)
             {
 
             }
 
-            var recoveryCodes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+            IEnumerable<string> newRecoveryCodes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
 
-            return new JsonResult(new
+            GenerateRecoveryCodesViewModel recoveryCodes = new GenerateRecoveryCodesViewModel
             {
-                recoveryCodes = new { recoveryCodes }
-            });
+                Items = newRecoveryCodes.ToList()
+            };
+
+            return Ok(recoveryCodes);
         }
 
         [HttpPost]        

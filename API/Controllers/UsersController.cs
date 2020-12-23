@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MimeKit;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -56,33 +57,42 @@ namespace API.Controllers
         [Route("{id}")]
         public async Task<IActionResult> Details()
         {
+            _logger.LogDebug("Details action executed.");
+
             ApplicationUser user = await _userManager.GetUserAsync(User);
-            var logins = await _userManager.GetLoginsAsync(user);
 
-
-            JsonResult restult = null;
-            try
+            if (user == null)
             {
-                restult = new JsonResult(new
-                {
-                    email = user.Email,
-                    emailConfirmed = user.EmailConfirmed,
-                    externalLogins = logins.Select(login => login.ProviderDisplayName).ToList(),
-                    twoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user),
-                    hasAuthenticator = await _userManager.GetAuthenticatorKeyAsync(user) != null,
-                    //twoFactorClientRemembered = await _signinManager.IsTwoFactorClientRememberedAsync(user),
-                    recoveryCodesLeft = await _userManager.CountRecoveryCodesAsync(user)
-                });
-
+                // return Bad request
             }
-            catch(Exception ex)
+
+            IList<UserLoginInfo> logins = await _userManager.GetLoginsAsync(user);
+
+            ProfileDetailsViewModel profileDetails = new ProfileDetailsViewModel
             {
+                Email = user.Email,
+                EmailConfirmed = user.EmailConfirmed,
+                ExternalLogins = logins.Select(l => l.ProviderDisplayName).ToList(),
+                TwoFactorClientRemembered = false,
+                HasAuthenticator = await _userManager.GetAuthenticatorKeyAsync(user) != null,
+                TwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user),
+                RecoveryCodesLeft = await _userManager.CountRecoveryCodesAsync(user)
+            };
 
-
+            if(profileDetails.HasAuthenticator && profileDetails.TwoFactorEnabled)
+            {
+                profileDetails.TwoFactorConfigurationStatus = TwoFactorConfigurationStatus.Enabled;
             }
-            
+            else if(profileDetails.HasAuthenticator && (profileDetails.TwoFactorEnabled == false))
+            {
+                profileDetails.TwoFactorConfigurationStatus = TwoFactorConfigurationStatus.Disabled;
+            }
+            else if(profileDetails.HasAuthenticator == false)
+            {
+                profileDetails.TwoFactorConfigurationStatus = TwoFactorConfigurationStatus.NotConfigured;
+            }
 
-            return restult;
+            return Ok(profileDetails);
         }
 
         [HttpGet]
