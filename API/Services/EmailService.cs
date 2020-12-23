@@ -18,9 +18,9 @@ namespace API.Services
             _logger = logger;
         }
 
-        private IConfigurationSection _emailServiceOptions;
-        private IConfiguration _configuration;
-        private ILogger<EmailService> _logger;
+        private readonly IConfigurationSection _emailServiceOptions;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<EmailService> _logger;
 
         public bool SendEmail(MimeMessage message)
         {

@@ -8,7 +8,7 @@ namespace API.Controllers
 {
     [ApiController]
     [Route("[controller]")]    
-    public class HealthCheckController : APIControllerBase
+    public class HealthCheckController : ApiControllerBase
     {
         public HealthCheckController(ILogger<HealthCheckController> logger)
         {

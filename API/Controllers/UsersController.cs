@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MimeKit;
+using System;
+using System.Linq;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,34 +22,73 @@ namespace API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class UsersController : APIControllerBase
+    public class UsersController : ApiControllerBase
     {
         public UsersController(
             IConfiguration configuration,
-            UserManager<ApplicationUser> userManager,
+            OdmUserManager userManager,
             IEmailService emailService,
             IHtmlTemplateGenerator templateGenerator,
+            SignInManager<ApplicationUser> signinManager,
+            UrlEncoder urlEncoder,
             ILogger<UsersController> logger)
         {
             _userManager = userManager;
             _configuration = configuration;
             _emailService = emailService;
             _templateGenerator = templateGenerator;
+            _urlEncoder = urlEncoder;
             _emailServiceOptions = configuration.GetSection(nameof(EmailServiceOptions));
+            _signinManager = signinManager;
             _logger = logger;
         }
 
         private readonly IConfiguration _configuration;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly OdmUserManager _userManager;
+        private readonly SignInManager<ApplicationUser> _signinManager;
+        private readonly UrlEncoder _urlEncoder;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _emailServiceOptions;
         private readonly IHtmlTemplateGenerator _templateGenerator;
-        private readonly ILogger<UsersController> _logger;
+        private readonly ILogger<UsersController> _logger;        
+
+        [HttpGet]
+        [Route("{id}")]
+        public async Task<IActionResult> Details()
+        {
+            ApplicationUser user = await _userManager.GetUserAsync(User);
+            var logins = await _userManager.GetLoginsAsync(user);
+
+
+            JsonResult restult = null;
+            try
+            {
+                restult = new JsonResult(new
+                {
+                    email = user.Email,
+                    emailConfirmed = user.EmailConfirmed,
+                    externalLogins = logins.Select(login => login.ProviderDisplayName).ToList(),
+                    twoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user),
+                    hasAuthenticator = await _userManager.GetAuthenticatorKeyAsync(user) != null,
+                    //twoFactorClientRemembered = await _signinManager.IsTwoFactorClientRememberedAsync(user),
+                    recoveryCodesLeft = await _userManager.CountRecoveryCodesAsync(user)
+                });
+
+            }
+            catch(Exception ex)
+            {
+
+
+            }
+            
+
+            return restult;
+        }
 
         [HttpGet]
         [AllowAnonymous]
-        [Route("{email}")]
-        public async Task<IActionResult> EmailExists(string email)
+        [Route("email")]
+        public async Task<IActionResult> EmailExists([FromQuery] string email)
         {
             _logger.LogDebug("CheckIfEmailExists action executed. Looking for: {email}", email);
 

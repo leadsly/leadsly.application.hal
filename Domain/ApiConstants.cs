@@ -40,6 +40,7 @@
             public const string AdminPassword = "Admin:Password";
             public const string SystemAdminEmailPassword = "System:Admin:Email:Password";
             public const string SystemAdminEmail = "System:Admin:Email";
+            public const string TwoFactorAuthenticationEncryptionKey = "TwoFactorAuthentication:EncryptionKey";
         }
 
         public class Cors

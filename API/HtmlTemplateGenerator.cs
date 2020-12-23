@@ -15,7 +15,7 @@ namespace API
             }
         }
 
-        private string PasswordResetEmailBody()
+        private static string PasswordResetEmailBody()
         {
             return $@"
              <html lang='en'>

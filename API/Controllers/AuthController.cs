@@ -23,7 +23,7 @@ namespace API.Controllers
 {
     [ApiController]
     [Route("[controller]")]    
-    public class AuthController : APIControllerBase
+    public class AuthController : ApiControllerBase
     {
         public AuthController(            
             IAccessTokenService tokenService,
@@ -72,18 +72,6 @@ namespace API.Controllers
             }
 
             ApplicationUser appUser = await _userManager.FindByEmailAsync(signin.Email);
-
-            //await _userManager.ResetAuthenticatorKeyAsync(appUser);
-
-            //var unformattedKey = await _userManager.GetAuthenticatorKeyAsync(appUser);
-
-            //var email = await _userManager.GetEmailAsync(appUser);
-
-            //const string AuthenticatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6";
-
-            //string authenticatorUri = string.Format(AuthenticatorUriFormat, _urlEncoder.Encode("ASP.NET Core Identity"), _urlEncoder.Encode(email), unformattedKey);
-
-            //await _userManager.GenerateTwoFactorTokenAsync
 
             if (appUser == null)
             {

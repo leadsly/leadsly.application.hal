@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace API.Controllers
 {
-    public class APIControllerBase : Controller
+    public class ApiControllerBase : Controller
     {
         protected ObjectResult ProblemDetailsResult(ProblemDetails problemDetails)
         {

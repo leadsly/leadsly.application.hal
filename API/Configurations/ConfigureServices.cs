@@ -87,6 +87,8 @@ namespace API.Configurations
             .AddTokenProvider<GoogleDataProtectorTokenProvider<ApplicationUser>>(ApiConstants.DataTokenProviders.ExternalLoginProviders.Google)
             .AddRoles<IdentityRole>()            
             .AddRoleManager<RoleManager<IdentityRole>>()
+            .AddSignInManager()
+            .AddUserManager<OdmUserManager>()
             .AddEntityFrameworkStores<DatabaseContext>(); // Tell identity which EF DbContext to use;
 
             services.Configure<DataProtectionTokenProviderOptions>(options =>
