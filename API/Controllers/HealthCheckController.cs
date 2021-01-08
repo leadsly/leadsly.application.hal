@@ -21,7 +21,7 @@ namespace API.Controllers
         [AllowAnonymous]
         public IActionResult HealthCheck()
         {
-            _logger.LogDebug("Healthcheck action executed.");           
+            _logger.LogTrace("Healthcheck action executed.");           
             return new JsonResult(new HealthCheckViewModel 
             {
                 APIVersion = typeof(Startup).Assembly.GetName().Version.ToString()

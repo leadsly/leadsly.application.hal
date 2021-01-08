@@ -83,7 +83,8 @@ namespace DataCore.DatabaseInitializer
                 Email = "admin@admin.com",
                 FirstName = "Kai",
                 LastName = "Kami",
-                PhoneNumber = "800-000-0000"
+                PhoneNumber = "800-000-0000",
+                ApplicationId = $"{Guid.NewGuid()}"
             };
 
             PasswordHasher<ApplicationUser> passwordHasher = new PasswordHasher<ApplicationUser>();

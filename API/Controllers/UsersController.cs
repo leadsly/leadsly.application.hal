@@ -51,13 +51,46 @@ namespace API.Controllers
         private readonly IEmailService _emailService;
         private readonly IConfiguration _emailServiceOptions;
         private readonly IHtmlTemplateGenerator _templateGenerator;
-        private readonly ILogger<UsersController> _logger;        
+        private readonly ILogger<UsersController> _logger;
+
+        [HttpGet]
+        [Route("{id}/account/security")]
+        public async Task<IActionResult> SecurityDetails()
+        {
+            _logger.LogTrace("Security details action executed.");
+
+            ApplicationUser user = await _userManager.GetUserAsync(User);
+
+            if(user == null)
+            {
+                // return bad request user not found
+            }
+
+            IList<UserLoginInfo> logins = await _userManager.GetLoginsAsync(user);
+
+            string recoveryCodeString = await _userManager.GetAuthenticationTokenAsync(user, ApiConstants.AspNetUserTokens.AspNetUserStore_LoginProvider, ApiConstants.AspNetUserTokens.Name);
+            UserRecoveryCodesViewModel recoveryCodes = new UserRecoveryCodesViewModel
+            {
+                Items = recoveryCodeString?.Split(';') ?? Array.Empty<string>()
+            };
+
+            AccountSecurityDetailsViewModel securityDetails = new AccountSecurityDetailsViewModel
+            {
+                ExternalLogins = logins.Select(l => l.ProviderDisplayName).ToList(),
+                HasAuthenticator = await _userManager.GetAuthenticatorKeyAsync(user) != null,
+                RecoveryCodes = recoveryCodes,
+                TwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user),
+                RecoveryCodesLeft = await _userManager.CountRecoveryCodesAsync(user)
+            };
+
+            return Ok(securityDetails);
+        }
 
         [HttpGet]
         [Route("{id}")]
         public async Task<IActionResult> Details()
         {
-            _logger.LogDebug("Details action executed.");
+            _logger.LogTrace("Details action executed.");
 
             ApplicationUser user = await _userManager.GetUserAsync(User);
 
@@ -68,29 +101,16 @@ namespace API.Controllers
 
             IList<UserLoginInfo> logins = await _userManager.GetLoginsAsync(user);
 
-            ProfileDetailsViewModel profileDetails = new ProfileDetailsViewModel
+            AccountDetailsViewModel profileDetails = new AccountDetailsViewModel
             {
                 Email = user.Email,
                 EmailConfirmed = user.EmailConfirmed,
                 ExternalLogins = logins.Select(l => l.ProviderDisplayName).ToList(),
-                TwoFactorClientRemembered = false,
+                TwoFactorClientRemembered = false,                
                 HasAuthenticator = await _userManager.GetAuthenticatorKeyAsync(user) != null,
                 TwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user),
                 RecoveryCodesLeft = await _userManager.CountRecoveryCodesAsync(user)
             };
-
-            if(profileDetails.HasAuthenticator && profileDetails.TwoFactorEnabled)
-            {
-                profileDetails.TwoFactorConfigurationStatus = TwoFactorConfigurationStatus.Enabled;
-            }
-            else if(profileDetails.HasAuthenticator && (profileDetails.TwoFactorEnabled == false))
-            {
-                profileDetails.TwoFactorConfigurationStatus = TwoFactorConfigurationStatus.Disabled;
-            }
-            else if(profileDetails.HasAuthenticator == false)
-            {
-                profileDetails.TwoFactorConfigurationStatus = TwoFactorConfigurationStatus.NotConfigured;
-            }
 
             return Ok(profileDetails);
         }
@@ -100,7 +120,7 @@ namespace API.Controllers
         [Route("email")]
         public async Task<IActionResult> EmailExists([FromQuery] string email)
         {
-            _logger.LogDebug("CheckIfEmailExists action executed. Looking for: {email}", email);
+            _logger.LogTrace("CheckIfEmailExists action executed. Looking for: {email}", email);
 
             ApplicationUser user = await _userManager.FindByEmailAsync(email);
 
@@ -110,9 +130,9 @@ namespace API.Controllers
         [HttpPut]
         [AllowAnonymous]
         [Route("password")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModelViewModel model)
         {
-            _logger.LogDebug("ResetPassword action executed.");
+            _logger.LogTrace("ResetPassword action executed.");
 
             ApplicationUser userToResetPassword = await _userManager.FindByEmailAsync(model.Email);
 
@@ -145,7 +165,7 @@ namespace API.Controllers
         {
             // TODO consider adding client id to all of the calls to allow for single backend api and multiple client apps
 
-            _logger.LogDebug("ForgotPassword action executed. Generating reset password link for {email}", email);
+            _logger.LogTrace("ForgotPassword action executed. Generating reset password link for {email}", email);
 
             ApplicationUser userToRecoverPassword = await _userManager.FindByEmailAsync(email);
 

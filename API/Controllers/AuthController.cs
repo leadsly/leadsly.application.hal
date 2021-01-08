@@ -64,10 +64,12 @@ namespace API.Controllers
         [Route("signin")]
         public async Task<IActionResult> SignIn([FromBody] SigninUserModel signin, CancellationToken ct = default)
         {
-            _logger.LogDebug("SignIn action executed.");
+            _logger.LogTrace("SignIn action executed.");
 
             if (string.IsNullOrEmpty(signin.Password))
             {
+                _logger.LogDebug("Request was some or all of the credentials.");
+
                 return Unauthorized_InvalidCredentials();
             }
 
@@ -75,6 +77,8 @@ namespace API.Controllers
 
             if (appUser == null)
             {
+                _logger.LogDebug("User not found.");
+
                 return Unauthorized_InvalidCredentials();
             }
 
@@ -119,7 +123,7 @@ namespace API.Controllers
         [Route("signup")]
         public async Task<IActionResult> SignUp([FromBody] SignupUserModel signupModel, CancellationToken ct = default)
         {
-            _logger.LogDebug("Signup action executed.");
+            _logger.LogTrace("Signup action executed.");
 
             if(string.Equals(signupModel.Password, signupModel.ConfirmPassword, StringComparison.OrdinalIgnoreCase) == false)
             {
@@ -131,7 +135,8 @@ namespace API.Controllers
             ApplicationUser newUser = new ApplicationUser
             {
                 Email = signupModel.Email,
-                UserName = signupModel.Email
+                UserName = signupModel.Email,
+                ApplicationId = $"{Guid.NewGuid()}"
             };
 
             if (ct.IsCancellationRequested)
@@ -167,7 +172,7 @@ namespace API.Controllers
         [Route("refresh-token")]
         public async Task<IActionResult> RefreshToken()
         {
-            _logger.LogDebug("RefreshToken action executed.");
+            _logger.LogTrace("RefreshToken action executed.");
 
             RenewAccessTokenResult result = new RenewAccessTokenResult();
 
@@ -189,7 +194,7 @@ namespace API.Controllers
         [Route("external-signin-google")]
         public async Task<IActionResult> ExternalSigninGoogle([FromBody] SocialUserModel externalUser)
         {
-            _logger.LogDebug("ExternalSigninGoogle action executed.");
+            _logger.LogTrace("ExternalSigninGoogle action executed.");
             ApplicationUser appUser = await _userManager.FindByEmailAsync(externalUser.Email);
 
             ApplicationAccessToken accessToken;
@@ -261,7 +266,7 @@ namespace API.Controllers
         [Route("external-signin-facebook")]
         public async Task<IActionResult> ExternalSigninFacebook([FromBody] SocialUserModel externalUser)
         {
-            _logger.LogDebug("ExternalSigninFacebook action executed.");
+            _logger.LogTrace("ExternalSigninFacebook action executed.");
 
             ApplicationAccessToken accessToken;
 

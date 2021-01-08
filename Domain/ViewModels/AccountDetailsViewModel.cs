@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace Domain.ViewModels
 {
     [DataContract]
-    public class ProfileDetailsViewModel
+    public class AccountDetailsViewModel
     {
         [DataMember(Name = "email", EmitDefaultValue = false)]
         public string Email { get; set; }
@@ -26,8 +26,5 @@ namespace Domain.ViewModels
 
         [DataMember(Name = "twoFactorEnabled", EmitDefaultValue = false)]
         public bool TwoFactorEnabled { get; set; }
-
-        [DataMember(Name = "twoFactorConfigurationStatus", EmitDefaultValue = false)]
-        public TwoFactorConfigurationStatus TwoFactorConfigurationStatus { get; set; }
     }
 }

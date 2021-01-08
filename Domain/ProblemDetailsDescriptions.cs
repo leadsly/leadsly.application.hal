@@ -22,6 +22,13 @@
         public const string ExternalJwtIsInvalid = "External provider jwt is invalid.";
         public const string RegistrationErrorDetail = "User registration error occured.";        
         public const string RegistrationDetail = "Missing or invalid registration data.";
+        public const string UserNotFound = "User could not be found.";
+        public const string TwoFactorAuthVerificationCode = "Two factor authentication code is invalid.";
+        public const string CannotDisable2faWhenItsNotEnabled = "Cannot disable 2fa as it's not currently enabled.";
+        public const string TwoFactorAuthenticationIsNotEnabled = "Two factor authentication is not enabled.";
+        public const string FailedToDisable2fa = "An error occured while disabling 2fa.";
+        public const string FailedToEnable2fa = "An error occured while enabling 2fa.";
+        public const string FailedToResetAuthenticatorKey = "An error occured while resetting 2fa authenticator key.";
         public const string FailedToSendEmail = "Failed to send email.";
     }
 }

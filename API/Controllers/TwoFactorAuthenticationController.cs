@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,35 +45,38 @@ namespace API.Controllers
 
         [HttpPost]        
         [Route("disable")]
-        public async Task<IActionResult> Disable2FA()
+        public async Task<IActionResult> Disable2fa()
         {
+            _logger.LogTrace("Disable2fa action executed.");
+
             ApplicationUser user = await _userManager.GetUserAsync(User);
 
             if(user == null)
             {
-                // bad request
+                _logger.LogDebug("User not found or does not exist.");
+
+                return BadRequest_UserNotFound();
             }
 
             bool isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
 
             if (isTwoFactorEnabled == false)
             {
-                // cannot disable 2FA as its not currently enabled           
-                return NoContent();
+                _logger.LogDebug("Two factor authentication is not setup, thus cannot be disabled.");
 
-                // return bad request
+                return BadRequest_CannotDisable2faWhenItsNotEnabled();                
             }
 
             IdentityResult result = await _userManager.SetTwoFactorEnabledAsync(user, false);
 
             if(result.Succeeded == false)
             {
-                // return false
-                return NoContent();
+                _logger.LogDebug("Disabling two factor authentication encountered a problem when executing 'SetTwoFactorEnabledAsync(user, false)'.");
+
+                return BadRequest_FailedToDisable2fa();
             }
 
             // return disable 2FA result
-
             return NoContent();
         }
 
@@ -80,37 +84,56 @@ namespace API.Controllers
         [Route("reset-authenticator")]
         public async Task<IActionResult> ResetAuthenticator()
         {
+            _logger.LogTrace("ResetAuthenticator action executed.");
+
             ApplicationUser user = await _userManager.GetUserAsync(User);
 
             if(user == null)
             {
+                _logger.LogDebug("User not found.");
 
+                return BadRequest_UserNotFound();
             }
 
-            await _userManager.SetTwoFactorEnabledAsync(user, false);
-            await _userManager.ResetAuthenticatorKeyAsync(user);            
+            IdentityResult disableTwoFactorAuthResult = await _userManager.SetTwoFactorEnabledAsync(user, false);
 
-            return Ok();
+            if(disableTwoFactorAuthResult.Succeeded == false)
+            {
+                _logger.LogDebug("Disabling two factor authentication encountered a problem when executing 'SetTwoFactorEnabledAsync(user, false)'.");
+
+                return BadRequest_FailedToDisable2fa();
+            }
+
+            IdentityResult resetAuthenticatorKeysResult = await _userManager.ResetAuthenticatorKeyAsync(user);            
+
+            if(resetAuthenticatorKeysResult.Succeeded == false)
+            {
+                _logger.LogDebug("Resetting two factor authenticator key encountered a problem when executing 'ResetAuthenticatorKeyAsync(user)'.");
+
+                return BadRequest_FailedToResetAuthenticatorKey();
+            }
+
+            return NoContent();
         }
 
         [HttpPost]
         [Route("generate-recovery-codes")]
         public async Task<IActionResult> GenerateRecoveryCodes()
         {
-            var user = await _userManager.GetUserAsync(User);
+            _logger.LogTrace("GenerateRecoveryCodes action executed.");
 
-            var isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
+            ApplicationUser user = await _userManager.GetUserAsync(User);
+
+            bool isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
 
             if (isTwoFactorEnabled == false)
             {
-
+                return BadRequest_TwoFactorAuthenticationIsNotEnabled();
             }
-
-            IEnumerable<string> newRecoveryCodes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
-
-            GenerateRecoveryCodesViewModel recoveryCodes = new GenerateRecoveryCodesViewModel
+                        
+            UserRecoveryCodesViewModel recoveryCodes = new UserRecoveryCodesViewModel
             {
-                Items = newRecoveryCodes.ToList()
+                Items = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10)
             };
 
             return Ok(recoveryCodes);
@@ -118,93 +141,107 @@ namespace API.Controllers
 
         [HttpPost]        
         [Route("verify-authenticator")]
-        public async Task<IActionResult> VerifyAuthenticator([FromBody] string verifyAuthenticator)
+        public async Task<IActionResult> VerifyAuthenticator([FromBody] string verifyAuthenticatorCode)
         {
+            _logger.LogTrace("VerifyAuthenticator action executed.");
+
             ApplicationUser user = await _userManager.GetUserAsync(User);
 
             if(user == null)
             {
+                _logger.LogDebug("User not found.");
 
+                return BadRequest_UserNotFound();
             }
 
-            string verificationCode = verifyAuthenticator.Replace(" ", string.Empty).Replace("-", string.Empty);
+            string verificationCode = verifyAuthenticatorCode.Replace(" ", string.Empty).Replace("-", string.Empty);
 
-            bool is2FaTokenValid = await _userManager.VerifyTwoFactorTokenAsync(user, _userManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
+            bool is2faTokenValid = await _userManager.VerifyTwoFactorTokenAsync(user, _userManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
 
-            if (is2FaTokenValid == false)
+            if (is2faTokenValid == false)
             {
+                _logger.LogDebug("Verification code was not valid.");
 
+                return BadRequest_VerificationCodeIsInvalid();
             }
 
             IdentityResult result = await _userManager.SetTwoFactorEnabledAsync(user, true);
 
             if(result.Succeeded == false)
             {
+                _logger.LogDebug("Enabling two factor authentication encountered a problem when executing 'SetTwoFactorEnabledAsync(user, true)'.");
 
-
+                return BadRequest_FailedToEnable2fa();
             }
 
             AuthenticatorSetupResultViewModel model = new AuthenticatorSetupResultViewModel
             {
-                Status = TwoFactorAuthenticationStatus.Succeeded
+                Status = TwoFactorAuthenticationStatus.Succeeded,
+                RecoveryCodes = new UserRecoveryCodesViewModel
+                {
+                    Items = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10)
+                }
             };
-
-            if (await _userManager.CountRecoveryCodesAsync(user) == 0)
-            {
-                // generate recovery codes
-                IEnumerable<string> recoveryCodes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
-
-                model.RecoveryCodes = recoveryCodes.ToList();
-                
-                return Ok(model);
-            }
 
             return Ok(model);
         }
 
-        [HttpGet]        
+        [HttpGet]
         [Route("setup-authenticator")]
         public async Task<IActionResult> SetupAuthenticator()
         {
-            var user = await _userManager.GetUserAsync(User);            
-            var authenticatorDetails = await GetAuthenticatorDetailsAsync(user);
+            _logger.LogTrace("SetupAuthenticator action executed.");
 
-            return new JsonResult(authenticatorDetails);
+            ApplicationUser user = await _userManager.GetUserAsync(User);
+            AuthenticatorSetupViewModel authenticatorSetupDetails = await GetAuthenticatorDetailsAsync(user);
+
+            return Ok(authenticatorSetupDetails);
         }
 
-        private async Task<object> GetAuthenticatorDetailsAsync(ApplicationUser user)
+        private async Task<AuthenticatorSetupViewModel> GetAuthenticatorDetailsAsync(ApplicationUser user)
         {
             // load the authenticator key and & QR code URI to display on the form
-            var unformattedKey = await _userManager.GetAuthenticatorKeyAsync(user);
+            string unformattedKey = await _userManager.GetAuthenticatorKeyAsync(user);
             if (string.IsNullOrEmpty(unformattedKey))
             {
                 await _userManager.ResetAuthenticatorKeyAsync(user);
                 unformattedKey = await _userManager.GetAuthenticatorKeyAsync(user);
             }
 
-            var email = await _userManager.GetEmailAsync(user);
+            string email = await _userManager.GetEmailAsync(user);
 
-            return new
+            return new AuthenticatorSetupViewModel
             {
-                sharedKey = FormatKey(unformattedKey),
+                SharedKey = FormatKey(unformattedKey),
                 AuthenticatorUri = GenerateQrCodeUri(email, unformattedKey)
             };
         }
 
         private string GenerateQrCodeUri(string email, string unformattedKey)
         {
-            const string AuthenticatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6";
+            _logger.LogTrace("Generating Qr code uri.");
+
+            string appDisplayName = _configuration.GetValue<string>("TwoFactorAuthDisplayAppName");
+
+            if (string.IsNullOrEmpty(appDisplayName))
+            {
+                _logger.LogError("Check appsettings.json file. 'TwoFactorAuthDisplayAppName' key value pair is not properly set.");
+
+                appDisplayName = "odiam-dot-net-api-starter";
+            }
 
             return string.Format(
-                AuthenticatorUriFormat,
-                _urlEncoder.Encode("odiam-dotnet-api-starter"),
+                ApiConstants.TwoFactorAuthentication.AuthenticatorUriFormat,
+                _urlEncoder.Encode(appDisplayName),
                 _urlEncoder.Encode(email),
                 unformattedKey);
         }
 
         private string FormatKey(string unformattedKey)
         {
-            var result = new StringBuilder();
+            _logger.LogTrace("Formatting two factor authentication setup key.");
+
+            StringBuilder result = new StringBuilder();
             int currentPosition = 0;
             while (currentPosition + 4 < unformattedKey.Length)
             {

@@ -4,9 +4,9 @@ using System.Runtime.Serialization;
 namespace Domain.ViewModels
 {
     [DataContract]
-    public class GenerateRecoveryCodesViewModel
+    public class UserRecoveryCodesViewModel
     {
         [DataMember(Name = "items", EmitDefaultValue = false)]
-        public IList<string> Items { get; set; }
+        public IEnumerable<string> Items { get; set; }
     }
 }

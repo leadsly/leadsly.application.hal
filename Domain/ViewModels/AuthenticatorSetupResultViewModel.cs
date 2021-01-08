@@ -10,6 +10,6 @@ namespace Domain.ViewModels
         public TwoFactorAuthenticationStatus Status {get; set;}
 
         [DataMember(Name = "recoveryCodes", EmitDefaultValue = false)]
-        public List<string> RecoveryCodes { get; set; }
+        public UserRecoveryCodesViewModel RecoveryCodes { get; set; }
     }
 }

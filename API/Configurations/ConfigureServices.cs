@@ -91,18 +91,21 @@ namespace API.Configurations
             .AddUserManager<OdmUserManager>()
             .AddEntityFrameworkStores<DatabaseContext>(); // Tell identity which EF DbContext to use;
 
+            // email token provider settings
             services.Configure<DataProtectionTokenProviderOptions>(options =>
             {
                 options.Name = TokenOptions.DefaultProvider;
                 options.TokenLifespan = TimeSpan.FromDays(1);
             });
 
+            // refresh token provider settings
             services.Configure<DataProtectionTokenProviderOptions>(options =>
             {
                 options.Name = ApiConstants.DataTokenProviders.RefreshTokenProvider.Name;
                 options.TokenLifespan = TimeSpan.FromDays(7);
             });
 
+            // facebook token provider settings
             services.Configure<FacebookDataProtectionTokenProviderOptions>(options =>
             {
                 options.Name = ApiConstants.DataTokenProviders.ExternalLoginProviders.Facebook;
@@ -111,6 +114,7 @@ namespace API.Configurations
                 options.ClientSecret = configuration[ApiConstants.VaultKeys.FaceBookClientSecret];
             });
 
+            // google token provider settings
             services.Configure<GoogleDataProtectionTokenProviderOptions>(options =>
             {
                 options.Name = ApiConstants.DataTokenProviders.ExternalLoginProviders.Google;

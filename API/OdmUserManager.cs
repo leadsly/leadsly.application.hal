@@ -33,59 +33,68 @@ namespace API
 
         private readonly IConfiguration _configuration;
 
-        //public override string GenerateNewAuthenticatorKey()
-        //{
-        //    string originalAuthenticatorKey = base.GenerateNewAuthenticatorKey();
+        public override string GenerateNewAuthenticatorKey()
+        {
+            string originalAuthenticatorKey = base.GenerateNewAuthenticatorKey();
 
-        //    string encryptedKey = EncryptProvider.AESEncrypt(originalAuthenticatorKey, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey]);
+            string encryptedKey = EncryptProvider.AESEncrypt(originalAuthenticatorKey, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey]);
 
-        //    return encryptedKey;
-        //}
+            return encryptedKey;
+        }
 
-        //public override async Task<string> GetAuthenticatorKeyAsync(ApplicationUser user)
-        //{
-        //    string databaseKey = await base.GetAuthenticatorKeyAsync(user);
+        public override async Task<string> GetAuthenticationTokenAsync(ApplicationUser user, string loginProvider, string tokenName)
+        {
+            string encryptedToken = await base.GetAuthenticationTokenAsync(user, loginProvider, tokenName);            
 
-        //    if (databaseKey == null)
-        //    {
-        //        return null;
-        //    }
+            string decryptedToken = String.Join(';', encryptedToken.Split(';').Select(encryptedCode => EncryptProvider.AESDecrypt(encryptedCode, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey])));
 
-        //    string originalAuthenticatorKey = EncryptProvider.AESDecrypt(databaseKey, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey]);                
+            return decryptedToken;
+        }
 
-        //    return originalAuthenticatorKey;
-        //}
+        public override async Task<string> GetAuthenticatorKeyAsync(ApplicationUser user)
+        {
+            string databaseKey = await base.GetAuthenticatorKeyAsync(user);
 
-        //protected override string CreateTwoFactorRecoveryCode()
-        //{
-        //    string originalRecoveryCode = base.CreateTwoFactorRecoveryCode();
+            if (databaseKey == null)
+            {
+                return null;
+            }
 
-        //    string encryptedRecoveryCode = EncryptProvider.AESEncrypt(originalRecoveryCode, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey]);                
+            string originalAuthenticatorKey = EncryptProvider.AESDecrypt(databaseKey, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey]);
 
-        //    return encryptedRecoveryCode;
-        //}
+            return originalAuthenticatorKey;
+        }
 
-        //public override async Task<IEnumerable<string>> GenerateNewTwoFactorRecoveryCodesAsync(ApplicationUser user, int number)
-        //{
-        //    IEnumerable<string> tokens = await base.GenerateNewTwoFactorRecoveryCodesAsync(user, number);
+        protected override string CreateTwoFactorRecoveryCode()
+        {
+            string originalRecoveryCode = base.CreateTwoFactorRecoveryCode();
 
-        //    string[] generatedTokens = tokens as string[] ?? tokens.ToArray();
-        //    if (!generatedTokens.Any())
-        //    {
-        //        return generatedTokens;
-        //    }
+            string encryptedRecoveryCode = EncryptProvider.AESEncrypt(originalRecoveryCode, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey]);
 
-        //    return generatedTokens.Select(token => EncryptProvider.AESDecrypt(token, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey]));
-        //}
+            return encryptedRecoveryCode;
+        }
 
-        //public override Task<IdentityResult> RedeemTwoFactorRecoveryCodeAsync(ApplicationUser user, string code)
-        //{
-        //    if (!string.IsNullOrEmpty(code))
-        //    {
-        //        code = EncryptProvider.AESEncrypt(code, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey]);
-        //    }
+        public override async Task<IEnumerable<string>> GenerateNewTwoFactorRecoveryCodesAsync(ApplicationUser user, int number)
+        {
+            IEnumerable<string> tokens = await base.GenerateNewTwoFactorRecoveryCodesAsync(user, number);
 
-        //    return base.RedeemTwoFactorRecoveryCodeAsync(user, code);
-        //}
+            string[] generatedTokens = tokens as string[] ?? tokens.ToArray();
+            if (!generatedTokens.Any())
+            {
+                return generatedTokens;
+            }
+
+            return generatedTokens.Select(token => EncryptProvider.AESDecrypt(token, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey]));
+        }
+
+        public override async Task<IdentityResult> RedeemTwoFactorRecoveryCodeAsync(ApplicationUser user, string code)
+        {
+            if (!string.IsNullOrEmpty(code))
+            {
+                code = EncryptProvider.AESEncrypt(code, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey]);
+            }           
+
+            return await base.RedeemTwoFactorRecoveryCodeAsync(user, code);
+        }
     }
 }

@@ -2,9 +2,20 @@
 {
     public class ApiConstants
     {
+        public class TwoFactorAuthentication
+        {
+            public const string AuthenticatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6";
+        }
+
         public class TokenOptions
         {
             public const string ExpiredToken = "token-expired";
+        }
+
+        public class AspNetUserTokens
+        {
+            public const string AspNetUserStore_LoginProvider = "[AspNetUserStore]";
+            public const string Name = "RecoveryCodes";            
         }
 
         public class DataTokenProviders

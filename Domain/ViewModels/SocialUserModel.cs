@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace Domain.ViewModels
 {
     [DataContract]
-    public class SocialUserModel : IApplicationUser
+    public class SocialUserModel
     {
         [DataMember(Name = "id", EmitDefaultValue = false)]
         public string Id { get; set; }
