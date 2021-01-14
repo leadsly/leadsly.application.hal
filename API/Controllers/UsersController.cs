@@ -64,6 +64,7 @@ namespace API.Controllers
             if(user == null)
             {
                 // return bad request user not found
+                return BadRequest_UserNotFound();
             }
 
             IList<UserLoginInfo> logins = await _userManager.GetLoginsAsync(user);
@@ -97,6 +98,7 @@ namespace API.Controllers
             if (user == null)
             {
                 // return Bad request
+                return BadRequest_UserNotFound();
             }
 
             IList<UserLoginInfo> logins = await _userManager.GetLoginsAsync(user);
