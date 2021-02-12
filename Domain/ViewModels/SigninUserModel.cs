@@ -10,8 +10,5 @@ namespace Domain.ViewModels
 
         [DataMember(Name = "password", EmitDefaultValue = false)]
         public string Password  { get; set; }
-
-        [DataMember(Name = "rememberMe", EmitDefaultValue = true)]
-        public bool RememberMe { get; set; }
     }
 }

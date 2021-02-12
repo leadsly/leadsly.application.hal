@@ -44,9 +44,14 @@ namespace API
 
         public override async Task<string> GetAuthenticationTokenAsync(ApplicationUser user, string loginProvider, string tokenName)
         {
-            string encryptedToken = await base.GetAuthenticationTokenAsync(user, loginProvider, tokenName);            
+            string encryptedToken = await base.GetAuthenticationTokenAsync(user, loginProvider, tokenName);
 
-            string decryptedToken = String.Join(';', encryptedToken.Split(';').Select(encryptedCode => EncryptProvider.AESDecrypt(encryptedCode, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey])));
+            string decryptedToken = encryptedToken;
+
+            if(loginProvider == ApiConstants.AspNetUserTokens.AspNetUserStore_LoginProvider && tokenName == ApiConstants.AspNetUserTokens.Name)
+            {
+                decryptedToken = String.Join(';', encryptedToken.Split(';').Select(encryptedCode => EncryptProvider.AESDecrypt(encryptedCode, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey])));
+            }               
 
             return decryptedToken;
         }

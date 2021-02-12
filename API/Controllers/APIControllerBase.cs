@@ -38,7 +38,7 @@ namespace API.Controllers
                 Title = ReasonPhrases.GetReasonPhrase(400),
                 Detail = ProblemDetailsDescriptions.RegistrationDetail,
                 Instance = this.HttpContext.Request.Path.Value
-            }); ;
+            });
         }
 
         /// <summary>

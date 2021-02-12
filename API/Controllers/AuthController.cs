@@ -62,9 +62,9 @@ namespace API.Controllers
         [HttpPost]
         [AllowAnonymous]
         [Route("signin")]
-        public async Task<IActionResult> SignIn([FromBody] SigninUserModel signin, CancellationToken ct = default)
+        public async Task<IActionResult> Signin([FromBody] SigninUserModel signin, CancellationToken ct = default)
         {
-            _logger.LogTrace("SignIn action executed.");
+            _logger.LogTrace("Signin action executed.");
 
             if (string.IsNullOrEmpty(signin.Password))
             {
@@ -108,12 +108,9 @@ namespace API.Controllers
 
             await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe);
 
-            if(signin.RememberMe == true)
-            {
-                string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.Purpose);
+            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.Purpose);
 
-                await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe, refreshToken);                
-            }            
+            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe, refreshToken);                                        
 
             return Ok(accessToken);
         }
@@ -121,7 +118,7 @@ namespace API.Controllers
         [HttpPost]
         [AllowAnonymous]
         [Route("signup")]
-        public async Task<IActionResult> SignUp([FromBody] SignupUserModel signupModel, CancellationToken ct = default)
+        public async Task<IActionResult> Signup([FromBody] SignupUserModel signupModel, CancellationToken ct = default)
         {
             _logger.LogTrace("Signup action executed.");
 
@@ -178,12 +175,20 @@ namespace API.Controllers
 
             string expiredAccessToken = HttpContext.GetAccessToken();
 
-            if(expiredAccessToken != string.Empty)
+            try
             {
-                // request has token but it failed authentication. Attempt to renew the token
-                result = await _tokenService.TryRenewAccessToken(expiredAccessToken, _userManager, _roleManager);
-                bool succeeded = result.Succeeded;
-                _logger.LogDebug("Attempted to rewnew jwt. Result: {succeeded}", succeeded);
+                if (expiredAccessToken != string.Empty)
+                {
+                    // request has token but it failed authentication. Attempt to renew the token
+                    result = await _tokenService.TryRenewAccessToken(expiredAccessToken, _userManager, _roleManager);
+                    bool succeeded = result.Succeeded;
+                    _logger.LogDebug("Attempted to rewnew jwt. Result: {succeeded}.", succeeded);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Silently fail
+                _logger.LogError(ex, "Failed to rewnew jwt.");
             }
 
             return Ok(result);
@@ -229,7 +234,8 @@ namespace API.Controllers
                     UserName = externalUser.Email,
                     ExternalProvider = externalUser.Provider,
                     PhotoUrl = externalUser.PhotoUrl,
-                    ExternalProviderUserId = externalUser.Id
+                    ExternalProviderUserId = externalUser.Id,
+                    ApplicationId = $"{Guid.NewGuid()}"
                 };
 
                 PasswordHasher<ApplicationUser> passwordHasher = new PasswordHasher<ApplicationUser>();
@@ -257,6 +263,13 @@ namespace API.Controllers
 
                 accessToken = await _tokenService.GenerateApplicationTokenAsync(signedupExternalUser.Id, claimsIdentity);
             }
+
+            // remove old refresh token if any where present
+            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe);
+            // generate refresh token
+            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.Purpose);
+
+            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe, refreshToken);
 
             return Ok(accessToken);
         }
@@ -326,7 +339,8 @@ namespace API.Controllers
                         UserName = externalUser.Email,
                         ExternalProvider = externalUser?.Provider,
                         PhotoUrl = externalUser?.PhotoUrl,
-                        ExternalProviderUserId = externalUser?.Id
+                        ExternalProviderUserId = externalUser?.Id,
+                        ApplicationId = $"{Guid.NewGuid()}"
                     };
 
                     PasswordHasher<ApplicationUser> passwordHasher = new PasswordHasher<ApplicationUser>();
@@ -368,7 +382,36 @@ namespace API.Controllers
                 }
             }
 
+            // remove old refresh token if any where present
+            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe);
+            // generate refresh token
+            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.Purpose);
+
+            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe, refreshToken);
+
             return Ok(accessToken);
+        }
+
+        [HttpDelete]
+        [AllowAnonymous]
+        [Route("signout")]
+        public async Task<IActionResult> Signout(CancellationToken ct = default)
+        {
+            _logger.LogTrace("Signout action executed.");
+
+            Claim userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if(userIdClaim != null)
+            {
+                ApplicationUser appUser = await _userManager.FindByIdAsync(userIdClaim.Value);
+
+                if(appUser != null)
+                {                    
+                    await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe);
+                }
+            }            
+
+            return Ok();
         }
 
     }

@@ -58,7 +58,7 @@ namespace API.Authentication
                 ValidIssuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)],
 
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this._configuration[nameof(ApiConstants.VaultKeys.JwtSecret)])),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this._configuration[ApiConstants.VaultKeys.JwtSecret])),
                 ValidateLifetime = false,
 
                 RequireSignedTokens = true,
