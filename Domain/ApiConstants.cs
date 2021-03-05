@@ -12,19 +12,19 @@
             public const string ExpiredToken = "token-expired";
         }
 
-        public class AspNetUserTokens
-        {
-            public const string AspNetUserStore_LoginProvider = "[AspNetUserStore]";
-            public const string Name = "RecoveryCodes";            
-        }
-
         public class DataTokenProviders
         {
-            public class RefreshTokenProvider
+            public class AspNetUserProvider
             {
-                public const string Name = "refresh-token-provider";
-                public const string Purpose = "remember-me";
-                public const string RememberMe = "refresh-token";
+                public const string ProviderName = "[AspNetUserStore]";
+                public const string TokenName = "RecoveryCodes";
+            }
+
+            public class StaySignedInProvider
+            {
+                public const string ProviderName = "[UserSession]";
+                public const string Purpose = "Keep user signed in.";
+                public const string TokenName = "StaySignedIn";
             }
 
             public class ExternalLoginProviders

@@ -15,10 +15,6 @@ using System.Threading.Tasks;
 using Domain;
 using System.Text.Encodings.Web;
 using API.Services;
-using MimeKit;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Auth;
-
 namespace API.Controllers
 {
     [ApiController]
@@ -29,8 +25,7 @@ namespace API.Controllers
             IAccessTokenService tokenService,
             IClaimsIdentityService claimsIdentityService,
             IConfiguration configuration,
-            UserManager<ApplicationUser> userManager,            
-            RoleManager<IdentityRole> roleManager,
+            OdmUserManager userManager,            
             UrlEncoder urlEncoder,
             IEmailService emailService,
             IHtmlTemplateGenerator templateGenerator,
@@ -40,7 +35,6 @@ namespace API.Controllers
             _claimsIdentityService = claimsIdentityService;            
             _userManager = userManager;
             _configuration = configuration;
-            _roleManager = roleManager;
             _urlEncoder = urlEncoder;
             _emailService = emailService;
             _templateGenerator = templateGenerator;
@@ -52,8 +46,7 @@ namespace API.Controllers
         private readonly IConfiguration _configuration;
         private readonly UrlEncoder _urlEncoder;
         private readonly IClaimsIdentityService _claimsIdentityService;        
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly OdmUserManager _userManager;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _emailServiceOptions;
         private readonly IHtmlTemplateGenerator _templateGenerator;
@@ -102,15 +95,15 @@ namespace API.Controllers
             // if user successfully logged in reset access failed count back to zero.
             await _userManager.ResetAccessFailedCountAsync(appUser);
 
-            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser, _userManager, _roleManager);
+            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
 
             ApplicationAccessToken accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
 
-            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe);
+            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
 
-            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.Purpose);
+            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose);
 
-            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe, refreshToken);                                        
+            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName, refreshToken);                                        
 
             return Ok(accessToken);
         }
@@ -157,9 +150,13 @@ namespace API.Controllers
                 return BadRequest_UserRegistrationError();
             }
 
-            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(signedupUser, _userManager, _roleManager);
+            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(signedupUser);
 
             ApplicationAccessToken accessToken = await _tokenService.GenerateApplicationTokenAsync(signedupUser.Id, claimsIdentity);
+
+            string refreshToken = await _userManager.GenerateUserTokenAsync(newUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose);
+
+            await _userManager.SetAuthenticationTokenAsync(newUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName, refreshToken);
 
             return Ok(accessToken);
         }        
@@ -180,7 +177,7 @@ namespace API.Controllers
                 if (expiredAccessToken != string.Empty)
                 {
                     // request has token but it failed authentication. Attempt to renew the token
-                    result = await _tokenService.TryRenewAccessToken(expiredAccessToken, _userManager, _roleManager);
+                    result = await _tokenService.TryRenewAccessToken(expiredAccessToken);
                     bool succeeded = result.Succeeded;
                     _logger.LogDebug("Attempted to rewnew jwt. Result: {succeeded}.", succeeded);
                 }
@@ -211,7 +208,7 @@ namespace API.Controllers
 
                 if (result == true)
                 {
-                    ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser, _userManager, _roleManager);
+                    ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
 
                     accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
                 }
@@ -259,17 +256,17 @@ namespace API.Controllers
                     return BadRequest_UserRegistrationError();
                 }
 
-                ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(signedupExternalUser, _userManager, _roleManager);
+                ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(signedupExternalUser);
 
                 accessToken = await _tokenService.GenerateApplicationTokenAsync(signedupExternalUser.Id, claimsIdentity);
             }
 
             // remove old refresh token if any where present
-            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe);
+            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
             // generate refresh token
-            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.Purpose);
+            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose);
 
-            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe, refreshToken);
+            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName, refreshToken);
 
             return Ok(accessToken);
         }
@@ -306,7 +303,7 @@ namespace API.Controllers
 
                     _logger.LogDebug("Was Facebook auth token successfully set: {setSucceeded}.", setSucceeded);
 
-                    ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser, _userManager, _roleManager);
+                    ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
 
                     accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
                 }
@@ -370,7 +367,7 @@ namespace API.Controllers
 
                     _logger.LogDebug("Was Facebook auth token successfully set: {setSucceeded}.", setSucceeded);
 
-                    ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(signedupExternalUser, _userManager, _roleManager);
+                    ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(signedupExternalUser);
 
                     accessToken = await _tokenService.GenerateApplicationTokenAsync(signedupExternalUser.Id, claimsIdentity);
                 }
@@ -383,11 +380,11 @@ namespace API.Controllers
             }
 
             // remove old refresh token if any where present
-            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe);
+            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
             // generate refresh token
-            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.Purpose);
+            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose);
 
-            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe, refreshToken);
+            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName, refreshToken);
 
             return Ok(accessToken);
         }
@@ -407,7 +404,7 @@ namespace API.Controllers
 
                 if(appUser != null)
                 {                    
-                    await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe);
+                    await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
                 }
             }            
 

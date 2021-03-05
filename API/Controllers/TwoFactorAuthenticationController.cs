@@ -1,15 +1,10 @@
 ﻿using Domain;
 using Domain.Models;
 using Domain.ViewModels;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
@@ -23,21 +18,18 @@ namespace API.Controllers
         public TwoFactorAuthenticationController(IConfiguration configuration,
             OdmUserManager userManager,            
             IHtmlTemplateGenerator templateGenerator,
-            SignInManager<ApplicationUser> signinManager,
             UrlEncoder urlEncoder,
             ILogger<TwoFactorAuthenticationController> logger)
         {
             _userManager = userManager;
             _configuration = configuration;            
             _templateGenerator = templateGenerator;
-            _urlEncoder = urlEncoder;            
-            _signinManager = signinManager;
+            _urlEncoder = urlEncoder;                        
             _logger = logger;
         }
 
         private readonly IConfiguration _configuration;
-        private readonly OdmUserManager _userManager;
-        private readonly SignInManager<ApplicationUser> _signinManager;
+        private readonly OdmUserManager _userManager;        
         private readonly UrlEncoder _urlEncoder;        
         private readonly IConfiguration _emailServiceOptions;
         private readonly IHtmlTemplateGenerator _templateGenerator;
@@ -49,16 +41,16 @@ namespace API.Controllers
         {
             _logger.LogTrace("Disable2fa action executed.");
 
-            ApplicationUser user = await _userManager.GetUserAsync(User);
+            ApplicationUser appUser = await _userManager.GetUserAsync(User);
 
-            if(user == null)
+            if(appUser == null)
             {
                 _logger.LogDebug("User not found or does not exist.");
 
                 return BadRequest_UserNotFound();
             }
 
-            bool isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
+            bool isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(appUser);
 
             if (isTwoFactorEnabled == false)
             {
@@ -67,14 +59,22 @@ namespace API.Controllers
                 return BadRequest_CannotDisable2faWhenItsNotEnabled();                
             }
 
-            IdentityResult result = await _userManager.SetTwoFactorEnabledAsync(user, false);
+            // this operation changes user's security time stamp, custom token will have to be re-issued.
+            IdentityResult result = await _userManager.SetTwoFactorEnabledAsync(appUser, false);
 
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 _logger.LogDebug("Disabling two factor authentication encountered a problem when executing 'SetTwoFactorEnabledAsync(user, false)'.");
 
                 return BadRequest_FailedToDisable2fa();
             }
+
+            // reset user stay signed in token, because once we disable two factor auth, user time stamps will not match
+            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
+
+            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose);
+
+            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName, refreshToken);
 
             // return disable 2FA result
             return NoContent();
@@ -86,16 +86,17 @@ namespace API.Controllers
         {
             _logger.LogTrace("ResetAuthenticator action executed.");
 
-            ApplicationUser user = await _userManager.GetUserAsync(User);
+            ApplicationUser appUser = await _userManager.GetUserAsync(User);
 
-            if(user == null)
+            if(appUser == null)
             {
                 _logger.LogDebug("User not found.");
 
                 return BadRequest_UserNotFound();
             }
 
-            IdentityResult disableTwoFactorAuthResult = await _userManager.SetTwoFactorEnabledAsync(user, false);
+            // this operation changes user's security time stamp, custom token will have to be re-issued.
+            IdentityResult disableTwoFactorAuthResult = await _userManager.SetTwoFactorEnabledAsync(appUser, false);
 
             if(disableTwoFactorAuthResult.Succeeded == false)
             {
@@ -104,7 +105,7 @@ namespace API.Controllers
                 return BadRequest_FailedToDisable2fa();
             }
 
-            IdentityResult resetAuthenticatorKeysResult = await _userManager.ResetAuthenticatorKeyAsync(user);            
+            IdentityResult resetAuthenticatorKeysResult = await _userManager.ResetAuthenticatorKeyAsync(appUser);            
 
             if(resetAuthenticatorKeysResult.Succeeded == false)
             {
@@ -112,6 +113,13 @@ namespace API.Controllers
 
                 return BadRequest_FailedToResetAuthenticatorKey();
             }
+
+            // reset user stay signed in token, because once we disable two factor auth, user time stamps will not match
+            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
+
+            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose);
+
+            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName, refreshToken);
 
             return NoContent();
         }
@@ -145,9 +153,9 @@ namespace API.Controllers
         {
             _logger.LogTrace("VerifyAuthenticator action executed.");
 
-            ApplicationUser user = await _userManager.GetUserAsync(User);
+            ApplicationUser appUser = await _userManager.GetUserAsync(User);
 
-            if(user == null)
+            if(appUser == null)
             {
                 _logger.LogDebug("User not found.");
 
@@ -156,7 +164,7 @@ namespace API.Controllers
 
             string verificationCode = verifyAuthenticatorCode.Replace(" ", string.Empty).Replace("-", string.Empty);
 
-            bool is2faTokenValid = await _userManager.VerifyTwoFactorTokenAsync(user, _userManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
+            bool is2faTokenValid = await _userManager.VerifyTwoFactorTokenAsync(appUser, _userManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
 
             if (is2faTokenValid == false)
             {
@@ -165,7 +173,8 @@ namespace API.Controllers
                 return BadRequest_VerificationCodeIsInvalid();
             }
 
-            IdentityResult result = await _userManager.SetTwoFactorEnabledAsync(user, true);
+            // this operation changes user's security time stamp, custom token will have to be re-issued.
+            IdentityResult result = await _userManager.SetTwoFactorEnabledAsync(appUser, true);
 
             if(result.Succeeded == false)
             {
@@ -179,9 +188,16 @@ namespace API.Controllers
                 Status = TwoFactorAuthenticationStatus.Succeeded,
                 RecoveryCodes = new UserRecoveryCodesViewModel
                 {
-                    Items = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10)
+                    Items = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(appUser, 10)
                 }
             };
+
+            // reset user stay signed in token, because once we disable two factor auth, user time stamps will not match
+            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
+
+            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose);
+
+            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName, refreshToken);
 
             return Ok(model);
         }

@@ -55,12 +55,20 @@ namespace API.Configurations
             services.AddDbContext<DatabaseContext>(options =>
             {                
                 options.UseSqlServer(defaultConnection);
+                options.EnableSensitiveDataLogging();
             }, ServiceLifetime.Scoped);
             
             services.AddSingleton(new DbInfo(defaultConnection));
 
             return services;
         }
+
+        //public static IdentityBuilder AddStaySignedInLoginTokenProvider(this IdentityBuilder builder)
+        //{
+        //    var userType = builder.UserType;
+        //    var provider = typeof(StaySignedInDataProtectorTokenProvider<>).MakeGenericType(userType);
+        //    return builder.AddTokenProvider(ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, provider);
+        //}
 
         public static IServiceCollection AddIdentityConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
@@ -82,7 +90,7 @@ namespace API.Configurations
                 options.User.RequireUniqueEmail = true;                
             })
             .AddDefaultTokenProviders()
-            .AddTokenProvider<DataProtectorTokenProvider<ApplicationUser>>(ApiConstants.DataTokenProviders.RefreshTokenProvider.Name)
+            .AddTokenProvider<StaySignedInDataProtectorTokenProvider<ApplicationUser>>(ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName)            
             .AddTokenProvider<FacebookDataProtectorTokenProvider<ApplicationUser>>(ApiConstants.DataTokenProviders.ExternalLoginProviders.Facebook)
             .AddTokenProvider<GoogleDataProtectorTokenProvider<ApplicationUser>>(ApiConstants.DataTokenProviders.ExternalLoginProviders.Google)
             .AddRoles<IdentityRole>()            
@@ -98,10 +106,10 @@ namespace API.Configurations
                 options.TokenLifespan = TimeSpan.FromDays(1);
             });
 
-            // refresh token provider settings
-            services.Configure<DataProtectionTokenProviderOptions>(options =>
+            // stay signed in provider settings
+            services.Configure<StaySignedInDataProtectionTokenProviderOptions>(options =>
             {
-                options.Name = ApiConstants.DataTokenProviders.RefreshTokenProvider.Name;
+                options.Name = ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName;
                 options.TokenLifespan = TimeSpan.FromDays(7);
             });
 

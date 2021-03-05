@@ -15,14 +15,14 @@ namespace DataCore.DatabaseInitializer
     {
         public async static Task Populate(IServiceProvider serviceProvider, ILogger<DatabaseInitializer> logger)
         {
-            UserManager<ApplicationUser> userManager = serviceProvider.GetService<UserManager<ApplicationUser>>();
+            OdmUserManager userManager = serviceProvider.GetService<OdmUserManager>();
             RoleManager<IdentityRole> roleManager = serviceProvider.GetService<RoleManager<IdentityRole>>();
             IConfiguration configuration = serviceProvider.GetService<IConfiguration>();
 
             await Seed(userManager, roleManager, configuration, logger);
         }
 
-        private async static Task Seed(UserManager<ApplicationUser> userManager, 
+        private async static Task Seed(OdmUserManager userManager, 
                                        RoleManager<IdentityRole> roleManager, 
                                        IConfiguration configuration, 
                                        ILogger<DatabaseInitializer> logger)

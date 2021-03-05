@@ -69,10 +69,10 @@ namespace API.Controllers
 
             IList<UserLoginInfo> logins = await _userManager.GetLoginsAsync(user);
 
-            string recoveryCodeString = await _userManager.GetAuthenticationTokenAsync(user, ApiConstants.AspNetUserTokens.AspNetUserStore_LoginProvider, ApiConstants.AspNetUserTokens.Name);
+            string recoveryCodeString = await _userManager.GetAuthenticationTokenAsync(user, ApiConstants.DataTokenProviders.AspNetUserProvider.ProviderName, ApiConstants.DataTokenProviders.AspNetUserProvider.TokenName);
             UserRecoveryCodesViewModel recoveryCodes = new UserRecoveryCodesViewModel
             {
-                Items = recoveryCodeString?.Split(';') ?? Array.Empty<string>()
+                 Items = recoveryCodeString?.Split(';') ?? Array.Empty<string>()
             };
 
             AccountSecurityDetailsViewModel securityDetails = new AccountSecurityDetailsViewModel

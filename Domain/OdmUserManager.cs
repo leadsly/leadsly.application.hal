@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace API
+namespace Domain
 {
     public class OdmUserManager : UserManager<ApplicationUser>
     {
@@ -48,9 +48,12 @@ namespace API
 
             string decryptedToken = encryptedToken;
 
-            if(loginProvider == ApiConstants.AspNetUserTokens.AspNetUserStore_LoginProvider && tokenName == ApiConstants.AspNetUserTokens.Name)
+            if(loginProvider == ApiConstants.DataTokenProviders.AspNetUserProvider.ProviderName && tokenName == ApiConstants.DataTokenProviders.AspNetUserProvider.TokenName)
             {
-                decryptedToken = String.Join(';', encryptedToken.Split(';').Select(encryptedCode => EncryptProvider.AESDecrypt(encryptedCode, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey])));
+                if(encryptedToken != null)
+                {
+                    decryptedToken = String.Join(';', encryptedToken.Split(';').Select(encryptedCode => EncryptProvider.AESDecrypt(encryptedCode, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey])));
+                }                
             }               
 
             return decryptedToken;

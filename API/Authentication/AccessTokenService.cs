@@ -18,18 +18,22 @@ namespace API.Authentication
 {
     public class AccessTokenService : IAccessTokenService
     {
-        public AccessTokenService(IConfiguration configuration, IJwtFactory jwtFactory, IOptions<JwtIssuerOptions> jwtOptions, IClaimsIdentityService claimsIdentityService)
+        public AccessTokenService(IConfiguration configuration, IJwtFactory jwtFactory, IOptions<JwtIssuerOptions> jwtOptions, IClaimsIdentityService claimsIdentityService, OdmUserManager userManager, RoleManager<IdentityRole> roleManager)
         {
             _configuration = configuration;
             _jwtFactory = jwtFactory;
             _jwtOptions = jwtOptions.Value;
             _claimsIdentityService = claimsIdentityService;
+            _userManager = userManager;
+            _roleManager = roleManager;
         }
 
         private readonly IConfiguration _configuration;
         private readonly IJwtFactory _jwtFactory;
         private readonly JwtIssuerOptions _jwtOptions;
         private readonly IClaimsIdentityService _claimsIdentityService;
+        private readonly OdmUserManager _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
         private IJsonSerializer Serializer => new JsonNetSerializer();
         private IDateTimeProvider Provider => new UtcDateTimeProvider();
@@ -79,7 +83,7 @@ namespace API.Authentication
             return principal;
         }
 
-        public async Task<RenewAccessTokenResult> TryRenewAccessToken(string expiredAccessToken, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public async Task<RenewAccessTokenResult> TryRenewAccessToken(string expiredAccessToken)
         {
             RenewAccessTokenResult result = new RenewAccessTokenResult();
 
@@ -92,29 +96,29 @@ namespace API.Authentication
                 return result;
             }
 
-            ApplicationUser appUser = await userManager.FindByIdAsync(userId.Value);
+            ApplicationUser appUser = await _userManager.FindByIdAsync(userId.Value);
 
             if (appUser == null)
             {
                 return result;
             }
 
-            string refreshToken = await userManager.GetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe);
+            string refreshToken = await _userManager.GetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
 
-            bool isValid = await userManager.VerifyUserTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.Purpose, refreshToken);
+            bool isValid = await _userManager.VerifyUserTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose, refreshToken);
 
             if (isValid == false)
             {
                 return result;
             }
 
-            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser, userManager, roleManager);
+            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
 
-            await userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe);
+            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
 
-            string newRefreshToken = await userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.Purpose);
+            string newRefreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose);
 
-            IdentityResult settingNewTokenResult = await userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.RefreshTokenProvider.Name, ApiConstants.DataTokenProviders.RefreshTokenProvider.RememberMe, newRefreshToken);
+            IdentityResult settingNewTokenResult = await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName, newRefreshToken);
 
             if(settingNewTokenResult.Succeeded == false)
             {
