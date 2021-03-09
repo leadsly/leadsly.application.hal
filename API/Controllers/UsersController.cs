@@ -59,32 +59,74 @@ namespace API.Controllers
         {
             _logger.LogTrace("Security details action executed.");
 
-            ApplicationUser user = await _userManager.GetUserAsync(User);
+            ApplicationUser appUser = await _userManager.GetUserAsync(User);
 
-            if(user == null)
+            if (appUser == null)
             {
                 // return bad request user not found
                 return BadRequest_UserNotFound();
             }
 
-            IList<UserLoginInfo> logins = await _userManager.GetLoginsAsync(user);
+            IList<UserLoginInfo> logins = await _userManager.GetLoginsAsync(appUser);
 
-            string recoveryCodeString = await _userManager.GetAuthenticationTokenAsync(user, ApiConstants.DataTokenProviders.AspNetUserProvider.ProviderName, ApiConstants.DataTokenProviders.AspNetUserProvider.TokenName);
+            string recoveryCodeString = await _userManager.GetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.AspNetUserProvider.ProviderName, ApiConstants.DataTokenProviders.AspNetUserProvider.TokenName);
             UserRecoveryCodesViewModel recoveryCodes = new UserRecoveryCodesViewModel
             {
-                 Items = recoveryCodeString?.Split(';') ?? Array.Empty<string>()
+                Items = recoveryCodeString?.Split(';') ?? Array.Empty<string>()
             };
 
             AccountSecurityDetailsViewModel securityDetails = new AccountSecurityDetailsViewModel
             {
                 ExternalLogins = logins.Select(l => l.ProviderDisplayName).ToList(),
-                HasAuthenticator = await _userManager.GetAuthenticatorKeyAsync(user) != null,
+                HasAuthenticator = await _userManager.GetAuthenticatorKeyAsync(appUser) != null,
                 RecoveryCodes = recoveryCodes,
-                TwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user),
-                RecoveryCodesLeft = await _userManager.CountRecoveryCodesAsync(user)
+                TwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(appUser),
+                RecoveryCodesLeft = await _userManager.CountRecoveryCodesAsync(appUser)
             };
 
             return Ok(securityDetails);
+        }
+
+        [HttpGet]
+        [Route("{id}/account/general")]
+        public async Task<IActionResult> GeneralDetails()
+        {
+            _logger.LogTrace("General details action executed.");
+
+            ApplicationUser appUser = await _userManager.GetUserAsync(User);
+
+            if(appUser == null)
+            {
+                // return bad request user not found
+                return BadRequest_UserNotFound();
+            }
+
+            AccountGeneralDetailsViewModel generalDetails = new AccountGeneralDetailsViewModel
+            {
+                Email = appUser.Email,
+                Verified = appUser.EmailConfirmed
+            };
+
+            return Ok(generalDetails);
+        }
+
+        [HttpGet]
+        [Route("{id}/account/resend-email-verification")]
+        public async Task<IActionResult> ResendEmailVerification()
+        {
+            _logger.LogTrace("Resend email verification action executed.");
+
+            ApplicationUser appUser = await _userManager.GetUserAsync(User);
+
+            if(appUser == null)
+            {
+                // return bad request user not found
+                return BadRequest_UserNotFound();
+            }
+
+            // attempt to resend email here;
+
+            return NoContent();
         }
 
         [HttpGet]
