@@ -10,7 +10,9 @@ namespace API
     public class Program
     {
         public static void Main(string[] args)
-        {
+        {   
+            // Reference below answer for when to use Trace, Debug, Info, Warn, Error, Fatal log levels.
+            //https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels            
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
                 .Enrich.FromLogContext()
@@ -36,8 +38,6 @@ namespace API
 
         public static IHostBuilder CreateHostBuilder(string[] args)
         {
-            
-
             try
             {
                 return Host.CreateDefaultBuilder(args)
@@ -52,7 +52,6 @@ namespace API
                 Log.Fatal(ex, "Host builder error.");
                 throw;
             }
-        }
-            
+        }            
     }
 }

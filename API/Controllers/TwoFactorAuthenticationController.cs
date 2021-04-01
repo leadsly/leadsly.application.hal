@@ -43,6 +43,13 @@ namespace API.Controllers
 
             ApplicationUser appUser = await _userManager.GetUserAsync(User);
 
+            var a = true;
+            if (a)
+            {
+
+                throw new System.Exception();
+            }
+
             if(appUser == null)
             {
                 _logger.LogDebug("User not found or does not exist.");
@@ -130,10 +137,16 @@ namespace API.Controllers
         {
             _logger.LogTrace("GenerateRecoveryCodes action executed.");
 
+            var a = true;
+            if (a)
+            {
+                throw new System.Exception();
+            }            
+
             ApplicationUser user = await _userManager.GetUserAsync(User);
 
             bool isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
-
+            isTwoFactorEnabled = false;
             if (isTwoFactorEnabled == false)
             {
                 return BadRequest_TwoFactorAuthenticationIsNotEnabled();
@@ -154,8 +167,8 @@ namespace API.Controllers
             _logger.LogTrace("VerifyAuthenticator action executed.");
 
             ApplicationUser appUser = await _userManager.GetUserAsync(User);
-
-            if(appUser == null)
+           
+            if (appUser == null)
             {
                 _logger.LogDebug("User not found.");
 
@@ -207,6 +220,12 @@ namespace API.Controllers
         public async Task<IActionResult> SetupAuthenticator()
         {
             _logger.LogTrace("SetupAuthenticator action executed.");
+
+            var a = true;
+            if (a)
+            {
+                throw new System.Exception();
+            }
 
             ApplicationUser user = await _userManager.GetUserAsync(User);
             AuthenticatorSetupViewModel authenticatorSetupDetails = await GetAuthenticatorDetailsAsync(user);

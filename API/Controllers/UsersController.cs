@@ -63,6 +63,8 @@ namespace API.Controllers
 
             if (appUser == null)
             {
+                _logger.LogDebug("User not found.");
+
                 // return bad request user not found
                 return BadRequest_UserNotFound();
             }
@@ -93,10 +95,11 @@ namespace API.Controllers
         {
             _logger.LogTrace("General details action executed.");
 
-            ApplicationUser appUser = await _userManager.GetUserAsync(User);
-
+            ApplicationUser appUser = await _userManager.GetUserAsync(User);            
             if(appUser == null)
             {
+                _logger.LogDebug("User not found.");
+
                 // return bad request user not found
                 return BadRequest_UserNotFound();
             }
@@ -209,13 +212,15 @@ namespace API.Controllers
         {
             // TODO consider adding client id to all of the calls to allow for single backend api and multiple client apps
 
-            _logger.LogTrace("ForgotPassword action executed. Generating reset password link for {email}", email);
+            _logger.LogTrace("ForgotPassword action executed. Generating reset password link for: '{email}'", email);
 
             ApplicationUser userToRecoverPassword = await _userManager.FindByEmailAsync(email);
 
             // We want to fail silently
             if (userToRecoverPassword == null)
             {
+                _logger.LogDebug("User not found.");
+                // TODO consider sending NoContent()
                 return Ok();
             }
 
@@ -223,6 +228,8 @@ namespace API.Controllers
 
             if (passwordResetCode == null)
             {
+                _logger.LogDebug("Failed to generate password reset token");
+                // TODO consider sending NoContent()
                 return Ok();
             }
 
@@ -244,6 +251,8 @@ namespace API.Controllers
 
             if (_emailService.SendEmail(message))
             {
+                _logger.LogInformation("Password recovery email has been sent to: '{email}'", email);
+                // TODO consider sending NoContent()
                 return Ok();
             }
 

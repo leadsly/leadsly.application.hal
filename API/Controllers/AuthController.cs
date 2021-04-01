@@ -115,6 +115,12 @@ namespace API.Controllers
         {
             _logger.LogTrace("Signup action executed.");
 
+            bool test = false;            
+            if (test)
+            {
+                throw new Exception();
+            }
+
             if(string.Equals(signupModel.Password, signupModel.ConfirmPassword, StringComparison.OrdinalIgnoreCase) == false)
             {
                 _logger.LogError("Confirm password and password do not match.");
@@ -128,6 +134,9 @@ namespace API.Controllers
                 UserName = signupModel.Email,
                 ApplicationId = $"{Guid.NewGuid()}"
             };
+
+            signupModel.Password = "Pass";
+            newUser.Email = "aaa";
 
             if (ct.IsCancellationRequested)
                 ct.ThrowIfCancellationRequested();
@@ -170,10 +179,10 @@ namespace API.Controllers
 
             RenewAccessTokenResult result = new RenewAccessTokenResult();
 
-            string expiredAccessToken = HttpContext.GetAccessToken();
-
             try
             {
+                string expiredAccessToken = HttpContext.GetAccessToken();
+
                 if (expiredAccessToken != string.Empty)
                 {
                     // request has token but it failed authentication. Attempt to renew the token
