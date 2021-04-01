@@ -43,13 +43,6 @@ namespace API.Controllers
 
             ApplicationUser appUser = await _userManager.GetUserAsync(User);
 
-            var a = true;
-            if (a)
-            {
-
-                throw new System.Exception();
-            }
-
             if(appUser == null)
             {
                 _logger.LogDebug("User not found or does not exist.");
@@ -136,19 +129,13 @@ namespace API.Controllers
         public async Task<IActionResult> GenerateRecoveryCodes()
         {
             _logger.LogTrace("GenerateRecoveryCodes action executed.");
-
-            var a = true;
-            if (a)
-            {
-                throw new System.Exception();
-            }            
+         
 
             ApplicationUser user = await _userManager.GetUserAsync(User);
-
-            bool isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);
-            isTwoFactorEnabled = false;
+            bool isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);            
             if (isTwoFactorEnabled == false)
             {
+                _logger.LogDebug("Two factor authentication is not enabled.");
                 return BadRequest_TwoFactorAuthenticationIsNotEnabled();
             }
                         
@@ -221,12 +208,6 @@ namespace API.Controllers
         {
             _logger.LogTrace("SetupAuthenticator action executed.");
 
-            var a = true;
-            if (a)
-            {
-                throw new System.Exception();
-            }
-
             ApplicationUser user = await _userManager.GetUserAsync(User);
             AuthenticatorSetupViewModel authenticatorSetupDetails = await GetAuthenticatorDetailsAsync(user);
 
@@ -260,7 +241,7 @@ namespace API.Controllers
 
             if (string.IsNullOrEmpty(appDisplayName))
             {
-                _logger.LogError("Check appsettings.json file. 'TwoFactorAuthDisplayAppName' key value pair is not properly set.");
+                _logger.LogDebug("Check appsettings.json file. 'TwoFactorAuthDisplayAppName' key value pair is not properly set.");
 
                 appDisplayName = "odiam-dot-net-api-starter";
             }

@@ -80,14 +80,20 @@ namespace API.Controllers
             
             if (await _userManager.CheckPasswordAsync(appUser, signin.Password) == false)
             {
+                _logger.LogDebug("Password validation failed.");
+
                 await _userManager.AccessFailedAsync(appUser);
 
                 if (await _userManager.IsLockedOutAsync(appUser))
                 {
+                    _logger.LogDebug("User is locked out.");
+
                     return Unauthorized_AccountLockedOut();
                 }
 
                 int failedAttempts = await _userManager.GetAccessFailedCountAsync(appUser);
+
+                _logger.LogDebug("Failed sign in attempt number: '{failedAttempts}'.", failedAttempts);
 
                 return Unauthorized_InvalidCredentials(failedAttempts);
             }
@@ -115,15 +121,9 @@ namespace API.Controllers
         {
             _logger.LogTrace("Signup action executed.");
 
-            bool test = false;            
-            if (test)
-            {
-                throw new Exception();
-            }
-
             if(string.Equals(signupModel.Password, signupModel.ConfirmPassword, StringComparison.OrdinalIgnoreCase) == false)
             {
-                _logger.LogError("Confirm password and password do not match.");
+                _logger.LogDebug("Confirm password and password do not match.");
 
                 return BadRequest_UserRegistrationError();
             }            
@@ -135,9 +135,6 @@ namespace API.Controllers
                 ApplicationId = $"{Guid.NewGuid()}"
             };
 
-            signupModel.Password = "Pass";
-            newUser.Email = "aaa";
-
             if (ct.IsCancellationRequested)
                 ct.ThrowIfCancellationRequested();
 
@@ -145,7 +142,7 @@ namespace API.Controllers
 
             if (result.Succeeded == false)
             {
-                _logger.LogError("User registration data is invalid or missing.");
+                _logger.LogDebug("User registration data is invalid or missing.");
 
                 return BadRequest_UserNotCreated(result.Errors);
             }
@@ -154,7 +151,7 @@ namespace API.Controllers
 
             if (signedupUser == null)
             {
-                _logger.LogError($"Unable to find user by email: { signupModel.Email }. Attempted to retrieve newly registered user to generate access token.");
+                _logger.LogDebug($"Unable to find user by email: { signupModel.Email }. Attempted to retrieve newly registered user to generate access token.");
 
                 return BadRequest_UserRegistrationError();
             }
@@ -194,7 +191,7 @@ namespace API.Controllers
             catch (Exception ex)
             {
                 // Silently fail
-                _logger.LogError(ex, "Failed to rewnew jwt.");
+                _logger.LogWarning(ex, "Failed to rewnew jwt.");
             }
 
             return Ok(result);
@@ -223,7 +220,7 @@ namespace API.Controllers
                 }
                 else
                 {
-                    _logger.LogError("External provider token was invalid.");
+                    _logger.LogDebug("External provider token was invalid.");
 
                     return Unauthorized_InvalidExternalProviderToken();
                 }
@@ -251,7 +248,7 @@ namespace API.Controllers
 
                 if (result.Succeeded == false)
                 {
-                    _logger.LogError("User registration data is invalid or missing.");
+                    _logger.LogDebug("User registration data is invalid or missing.");
 
                     return BadRequest_UserNotCreated(result.Errors);
                 }
@@ -260,7 +257,7 @@ namespace API.Controllers
 
                 if (signedupExternalUser == null)
                 {
-                    _logger.LogError($"Unable to find user by email: { signedupExternalUser.Email }. Attempted to retrieve newly registered user to generate access token.");
+                    _logger.LogDebug($"Unable to find user by email: { signedupExternalUser.Email }. Attempted to retrieve newly registered user to generate access token.");
 
                     return BadRequest_UserRegistrationError();
                 }
@@ -356,7 +353,7 @@ namespace API.Controllers
 
                     if (result.Succeeded == false)
                     {
-                        _logger.LogError("User registration data is invalid or missing.");
+                        _logger.LogDebug("User registration data is invalid or missing.");
 
                         return BadRequest_UserNotCreated(result.Errors);
                     }
@@ -365,7 +362,7 @@ namespace API.Controllers
 
                     if (signedupExternalUser == null)
                     {
-                        _logger.LogError($"Unable to find user by email: { signedupExternalUser.Email }. Attempted to retrieve newly registered user to generate access token.");
+                        _logger.LogDebug($"Unable to find user by email: { signedupExternalUser.Email }. Attempted to retrieve newly registered user to generate access token.");
 
                         return BadRequest_UserRegistrationError();
                     }
@@ -382,7 +379,7 @@ namespace API.Controllers
                 }
                 else
                 {
-                    _logger.LogError("External provider token was invalid.");
+                    _logger.LogDebug("External provider token was invalid.");
 
                     return Unauthorized_InvalidExternalProviderToken();
                 }
