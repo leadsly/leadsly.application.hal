@@ -1,10 +1,7 @@
-﻿using API.Authentication;
-using API.Services;
+﻿using API.Services;
 using Domain;
 using Domain.Models;
 using Domain.ViewModels;
-using Google.Apis.Auth;
-using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,13 +11,14 @@ using MimeKit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.Encodings.Web;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace API.Controllers
 {
+    /// <summary>
+    /// Users controller.
+    /// </summary>
     [ApiController]
     [Route("[controller]")]
     public class UsersController : ApiControllerBase
@@ -53,6 +51,10 @@ namespace API.Controllers
         private readonly IHtmlTemplateGenerator _templateGenerator;
         private readonly ILogger<UsersController> _logger;
 
+        /// <summary>
+        /// Gets users account security details.
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("{id}/account/security")]
         public async Task<IActionResult> SecurityDetails()
@@ -89,6 +91,10 @@ namespace API.Controllers
             return Ok(securityDetails);
         }
 
+        /// <summary>
+        /// Gets users account general details.
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("{id}/account/general")]
         public async Task<IActionResult> GeneralDetails()
@@ -113,6 +119,10 @@ namespace API.Controllers
             return Ok(generalDetails);
         }
 
+        /// <summary>
+        /// Resends email confirmation email.
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("{id}/account/resend-email-verification")]
         public async Task<IActionResult> ResendEmailVerification()
@@ -132,36 +142,11 @@ namespace API.Controllers
             return NoContent();
         }
 
-        [HttpGet]
-        [Route("{id}")]
-        public async Task<IActionResult> Details()
-        {
-            _logger.LogTrace("Details action executed.");
-
-            ApplicationUser user = await _userManager.GetUserAsync(User);
-
-            if (user == null)
-            {
-                // return Bad request
-                return BadRequest_UserNotFound();
-            }
-
-            IList<UserLoginInfo> logins = await _userManager.GetLoginsAsync(user);
-
-            AccountDetailsViewModel profileDetails = new AccountDetailsViewModel
-            {
-                Email = user.Email,
-                EmailConfirmed = user.EmailConfirmed,
-                ExternalLogins = logins.Select(l => l.ProviderDisplayName).ToList(),
-                TwoFactorClientRemembered = false,                
-                HasAuthenticator = await _userManager.GetAuthenticatorKeyAsync(user) != null,
-                TwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user),
-                RecoveryCodesLeft = await _userManager.CountRecoveryCodesAsync(user)
-            };
-
-            return Ok(profileDetails);
-        }
-
+        /// <summary>
+        /// Checks if email has already been registered.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns></returns>
         [HttpGet]
         [AllowAnonymous]
         [Route("email")]
@@ -174,6 +159,11 @@ namespace API.Controllers
             return user == null ? new JsonResult(false) : new JsonResult(true);
         }
 
+        /// <summary>
+        /// Updates user's password.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPut]
         [AllowAnonymous]
         [Route("password")]
@@ -205,6 +195,11 @@ namespace API.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Emails user a password reset link.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns></returns>
         [HttpPost]
         [AllowAnonymous]
         [Route("password")]

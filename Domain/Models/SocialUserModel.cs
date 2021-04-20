@@ -1,7 +1,7 @@
 ﻿using Domain.Models;
 using System.Runtime.Serialization;
 
-namespace Domain.ViewModels
+namespace Domain.Models
 {
     [DataContract]
     public class SocialUserModel

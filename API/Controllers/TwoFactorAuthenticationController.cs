@@ -11,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace API.Controllers
 {
+    /// <summary>
+    /// Two factor authentication controller.
+    /// </summary>
     [ApiController]
     [Route("2fa")]
     public class TwoFactorAuthenticationController : ApiControllerBase
@@ -35,6 +38,10 @@ namespace API.Controllers
         private readonly IHtmlTemplateGenerator _templateGenerator;
         private readonly ILogger<TwoFactorAuthenticationController> _logger;
 
+        /// <summary>
+        /// Disables two factor authentication.
+        /// </summary>
+        /// <returns></returns>
         [HttpPost]        
         [Route("disable")]
         public async Task<IActionResult> Disable2fa()
@@ -70,16 +77,16 @@ namespace API.Controllers
             }
 
             // reset user stay signed in token, because once we disable two factor auth, user time stamps will not match
-            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
-
-            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose);
-
-            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName, refreshToken);
+            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
             // return disable 2FA result
             return NoContent();
         }
 
+        /// <summary>
+        /// Resets authenticator.
+        /// </summary>
+        /// <returns></returns>
         [HttpPost]
         [Route("reset-authenticator")]
         public async Task<IActionResult> ResetAuthenticator()
@@ -115,15 +122,15 @@ namespace API.Controllers
             }
 
             // reset user stay signed in token, because once we disable two factor auth, user time stamps will not match
-            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
-
-            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose);
-
-            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName, refreshToken);
+            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
             return NoContent();
         }
 
+        /// <summary>
+        /// Generates new recovery codes.
+        /// </summary>
+        /// <returns></returns>
         [HttpPost]
         [Route("generate-recovery-codes")]
         public async Task<IActionResult> GenerateRecoveryCodes()
@@ -131,8 +138,8 @@ namespace API.Controllers
             _logger.LogTrace("GenerateRecoveryCodes action executed.");
          
 
-            ApplicationUser user = await _userManager.GetUserAsync(User);
-            bool isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(user);            
+            ApplicationUser appUser = await _userManager.GetUserAsync(User);
+            bool isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(appUser);            
             if (isTwoFactorEnabled == false)
             {
                 _logger.LogDebug("Two factor authentication is not enabled.");
@@ -141,15 +148,22 @@ namespace API.Controllers
                         
             UserRecoveryCodesViewModel recoveryCodes = new UserRecoveryCodesViewModel
             {
-                Items = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10)
+                Items = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(appUser, 10)
             };
+
+            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
             return Ok(recoveryCodes);
         }
 
+        /// <summary>
+        /// Verifies authenticator setup code and enables two factor authentication.
+        /// </summary>
+        /// <param name="verifyAuthenticatorCode"></param>
+        /// <returns></returns>
         [HttpPost]        
         [Route("verify-authenticator")]
-        public async Task<IActionResult> VerifyAuthenticator([FromBody] string verifyAuthenticatorCode)
+        public async Task<IActionResult> VerifyAuthenticator([FromBody] TwoFactorAuthenticationVerificationCodeModel verifyAuthenticatorCode)
         {
             _logger.LogTrace("VerifyAuthenticator action executed.");
 
@@ -162,7 +176,7 @@ namespace API.Controllers
                 return BadRequest_UserNotFound();
             }
 
-            string verificationCode = verifyAuthenticatorCode.Replace(" ", string.Empty).Replace("-", string.Empty);
+            string verificationCode = verifyAuthenticatorCode.Code.Replace(" ", string.Empty).Replace("-", string.Empty);
 
             bool is2faTokenValid = await _userManager.VerifyTwoFactorTokenAsync(appUser, _userManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
 
@@ -170,7 +184,7 @@ namespace API.Controllers
             {
                 _logger.LogDebug("Verification code was not valid.");
 
-                return BadRequest_VerificationCodeIsInvalid();
+                return BadRequest_SetupVerificationCodeIsInvalid();
             }
 
             // this operation changes user's security time stamp, custom token will have to be re-issued.
@@ -193,15 +207,15 @@ namespace API.Controllers
             };
 
             // reset user stay signed in token, because once we disable two factor auth, user time stamps will not match
-            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
-
-            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose);
-
-            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName, refreshToken);
+            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
             return Ok(model);
-        }
+        }        
 
+        /// <summary>
+        /// Gets authenticator setup key and QR code.
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("setup-authenticator")]
         public async Task<IActionResult> SetupAuthenticator()
@@ -214,6 +228,11 @@ namespace API.Controllers
             return Ok(authenticatorSetupDetails);
         }
 
+        /// <summary>
+        /// Gets authenticator setup details.
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
         private async Task<AuthenticatorSetupViewModel> GetAuthenticatorDetailsAsync(ApplicationUser user)
         {
             // load the authenticator key and & QR code URI to display on the form
@@ -233,6 +252,12 @@ namespace API.Controllers
             };
         }
 
+        /// <summary>
+        /// Generates QR code uri.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="unformattedKey"></param>
+        /// <returns></returns>
         private string GenerateQrCodeUri(string email, string unformattedKey)
         {
             _logger.LogTrace("Generating Qr code uri.");
@@ -253,6 +278,11 @@ namespace API.Controllers
                 unformattedKey);
         }
 
+        /// <summary>
+        /// Formats authenticator setup shared key.
+        /// </summary>
+        /// <param name="unformattedKey"></param>
+        /// <returns></returns>
         private string FormatKey(string unformattedKey)
         {
             _logger.LogTrace("Formatting two factor authentication setup key.");

@@ -1,11 +1,14 @@
-﻿using Domain.ViewModels;
+﻿using Domain;
+using Domain.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System.Threading;
 
 namespace API.Controllers
 {
+    /// <summary>
+    /// Healthcheck controller.
+    /// </summary>
     [ApiController]
     [Route("[controller]")]    
     public class HealthCheckController : ApiControllerBase
@@ -17,6 +20,10 @@ namespace API.Controllers
 
         private readonly ILogger<HealthCheckController> _logger;
 
+        /// <summary>
+        /// Gets applications name and version. If returned indicates api is successfully running.
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("/healthcheck")]
         [AllowAnonymous]
         public IActionResult HealthCheck()

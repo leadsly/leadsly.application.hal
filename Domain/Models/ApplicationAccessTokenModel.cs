@@ -1,6 +1,6 @@
-﻿namespace API.Authentication
+﻿namespace Domain.Models
 {
-    public class ApplicationAccessToken
+    public class ApplicationAccessTokenModel
     {
         public string access_token { get; set; }
         public long expires_in { get; set; }

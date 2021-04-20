@@ -1,7 +1,6 @@
 ﻿using API.Authentication;
 using API.Extensions;
 using Domain.Models;
-using Domain.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +16,9 @@ using System.Text.Encodings.Web;
 using API.Services;
 namespace API.Controllers
 {
+    /// <summary>
+    /// Authentication controller.
+    /// </summary>
     [ApiController]
     [Route("[controller]")]    
     public class AuthController : ApiControllerBase
@@ -52,6 +54,12 @@ namespace API.Controllers
         private readonly IHtmlTemplateGenerator _templateGenerator;
         private readonly ILogger<AuthController> _logger;
 
+        /// <summary>
+        /// Signs user in.
+        /// </summary>
+        /// <param name="signin"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
         [HttpPost]
         [AllowAnonymous]
         [Route("signin")]
@@ -61,7 +69,7 @@ namespace API.Controllers
 
             if (string.IsNullOrEmpty(signin.Password))
             {
-                _logger.LogDebug("Request was some or all of the credentials.");
+                _logger.LogDebug("Request was missing user's password.");
 
                 return Unauthorized_InvalidCredentials();
             }
@@ -98,22 +106,129 @@ namespace API.Controllers
                 return Unauthorized_InvalidCredentials(failedAttempts);
             }
 
+            if(await _userManager.GetTwoFactorEnabledAsync(appUser) == true)
+            {
+                var providers = await _userManager.GetValidTwoFactorProvidersAsync(appUser);
+                if(providers.Contains("Authenticator") == false)
+                {
+                    return BadRequest_TwoFactorAuthenticationIsNotEnabled();
+                }
+
+                return Ok(new AuthResponseModel
+                {
+                    Is2StepVerificationRequired = true,
+                    Provider = "Authenticator"
+                });
+            }
+
             // if user successfully logged in reset access failed count back to zero.
             await _userManager.ResetAccessFailedCountAsync(appUser);
 
             ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
 
-            ApplicationAccessToken accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
+            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
 
-            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
+            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
-            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose);
+            return Ok(new AuthResponseModel { 
+                AccessToken = accessToken                
+            });
+        }
 
-            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName, refreshToken);                                        
+        /// <summary>
+        /// Verifies two step verification code entered by user and provider sent by the client application.
+        /// </summary>
+        /// <param name="twoFactorVerification"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [AllowAnonymous]
+        [Route("verify-two-step-verification-code")]
+        public async Task<IActionResult> VerifyTwoStepVerificationCode([FromBody] TwoFactorAuthenticationVerificationCodeModel twoFactorVerification)
+        {
+            _logger.LogTrace("VerifyAuthenticator action executed.");
+
+            ApplicationUser appUser = await _userManager.FindByEmailAsync(twoFactorVerification.Email);
+
+            if (appUser == null)
+            {
+                _logger.LogDebug("User not found.");
+
+                return BadRequest_UserNotFound();
+            }
+
+            string verificationCode = twoFactorVerification.Code.Replace(" ", string.Empty).Replace("-", string.Empty);
+
+            bool is2faTokenValid = await _userManager.VerifyTwoFactorTokenAsync(appUser, twoFactorVerification.Provider, verificationCode);
+
+            if (is2faTokenValid == false)
+            {
+                _logger.LogDebug("Verification code or provider was not valid.");
+
+                return BadRequest_TwoStepVerificationCodeOrProviderIsInvalid();
+            }
+
+            // if user successfully logged in reset access failed count back to zero.
+            await _userManager.ResetAccessFailedCountAsync(appUser);
+
+            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
+
+            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
+
+            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
             return Ok(accessToken);
         }
 
+        /// <summary>
+        /// Signs user in, by redeeming their two factor authentication recovery code.
+        /// </summary>
+        /// <param name="recoveryCode"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [AllowAnonymous]
+        [Route("redeem-recovery-code")]
+        public async Task<IActionResult> RedeemRecoveryCode([FromBody] TwoFactorAuthenticationBackupCodeModel recoveryCode)
+        {
+            _logger.LogTrace("RedeemBackupCode action executed.");
+
+            ApplicationUser appUser = await _userManager.FindByEmailAsync(recoveryCode.Email);
+
+            if (appUser == null)
+            {
+                _logger.LogDebug("User not found.");
+
+                return BadRequest_UserNotFound();
+            }
+
+            string verificationCode = recoveryCode.Code.Replace(" ", string.Empty).Replace("-", string.Empty);
+
+            IdentityResult isRecoveryCodeValid = await _userManager.RedeemTwoFactorRecoveryCodeAsync(appUser, verificationCode);
+
+            if (isRecoveryCodeValid.Succeeded == false)
+            {
+                _logger.LogDebug("Recovery code was not valid.");
+
+                return BadRequest_RecoveryCodeIsNotValid();
+            }
+
+            // if user successfully logged in reset access failed count back to zero.
+            await _userManager.ResetAccessFailedCountAsync(appUser);
+
+            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
+
+            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
+
+            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
+
+            return Ok(accessToken);
+        }
+
+        /// <summary>
+        /// Signs user up.
+        /// </summary>
+        /// <param name="signupModel"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
         [HttpPost]
         [AllowAnonymous]
         [Route("signup")]
@@ -128,7 +243,7 @@ namespace API.Controllers
                 return BadRequest_UserRegistrationError();
             }            
 
-            ApplicationUser newUser = new ApplicationUser
+            ApplicationUser appUser = new ApplicationUser
             {
                 Email = signupModel.Email,
                 UserName = signupModel.Email,
@@ -138,7 +253,7 @@ namespace API.Controllers
             if (ct.IsCancellationRequested)
                 ct.ThrowIfCancellationRequested();
 
-            IdentityResult result = await _userManager.CreateAsync(newUser, signupModel.Password);
+            IdentityResult result = await _userManager.CreateAsync(appUser, signupModel.Password);
 
             if (result.Succeeded == false)
             {
@@ -158,15 +273,19 @@ namespace API.Controllers
 
             ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(signedupUser);
 
-            ApplicationAccessToken accessToken = await _tokenService.GenerateApplicationTokenAsync(signedupUser.Id, claimsIdentity);
+            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(signedupUser.Id, claimsIdentity);
 
-            string refreshToken = await _userManager.GenerateUserTokenAsync(newUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose);
-
-            await _userManager.SetAuthenticationTokenAsync(newUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName, refreshToken);
+            // TODO may cause issues if StaySignedIn token was not previouslt set. NEEDS TO BE TESTED
+            _logger.LogWarning("NEEDS TO BE TESTED. IF NEW USER DOES NOT HAVE STAYSIGNEDIN TOKEN DOES CALLING RemoveAuthenticationTokenAsync CAUSE ISSUES?");
+            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
             return Ok(accessToken);
         }        
 
+        /// <summary>
+        /// Refreshes user's authentication token.
+        /// </summary>
+        /// <returns></returns>
         [HttpPost]
         [AllowAnonymous]
         [Route("refresh-token")]
@@ -174,7 +293,7 @@ namespace API.Controllers
         {
             _logger.LogTrace("RefreshToken action executed.");
 
-            RenewAccessTokenResult result = new RenewAccessTokenResult();
+            RenewAccessTokenResultModel result = new RenewAccessTokenResultModel();
 
             try
             {
@@ -197,6 +316,11 @@ namespace API.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Signs user in using Google's sign in.
+        /// </summary>
+        /// <param name="externalUser"></param>
+        /// <returns></returns>
         [HttpPost]
         [AllowAnonymous]
         [Route("external-signin-google")]
@@ -205,7 +329,7 @@ namespace API.Controllers
             _logger.LogTrace("ExternalSigninGoogle action executed.");
             ApplicationUser appUser = await _userManager.FindByEmailAsync(externalUser.Email);
 
-            ApplicationAccessToken accessToken;
+            ApplicationAccessTokenModel accessToken;
 
             // Sign user in
             if (appUser != null)
@@ -268,15 +392,16 @@ namespace API.Controllers
             }
 
             // remove old refresh token if any where present
-            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
-            // generate refresh token
-            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose);
-
-            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName, refreshToken);
+            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
             return Ok(accessToken);
         }
 
+        /// <summary>
+        /// Signs user in using Facebook's sign in.
+        /// </summary>
+        /// <param name="externalUser"></param>
+        /// <returns></returns>
         [HttpPost]
         [AllowAnonymous]
         [Route("external-signin-facebook")]
@@ -284,7 +409,7 @@ namespace API.Controllers
         {
             _logger.LogTrace("ExternalSigninFacebook action executed.");
 
-            ApplicationAccessToken accessToken;
+            ApplicationAccessTokenModel accessToken;
 
             ApplicationUser appUser = await _userManager.FindByEmailAsync(externalUser.Email);
 
@@ -386,15 +511,16 @@ namespace API.Controllers
             }
 
             // remove old refresh token if any where present
-            await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
-            // generate refresh token
-            string refreshToken = await _userManager.GenerateUserTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.Purpose);
-
-            await _userManager.SetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName, refreshToken);
+            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
             return Ok(accessToken);
         }
 
+        /// <summary>
+        /// Signs user out.
+        /// </summary>
+        /// <param name="ct"></param>
+        /// <returns></returns>
         [HttpDelete]
         [AllowAnonymous]
         [Route("signout")]

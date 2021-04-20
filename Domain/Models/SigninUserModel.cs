@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace Domain.ViewModels
+namespace Domain.Models
 {
     [DataContract]
     public class SigninUserModel
