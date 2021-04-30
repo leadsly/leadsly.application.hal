@@ -5,8 +5,8 @@ namespace Domain.ViewModels
     [DataContract]
     public class ResetPasswordModelViewModel
     {
-        [DataMember(Name = "email", EmitDefaultValue = false)]
-        public string Email { get; set; }
+        [DataMember(Name = "userId", EmitDefaultValue = false)]
+        public string UserId { get; set; }
 
         [DataMember(Name = "password", EmitDefaultValue = false)]
         public string Password { get; set; }

@@ -148,7 +148,7 @@ namespace API.Controllers
                         
             UserRecoveryCodesViewModel recoveryCodes = new UserRecoveryCodesViewModel
             {
-                Items = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(appUser, 10)
+                Items = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(appUser, ApiConstants.TwoFactorAuthentication.NumberOfRecoveryCodes)
             };
 
             await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
@@ -202,7 +202,7 @@ namespace API.Controllers
                 Status = TwoFactorAuthenticationStatus.Succeeded,
                 RecoveryCodes = new UserRecoveryCodesViewModel
                 {
-                    Items = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(appUser, 10)
+                    Items = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(appUser, ApiConstants.TwoFactorAuthentication.NumberOfRecoveryCodes)
                 }
             };
 

@@ -32,5 +32,6 @@
         public const string FailedToEnable2fa = "An error occured while enabling 2fa.";
         public const string FailedToResetAuthenticatorKey = "An error occured while resetting 2fa authenticator key.";
         public const string FailedToSendEmail = "Failed to send email.";
+        public const string FailedToUpdatePassword = "Failed to update password.";
     }
 }

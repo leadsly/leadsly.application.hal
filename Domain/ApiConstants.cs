@@ -5,6 +5,7 @@
         public class TwoFactorAuthentication
         {
             public const string AuthenticatorUriFormat = "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6";
+            public const int NumberOfRecoveryCodes = 5;
         }
 
         public class TokenOptions

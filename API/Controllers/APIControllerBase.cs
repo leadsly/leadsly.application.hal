@@ -112,6 +112,22 @@ namespace API.Controllers
         }
 
         /// <summary>
+        /// Bad request when users password fails to update.
+        /// </summary>        
+        /// <returns></returns>
+        protected ObjectResult BadRequest_FailedToUpdatePassword()
+        {
+            return ProblemDetailsResult(new ProblemDetails
+            {
+                Type = ProblemDetailsTypes.BadRequestType,
+                Status = StatusCodes.Status400BadRequest,
+                Title = ReasonPhrases.GetReasonPhrase(400),
+                Detail = ProblemDetailsDescriptions.FailedToUpdatePassword,
+                Instance = this.HttpContext.Request.Path.Value
+            }); ;
+        }
+
+        /// <summary>
         /// Bad request when two step verification code is invalid.
         /// </summary>        
         /// <returns></returns>

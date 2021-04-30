@@ -171,18 +171,21 @@ namespace API.Controllers
         {
             _logger.LogTrace("ResetPassword action executed.");
 
-            ApplicationUser userToResetPassword = await _userManager.FindByEmailAsync(model.Email);
+            ApplicationUser userToResetPassword = await _userManager.FindByIdAsync(model.UserId);
 
             if(userToResetPassword == null)
             {
-                string email = model.Email;
-                _logger.LogDebug("ResetPassword action failed. Unable to find by provided email: {email}.", email);
+                string userId = model.UserId;
+                _logger.LogDebug("ResetPassword action failed. Unable to find by provided userId: {userId}.", userId);
 
+                return BadRequest_FailedToUpdatePassword();
             }
 
             if(model.PasswordResetToken == null)
             {
                 _logger.LogDebug("ResetPassword action failed. Password reset token not found in the request.");
+
+                return BadRequest_FailedToUpdatePassword();
             }
 
             IdentityResult result = await _userManager.ResetPasswordAsync(userToResetPassword, model.PasswordResetToken, model.Password);
@@ -190,6 +193,8 @@ namespace API.Controllers
             if(result.Succeeded == false)
             {
                 _logger.LogDebug("ResetPassword action failed. Password reset operation failed to update the new password.");
+
+                return BadRequest_FailedToUpdatePassword();
             }
 
             return NoContent();
