@@ -48,8 +48,7 @@ namespace API.Controllers
         {
             _logger.LogTrace("Disable2fa action executed.");
 
-            ApplicationUser appUser = await _userManager.GetUserAsync(User);
-
+            ApplicationUser appUser = await _userManager.GetUserAsync(User);            
             if(appUser == null)
             {
                 _logger.LogDebug("User not found or does not exist.");
@@ -136,7 +135,6 @@ namespace API.Controllers
         public async Task<IActionResult> GenerateRecoveryCodes()
         {
             _logger.LogTrace("GenerateRecoveryCodes action executed.");
-         
 
             ApplicationUser appUser = await _userManager.GetUserAsync(User);
             bool isTwoFactorEnabled = await _userManager.GetTwoFactorEnabledAsync(appUser);            
@@ -168,7 +166,7 @@ namespace API.Controllers
             _logger.LogTrace("VerifyAuthenticator action executed.");
 
             ApplicationUser appUser = await _userManager.GetUserAsync(User);
-           
+                       
             if (appUser == null)
             {
                 _logger.LogDebug("User not found.");

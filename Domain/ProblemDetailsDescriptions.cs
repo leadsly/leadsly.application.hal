@@ -33,5 +33,9 @@
         public const string FailedToResetAuthenticatorKey = "An error occured while resetting 2fa authenticator key.";
         public const string FailedToSendEmail = "Failed to send email.";
         public const string FailedToUpdatePassword = "Failed to update password.";
+        public const string FailedToUpdateEmail = "Failed to update e-mail.";
+        public const string FailedToVerifyUsersEmail = "Failed to verify user's e-mail.";
+        public const string FailedToGenerateChangeEmailToken = "Failed to generate change e-mail token.";
+        public const string PasswordResetTokenNotFound = "Password reset token was not found in the request.";
     }
 }

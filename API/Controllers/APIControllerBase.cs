@@ -124,7 +124,107 @@ namespace API.Controllers
                 Title = ReasonPhrases.GetReasonPhrase(400),
                 Detail = ProblemDetailsDescriptions.FailedToUpdatePassword,
                 Instance = this.HttpContext.Request.Path.Value
-            }); ;
+            });
+        }
+
+        /// <summary>
+        /// Bad request when users email fails to update.
+        /// </summary>        
+        /// <returns></returns>
+        protected ObjectResult BadRequest_FailedToUpdateEmail()
+        {
+            return ProblemDetailsResult(new ProblemDetails
+            {
+                Type = ProblemDetailsTypes.BadRequestType,
+                Status = StatusCodes.Status400BadRequest,
+                Title = ReasonPhrases.GetReasonPhrase(400),
+                Detail = ProblemDetailsDescriptions.FailedToUpdateEmail,
+                Instance = this.HttpContext.Request.Path.Value
+            });
+        }
+
+        /// <summary>
+        /// Bad request there is an issue verifying user's email.
+        /// </summary>        
+        /// <returns></returns>
+        protected ObjectResult BadRequest_FailedToVerifyUsersEmail()
+        {
+            return ProblemDetailsResult(new ProblemDetails
+            {
+                Type = ProblemDetailsTypes.BadRequestType,
+                Status = StatusCodes.Status400BadRequest,
+                Title = ReasonPhrases.GetReasonPhrase(400),
+                Detail = ProblemDetailsDescriptions.FailedToUpdateEmail,
+                Instance = this.HttpContext.Request.Path.Value
+            });
+        }
+
+        /// <summary>
+        /// Bad request when server fails to generate change email token.
+        /// </summary>        
+        /// <returns></returns>
+        protected ObjectResult BadRequest_FailedToGenerateChangeEmailToken()
+        {
+            return ProblemDetailsResult(new ProblemDetails
+            {
+                Type = ProblemDetailsTypes.BadRequestType,
+                Status = StatusCodes.Status400BadRequest,
+                Title = ReasonPhrases.GetReasonPhrase(400),
+                Detail = ProblemDetailsDescriptions.FailedToGenerateChangeEmailToken,
+                Instance = this.HttpContext.Request.Path.Value
+            });
+        }
+
+        /// <summary>
+        /// Bad request when password reset token is not found on the request.
+        /// </summary>        
+        /// <returns></returns>
+        protected ObjectResult BadRequest_PasswordResetTokenNotFound()
+        {
+            return ProblemDetailsResult(new ProblemDetails
+            {
+                Type = ProblemDetailsTypes.BadRequestType,
+                Status = StatusCodes.Status400BadRequest,
+                Title = ReasonPhrases.GetReasonPhrase(400),
+                Detail = ProblemDetailsDescriptions.PasswordResetTokenNotFound,
+                Instance = this.HttpContext.Request.Path.Value
+            });
+        }
+
+        /// <summary>
+        /// Bad request when there is an issue updating user's password.
+        /// </summary>        
+        /// <returns></returns>
+        protected ObjectResult BadRequest_PasswordNotUpdated(IEnumerable<IdentityError> errors)
+        {
+            Dictionary<string, string[]> errorsDictionary = errors.ToDictionary(x => x.Code, x => new[] { x.Description });
+
+            return ProblemDetailsResult(new ValidationProblemDetails(errorsDictionary)
+            {
+                Type = ProblemDetailsTypes.BadRequestType,
+                Status = StatusCodes.Status400BadRequest,
+                Title = ReasonPhrases.GetReasonPhrase(400),
+                Detail = ProblemDetailsDescriptions.FailedToUpdatePassword,
+                Instance = this.HttpContext.Request.Path.Value
+            });
+        }
+
+        /// <summary>
+        /// Bad request when there is an issue updating user's password.
+        /// </summary>        
+        /// <returns></returns>
+        protected ObjectResult BadRequest_EmailNotUpdated(IEnumerable<IdentityError> errors)
+        {
+            Dictionary<string, string[]> errorsDictionary = errors.ToDictionary(x => x.Code, x => new[] { x.Description });
+
+            return ProblemDetailsResult(new ValidationProblemDetails(errorsDictionary)
+            {
+                Type = ProblemDetailsTypes.BadRequestType,
+                Status = StatusCodes.Status400BadRequest,
+                Title = ReasonPhrases.GetReasonPhrase(400),
+                Detail = ProblemDetailsDescriptions.FailedToUpdateEmail,
+                Instance = this.HttpContext.Request.Path.Value
+            });
         }
 
         /// <summary>
@@ -253,22 +353,6 @@ namespace API.Controllers
                 Status = StatusCodes.Status400BadRequest,
                 Title = ReasonPhrases.GetReasonPhrase(400),
                 Detail = ProblemDetailsDescriptions.RegistrationErrorDetail,
-                Instance = this.HttpContext.Request.Path.Value
-            });
-        }
-
-        /// <summary>
-        /// Bad request when an issue occured sending an email.
-        /// </summary>
-        /// <returns></returns>
-        protected ObjectResult BadRequest_FailedToSendEmail()
-        {
-            return ProblemDetailsResult(new ProblemDetails
-            {
-                Type = ProblemDetailsTypes.BadRequestType,
-                Status = StatusCodes.Status400BadRequest,
-                Title = ReasonPhrases.GetReasonPhrase(400),
-                Detail = ProblemDetailsDescriptions.FailedToSendEmail,
                 Instance = this.HttpContext.Request.Path.Value
             });
         }

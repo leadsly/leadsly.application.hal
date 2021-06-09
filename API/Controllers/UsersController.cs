@@ -143,6 +143,158 @@ namespace API.Controllers
         }
 
         /// <summary>
+        /// Changes user's email.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPut]
+        [Route("{id}/email")]
+        public async Task<IActionResult> ChangeEmail(string id, [FromBody] EmailChangeViewModel model)
+        {
+            _logger.LogTrace("ChangeEmail action executed.");
+
+            ApplicationUser appUser = await _userManager.FindByIdAsync(id);
+
+            if (appUser == null)
+            {
+                _logger.LogDebug("ChangeEmail action failed. Unable to find user by provided userId: {id}.", id);
+
+                return BadRequest_FailedToUpdateEmail();
+            }
+
+            if (await _userManager.CheckPasswordAsync(appUser, model.Password) == false)
+            {
+                _logger.LogDebug("ChangeEmail action failed to verify user's password.");
+
+                return BadRequest_FailedToUpdateEmail();
+            }
+
+            string changeEmailToken = await _userManager.GenerateChangeEmailTokenAsync(appUser, model.NewEmail);
+
+            if(changeEmailToken == null)
+            {
+                _logger.LogDebug("ChangeEmail action failed to generate change email token.");
+
+                return BadRequest_FailedToGenerateChangeEmailToken();
+            }            
+
+            appUser.Email = model.NewEmail;
+            appUser.EmailConfirmed = false;
+
+            IdentityResult result = await _userManager.UpdateAsync(appUser);
+
+            if (result.Succeeded == false)
+            {
+                _logger.LogDebug("Password reset operation failed to change user's password.");
+
+                return BadRequest_PasswordNotUpdated(result.Errors);
+            }            
+
+            string code = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Encode(changeEmailToken);
+
+
+            string callBackUrl = $"http://localhost:4200/users/{appUser.Id}/verify-email?code={code}";
+
+            ComposeEmailSettingsModel settings = new ComposeEmailSettingsModel
+            {
+                Subject = "Verify E-mail",
+                To = new MailboxAddress(_emailServiceOptions[nameof(EmailServiceOptions.SystemAdminName)], _emailServiceOptions[nameof(EmailServiceOptions.SystemAdminEmail)]),
+                From = new MailboxAddress("System Admin", model.NewEmail),
+                Body = _templateGenerator.GenerateBodyFor(EmailTemplateTypes.PasswordReset)
+            };
+
+            settings.Body = settings.Body.Replace(ApiConstants.Email.CallbackUrlToken, callBackUrl);
+
+            MimeMessage message = _emailService.ComposeEmail(settings);
+
+            if (_emailService.SendEmail(message))
+            {
+                string email = model.NewEmail;
+                _logger.LogInformation("Password recovery email has been sent to: '{email}'", email);
+            }
+            else
+            {
+                _logger.LogDebug("Failed to send verification link.");
+            }
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Verifies user's email.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [AllowAnonymous]
+        [Route("{id}/verify-email")]
+        public async Task<IActionResult> VerifyEmail(string id, EmailChangeViewModel model)
+        {
+            _logger.LogTrace("VerifyEmail action executed.");
+
+            ApplicationUser appUser = await _userManager.FindByIdAsync(id);
+
+            if (appUser == null)
+            {
+                _logger.LogDebug("VerifyEmail action failed. Unable to find user by provided userId: {id}.", id);
+
+                return BadRequest_FailedToVerifyUsersEmail();
+            }
+
+            if (model.EmailChangeToken == null)
+            {
+                _logger.LogDebug("ResetPassword action failed. Password reset token not found in the request.");
+
+                return BadRequest_PasswordResetTokenNotFound();
+            }
+
+            string code = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Decode(model.EmailChangeToken);
+
+            IdentityResult result = await _userManager.ChangeEmailAsync(appUser, model.NewEmail, code);
+
+            if (result.Succeeded == false)
+            {
+                _logger.LogDebug("ResetPassword action failed. Password reset operation failed to update the new password.");
+
+                return BadRequest_PasswordNotUpdated(result.Errors);
+            }
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Changes user's password.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPut]
+        [Route("{id}/password")]
+        public async Task<IActionResult> ChangePassword(string id, [FromBody] PasswordChangeViewModel model)
+        {
+            _logger.LogTrace("ChangePassword action executed.");
+
+            ApplicationUser appUser = await _userManager.FindByIdAsync(id);
+
+            if (appUser == null)
+            {
+                _logger.LogDebug("ChangePassword action failed. Unable to find user by provided userId: {id}.", id);
+
+                return BadRequest_FailedToUpdatePassword();
+            }
+
+            IdentityResult result = await _userManager.ChangePasswordAsync(appUser, model.CurrentPassword, model.NewPassword);
+
+            if (result.Succeeded == false)
+            {
+                _logger.LogDebug("Password reset operation failed to change user's password.");
+
+                return BadRequest_PasswordNotUpdated(result.Errors);
+            }
+
+            return NoContent();
+        }
+
+        /// <summary>
         /// Checks if email has already been registered.
         /// </summary>
         /// <param name="email"></param>
@@ -160,23 +312,22 @@ namespace API.Controllers
         }
 
         /// <summary>
-        /// Updates user's password.
+        /// Resets user's password.
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        [HttpPut]
+        [HttpPost]
         [AllowAnonymous]
-        [Route("password")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModelViewModel model)
+        [Route("{id}/reset-password")]
+        public async Task<IActionResult> ResetPassword(string id, [FromBody] ResetPasswordModelViewModel model)
         {
             _logger.LogTrace("ResetPassword action executed.");
 
-            ApplicationUser userToResetPassword = await _userManager.FindByIdAsync(model.UserId);
+            ApplicationUser userToResetPassword = await _userManager.FindByIdAsync(id);
 
             if(userToResetPassword == null)
             {
-                string userId = model.UserId;
-                _logger.LogDebug("ResetPassword action failed. Unable to find by provided userId: {userId}.", userId);
+                _logger.LogDebug("ResetPassword action failed. Unable to find user by provided userId: {id}.", id);
 
                 return BadRequest_FailedToUpdatePassword();
             }
@@ -185,16 +336,18 @@ namespace API.Controllers
             {
                 _logger.LogDebug("ResetPassword action failed. Password reset token not found in the request.");
 
-                return BadRequest_FailedToUpdatePassword();
+                return BadRequest_PasswordResetTokenNotFound();
             }
 
-            IdentityResult result = await _userManager.ResetPasswordAsync(userToResetPassword, model.PasswordResetToken, model.Password);
+            string code = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Decode(model.PasswordResetToken);
+
+            IdentityResult result = await _userManager.ResetPasswordAsync(userToResetPassword, code, model.Password);
 
             if(result.Succeeded == false)
             {
                 _logger.LogDebug("ResetPassword action failed. Password reset operation failed to update the new password.");
 
-                return BadRequest_FailedToUpdatePassword();
+                return BadRequest_PasswordNotUpdated(result.Errors);
             }
 
             return NoContent();
@@ -220,8 +373,8 @@ namespace API.Controllers
             if (userToRecoverPassword == null)
             {
                 _logger.LogDebug("User not found.");
-                // TODO consider sending NoContent()
-                return Ok();
+                
+                return NoContent();
             }
 
             string passwordResetCode = await _userManager.GeneratePasswordResetTokenAsync(userToRecoverPassword);
@@ -229,8 +382,8 @@ namespace API.Controllers
             if (passwordResetCode == null)
             {
                 _logger.LogDebug("Failed to generate password reset token");
-                // TODO consider sending NoContent()
-                return Ok();
+                
+                return NoContent();
             }
 
             string code = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Encode(passwordResetCode);
@@ -252,11 +405,11 @@ namespace API.Controllers
             if (_emailService.SendEmail(message))
             {
                 _logger.LogInformation("Password recovery email has been sent to: '{email}'", email);
-                // TODO consider sending NoContent()
-                return Ok();
+                
+                return NoContent();
             }
 
-            return BadRequest_FailedToSendEmail();
+            return NoContent();
         }
     }
 }

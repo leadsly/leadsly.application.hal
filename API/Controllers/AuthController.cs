@@ -252,8 +252,8 @@ namespace API.Controllers
 
             if (ct.IsCancellationRequested)
                 ct.ThrowIfCancellationRequested();
-
-            IdentityResult result = await _userManager.CreateAsync(appUser, signupModel.Password);
+            
+            IdentityResult result = await _userManager.CreateAsync(appUser, signupModel.Password);            
 
             if (result.Succeeded == false)
             {
