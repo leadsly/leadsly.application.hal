@@ -14,6 +14,8 @@ using System.Threading.Tasks;
 using Domain;
 using System.Text.Encodings.Web;
 using API.Services;
+using MimeKit;
+
 namespace API.Controllers
 {
     /// <summary>
@@ -85,6 +87,54 @@ namespace API.Controllers
 
             if (ct.IsCancellationRequested)
                 ct.ThrowIfCancellationRequested();
+
+            if(await _userManager.IsEmailConfirmedAsync(appUser) == false)
+            {
+                _logger.LogDebug("User's email is not confirmed. Unable to log user in.");
+
+                // attempt to resend email confirmation
+                string confirmEmailToken = await this._userManager.GenerateEmailConfirmationTokenAsync(appUser);
+
+                if (confirmEmailToken == null)
+                {
+                    _logger.LogDebug("Signin action failed to generate email confirmation token.");
+
+                    return BadRequest_FailedToGenerateToken();
+                }
+
+                string token = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Encode(confirmEmailToken);
+
+                IConfigurationSection clientOptions = this._configuration.GetSection(nameof(ClientOptions));
+                string callBackUrl = ApiConstants.Email.Verify.Url.Replace(ApiConstants.Email.ClientAddress, clientOptions[nameof(ClientOptions.Address)]);
+                callBackUrl = callBackUrl.Replace(ApiConstants.Email.EmailParam, appUser.Email);
+                callBackUrl = callBackUrl.Replace(ApiConstants.Email.TokenParam, token);
+
+                IConfigurationSection emailServiceOptions = this._configuration.GetSection(nameof(EmailServiceOptions));
+                IConfigurationSection verifyEmail = emailServiceOptions.GetSection(nameof(EmailServiceOptions.VerifyEmail));
+                ComposeEmailSettingsModel settings = new ComposeEmailSettingsModel
+                {
+                    Subject = verifyEmail[nameof(EmailServiceOptions.VerifyEmail.EmailSubject)],
+                    To = new MailboxAddress(appUser.Email, appUser.Email),
+                    From = new MailboxAddress(emailServiceOptions[nameof(EmailServiceOptions.SystemAdminName)], emailServiceOptions[nameof(EmailServiceOptions.SystemAdminEmail)]),
+                    Body = _templateGenerator.GenerateBodyFor(EmailTemplateTypes.VerifyEmail)
+                };
+
+                settings.Body = settings.Body.Replace(ApiConstants.Email.CallbackUrlToken, callBackUrl);
+
+                MimeMessage message = _emailService.ComposeEmail(settings);
+
+                string email = appUser.Email;
+                if (_emailService.SendEmail(message))
+                {
+                    _logger.LogInformation("Email verification has been sent to: '{email}'", email);                    
+                }
+                else
+                {
+                    _logger.LogInformation("Email verification has failed to send to: '{email}'", email);                    
+                }
+
+                return Forbidden_EmailNotConfirmed();
+            }
             
             if (await _userManager.CheckPasswordAsync(appUser, signin.Password) == false)
             {
@@ -262,25 +312,60 @@ namespace API.Controllers
                 return BadRequest_UserNotCreated(result.Errors);
             }
 
-            ApplicationUser signedupUser = await _userManager.FindByEmailAsync(signupModel.Email);
+            // create and send out email confirmation
+            string confirmEmailToken = await this._userManager.GenerateEmailConfirmationTokenAsync(appUser);
 
-            if (signedupUser == null)
+            if (confirmEmailToken == null)
             {
-                _logger.LogDebug($"Unable to find user by email: { signupModel.Email }. Attempted to retrieve newly registered user to generate access token.");
+                _logger.LogDebug("Signup action failed to generate email confirmation token.");
 
-                return BadRequest_UserRegistrationError();
+                return BadRequest_FailedToGenerateToken();
             }
 
-            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(signedupUser);
+            string token = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Encode(confirmEmailToken);
+            
+            IConfigurationSection clientOptions = this._configuration.GetSection(nameof(ClientOptions));
+            string callBackUrl = ApiConstants.Email.Verify.Url.Replace(ApiConstants.Email.ClientAddress, clientOptions[nameof(ClientOptions.Address)]);
+            callBackUrl = callBackUrl.Replace(ApiConstants.Email.IdParam, appUser.Id);
+            callBackUrl = callBackUrl.Replace(ApiConstants.Email.EmailParam, appUser.Email);
+            callBackUrl = callBackUrl.Replace(ApiConstants.Email.TokenParam, token);
 
-            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(signedupUser.Id, claimsIdentity);
+            IConfigurationSection emailServiceOptions = this._configuration.GetSection(nameof(EmailServiceOptions));
+            IConfigurationSection verifyEmail = emailServiceOptions.GetSection(nameof(EmailServiceOptions.VerifyEmail));
+            ComposeEmailSettingsModel settings = new ComposeEmailSettingsModel
+            {
+                Subject = verifyEmail[nameof(EmailServiceOptions.VerifyEmail.EmailSubject)],
+                To = new MailboxAddress(appUser.Email, appUser.Email),
+                From = new MailboxAddress(emailServiceOptions[nameof(EmailServiceOptions.SystemAdminName)], emailServiceOptions[nameof(EmailServiceOptions.SystemAdminEmail)]),
+                Body = _templateGenerator.GenerateBodyFor(EmailTemplateTypes.VerifyEmail)
+            };
 
-            // TODO may cause issues if StaySignedIn token was not previouslt set. NEEDS TO BE TESTED
-            _logger.LogWarning("NEEDS TO BE TESTED. IF NEW USER DOES NOT HAVE STAYSIGNEDIN TOKEN DOES CALLING RemoveAuthenticationTokenAsync CAUSE ISSUES?");
-            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
+            settings.Body = settings.Body.Replace(ApiConstants.Email.CallbackUrlToken, callBackUrl);
 
-            return Ok(accessToken);
-        }        
+            MimeMessage message = _emailService.ComposeEmail(settings);
+
+            string email = appUser.Email;
+            if (_emailService.SendEmail(message))
+            {
+                _logger.LogInformation("Email verification has been sent to: '{email}'", email);
+                return NoContent();
+            }
+            else
+            {
+                _logger.LogInformation("Email verification has failed to send to: '{email}'", email);
+                return BadRequest_FailedToSendConfirmationEmail();
+            }
+
+            //ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(signedupUser);
+
+            //ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(signedupUser.Id, claimsIdentity);
+
+            //// TODO may cause issues if StaySignedIn token was not previously set. NEEDS TO BE TESTED
+            //_logger.LogWarning("NEEDS TO BE TESTED. IF NEW USER DOES NOT HAVE STAYSIGNEDIN TOKEN DOES CALLING RemoveAuthenticationTokenAsync CAUSE ISSUES?");
+            //await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
+
+            //return Ok(accessToken);
+        }
 
         /// <summary>
         /// Refreshes user's authentication token.

@@ -39,7 +39,22 @@
 
         public class Email
         {
-            public const string CallbackUrlToken = "CallbackUrlToken";
+            public const string CallbackUrlToken = "CallbackUrlToken";            
+            public const string ChangeEmailUrl = "{clientAddress}/users/{id}/change-email?oldEmail={oldEmail}&newEmail={newEmail}&code={code}";
+            public const string ClientAddress = "{ClientAddress}";
+            public const string IdParam = "{Id}";
+            public const string EmailParam = "{Email}";
+            public const string TokenParam = "{Token}";
+
+            public class Change            
+            {
+                public const string Url = "{ClientAddress}/auth/{Id}/email-change-confirmation?newEmail={Email}&token={Token}";
+            }
+
+            public class Verify
+            {
+                public const string Url = "{ClientAddress}/auth/email-confirmation?email={Email}&token={Token}";                
+            }
         }
 
         public class VaultKeys

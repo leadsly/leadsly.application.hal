@@ -2,6 +2,8 @@
 {
     public enum EmailTemplateTypes
     {
-        PasswordReset
+        PasswordReset,
+        VerifyEmail,
+        ChangeEmail
     }
 }

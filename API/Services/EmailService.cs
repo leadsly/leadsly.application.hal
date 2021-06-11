@@ -59,9 +59,10 @@ namespace API.Services
             MimeMessage messageToUser = new MimeMessage();
 
             // Add From
-            messageToUser.From.Add(settings.From);            
-            // Add TO            
-            messageToUser.To.Add(settings.From);
+            messageToUser.From.Add(settings.From);    
+            
+            // Add To         
+            messageToUser.To.Add(settings.To);
 
             // Add Subject            
             messageToUser.Subject = settings.Subject;

@@ -30,12 +30,12 @@ namespace API.Configurations
 {
     public static class ConfigureServices
     {
-        public static IServiceCollection AddRepositoriesConfiguration(this IServiceCollection services)
-        {
-            Log.Information("Registering repository services.");
+        //public static IServiceCollection AddRepositoriesConfiguration(this IServiceCollection services)
+        //{
+        //    Log.Information("Registering repository services.");
 
-            return services;
-        }
+        //    return services;
+        //}
 
         public static IServiceCollection AddSupervisorConfiguration(this IServiceCollection services)
         {
@@ -63,17 +63,10 @@ namespace API.Configurations
             return services;
         }
 
-        //public static IdentityBuilder AddStaySignedInLoginTokenProvider(this IdentityBuilder builder)
-        //{
-        //    var userType = builder.UserType;
-        //    var provider = typeof(StaySignedInDataProtectorTokenProvider<>).MakeGenericType(userType);
-        //    return builder.AddTokenProvider(ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, provider);
-        //}
-
         public static IServiceCollection AddIdentityConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
-            Log.Information("Adding identity services.");            
-            
+            Log.Information("Adding identity services.");
+
             services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.Password.RequireDigit = true;
@@ -85,14 +78,16 @@ namespace API.Configurations
 
                 // Lockout settings
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-                options.Lockout.MaxFailedAccessAttempts = 10;                   
+                options.Lockout.MaxFailedAccessAttempts = 10;
 
-                options.User.RequireUniqueEmail = true;                
+                options.User.RequireUniqueEmail = true;
+                options.SignIn.RequireConfirmedEmail = true;
             })
             .AddDefaultTokenProviders()
-            .AddTokenProvider<StaySignedInDataProtectorTokenProvider<ApplicationUser>>(ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName)            
+            .AddTokenProvider<StaySignedInDataProtectorTokenProvider<ApplicationUser>>(ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName)
             .AddTokenProvider<FacebookDataProtectorTokenProvider<ApplicationUser>>(ApiConstants.DataTokenProviders.ExternalLoginProviders.Facebook)
             .AddTokenProvider<GoogleDataProtectorTokenProvider<ApplicationUser>>(ApiConstants.DataTokenProviders.ExternalLoginProviders.Google)
+            .AddTokenProvider<EmailConfirmationDataProtectorTokenProvider<ApplicationUser>>(TokenOptions.DefaultEmailProvider)
             .AddRoles<IdentityRole>()            
             .AddRoleManager<RoleManager<IdentityRole>>()
             .AddSignInManager()
@@ -100,10 +95,10 @@ namespace API.Configurations
             .AddEntityFrameworkStores<DatabaseContext>(); // Tell identity which EF DbContext to use;
 
             // email token provider settings
-            services.Configure<DataProtectionTokenProviderOptions>(options =>
+            services.Configure<EmailConfirmationDataProtectionTokenProviderOptions>(options =>
             {
-                options.Name = TokenOptions.DefaultProvider;
-                options.TokenLifespan = TimeSpan.FromDays(1);
+                options.Name = TokenOptions.DefaultEmailProvider;
+                options.TokenLifespan = TimeSpan.FromDays(3);
             });
 
             // stay signed in provider settings

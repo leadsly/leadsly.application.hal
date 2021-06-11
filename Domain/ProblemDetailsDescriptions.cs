@@ -16,6 +16,7 @@
         public const string NotFound = "The requested resource cannot be found.";
         public const string UnauthorizedDetail = "Authentication credentials are invalid.";
         public const string UnauthorizedAccountLocked = "Account is locked.";
+        public const string ForbiddenEmailNotConfirmed = "Email has not been confirmed.";
         public const string UnauthorizedExternalProvider = "Invalid external provider token";
         public const string Unauthorized = "Authentication credentials are missing or invalid.";
         public const string ExpiredAccessTokenIsInvalid = "Expired access token is invalid.";
@@ -31,11 +32,12 @@
         public const string FailedToDisable2fa = "An error occured while disabling 2fa.";
         public const string FailedToEnable2fa = "An error occured while enabling 2fa.";
         public const string FailedToResetAuthenticatorKey = "An error occured while resetting 2fa authenticator key.";
-        public const string FailedToSendEmail = "Failed to send email.";
+        public const string FailedToSendConfirmationEmail = "Failed to send confirmation email.";
+        public const string FailedToSendChangeEmailLink = "Failed to send change email link.";
         public const string FailedToUpdatePassword = "Failed to update password.";
         public const string FailedToUpdateEmail = "Failed to update e-mail.";
-        public const string FailedToVerifyUsersEmail = "Failed to verify user's e-mail.";
-        public const string FailedToGenerateChangeEmailToken = "Failed to generate change e-mail token.";
-        public const string PasswordResetTokenNotFound = "Password reset token was not found in the request.";
+        public const string FailedToConfirmUsersEmail = "Failed to confirm user's e-mail.";        
+        public const string FailedToGenerateToken = "Failed to generate token.";        
+        public const string TokenNotFound = "Token was not found in the request.";
     }
 }

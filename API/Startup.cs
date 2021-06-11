@@ -31,7 +31,7 @@ namespace API
                     .AddAuthorizationConfiguration()
                     .AddCorsConfiguration(Configuration)
                     .AddApiBehaviorOptionsConfiguration()
-                    .AddRepositoriesConfiguration()
+                    // .AddRepositoriesConfiguration()
                     .AddSupervisorConfiguration()
                     .AddIdentityConfiguration(Configuration)
                     .AddHttpContextAccessor()

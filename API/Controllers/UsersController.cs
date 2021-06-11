@@ -36,8 +36,7 @@ namespace API.Controllers
             _configuration = configuration;
             _emailService = emailService;
             _templateGenerator = templateGenerator;
-            _urlEncoder = urlEncoder;
-            _emailServiceOptions = configuration.GetSection(nameof(EmailServiceOptions));
+            _urlEncoder = urlEncoder;            
             _signinManager = signinManager;
             _logger = logger;
         }
@@ -46,8 +45,7 @@ namespace API.Controllers
         private readonly OdmUserManager _userManager;
         private readonly SignInManager<ApplicationUser> _signinManager;
         private readonly UrlEncoder _urlEncoder;
-        private readonly IEmailService _emailService;
-        private readonly IConfiguration _emailServiceOptions;
+        private readonly IEmailService _emailService;        
         private readonly IHtmlTemplateGenerator _templateGenerator;
         private readonly ILogger<UsersController> _logger;
 
@@ -137,9 +135,49 @@ namespace API.Controllers
                 return BadRequest_UserNotFound();
             }
 
-            // attempt to resend email here;
+            string confirmEmailToken = await this._userManager.GenerateEmailConfirmationTokenAsync(appUser);
 
-            return NoContent();
+            if (confirmEmailToken == null)
+            {
+                _logger.LogDebug("ResendEmailVerification action failed to generate email confirmation token.");
+
+                return BadRequest_FailedToGenerateToken();
+            }
+
+            string code = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Encode(confirmEmailToken);
+
+            // attempt to resend email here;
+            IConfigurationSection clientOptions = this._configuration.GetSection(nameof(ClientOptions));
+            string callBackUrl = ApiConstants.Email.Verify.Url.Replace(ApiConstants.Email.ClientAddress, clientOptions[nameof(ClientOptions.Address)]);
+            callBackUrl = callBackUrl.Replace(ApiConstants.Email.IdParam, appUser.Id);
+            callBackUrl = callBackUrl.Replace(ApiConstants.Email.EmailParam, appUser.Email);
+            callBackUrl = callBackUrl.Replace(ApiConstants.Email.TokenParam, code);
+
+            IConfigurationSection emailServiceOptions = this._configuration.GetSection(nameof(EmailServiceOptions));
+            IConfigurationSection changeEmailOptions = emailServiceOptions.GetSection(nameof(EmailServiceOptions.VerifyEmail));
+            ComposeEmailSettingsModel settings = new ComposeEmailSettingsModel
+            {
+                Subject = changeEmailOptions[nameof(EmailServiceOptions.ChangeEmail.EmailSubject)],
+                To = new MailboxAddress(appUser.Email, appUser.Email),
+                From = new MailboxAddress(emailServiceOptions[nameof(EmailServiceOptions.SystemAdminName)], emailServiceOptions[nameof(EmailServiceOptions.SystemAdminEmail)]),
+                Body = _templateGenerator.GenerateBodyFor(EmailTemplateTypes.VerifyEmail)
+            };
+
+            settings.Body = settings.Body.Replace(ApiConstants.Email.CallbackUrlToken, callBackUrl);
+
+            MimeMessage message = _emailService.ComposeEmail(settings);
+
+            string email = appUser.Email;
+            if (_emailService.SendEmail(message))
+            {
+                _logger.LogInformation("Email verification has been re-sent to: '{email}'", email);
+                return NoContent();
+            }
+            else
+            {   
+                _logger.LogInformation("Email verification has failed to re-send to: '{email}'", email);
+                return BadRequest_FailedToSendConfirmationEmail();
+            }
         }
 
         /// <summary>
@@ -147,9 +185,78 @@ namespace API.Controllers
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
+        [HttpPost]
+        [Route("{id}/change-email-request")]
+        public async Task<IActionResult> InitChangeEmailRequest(string id, [FromBody] ChangeEmailRequestViewModel model)
+        {
+            _logger.LogTrace("InitChangeEmailRequest action executed.");
+
+            ApplicationUser appUser = await _userManager.FindByIdAsync(id);
+
+            if (appUser == null)
+            {
+                _logger.LogDebug("InitChangeEmailRequest action failed. Unable to find user by provided userId: {id}.", id);
+
+                return BadRequest_FailedToUpdateEmail();
+            }
+
+            if (await _userManager.CheckPasswordAsync(appUser, model.Password) == false)
+            {
+                _logger.LogDebug("InitChangeEmailRequest action failed to verify user's password.");
+
+                return BadRequest_FailedToUpdateEmail();
+            }
+
+            string changeEmailToken = await _userManager.GenerateChangeEmailTokenAsync(appUser, model.NewEmail);
+
+            if(changeEmailToken == null)
+            {
+                _logger.LogDebug("InitChangeEmailRequest action failed to generate change email token.");
+
+                return BadRequest_FailedToGenerateToken();
+            }            
+
+            string token = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Encode(changeEmailToken);
+
+            IConfigurationSection clientOptions = this._configuration.GetSection(nameof(ClientOptions));
+            string callBackUrl = ApiConstants.Email.Change.Url.Replace(ApiConstants.Email.ClientAddress, clientOptions[nameof(ClientOptions.Address)]);
+            callBackUrl = callBackUrl.Replace(ApiConstants.Email.IdParam, appUser.Id);
+            callBackUrl = callBackUrl.Replace(ApiConstants.Email.EmailParam, model.NewEmail);
+            callBackUrl = callBackUrl.Replace(ApiConstants.Email.TokenParam, token);
+
+            IConfigurationSection emailServiceOptions = this._configuration.GetSection(nameof(EmailServiceOptions));
+            IConfigurationSection changeEmail = emailServiceOptions.GetSection(nameof(EmailServiceOptions.ChangeEmail));
+            ComposeEmailSettingsModel settings = new ComposeEmailSettingsModel
+            {
+                Subject = changeEmail[nameof(EmailServiceOptions.ChangeEmail.EmailSubject)],
+                To = new MailboxAddress(model.NewEmail, model.NewEmail),
+                From = new MailboxAddress(emailServiceOptions[nameof(EmailServiceOptions.SystemAdminName)], emailServiceOptions[nameof(EmailServiceOptions.SystemAdminEmail)]),
+                Body = _templateGenerator.GenerateBodyFor(EmailTemplateTypes.ChangeEmail)
+            };
+
+            settings.Body = settings.Body.Replace(ApiConstants.Email.CallbackUrlToken, callBackUrl);
+
+            MimeMessage message = _emailService.ComposeEmail(settings);
+
+            if (_emailService.SendEmail(message))
+            {
+                string email = model.NewEmail;
+                _logger.LogInformation("Change email link has been sent to: '{email}'", email);
+
+                return NoContent();
+            }
+            else
+            {
+                _logger.LogDebug("Failed to send change email link.");
+
+                return BadRequest_FailedToSendChangeEmailConfirmation();
+            }
+        }
+
         [HttpPut]
+        [AllowAnonymous]
         [Route("{id}/email")]
-        public async Task<IActionResult> ChangeEmail(string id, [FromBody] EmailChangeViewModel model)
+        public async Task<IActionResult> ChangeEmail(string id, [FromBody] ChangeEmailViewModel model)
         {
             _logger.LogTrace("ChangeEmail action executed.");
 
@@ -162,59 +269,16 @@ namespace API.Controllers
                 return BadRequest_FailedToUpdateEmail();
             }
 
-            if (await _userManager.CheckPasswordAsync(appUser, model.Password) == false)
+            string token = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Decode(model.Token);
+
+            appUser.UserName = model.NewEmail;
+            IdentityResult result = await this._userManager.ChangeEmailAsync(appUser, model.NewEmail, token);
+
+            if (result.Succeeded == false) 
             {
-                _logger.LogDebug("ChangeEmail action failed to verify user's password.");
+                _logger.LogDebug("ChangeEmail action failed. Unable to change user's email. New email or token is invalid.");
 
                 return BadRequest_FailedToUpdateEmail();
-            }
-
-            string changeEmailToken = await _userManager.GenerateChangeEmailTokenAsync(appUser, model.NewEmail);
-
-            if(changeEmailToken == null)
-            {
-                _logger.LogDebug("ChangeEmail action failed to generate change email token.");
-
-                return BadRequest_FailedToGenerateChangeEmailToken();
-            }            
-
-            appUser.Email = model.NewEmail;
-            appUser.EmailConfirmed = false;
-
-            IdentityResult result = await _userManager.UpdateAsync(appUser);
-
-            if (result.Succeeded == false)
-            {
-                _logger.LogDebug("Password reset operation failed to change user's password.");
-
-                return BadRequest_PasswordNotUpdated(result.Errors);
-            }            
-
-            string code = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Encode(changeEmailToken);
-
-
-            string callBackUrl = $"http://localhost:4200/users/{appUser.Id}/verify-email?code={code}";
-
-            ComposeEmailSettingsModel settings = new ComposeEmailSettingsModel
-            {
-                Subject = "Verify E-mail",
-                To = new MailboxAddress(_emailServiceOptions[nameof(EmailServiceOptions.SystemAdminName)], _emailServiceOptions[nameof(EmailServiceOptions.SystemAdminEmail)]),
-                From = new MailboxAddress("System Admin", model.NewEmail),
-                Body = _templateGenerator.GenerateBodyFor(EmailTemplateTypes.PasswordReset)
-            };
-
-            settings.Body = settings.Body.Replace(ApiConstants.Email.CallbackUrlToken, callBackUrl);
-
-            MimeMessage message = _emailService.ComposeEmail(settings);
-
-            if (_emailService.SendEmail(message))
-            {
-                string email = model.NewEmail;
-                _logger.LogInformation("Password recovery email has been sent to: '{email}'", email);
-            }
-            else
-            {
-                _logger.LogDebug("Failed to send verification link.");
             }
 
             return NoContent();
@@ -227,36 +291,37 @@ namespace API.Controllers
         /// <returns></returns>
         [HttpPost]
         [AllowAnonymous]
-        [Route("{id}/verify-email")]
-        public async Task<IActionResult> VerifyEmail(string id, EmailChangeViewModel model)
+        [Route("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailViewModel model)
         {
-            _logger.LogTrace("VerifyEmail action executed.");
+            _logger.LogTrace("ConfirmEmail action executed.");
 
-            ApplicationUser appUser = await _userManager.FindByIdAsync(id);
+            ApplicationUser appUser = await _userManager.FindByEmailAsync(model.Email);
 
             if (appUser == null)
             {
-                _logger.LogDebug("VerifyEmail action failed. Unable to find user by provided userId: {id}.", id);
+                string email = model.Email;
+                _logger.LogDebug("ConfirmEmail action failed. Unable to find user by provided email: {email}.", email);
 
-                return BadRequest_FailedToVerifyUsersEmail();
+                return BadRequest_UserNotFound();
             }
 
-            if (model.EmailChangeToken == null)
+            if (model.Token == null)
             {
-                _logger.LogDebug("ResetPassword action failed. Password reset token not found in the request.");
+                _logger.LogDebug("ConfirmEmail action failed. ConfirmEmail token not found in the request.");
 
-                return BadRequest_PasswordResetTokenNotFound();
+                return BadRequest_TokenNotFound();
             }
 
-            string code = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Decode(model.EmailChangeToken);
+            string token = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Decode(model.Token);
 
-            IdentityResult result = await _userManager.ChangeEmailAsync(appUser, model.NewEmail, code);
+            IdentityResult result = await _userManager.ConfirmEmailAsync(appUser, token);
 
             if (result.Succeeded == false)
             {
-                _logger.LogDebug("ResetPassword action failed. Password reset operation failed to update the new password.");
+                _logger.LogDebug("ConfirmEmail action failed. Failed to confirm user's email. Email or token is invalid.");
 
-                return BadRequest_PasswordNotUpdated(result.Errors);
+                return BadRequest_FailedToConfirmUsersEmail();
             }
 
             return NoContent();
@@ -336,7 +401,7 @@ namespace API.Controllers
             {
                 _logger.LogDebug("ResetPassword action failed. Password reset token not found in the request.");
 
-                return BadRequest_PasswordResetTokenNotFound();
+                return BadRequest_TokenNotFound();
             }
 
             string code = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Decode(model.PasswordResetToken);
@@ -388,13 +453,15 @@ namespace API.Controllers
 
             string code = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Encode(passwordResetCode);
 
-            string callBackUrl = $"http://localhost:4200/auth/reset-password?userId={userToRecoverPassword.Id}&code={code}";
+            IConfigurationSection clientOptions = this._configuration.GetSection(nameof(ClientOptions));
+            string callBackUrl = $"{clientOptions[nameof(ClientOptions.Address)]}/auth/reset-password?userId={userToRecoverPassword.Id}&code={code}";
 
+            IConfigurationSection emailServiceOptions = this._configuration.GetSection(nameof(EmailServiceOptions));
             ComposeEmailSettingsModel settings = new ComposeEmailSettingsModel
             {
-                Subject = "Password Recovery",
-                To = new MailboxAddress(_emailServiceOptions[nameof(EmailServiceOptions.SystemAdminName)], _emailServiceOptions[nameof(EmailServiceOptions.SystemAdminEmail)]),
-                From = new MailboxAddress("System Admin", email),
+                Subject = emailServiceOptions[nameof(EmailServiceOptions.PasswordReset.EmailSubject)],
+                To = new MailboxAddress(email, email),
+                From = new MailboxAddress(emailServiceOptions[nameof(EmailServiceOptions.SystemAdminName)], emailServiceOptions[nameof(EmailServiceOptions.SystemAdminEmail)]),
                 Body = _templateGenerator.GenerateBodyFor(EmailTemplateTypes.PasswordReset)
             };
 

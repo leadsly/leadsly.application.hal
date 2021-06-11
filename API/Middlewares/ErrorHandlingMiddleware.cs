@@ -16,7 +16,7 @@ namespace API.Middlewares
         }
 
         public async Task Invoke(HttpContext context)
-        {
+    {
             try
             {
                 await next(context);
