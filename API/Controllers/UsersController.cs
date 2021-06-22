@@ -457,9 +457,10 @@ namespace API.Controllers
             string callBackUrl = $"{clientOptions[nameof(ClientOptions.Address)]}/auth/reset-password?userId={userToRecoverPassword.Id}&code={code}";
 
             IConfigurationSection emailServiceOptions = this._configuration.GetSection(nameof(EmailServiceOptions));
+            IConfigurationSection forgotPasswordEmail = emailServiceOptions.GetSection(nameof(EmailServiceOptions.PasswordReset));
             ComposeEmailSettingsModel settings = new ComposeEmailSettingsModel
             {
-                Subject = emailServiceOptions[nameof(EmailServiceOptions.PasswordReset.EmailSubject)],
+                Subject = forgotPasswordEmail[nameof(EmailServiceOptions.PasswordReset.EmailSubject)],
                 To = new MailboxAddress(email, email),
                 From = new MailboxAddress(emailServiceOptions[nameof(EmailServiceOptions.SystemAdminName)], emailServiceOptions[nameof(EmailServiceOptions.SystemAdminEmail)]),
                 Body = _templateGenerator.GenerateBodyFor(EmailTemplateTypes.PasswordReset)

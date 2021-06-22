@@ -22,21 +22,21 @@ namespace API.Controllers
     /// Authentication controller.
     /// </summary>
     [ApiController]
-    [Route("[controller]")]    
+    [Route("[controller]")]
     public class AuthController : ApiControllerBase
     {
-        public AuthController(            
+        public AuthController(
             IAccessTokenService tokenService,
             IClaimsIdentityService claimsIdentityService,
             IConfiguration configuration,
-            OdmUserManager userManager,            
+            OdmUserManager userManager,
             UrlEncoder urlEncoder,
             IEmailService emailService,
             IHtmlTemplateGenerator templateGenerator,
             ILogger<AuthController> logger)
-        {            
+        {
             _tokenService = tokenService;
-            _claimsIdentityService = claimsIdentityService;            
+            _claimsIdentityService = claimsIdentityService;
             _userManager = userManager;
             _configuration = configuration;
             _urlEncoder = urlEncoder;
@@ -45,11 +45,11 @@ namespace API.Controllers
             _emailServiceOptions = configuration.GetSection(nameof(EmailServiceOptions));
             _logger = logger;
         }
-        
+
         private readonly IAccessTokenService _tokenService;
         private readonly IConfiguration _configuration;
         private readonly UrlEncoder _urlEncoder;
-        private readonly IClaimsIdentityService _claimsIdentityService;        
+        private readonly IClaimsIdentityService _claimsIdentityService;
         private readonly OdmUserManager _userManager;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _emailServiceOptions;
@@ -88,54 +88,12 @@ namespace API.Controllers
             if (ct.IsCancellationRequested)
                 ct.ThrowIfCancellationRequested();
 
-            if(await _userManager.IsEmailConfirmedAsync(appUser) == false)
+            if (await _userManager.IsEmailConfirmedAsync(appUser) == false)
             {
-                _logger.LogDebug("User's email is not confirmed. Unable to log user in.");
-
-                // attempt to resend email confirmation
-                string confirmEmailToken = await this._userManager.GenerateEmailConfirmationTokenAsync(appUser);
-
-                if (confirmEmailToken == null)
-                {
-                    _logger.LogDebug("Signin action failed to generate email confirmation token.");
-
-                    return BadRequest_FailedToGenerateToken();
-                }
-
-                string token = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Encode(confirmEmailToken);
-
-                IConfigurationSection clientOptions = this._configuration.GetSection(nameof(ClientOptions));
-                string callBackUrl = ApiConstants.Email.Verify.Url.Replace(ApiConstants.Email.ClientAddress, clientOptions[nameof(ClientOptions.Address)]);
-                callBackUrl = callBackUrl.Replace(ApiConstants.Email.EmailParam, appUser.Email);
-                callBackUrl = callBackUrl.Replace(ApiConstants.Email.TokenParam, token);
-
-                IConfigurationSection emailServiceOptions = this._configuration.GetSection(nameof(EmailServiceOptions));
-                IConfigurationSection verifyEmail = emailServiceOptions.GetSection(nameof(EmailServiceOptions.VerifyEmail));
-                ComposeEmailSettingsModel settings = new ComposeEmailSettingsModel
-                {
-                    Subject = verifyEmail[nameof(EmailServiceOptions.VerifyEmail.EmailSubject)],
-                    To = new MailboxAddress(appUser.Email, appUser.Email),
-                    From = new MailboxAddress(emailServiceOptions[nameof(EmailServiceOptions.SystemAdminName)], emailServiceOptions[nameof(EmailServiceOptions.SystemAdminEmail)]),
-                    Body = _templateGenerator.GenerateBodyFor(EmailTemplateTypes.VerifyEmail)
-                };
-
-                settings.Body = settings.Body.Replace(ApiConstants.Email.CallbackUrlToken, callBackUrl);
-
-                MimeMessage message = _emailService.ComposeEmail(settings);
-
-                string email = appUser.Email;
-                if (_emailService.SendEmail(message))
-                {
-                    _logger.LogInformation("Email verification has been sent to: '{email}'", email);                    
-                }
-                else
-                {
-                    _logger.LogInformation("Email verification has failed to send to: '{email}'", email);                    
-                }
-
-                return Forbidden_EmailNotConfirmed();
+                //[CONFIRMATION-WALL]: Keep code if email confirmation is required.
+                //await RequireConfirmedEmail(appUser);
             }
-            
+
             if (await _userManager.CheckPasswordAsync(appUser, signin.Password) == false)
             {
                 _logger.LogDebug("Password validation failed.");
@@ -156,10 +114,10 @@ namespace API.Controllers
                 return Unauthorized_InvalidCredentials(failedAttempts);
             }
 
-            if(await _userManager.GetTwoFactorEnabledAsync(appUser) == true)
+            if (await _userManager.GetTwoFactorEnabledAsync(appUser) == true)
             {
                 var providers = await _userManager.GetValidTwoFactorProvidersAsync(appUser);
-                if(providers.Contains("Authenticator") == false)
+                if (providers.Contains("Authenticator") == false)
                 {
                     return BadRequest_TwoFactorAuthenticationIsNotEnabled();
                 }
@@ -180,8 +138,9 @@ namespace API.Controllers
 
             await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
-            return Ok(new AuthResponseModel { 
-                AccessToken = accessToken                
+            return Ok(new AuthResponseModel
+            {
+                AccessToken = accessToken
             });
         }
 
@@ -286,12 +245,12 @@ namespace API.Controllers
         {
             _logger.LogTrace("Signup action executed.");
 
-            if(string.Equals(signupModel.Password, signupModel.ConfirmPassword, StringComparison.OrdinalIgnoreCase) == false)
+            if (string.Equals(signupModel.Password, signupModel.ConfirmPassword, StringComparison.OrdinalIgnoreCase) == false)
             {
                 _logger.LogDebug("Confirm password and password do not match.");
 
                 return BadRequest_UserRegistrationError();
-            }            
+            }
 
             ApplicationUser appUser = new ApplicationUser
             {
@@ -302,8 +261,8 @@ namespace API.Controllers
 
             if (ct.IsCancellationRequested)
                 ct.ThrowIfCancellationRequested();
-            
-            IdentityResult result = await _userManager.CreateAsync(appUser, signupModel.Password);            
+
+            IdentityResult result = await _userManager.CreateAsync(appUser, signupModel.Password);
 
             if (result.Succeeded == false)
             {
@@ -323,7 +282,7 @@ namespace API.Controllers
             }
 
             string token = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Encode(confirmEmailToken);
-            
+
             IConfigurationSection clientOptions = this._configuration.GetSection(nameof(ClientOptions));
             string callBackUrl = ApiConstants.Email.Verify.Url.Replace(ApiConstants.Email.ClientAddress, clientOptions[nameof(ClientOptions.Address)]);
             callBackUrl = callBackUrl.Replace(ApiConstants.Email.IdParam, appUser.Id);
@@ -335,7 +294,7 @@ namespace API.Controllers
             ComposeEmailSettingsModel settings = new ComposeEmailSettingsModel
             {
                 Subject = verifyEmail[nameof(EmailServiceOptions.VerifyEmail.EmailSubject)],
-                To = new MailboxAddress(appUser.Email, appUser.Email),
+                To = new MailboxAddress(appUser.Email, "omikolaj1@gmail.com"), //appUser.Email),
                 From = new MailboxAddress(emailServiceOptions[nameof(EmailServiceOptions.SystemAdminName)], emailServiceOptions[nameof(EmailServiceOptions.SystemAdminEmail)]),
                 Body = _templateGenerator.GenerateBodyFor(EmailTemplateTypes.VerifyEmail)
             };
@@ -348,23 +307,24 @@ namespace API.Controllers
             if (_emailService.SendEmail(message))
             {
                 _logger.LogInformation("Email verification has been sent to: '{email}'", email);
-                return NoContent();
+                // if you don't want to sign user in after signing up add return NoContent();                
             }
             else
             {
                 _logger.LogInformation("Email verification has failed to send to: '{email}'", email);
-                return BadRequest_FailedToSendConfirmationEmail();
+                // if you don't want to sign user in after signing up add return BadRequest_FailedToSendConfirmationEmail();
             }
 
-            //ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(signedupUser);
+            // if you dont want to sign user in after signing up, comment out rest of this code.            
+            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
 
-            //ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(signedupUser.Id, claimsIdentity);
+            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
 
-            //// TODO may cause issues if StaySignedIn token was not previously set. NEEDS TO BE TESTED
-            //_logger.LogWarning("NEEDS TO BE TESTED. IF NEW USER DOES NOT HAVE STAYSIGNEDIN TOKEN DOES CALLING RemoveAuthenticationTokenAsync CAUSE ISSUES?");
-            //await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
+            // TODO may cause issues if StaySignedIn token was not previously set. NEEDS TO BE TESTED
+            _logger.LogWarning("NEEDS TO BE TESTED. IF NEW USER DOES NOT HAVE STAYSIGNEDIN TOKEN DOES CALLING RemoveAuthenticationTokenAsync CAUSE ISSUES?");
+            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
-            //return Ok(accessToken);
+            return Ok(accessToken);
         }
 
         /// <summary>
@@ -615,18 +575,70 @@ namespace API.Controllers
 
             Claim userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
 
-            if(userIdClaim != null)
+            if (userIdClaim != null)
             {
                 ApplicationUser appUser = await _userManager.FindByIdAsync(userIdClaim.Value);
 
-                if(appUser != null)
-                {                    
+                if (appUser != null)
+                {
                     await _userManager.RemoveAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName, ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName);
                 }
-            }            
+            }
 
             return Ok();
         }
 
+        /// <summary>
+        /// Requires that user's email is confirmed before signing in.
+        /// </summary>
+        /// <param name="appUser"></param>
+        /// <returns></returns>
+        private async Task<IActionResult> RequireConfirmedEmail(ApplicationUser appUser)
+        {
+            _logger.LogDebug("User's email is not confirmed. Unable to log user in.");
+
+            // attempt to resend email confirmation
+            string confirmEmailToken = await this._userManager.GenerateEmailConfirmationTokenAsync(appUser);
+
+            if (confirmEmailToken == null)
+            {
+                _logger.LogDebug("Signin action failed to generate email confirmation token.");
+
+                return BadRequest_FailedToGenerateToken();
+            }
+
+            string token = Microsoft.IdentityModel.Tokens.Base64UrlEncoder.Encode(confirmEmailToken);
+
+            IConfigurationSection clientOptions = this._configuration.GetSection(nameof(ClientOptions));
+            string callBackUrl = ApiConstants.Email.Verify.Url.Replace(ApiConstants.Email.ClientAddress, clientOptions[nameof(ClientOptions.Address)]);
+            callBackUrl = callBackUrl.Replace(ApiConstants.Email.EmailParam, appUser.Email);
+            callBackUrl = callBackUrl.Replace(ApiConstants.Email.TokenParam, token);
+
+            IConfigurationSection emailServiceOptions = this._configuration.GetSection(nameof(EmailServiceOptions));
+            IConfigurationSection verifyEmail = emailServiceOptions.GetSection(nameof(EmailServiceOptions.VerifyEmail));
+            ComposeEmailSettingsModel settings = new ComposeEmailSettingsModel
+            {
+                Subject = verifyEmail[nameof(EmailServiceOptions.VerifyEmail.EmailSubject)],
+                To = new MailboxAddress(appUser.Email, appUser.Email),
+                From = new MailboxAddress(emailServiceOptions[nameof(EmailServiceOptions.SystemAdminName)], emailServiceOptions[nameof(EmailServiceOptions.SystemAdminEmail)]),
+                Body = _templateGenerator.GenerateBodyFor(EmailTemplateTypes.VerifyEmail)
+            };
+
+            settings.Body = settings.Body.Replace(ApiConstants.Email.CallbackUrlToken, callBackUrl);
+
+            MimeMessage message = _emailService.ComposeEmail(settings);
+
+            string email = appUser.Email;
+            if (_emailService.SendEmail(message))
+            {
+                _logger.LogInformation("Email verification has been sent to: '{email}'", email);
+            }
+            else
+            {
+                _logger.LogInformation("Email verification has failed to send to: '{email}'", email);
+            }
+
+            return Forbidden_EmailNotConfirmed();
+        }
     }
 }
