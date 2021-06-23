@@ -74,7 +74,7 @@ namespace API.Controllers
             string recoveryCodeString = await _userManager.GetAuthenticationTokenAsync(appUser, ApiConstants.DataTokenProviders.AspNetUserProvider.ProviderName, ApiConstants.DataTokenProviders.AspNetUserProvider.TokenName);
             UserRecoveryCodesViewModel recoveryCodes = new UserRecoveryCodesViewModel
             {
-                Items = recoveryCodeString?.Split(';') ?? Array.Empty<string>()
+                Items = recoveryCodeString != string.Empty ? recoveryCodeString?.Split(';') : Enumerable.Empty<string>()
             };
 
             AccountSecurityDetailsViewModel securityDetails = new AccountSecurityDetailsViewModel

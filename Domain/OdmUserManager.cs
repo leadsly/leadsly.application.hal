@@ -51,7 +51,10 @@ namespace Domain
             {
                 if(encryptedToken != null)
                 {
-                    decryptedToken = String.Join(';', encryptedToken.Split(';').Select(encryptedCode => EncryptProvider.AESDecrypt(encryptedCode, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey])));
+                    if (encryptedToken != string.Empty)
+                    {
+                        decryptedToken = String.Join(';', encryptedToken.Split(';').Select(encryptedCode => EncryptProvider.AESDecrypt(encryptedCode, _configuration[ApiConstants.VaultKeys.TwoFactorAuthenticationEncryptionKey])));
+                    }
                 }                
             }               
 
