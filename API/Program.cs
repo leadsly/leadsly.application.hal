@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
@@ -11,16 +12,18 @@ namespace API
     public class Program
     {
         public static void Main(string[] args)
-        {   
-            // Reference below answer for when to use Trace, Debug, Info, Warn, Error, Fatal log levels.
-            //https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels            
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
-                .Enrich.FromLogContext()
-                .WriteTo.Console()               
-                .WriteTo.File(Path.Combine(Directory.GetCurrentDirectory(), "api-logs.txt"))
-                .MinimumLevel.Verbose()
-                .CreateLogger();
+        {
+            //https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+
+            string env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
+            IConfiguration configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())                
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true)
+                .Build();
+
+            Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger();
 
             try
             {
@@ -42,7 +45,7 @@ namespace API
             try
             {
                 return Host.CreateDefaultBuilder(args)
-                           .UseSerilog()
+                           .UseSerilog()                                         
                            .ConfigureWebHostDefaults(webBuilder =>
                            {
                                 webBuilder.UseStartup<Startup>();

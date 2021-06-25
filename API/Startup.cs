@@ -13,12 +13,14 @@ namespace API
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
+            Environment = env;
         }
 
         public IConfiguration Configuration { get; }
+        public IWebHostEnvironment Environment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -26,12 +28,11 @@ namespace API
             services.AddControllers()
                     .AddJsonOptionsConfiguration();
 
-            services.AddConnectionProviders(Configuration)
+            services.AddConnectionProviders(Configuration, Environment)
                     .AddJsonWebTokenConfiguration(Configuration)
                     .AddAuthorizationConfiguration()
                     .AddCorsConfiguration(Configuration)
-                    .AddApiBehaviorOptionsConfiguration()
-                    // .AddRepositoriesConfiguration()
+                    .AddApiBehaviorOptionsConfiguration()                    
                     .AddSupervisorConfiguration()
                     .AddIdentityConfiguration(Configuration)
                     .AddHttpContextAccessor()

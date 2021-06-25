@@ -25,18 +25,13 @@ using System.Linq;
 using Serilog;
 using API.DataProtectorTokenProviders;
 using API.Services;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 
 namespace API.Configurations
 {
     public static class ConfigureServices
     {
-        //public static IServiceCollection AddRepositoriesConfiguration(this IServiceCollection services)
-        //{
-        //    Log.Information("Registering repository services.");
-
-        //    return services;
-        //}
-
         public static IServiceCollection AddSupervisorConfiguration(this IServiceCollection services)
         {
             Log.Information("Registering supervisor services.");
@@ -46,7 +41,7 @@ namespace API.Configurations
             return services;
         }
 
-        public static IServiceCollection AddConnectionProviders(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddConnectionProviders(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment env)
         {
             Log.Information("Configuring default connection string and database context.");
 
@@ -55,7 +50,7 @@ namespace API.Configurations
             services.AddDbContext<DatabaseContext>(options =>
             {                
                 options.UseSqlServer(defaultConnection);
-                options.EnableSensitiveDataLogging();
+                options.EnableSensitiveDataLogging(env.IsDevelopment());
             }, ServiceLifetime.Scoped);
             
             services.AddSingleton(new DbInfo(defaultConnection));
