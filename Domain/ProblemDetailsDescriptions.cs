@@ -15,6 +15,7 @@
         public const string NotFoundDetail = "The requested resource cannot be found.";
         public const string NotFound = "The requested resource cannot be found.";
         public const string UnauthorizedDetail = "Authentication credentials are invalid.";
+        public const string UnauthorizedRefreshTokenFailed = "Access token failed to refresh.";
         public const string UnauthorizedAccountLocked = "Account is locked.";
         public const string ForbiddenEmailNotConfirmed = "Email has not been confirmed.";
         public const string UnauthorizedExternalProvider = "Invalid external provider token";

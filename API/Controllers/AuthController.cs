@@ -145,94 +145,6 @@ namespace API.Controllers
         }
 
         /// <summary>
-        /// Verifies two step verification code entered by user and provider sent by the client application.
-        /// </summary>
-        /// <param name="twoFactorVerification"></param>
-        /// <returns></returns>
-        [HttpPost]
-        [AllowAnonymous]
-        [Route("verify-two-step-verification-code")]
-        public async Task<IActionResult> VerifyTwoStepVerificationCode([FromBody] TwoFactorAuthenticationVerificationCodeModel twoFactorVerification)
-        {
-            _logger.LogTrace("VerifyAuthenticator action executed.");
-
-            ApplicationUser appUser = await _userManager.FindByEmailAsync(twoFactorVerification.Email);
-
-            if (appUser == null)
-            {
-                _logger.LogDebug("User not found.");
-
-                return BadRequest_UserNotFound();
-            }
-
-            string verificationCode = twoFactorVerification.Code.Replace(" ", string.Empty).Replace("-", string.Empty);
-
-            bool is2faTokenValid = await _userManager.VerifyTwoFactorTokenAsync(appUser, twoFactorVerification.Provider, verificationCode);
-
-            if (is2faTokenValid == false)
-            {
-                _logger.LogDebug("Verification code or provider was not valid.");
-
-                return BadRequest_TwoStepVerificationCodeOrProviderIsInvalid();
-            }
-
-            // if user successfully logged in reset access failed count back to zero.
-            await _userManager.ResetAccessFailedCountAsync(appUser);
-
-            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
-
-            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
-
-            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
-
-            return Ok(accessToken);
-        }
-
-        /// <summary>
-        /// Signs user in, by redeeming their two factor authentication recovery code.
-        /// </summary>
-        /// <param name="recoveryCode"></param>
-        /// <returns></returns>
-        [HttpPost]
-        [AllowAnonymous]
-        [Route("redeem-recovery-code")]
-        public async Task<IActionResult> RedeemRecoveryCode([FromBody] TwoFactorAuthenticationBackupCodeModel recoveryCode)
-        {
-            _logger.LogTrace("RedeemBackupCode action executed.");
-
-            ApplicationUser appUser = await _userManager.FindByEmailAsync(recoveryCode.Email);
-
-            if (appUser == null)
-            {
-                _logger.LogDebug("User not found.");
-
-                return BadRequest_UserNotFound();
-            }
-
-            string verificationCode = recoveryCode.Code.Replace(" ", string.Empty).Replace("-", string.Empty);
-
-            IdentityResult isRecoveryCodeValid = await _userManager.RedeemTwoFactorRecoveryCodeAsync(appUser, verificationCode);
-
-            if (isRecoveryCodeValid.Succeeded == false)
-            {
-                _logger.LogDebug("Recovery code was not valid.");
-
-                return BadRequest_RecoveryCodeIsNotValid();
-            }
-
-            // if user successfully logged in reset access failed count back to zero.
-            await _userManager.ResetAccessFailedCountAsync(appUser);
-
-            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
-
-            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
-
-            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
-
-            return Ok(accessToken);
-        }
-
-        /// <summary>
         /// Signs user up.
         /// </summary>
         /// <param name="signupModel"></param>
@@ -340,25 +252,40 @@ namespace API.Controllers
 
             RenewAccessTokenResultModel result = new RenewAccessTokenResultModel();
 
+            string expiredAccessToken = HttpContext.GetAccessToken();
+
+            throw new Exception();
+
+            if (expiredAccessToken == string.Empty)
+            {
+                _logger.LogWarning("Expired access token not present on the reqest.");
+
+                return Unauthorized_AccessTokenRefreshFailed();
+            }
+
             try
             {
-                string expiredAccessToken = HttpContext.GetAccessToken();
-
-                if (expiredAccessToken != string.Empty)
-                {
-                    // request has token but it failed authentication. Attempt to renew the token
-                    result = await _tokenService.TryRenewAccessToken(expiredAccessToken);
-                    bool succeeded = result.Succeeded;
-                    _logger.LogDebug("Attempted to rewnew jwt. Result: {succeeded}.", succeeded);
-                }
+                // request has token but it failed authentication. Attempt to renew the token
+                result = await _tokenService.TryRenewAccessToken(expiredAccessToken);
+                bool succeeded = result.Succeeded;
+                _logger.LogDebug("Attempted to rewnew jwt. Result: {succeeded}.", succeeded);                
             }
             catch (Exception ex)
             {
                 // Silently fail
-                _logger.LogWarning(ex, "Failed to rewnew jwt.");
+                _logger.LogError(ex, "Failed to rewnew jwt.");
+
+                return Unauthorized_AccessTokenRefreshFailed();
             }
 
-            return Ok(result);
+            if (result.Succeeded == false)
+            {
+                _logger.LogError("Failed to rewnew jwt.");
+
+                return Unauthorized_AccessTokenRefreshFailed();
+            }
+
+            return Ok(result.AccessToken);
         }
 
         /// <summary>

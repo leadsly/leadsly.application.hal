@@ -1,10 +1,13 @@
-﻿using Domain;
+﻿using API.Authentication;
+using Domain;
 using Domain.Models;
 using Domain.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
@@ -20,22 +23,24 @@ namespace API.Controllers
     {
         public TwoFactorAuthenticationController(IConfiguration configuration,
             OdmUserManager userManager,            
-            IHtmlTemplateGenerator templateGenerator,
+            IAccessTokenService tokenService,
+            IClaimsIdentityService claimsIdentityService,
             UrlEncoder urlEncoder,
             ILogger<TwoFactorAuthenticationController> logger)
         {
             _userManager = userManager;
-            _configuration = configuration;            
-            _templateGenerator = templateGenerator;
+            _configuration = configuration;        
             _urlEncoder = urlEncoder;                        
             _logger = logger;
+            _claimsIdentityService = claimsIdentityService;
+            _tokenService = tokenService;
         }
 
         private readonly IConfiguration _configuration;
+        private readonly IAccessTokenService _tokenService;
+        private readonly IClaimsIdentityService _claimsIdentityService;
         private readonly OdmUserManager _userManager;        
         private readonly UrlEncoder _urlEncoder;        
-        private readonly IConfiguration _emailServiceOptions;
-        private readonly IHtmlTemplateGenerator _templateGenerator;
         private readonly ILogger<TwoFactorAuthenticationController> _logger;
 
         /// <summary>
@@ -124,6 +129,94 @@ namespace API.Controllers
             await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
             return NoContent();
+        }
+
+        /// <summary>
+        /// Signs user in, by redeeming their two factor authentication recovery code.
+        /// </summary>
+        /// <param name="recoveryCode"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [AllowAnonymous]
+        [Route("redeem-recovery-code")]
+        public async Task<IActionResult> RedeemRecoveryCode([FromBody] TwoFactorAuthenticationBackupCodeModel recoveryCode)
+        {
+            _logger.LogTrace("RedeemBackupCode action executed.");
+
+            ApplicationUser appUser = await _userManager.FindByEmailAsync(recoveryCode.Email);
+
+            if (appUser == null)
+            {
+                _logger.LogDebug("User not found.");
+
+                return BadRequest_UserNotFound();
+            }
+
+            string verificationCode = recoveryCode.Code.Replace(" ", string.Empty).Replace("-", string.Empty);
+
+            IdentityResult isRecoveryCodeValid = await _userManager.RedeemTwoFactorRecoveryCodeAsync(appUser, verificationCode);
+
+            if (isRecoveryCodeValid.Succeeded == false)
+            {
+                _logger.LogDebug("Recovery code was not valid.");
+
+                return BadRequest_RecoveryCodeIsNotValid();
+            }
+
+            // if user successfully logged in reset access failed count back to zero.
+            await _userManager.ResetAccessFailedCountAsync(appUser);
+
+            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
+
+            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
+
+            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
+
+            return Ok(accessToken);
+        }
+
+        /// <summary>
+        /// Verifies two step verification code entered by user and provider sent by the client application.
+        /// </summary>
+        /// <param name="twoFactorVerification"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [AllowAnonymous]
+        [Route("verify-two-step-verification-code")]
+        public async Task<IActionResult> VerifyTwoStepVerificationCode([FromBody] TwoFactorAuthenticationVerificationCodeModel twoFactorVerification)
+        {
+            _logger.LogTrace("VerifyTwoStepVerificationCode action executed.");
+
+            ApplicationUser appUser = await _userManager.FindByEmailAsync(twoFactorVerification.Email);
+
+            if (appUser == null)
+            {
+                _logger.LogDebug("User not found.");
+
+                return BadRequest_UserNotFound();
+            }
+
+            string verificationCode = twoFactorVerification.Code.Replace(" ", string.Empty).Replace("-", string.Empty);
+
+            bool is2faTokenValid = await _userManager.VerifyTwoFactorTokenAsync(appUser, twoFactorVerification.Provider, verificationCode);
+
+            if (is2faTokenValid == false)
+            {
+                _logger.LogDebug("Verification code or provider was not valid.");
+
+                return BadRequest_TwoStepVerificationCodeOrProviderIsInvalid();
+            }
+
+            // if user successfully logged in reset access failed count back to zero.
+            await _userManager.ResetAccessFailedCountAsync(appUser);
+
+            ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
+
+            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
+
+            await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
+
+            return Ok(accessToken);
         }
 
         /// <summary>

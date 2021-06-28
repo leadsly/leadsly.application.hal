@@ -390,7 +390,7 @@ namespace API.Controllers
         }
 
         /// <summary>
-        /// Bad request user credentials are invalid.
+        /// Unauthorized request when user credentials are invalid.
         /// </summary>
         /// <returns></returns>
         protected ObjectResult Unauthorized_InvalidCredentials()
@@ -401,6 +401,22 @@ namespace API.Controllers
                 Status = StatusCodes.Status401Unauthorized,
                 Title = ReasonPhrases.GetReasonPhrase(401),
                 Detail = ProblemDetailsDescriptions.UnauthorizedDetail,
+                Instance = this.HttpContext.Request.Path.Value
+            });
+        }
+
+        /// <summary>
+        /// Unauthorized request when refresh token fails.
+        /// </summary>
+        /// <returns></returns>
+        protected ObjectResult Unauthorized_AccessTokenRefreshFailed()
+        {
+            return ProblemDetailsResult(new ProblemDetails
+            {
+                Type = ProblemDetailsTypes.Unauthorized,
+                Status = StatusCodes.Status401Unauthorized,
+                Title = ReasonPhrases.GetReasonPhrase(401),
+                Detail = ProblemDetailsDescriptions.UnauthorizedRefreshTokenFailed,
                 Instance = this.HttpContext.Request.Path.Value
             });
         }
