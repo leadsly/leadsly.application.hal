@@ -50,7 +50,11 @@ namespace API.Configurations
             services.AddDbContext<DatabaseContext>(options =>
             {                
                 options.UseSqlServer(defaultConnection);
-                options.EnableSensitiveDataLogging(env.IsDevelopment());
+                if(env.IsDevelopment())
+                {
+                    Log.Information("Enabling SQL Server sensitive data logging.");
+                    options.EnableSensitiveDataLogging(env.IsDevelopment());
+                }                
             }, ServiceLifetime.Scoped);
             
             services.AddSingleton(new DbInfo(defaultConnection));

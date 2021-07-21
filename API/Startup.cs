@@ -32,12 +32,16 @@ namespace API
                     .AddJsonWebTokenConfiguration(Configuration)
                     .AddAuthorizationConfiguration()
                     .AddCorsConfiguration(Configuration)
-                    .AddApiBehaviorOptionsConfiguration()                    
+                    .AddApiBehaviorOptionsConfiguration()
                     .AddSupervisorConfiguration()
                     .AddIdentityConfiguration(Configuration)
                     .AddHttpContextAccessor()
                     .AddEmailServiceConfiguration()
-                    .AddRemoveNull204FormatterConfigration();            
+                    .AddRemoveNull204FormatterConfigration()
+                    .AddSpaStaticFiles(spa => 
+                    {
+                        spa.RootPath = "wwwroot";
+                    });
 
             services.Configure<MvcOptions>(ApiDefaults.Configure);
         }
@@ -50,14 +54,18 @@ namespace API
 
             if (env.IsDevelopment())
             {
-                app.UseCors(ApiConstants.Cors.AllowAll);                
+                app.UseCors(ApiConstants.Cors.AllowAll);
             }
             else
             {
                 app.UseCors(ApiConstants.Cors.WithOrigins);
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();                
+                app.UseHsts();
             }
+
+            app.UseDefaultFiles();
+
+            app.UseSpaStaticFiles();
 
             app.UseMiddleware<ErrorHandlingMiddleware>();
 
@@ -76,6 +84,11 @@ namespace API
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+            });
+
+            app.UseSpa(spa =>
+            {
+                spa.Options.SourcePath = "wwwroot";
             });
         }
     }

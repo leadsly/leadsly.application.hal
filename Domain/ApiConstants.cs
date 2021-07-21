@@ -59,15 +59,15 @@
 
         public class VaultKeys
         {
-            public const string JwtSecret = "Jwt:Secret";
-            public const string GoogleClientId = "Google:ClientId";
-            public const string GoogleClientSecret = "Google:ClientSecret";
-            public const string FaceBookClientId = "Facebook:ClientId";
-            public const string FaceBookClientSecret = "Facebook:ClientSecret";
-            public const string AdminPassword = "Admin:Password";
-            public const string SystemAdminEmailPassword = "System:Admin:Email:Password";
-            public const string SystemAdminEmail = "System:Admin:Email";
-            public const string TwoFactorAuthenticationEncryptionKey = "TwoFactorAuthentication:EncryptionKey";
+            public const string JwtSecret = "JwtSecret";
+            public const string GoogleClientId = "GoogleClientId";
+            public const string GoogleClientSecret = "GoogleClientSecret";
+            public const string FaceBookClientId = "FacebookClientId";
+            public const string FaceBookClientSecret = "FacebookClientSecret";
+            public const string AdminPassword = "AdminPassword";
+            public const string SystemAdminEmailPassword = "SystemAdminEmailPassword";
+            public const string SystemAdminEmail = "System:AdminEmail";
+            public const string TwoFactorAuthenticationEncryptionKey = "TwoFactorAuthenticationEncryptionKey";
         }
 
         public class Cors
