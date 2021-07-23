@@ -425,7 +425,7 @@ namespace API.Controllers
                 HttpResponseMessage response;
                 using (HttpClient client = new HttpClient())
                 {
-                    Uri verifyFacebookTokenUrl = new Uri(string.Format("https://graph.facebook.com/debug_token?input_token={0}&access_token={1}|{2}", externalUser.AuthToken, _configuration["Facebook:ClientId"], _configuration["Facebook:ClientSecret"]));
+                    Uri verifyFacebookTokenUrl = new Uri(string.Format("https://graph.facebook.com/debug_token?input_token={0}&access_token={1}|{2}", externalUser.AuthToken, _configuration[ApiConstants.VaultKeys.FaceBookClientId], _configuration[ApiConstants.VaultKeys.FaceBookClientSecret]));
                     response = await client.GetAsync(verifyFacebookTokenUrl);
                 }
 

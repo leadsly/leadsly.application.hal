@@ -28,13 +28,41 @@ namespace API.Services
 
             try
             {
-                _logger.LogInformation("Preparing to send email.");
+                _logger.LogInformation("[EmailService]: Preparing to send email.");
 
                 using (SmtpClient client = new SmtpClient())
                 {
-                    client.Connect(_emailServiceOptions[nameof(EmailServiceOptions.SmtpServer)], int.Parse(_emailServiceOptions[nameof(EmailServiceOptions.Port)]), true);
+                    string smtpServer = _emailServiceOptions[nameof(EmailServiceOptions.SmtpServer)];
 
-                    client.Authenticate(_emailServiceOptions[nameof(EmailServiceOptions.SystemAdminEmail)], _configuration[ApiConstants.VaultKeys.SystemAdminEmailPassword]);
+                    if (smtpServer == string.Empty)
+                    {
+                        _logger.LogError("[EmailService]: SmtpServer is not defined.");
+                    }
+
+                    string port = _emailServiceOptions[nameof(EmailServiceOptions.Port)];                    
+
+                    if(port == string.Empty)
+                    {
+                        _logger.LogError("[EmailService]: Port is not defined.");
+                    }
+
+                    client.Connect(smtpServer, int.Parse(port), true);
+
+                    string systemAdminEmail = _emailServiceOptions[nameof(EmailServiceOptions.SystemAdminEmail)];
+
+                    if(systemAdminEmail == string.Empty)
+                    {
+                        _logger.LogError("[EmailService]: SystemAdminEmail is not defined.");
+                    }
+
+                    string systemAdminEmailPassword = _configuration[ApiConstants.VaultKeys.SystemAdminEmailPassword];
+
+                    if(systemAdminEmailPassword == string.Empty)
+                    {
+                        _logger.LogError("[EmailService]: SystemAdminEmailPassword is not defined.");
+                    }
+
+                    client.Authenticate(systemAdminEmail, systemAdminEmailPassword);
 
                     client.Send(message);
 
@@ -45,7 +73,7 @@ namespace API.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error occured while sending email.", ex);
+                _logger.LogError(ex, "[EmailService]: Error occured while sending email.");
 
                 succeeded = false;
             }

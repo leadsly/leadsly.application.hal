@@ -63,7 +63,7 @@ namespace API
                                {
                                    IConfigurationRoot builtConfig = builder.Build();
                                    SecretClient secretClient = new SecretClient(
-                                       new Uri($"https://{builtConfig["KeyVaultName"]}.vault.azure.net/"),
+                                       new Uri(builtConfig["VaultUri"]),
                                        new DefaultAzureCredential());
                                    builder.AddAzureKeyVault(secretClient, new KeyVaultSecretManager());
                                }
