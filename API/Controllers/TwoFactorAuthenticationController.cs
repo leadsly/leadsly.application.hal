@@ -139,7 +139,7 @@ namespace API.Controllers
         [HttpPost]
         [AllowAnonymous]
         [Route("redeem-recovery-code")]
-        public async Task<IActionResult> RedeemRecoveryCode([FromBody] TwoFactorAuthenticationBackupCodeModel recoveryCode)
+        public async Task<IActionResult> RedeemRecoveryCode([FromBody] TwoFactorAuthenticationBackupCodeViewModel recoveryCode)
         {
             _logger.LogTrace("RedeemBackupCode action executed.");
 
@@ -168,7 +168,7 @@ namespace API.Controllers
 
             ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
 
-            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
+            ApplicationAccessTokenViewModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
 
             await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
@@ -212,7 +212,7 @@ namespace API.Controllers
 
             ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
 
-            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
+            ApplicationAccessTokenViewModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
 
             await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
