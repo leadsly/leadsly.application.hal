@@ -183,7 +183,7 @@ namespace API.Controllers
         [HttpPost]
         [AllowAnonymous]
         [Route("verify-two-step-verification-code")]
-        public async Task<IActionResult> VerifyTwoStepVerificationCode([FromBody] TwoFactorAuthenticationVerificationCodeModel twoFactorVerification)
+        public async Task<IActionResult> VerifyTwoStepVerificationCode([FromBody] TwoFactorAuthenticationVerificationCodeViewModel twoFactorVerification)
         {
             _logger.LogTrace("VerifyTwoStepVerificationCode action executed.");
 
@@ -254,7 +254,7 @@ namespace API.Controllers
         /// <returns></returns>
         [HttpPost]        
         [Route("verify-authenticator")]
-        public async Task<IActionResult> VerifyAuthenticator([FromBody] TwoFactorAuthenticationVerificationCodeModel verifyAuthenticatorCode)
+        public async Task<IActionResult> VerifyAuthenticator([FromBody] TwoFactorAuthenticationVerificationCodeViewModel verifyAuthenticatorCode)
         {
             _logger.LogTrace("VerifyAuthenticator action executed.");
 
