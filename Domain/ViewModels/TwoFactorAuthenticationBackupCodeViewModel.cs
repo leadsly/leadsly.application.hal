@@ -1,14 +1,18 @@
-﻿using System.Runtime.Serialization;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Domain.Models
+namespace Domain.ViewModels
 {
     [DataContract]
-    public class TwoFactorAuthenticationVerificationCodeModel
+    public class TwoFactorAuthenticationBackupCodeViewModel
     {
         [DataMember(Name = "code", EmitDefaultValue = false)]
         public string Code { get; set; }
-        [DataMember(Name = "provider", EmitDefaultValue = false)]
-        public string Provider { get; set; }
+
         [DataMember(Name = "email", EmitDefaultValue = false)]
         public string Email { get; set; }
     }

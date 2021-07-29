@@ -1,10 +1,14 @@
-﻿using Domain.Models;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Domain.Models
+namespace Domain.ViewModels
 {
     [DataContract]
-    public class SocialUserModel
+    public class SocialUserViewModel
     {
         [DataMember(Name = "id", EmitDefaultValue = false)]
         public string Id { get; set; }

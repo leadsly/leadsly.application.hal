@@ -139,7 +139,7 @@ namespace API.Controllers
         [HttpPost]
         [AllowAnonymous]
         [Route("redeem-recovery-code")]
-        public async Task<IActionResult> RedeemRecoveryCode([FromBody] TwoFactorAuthenticationBackupCodeModel recoveryCode)
+        public async Task<IActionResult> RedeemRecoveryCode([FromBody] TwoFactorAuthenticationBackupCodeViewModel recoveryCode)
         {
             _logger.LogTrace("RedeemBackupCode action executed.");
 
@@ -168,7 +168,7 @@ namespace API.Controllers
 
             ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
 
-            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
+            ApplicationAccessTokenViewModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
 
             await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
@@ -183,7 +183,7 @@ namespace API.Controllers
         [HttpPost]
         [AllowAnonymous]
         [Route("verify-two-step-verification-code")]
-        public async Task<IActionResult> VerifyTwoStepVerificationCode([FromBody] TwoFactorAuthenticationVerificationCodeModel twoFactorVerification)
+        public async Task<IActionResult> VerifyTwoStepVerificationCode([FromBody] TwoFactorAuthenticationVerificationCodeViewModel twoFactorVerification)
         {
             _logger.LogTrace("VerifyTwoStepVerificationCode action executed.");
 
@@ -212,7 +212,7 @@ namespace API.Controllers
 
             ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
 
-            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
+            ApplicationAccessTokenViewModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
 
             await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
@@ -254,7 +254,7 @@ namespace API.Controllers
         /// <returns></returns>
         [HttpPost]        
         [Route("verify-authenticator")]
-        public async Task<IActionResult> VerifyAuthenticator([FromBody] TwoFactorAuthenticationVerificationCodeModel verifyAuthenticatorCode)
+        public async Task<IActionResult> VerifyAuthenticator([FromBody] TwoFactorAuthenticationVerificationCodeViewModel verifyAuthenticatorCode)
         {
             _logger.LogTrace("VerifyAuthenticator action executed.");
 
