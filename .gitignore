@@ -236,3 +236,7 @@ _Pvt_Extensions
 # Logs
 api-logs.txt
 API/Logs/
+/API/Properties/serviceDependencies.odiam - Web Deploy.json
+/API/Properties/serviceDependencies.json
+/API/Properties/ServiceDependencies/odiam - Web Deploy/secrets1.arm.json
+/API/Properties/ServiceDependencies/odiam - Web Deploy/profile.arm.json

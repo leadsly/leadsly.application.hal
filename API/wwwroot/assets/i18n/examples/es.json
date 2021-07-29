@@ -1,0 +1,9 @@
+{
+	"odm.examples.menu.auth": "Autenticación",
+	"odm.examples.menu.crud": "CRUD",
+	"odm.examples.menu.form": "Formar",
+	"odm.examples.menu.notifications": "Notificaciones",
+	"odm.examples.menu.stocks": "Acciones",
+	"odm.examples.menu.theming": "Tematización",
+	"odm.examples.menu.todos": "Recordatorios"
+}

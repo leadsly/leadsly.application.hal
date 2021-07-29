@@ -1,0 +1,20 @@
+{
+	"level": "Error",
+	"loggers": [
+		{
+			"loggerName": "console",
+			"loggerLocation": "",
+			"isActive": true
+		},
+		{
+			"loggerName": "localstorage",
+			"loggerLocation": "logging",
+			"isActive": false
+		},
+		{
+			"loggerName": "webapi",
+			"loggerLocation": "/api/log",
+			"isActive": false
+		}
+	]
+}

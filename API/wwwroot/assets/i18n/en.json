@@ -1,0 +1,245 @@
+{
+	"odm": {
+		"server-down": "Server down",
+		"title.long": "Odiam Ngxs Material Starter",
+		"title.short": "Angular Starter",
+		"header.github": "Project Github Repository",
+		"account": {
+			"header": "Personal account",
+			"general": {
+				"title": "General",
+				"personal-email": "Personal email",
+				"verified-tooltip": "Emailed verified",
+				"pending-verification-tooltip": "Verification pending",
+				"resend-verification-toast": "Verification email has been resent",
+				"resend-verification-disabled-tooltip": "Please allow few mintues to receive email verification.",
+				"email": {
+					"title": "E-mail",
+					"description": "Change email associated with your account",
+					"change": {
+						"title": "Change Email Request",
+						"request-sent": "Confirm e-mail to complete the request",
+						"success": "Successfully updated e-mail"
+					}
+				}
+			},
+			"security": {
+				"title": "Security",
+				"change-password": {
+					"success": "Successfully updated password"
+				},
+				"two-step": {
+					"title": "Two-step verification",
+					"description": "Require security code in addition to your password",
+					"recovery-codes": {
+						"title": "Recovery codes",
+						"description": "Get security codes to use when you can't access your phone",
+						"backup-codes": {
+							"title": "Backup codes",
+							"description": "You can redeem these one time codes to access your account",
+							"no-codes": "No back up codes left. Please generate new ones."
+						}
+					},
+					"setup-wizard": {
+						"first-step": {
+							"title": "Setup",
+							"instructions": {
+								"qr-code": "Scan the QR Code or enter the following key into your two factor authenticator app such as Google Authenticator or Microsoft Authenticator. Spaces and casing do not matter",
+								"verification-code": "Once you have scanned the QR code or entered the key above, your two factor authentication app will provide you with a unique code. Enter that code in the confirmation box below"
+							},
+							"verification-code-placeholder": "6-digit verification code"
+						},
+						"last-step": {
+							"title": "Finished",
+							"header": "Succeeded",
+							"information": "Next time you log in you will be prompted to use two factor authentication",
+							"save-codes": "Save below one time access codes in case you do not have access to your phone"
+						}
+					}
+				},
+				"password": {
+					"title": "Password",
+					"description": "Your unique password used to protect your account",
+					"change": {
+						"title": "Change password"
+					}
+				}
+			}
+		},
+		"auth": {
+			"session": {
+				"expired": "Your session is expired and you are about to be signed out.",
+				"inactive": "You are about to be signed out due to inactivity.",
+				"inactive-toast-message": "Session expired due to inactivity",
+				"failed-to-renew": "Renewing session failed."
+			},
+			"verification": {
+				"email": "You're email has been successfully updated",
+				"error-title": "E-mail confirmation error",
+				"error-description": "Something went wrong during confirmation process...",
+				"success-title": "E-mail confirmed",
+				"success-description": "Your email has been confirmed, you may sign in now",
+				"required": "Please go to your email and verify your account",
+				"confirming": "Email confirmation in progress",
+				"toast-message": "Email has been confirmed"
+			},
+			"checking-availability": "Checking availability",
+			"password-help": "Verifies your password meets requirements.",
+			"forgot-password": {
+				"header": "Forgot your password?",
+				"subheader": "Enter your email address to reset your password.",
+				"message": "If the provided e-mail is registered, you will receive an email from us shortly to reset your password."
+			},
+			"sign-in": {
+				"title": "Sign in",
+				"header": "Welcome Back!",
+				"subheader": "Sign in to view your account",
+				"forgot-password": "Forgot password?",
+				"remember-me": "Remember my email",
+				"stay-signed-in": "Stay signed in?"
+			},
+			"sign-up": {
+				"title": "Create Account",
+				"header": "Welcome",
+				"subheader": "Sign up to create an account."
+			},
+			"two-step-verification": {
+				"header": "Two step verification is required",
+				"subheader": "Please enter verification code found on your authenticator app.",
+				"use-recovery-code": "Use recovery code",
+				"use-recovery-codes-tooltip": "Redeem recovery code to sign in"
+			},
+			"password-reset": {
+				"header": "Password reset",
+				"updated": {
+					"header": "Password updated",
+					"message": "You can now sign in using your new password"
+				}
+			},
+			"recovery-code": {
+				"header": "Recovery code is required",
+				"subheader": "Please enter your recovery code."
+			},
+			"form": {
+				"label": {
+					"email": "E-mail",
+					"password": "Password",
+					"current-password": "Current Password",
+					"new-password": "New Password",
+					"new-email": "New E-mail",
+					"confirm-password": "Confirm Password"
+				},
+				"placeholders": {
+					"verification-code": "{number}-digit verification code"
+				},
+				"requirements": {
+					"title": "Password help",
+					"pass-must-match": "Passwords must match",
+					"one-upper-case": "Must contain 1 upper case letter",
+					"one-lower-case": "Must contain 1 lower case letter",
+					"min-chars-long": "Must be 8 characters long",
+					"digit": "Must contain 1 digit",
+					"three-unique-chars": "Must contain 3 unique characters",
+					"one-special-char": "Must contain one (! @ # $ % & * _ ?)"
+				},
+				"validations": {
+					"non-unique-email": "{email} is already registered.",
+					"invalid-email-format": "Invalid e-mail format.",
+					"input-error": "Input validation error.",
+					"field-required": "This field is required.",
+					"valid-email": "E-mail is not registered.",
+					"min-length": "Input field must be at least {requiredLength} characters long.",
+					"password": {
+						"number": "Password must have at least one digit ('0'-'9').",
+						"uppercase": "Password must have at least one uppercase ('A'-'Z').",
+						"lowercase": "Password must have at least one lowercase ('a'-'z').",
+						"non-alphanumeric": "Password must contain one of {requiredNonAlphanumeric}",
+						"min-length": "Password must be at least {requiredLength} characters long."
+					}
+				}
+			}
+		},
+		"settings": {
+			"title": "Settings",
+			"animations": {
+				"elements": "Navigation page elements slide up",
+				"page": "Navigation whole page transition",
+				"title": "Animations"
+			},
+			"general": {
+				"title": "General",
+				"placeholder": "Language",
+				"language": {
+					"de": "German",
+					"en": "English",
+					"es": "Spanish",
+					"fr": "French",
+					"he": "Hebrew",
+					"pt-br": "Portuguese",
+					"sk": "Slovak",
+					"zh-cn": "Simple Chinese"
+				}
+			},
+			"themes": {
+				"blue": "Blue",
+				"dark": "Dark",
+				"light": "Light",
+				"nature": "Nature",
+				"night-mode": "Auto night mode (from 21:00 to 7:00)",
+				"placeholder": "Color Theme",
+				"saneago": "",
+				"sticky-header": "Sticky header",
+				"title": "Themes"
+			}
+		},
+		"menu": {
+			"about": "About",
+			"examples": "Examples",
+			"features": "Features",
+			"signin": "Sign in",
+			"signout": "Sign out",
+			"account": "Account",
+			"settings": "Settings"
+		},
+		"features": {
+			"angular": "Modern powerful framework",
+			"angular-cli": "A command line interface for Angular",
+			"angular-material": "Material design component library",
+			"bootstrap": "Responsive layout from battle tested, world most famous UI library",
+			"cypress": "Cypress is a next generation front end testing tool built for the modern web.",
+			"documentation": "Docs",
+			"fontawesome": "Easy to use vector icons and social logos",
+			"guide": "Guide",
+			"lazyloading": {
+				"title": "Lazy loading",
+				"description": "Faster startup time with lazy loaded feature modules"
+			},
+			"ngxs": "One way data flow powered by RxJS Observables",
+			"ngxtranslate": "An internationalization library for Angular",
+			"rxjs": "Reactive programming with async collections using Observables",
+			"description": "Flexible theming support for provided and custom components",
+			"themes.title": "Themes",
+			"title": "Features",
+			"typescript": "Superior developer experience, code completion, refactoring and less bugs"
+		},
+		"buttons": {
+			"reset-password": "Reset Password",
+			"resend-verification": "Resend",
+			"change": "Change",
+			"go-to-sign-in": "Go to Sign in",
+			"submit": "Submit",
+			"sign-up": "Sign up",
+			"sign-in": "Sign in",
+			"create-account": "Create Account",
+			"verify": "Verify",
+			"verifing": "Verifing",
+			"verified": "Verified",
+			"finish": "Finish",
+			"generate": "Generate new codes",
+			"cancel": "Cancel",
+			"yes": "Yes",
+			"no": "No",
+			"change-theme": "Change Theme"
+		}
+	}
+}

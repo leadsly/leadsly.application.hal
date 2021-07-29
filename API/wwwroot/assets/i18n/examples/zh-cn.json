@@ -1,0 +1,9 @@
+{
+	"odm.examples.menu.auth": "鉴权",
+	"odm.examples.menu.crud": "增删改查",
+	"odm.examples.menu.form": "表单",
+	"odm.examples.menu.notifications": "通知",
+	"odm.examples.menu.stocks": "股票",
+	"odm.examples.menu.theming": "主题",
+	"odm.examples.menu.todos": "待办事项"
+}
