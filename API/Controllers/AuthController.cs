@@ -1,6 +1,7 @@
 ﻿using API.Authentication;
 using API.Extensions;
 using Domain.Models;
+using Domain.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -65,7 +66,7 @@ namespace API.Controllers
         [HttpPost]
         [AllowAnonymous]
         [Route("signin")]
-        public async Task<IActionResult> Signin([FromBody] SigninUserModel signin, CancellationToken ct = default)
+        public async Task<IActionResult> Signin([FromBody] SigninUserViewModel signin, CancellationToken ct = default)
         {
             _logger.LogTrace("Signin action executed.");
 
@@ -122,7 +123,7 @@ namespace API.Controllers
                     return BadRequest_TwoFactorAuthenticationIsNotEnabled();
                 }
 
-                return Ok(new AuthResponseModel
+                return Ok(new AuthResponseViewModel
                 {
                     Is2StepVerificationRequired = true,
                     Provider = "Authenticator"
@@ -134,11 +135,11 @@ namespace API.Controllers
 
             ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
 
-            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
+            ApplicationAccessTokenViewModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
 
             await SetOrRefreshStaySignedInToken(appUser, _userManager, _logger);
 
-            return Ok(new AuthResponseModel
+            return Ok(new AuthResponseViewModel
             {
                 AccessToken = accessToken
             });
@@ -153,7 +154,7 @@ namespace API.Controllers
         [HttpPost]
         [AllowAnonymous]
         [Route("signup")]
-        public async Task<IActionResult> Signup([FromBody] SignupUserModel signupModel, CancellationToken ct = default)
+        public async Task<IActionResult> Signup([FromBody] SignupUserViewModel signupModel, CancellationToken ct = default)
         {
             _logger.LogTrace("Signup action executed.");
 
@@ -230,7 +231,7 @@ namespace API.Controllers
             // if you dont want to sign user in after signing up, comment out rest of this code.            
             ClaimsIdentity claimsIdentity = await _claimsIdentityService.GenerateClaimsIdentityAsync(appUser);
 
-            ApplicationAccessTokenModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
+            ApplicationAccessTokenViewModel accessToken = await _tokenService.GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
 
             // TODO may cause issues if StaySignedIn token was not previously set. NEEDS TO BE TESTED
             _logger.LogWarning("NEEDS TO BE TESTED. IF NEW USER DOES NOT HAVE STAYSIGNEDIN TOKEN DOES CALLING RemoveAuthenticationTokenAsync CAUSE ISSUES?");
@@ -250,7 +251,7 @@ namespace API.Controllers
         {
             _logger.LogTrace("RefreshToken action executed.");
 
-            RenewAccessTokenResultModel result = new RenewAccessTokenResultModel();
+            RenewAccessTokenResultViewModel result = new RenewAccessTokenResultViewModel();
 
             string expiredAccessToken = HttpContext.GetAccessToken();
 
@@ -296,12 +297,12 @@ namespace API.Controllers
         [HttpPost]
         [AllowAnonymous]
         [Route("external-signin-google")]
-        public async Task<IActionResult> ExternalSigninGoogle([FromBody] SocialUserModel externalUser)
+        public async Task<IActionResult> ExternalSigninGoogle([FromBody] SocialUserViewModel externalUser)
         {
             _logger.LogTrace("ExternalSigninGoogle action executed.");
             ApplicationUser appUser = await _userManager.FindByEmailAsync(externalUser.Email);
 
-            ApplicationAccessTokenModel accessToken;
+            ApplicationAccessTokenViewModel accessToken;
 
             // Sign user in
             if (appUser != null)
@@ -377,11 +378,11 @@ namespace API.Controllers
         [HttpPost]
         [AllowAnonymous]
         [Route("external-signin-facebook")]
-        public async Task<IActionResult> ExternalSigninFacebook([FromBody] SocialUserModel externalUser)
+        public async Task<IActionResult> ExternalSigninFacebook([FromBody] SocialUserViewModel externalUser)
         {
             _logger.LogTrace("ExternalSigninFacebook action executed.");
 
-            ApplicationAccessTokenModel accessToken;
+            ApplicationAccessTokenViewModel accessToken;
 
             ApplicationUser appUser = await _userManager.FindByEmailAsync(externalUser.Email);
 

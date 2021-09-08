@@ -1,4 +1,5 @@
 ﻿using API.Authentication.Jwt;
+using Domain.ViewModels;
 using Domain.Models;
 using JWT;
 using JWT.Algorithms;
@@ -40,9 +41,9 @@ namespace API.Authentication
         private IBase64UrlEncoder UrlEncoder => new JwtBase64UrlEncoder();
         private IJwtAlgorithm Algorithm => new HMACSHA256Algorithm();
 
-        public async Task<ApplicationAccessTokenModel> GenerateApplicationTokenAsync(string userId, ClaimsIdentity identity)
+        public async Task<ApplicationAccessTokenViewModel> GenerateApplicationTokenAsync(string userId, ClaimsIdentity identity)
         {
-            return new ApplicationAccessTokenModel
+            return new ApplicationAccessTokenViewModel
             {
                 access_token = await _jwtFactory.GenerateEncodedJwtAsync(userId, identity),
                 expires_in = (long)_jwtOptions.ValidFor.TotalSeconds
@@ -83,9 +84,9 @@ namespace API.Authentication
             return principal;
         }
 
-        public async Task<RenewAccessTokenResultModel> TryRenewAccessToken(string expiredAccessToken)
+        public async Task<RenewAccessTokenResultViewModel> TryRenewAccessToken(string expiredAccessToken)
         {
-            RenewAccessTokenResultModel result = new RenewAccessTokenResultModel();
+            RenewAccessTokenResultViewModel result = new RenewAccessTokenResultViewModel();
 
             ClaimsPrincipal claimsPrincipal = GetPrincipalFromExpiredToken(expiredAccessToken);
 
@@ -125,7 +126,7 @@ namespace API.Authentication
                 return result;
             }
 
-            ApplicationAccessTokenModel accessToken = await GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
+            ApplicationAccessTokenViewModel accessToken = await GenerateApplicationTokenAsync(appUser.Id, claimsIdentity);
 
             result.Succeeded = true;
 

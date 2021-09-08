@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Domain.ViewModels
 {
-    class RenewAccessTokenResultViewModel
+    public class RenewAccessTokenResultViewModel
     {
         public bool Succeeded { get; set; } = false;
         public ApplicationAccessTokenViewModel AccessToken { get; set; }

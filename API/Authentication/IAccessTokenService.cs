@@ -1,4 +1,4 @@
-﻿using Domain.Models;
+﻿using Domain.ViewModels;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -6,10 +6,10 @@ namespace API.Authentication
 {
     public interface IAccessTokenService
     {
-        Task<ApplicationAccessTokenModel> GenerateApplicationTokenAsync(string userId, ClaimsIdentity identity);
+        Task<ApplicationAccessTokenViewModel> GenerateApplicationTokenAsync(string userId, ClaimsIdentity identity);
 
         ClaimsPrincipal GetPrincipalFromExpiredToken(string expiredAccessToken);
 
-        Task<RenewAccessTokenResultModel> TryRenewAccessToken(string expiredAccessToken);
+        Task<RenewAccessTokenResultViewModel> TryRenewAccessToken(string expiredAccessToken);
     }
 }
