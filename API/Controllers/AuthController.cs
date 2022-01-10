@@ -255,8 +255,6 @@ namespace API.Controllers
 
             string expiredAccessToken = HttpContext.GetAccessToken();
 
-            throw new Exception();
-
             if (expiredAccessToken == string.Empty)
             {
                 _logger.LogWarning("Expired access token not present on the reqest.");
