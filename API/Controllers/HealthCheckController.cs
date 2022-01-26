@@ -1,4 +1,5 @@
 ﻿using Domain;
+using Domain.Supervisor;
 using Domain.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,11 +14,13 @@ namespace API.Controllers
     [Route("[controller]")]    
     public class HealthCheckController : ApiControllerBase
     {
-        public HealthCheckController(ILogger<HealthCheckController> logger)
+        public HealthCheckController(ILogger<HealthCheckController> logger, ISupervisor supervisor)
         {
             _logger = logger;
+            _supervisor = supervisor;
         }
 
+        private readonly ISupervisor _supervisor;
         private readonly ILogger<HealthCheckController> _logger;
 
         /// <summary>
@@ -28,6 +31,8 @@ namespace API.Controllers
         [AllowAnonymous]
         public IActionResult HealthCheck()
         {
+
+            _supervisor.Authenticate_Bot("omikolaj1@gmail.com", "somesuperlongandcomplicate");
             _logger.LogTrace("Healthcheck action executed.");           
             return new JsonResult(new HealthCheckViewModel 
             {

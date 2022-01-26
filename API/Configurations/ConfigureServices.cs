@@ -27,6 +27,8 @@ using API.DataProtectorTokenProviders;
 using API.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
 
 namespace API.Configurations
 {
@@ -37,6 +39,15 @@ namespace API.Configurations
             Log.Information("Registering supervisor services.");
 
             services.AddScoped<ISupervisor, Supervisor>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddSeleniumServicesConfiguration(this IServiceCollection services)
+        {
+            Log.Information("Registering selenium services configuration.");
+
+            services.AddScoped<ISeleniumStartup, SeleniumStartup>();
 
             return services;
         }

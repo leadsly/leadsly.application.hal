@@ -37,6 +37,7 @@ namespace API
                     .AddCorsConfiguration(Configuration)
                     .AddApiBehaviorOptionsConfiguration()
                     .AddSupervisorConfiguration()
+                    .AddSeleniumServicesConfiguration()
                     .AddIdentityConfiguration(Configuration)
                     .AddHttpContextAccessor()
                     .AddEmailServiceConfiguration()

@@ -7,5 +7,6 @@ namespace Domain.Supervisor
 {
     public interface ISupervisor
     {
+        void Authenticate_Bot(string email, string password);
     }
 }
