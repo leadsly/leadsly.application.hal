@@ -1,6 +1,6 @@
 ﻿namespace API.Exceptions
 {
-    interface IOdmWebApiException
+    interface IBotLeadslyWebApiException
     {
         string Type { get; }
         string Title { get; }

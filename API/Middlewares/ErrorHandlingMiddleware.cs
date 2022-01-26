@@ -30,7 +30,7 @@ namespace API.Middlewares
         private static Task HandleException(HttpContext context, Exception ex)
         {
             // If the exception is not user based
-            if (ex is not IOdmWebApiException)
+            if (ex is not IBotLeadslyWebApiException)
             {
                 // 500 if unexpected
                 HttpStatusCode code = HttpStatusCode.InternalServerError; 

@@ -25,7 +25,7 @@ namespace API.Controllers
         /// <param name="_userManager"></param>
         /// <param name="_logger"></param>
         /// <returns></returns>
-        public async Task SetOrRefreshStaySignedInToken<T>(ApplicationUser appUser, OdmUserManager _userManager, ILogger<T> _logger)
+        public async Task SetOrRefreshStaySignedInToken<T>(ApplicationUser appUser, BotLeadslyUserManager _userManager, ILogger<T> _logger)
         {
             string tokenName = ApiConstants.DataTokenProviders.StaySignedInProvider.TokenName;
             _logger.LogDebug("Attempting to remove user's [{tokenName}] token.", tokenName);

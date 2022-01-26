@@ -90,7 +90,7 @@ namespace API.Configurations
             .AddRoles<IdentityRole>()            
             .AddRoleManager<RoleManager<IdentityRole>>()
             .AddSignInManager()
-            .AddUserManager<OdmUserManager>()
+            .AddUserManager<BotLeadslyUserManager>()
             .AddEntityFrameworkStores<DatabaseContext>(); // Tell identity which EF DbContext to use;
 
             // email token provider settings

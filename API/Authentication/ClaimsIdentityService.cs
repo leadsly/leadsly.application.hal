@@ -11,7 +11,7 @@ namespace API.Authentication
 {
     public class ClaimsIdentityService : IClaimsIdentityService
     {
-        public ClaimsIdentityService(ILogger<IClaimsIdentityService> logger, OdmUserManager userManager, RoleManager<IdentityRole> roleManager)
+        public ClaimsIdentityService(ILogger<IClaimsIdentityService> logger, BotLeadslyUserManager userManager, RoleManager<IdentityRole> roleManager)
         {
             _logger = logger;
             _userManager = userManager;
@@ -20,7 +20,7 @@ namespace API.Authentication
 
         private readonly ILogger<IClaimsIdentityService> _logger;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly OdmUserManager _userManager;
+        private readonly BotLeadslyUserManager _userManager;
 
         public async Task<ClaimsIdentity> GenerateClaimsIdentityAsync(ApplicationUser user)
         {

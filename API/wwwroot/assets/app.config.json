@@ -1,7 +1,0 @@
-{
-	"session": {
-		"sessionIdleTimeout": 300,
-		"checkIfSessionIdleInterval": 25,
-		"sessionExpiredDialogTimeout": 120
-	}
-}

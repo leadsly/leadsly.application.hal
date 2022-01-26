@@ -11,9 +11,9 @@ using System.Threading.Tasks;
 
 namespace Domain
 {
-    public class OdmUserManager : UserManager<ApplicationUser>
+    public class BotLeadslyUserManager : UserManager<ApplicationUser>
     {
-        public OdmUserManager(
+        public BotLeadslyUserManager(
             IUserStore<ApplicationUser> store, 
             IOptions<IdentityOptions> optionsAccessor,
             IPasswordHasher<ApplicationUser> passwordHasher, 

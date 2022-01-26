@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace API.Exceptions
 {
-    public class OdmInvalidJwtException : InvalidJwtException, IOdmWebApiException
+    public class BotLeadslyInvalidJwtException : InvalidJwtException, IBotLeadslyWebApiException
     {
-        public OdmInvalidJwtException(string message) : base(message) { }
+        public BotLeadslyInvalidJwtException(string message) : base(message) { }
 
         public string Type => ProblemDetailsTypes.InternalServerErrorType;
 

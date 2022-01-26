@@ -4,7 +4,7 @@ using System;
 
 namespace API.Extensions
 {
-    public static class OdmApiExtensions
+    public static class BotLeadslyApiExtensions
     {
         public static string GetAccessToken(this HttpContext context)
         {

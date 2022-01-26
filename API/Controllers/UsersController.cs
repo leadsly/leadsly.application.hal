@@ -25,7 +25,7 @@ namespace API.Controllers
     {
         public UsersController(
             IConfiguration configuration,
-            OdmUserManager userManager,
+            BotLeadslyUserManager userManager,
             IEmailService emailService,
             IHtmlTemplateGenerator templateGenerator,
             SignInManager<ApplicationUser> signinManager,
@@ -42,7 +42,7 @@ namespace API.Controllers
         }
 
         private readonly IConfiguration _configuration;
-        private readonly OdmUserManager _userManager;
+        private readonly BotLeadslyUserManager _userManager;
         private readonly SignInManager<ApplicationUser> _signinManager;
         private readonly UrlEncoder _urlEncoder;
         private readonly IEmailService _emailService;        

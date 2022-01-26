@@ -30,7 +30,7 @@ namespace API.Controllers
             IAccessTokenService tokenService,
             IClaimsIdentityService claimsIdentityService,
             IConfiguration configuration,
-            OdmUserManager userManager,
+            BotLeadslyUserManager userManager,
             UrlEncoder urlEncoder,
             IEmailService emailService,
             IHtmlTemplateGenerator templateGenerator,
@@ -51,7 +51,7 @@ namespace API.Controllers
         private readonly IConfiguration _configuration;
         private readonly UrlEncoder _urlEncoder;
         private readonly IClaimsIdentityService _claimsIdentityService;
-        private readonly OdmUserManager _userManager;
+        private readonly BotLeadslyUserManager _userManager;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _emailServiceOptions;
         private readonly IHtmlTemplateGenerator _templateGenerator;

@@ -19,7 +19,7 @@ namespace API.Authentication
 {
     public class AccessTokenService : IAccessTokenService
     {
-        public AccessTokenService(IConfiguration configuration, IJwtFactory jwtFactory, IOptions<JwtIssuerOptions> jwtOptions, IClaimsIdentityService claimsIdentityService, OdmUserManager userManager, RoleManager<IdentityRole> roleManager)
+        public AccessTokenService(IConfiguration configuration, IJwtFactory jwtFactory, IOptions<JwtIssuerOptions> jwtOptions, IClaimsIdentityService claimsIdentityService, BotLeadslyUserManager userManager, RoleManager<IdentityRole> roleManager)
         {
             _configuration = configuration;
             _jwtFactory = jwtFactory;
@@ -33,7 +33,7 @@ namespace API.Authentication
         private readonly IJwtFactory _jwtFactory;
         private readonly JwtIssuerOptions _jwtOptions;
         private readonly IClaimsIdentityService _claimsIdentityService;
-        private readonly OdmUserManager _userManager;
+        private readonly BotLeadslyUserManager _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
 
         private IJsonSerializer Serializer => new JsonNetSerializer();
@@ -78,7 +78,7 @@ namespace API.Authentication
 
             if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256Signature, StringComparison.InvariantCultureIgnoreCase))
             {
-                throw new OdmSecurityTokenException();
+                throw new BotLeadslySecurityTokenException();
             }
 
             return principal;

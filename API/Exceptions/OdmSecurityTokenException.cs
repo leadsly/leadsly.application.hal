@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace API
 {
-    public class OdmSecurityTokenException : SecurityTokenException, IOdmWebApiException
+    public class BotLeadslySecurityTokenException : SecurityTokenException, IBotLeadslyWebApiException
     {
         public string Type => ProblemDetailsTypes.InternalServerErrorType;
 

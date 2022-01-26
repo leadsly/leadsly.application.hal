@@ -22,7 +22,7 @@ namespace API.Controllers
     public class TwoFactorAuthenticationController : ApiControllerBase
     {
         public TwoFactorAuthenticationController(IConfiguration configuration,
-            OdmUserManager userManager,            
+            BotLeadslyUserManager userManager,            
             IAccessTokenService tokenService,
             IClaimsIdentityService claimsIdentityService,
             UrlEncoder urlEncoder,
@@ -39,7 +39,7 @@ namespace API.Controllers
         private readonly IConfiguration _configuration;
         private readonly IAccessTokenService _tokenService;
         private readonly IClaimsIdentityService _claimsIdentityService;
-        private readonly OdmUserManager _userManager;        
+        private readonly BotLeadslyUserManager _userManager;        
         private readonly UrlEncoder _urlEncoder;        
         private readonly ILogger<TwoFactorAuthenticationController> _logger;
 
@@ -359,7 +359,7 @@ namespace API.Controllers
             {
                 _logger.LogDebug("Check appsettings.json file. 'TwoFactorAuthDisplayAppName' key value pair is not properly set.");
 
-                appDisplayName = "odiam-dot-net-api-starter";
+                appDisplayName = "bot-leadsly-dot-net-api-starter";
             }
 
             return string.Format(

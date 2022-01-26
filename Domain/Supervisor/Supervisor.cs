@@ -6,13 +6,13 @@ namespace Domain.Supervisor
 {
     public partial class Supervisor : ISupervisor
     {
-        public Supervisor(OdmUserManager userManager, ILogger<Supervisor> logger)
+        public Supervisor(BotLeadslyUserManager userManager, ILogger<Supervisor> logger)
         {
             _userManager = userManager;
             _logger = logger;
         }
 
-        private readonly OdmUserManager _userManager;
+        private readonly BotLeadslyUserManager _userManager;
         private readonly ILogger<Supervisor> _logger;
 
     }
