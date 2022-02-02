@@ -1,13 +1,6 @@
-﻿using DataCore;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using Microsoft.EntityFrameworkCore;
-using Domain.DbInfo;
-using Microsoft.AspNetCore.Identity;
-using Leadsly.Models.Database;
-using API.Authentication;
-using API.Authentication.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -23,14 +16,10 @@ using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Domain;
 using System.Linq;
 using Serilog;
-using API.DataProtectorTokenProviders;
-using API.Services;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
+using Leadsly.Domain;
+using Leadsly.Shared.Domain;
 
-namespace API.Configurations
+namespace Api.Configurations
 {
     public static class ConfigureServices
     {
@@ -49,157 +38,6 @@ namespace API.Configurations
 
             services.AddScoped<ILeadslyBot, LeadslyBot>();
             services.AddScoped<IWebDriverManager, WebDriverManager>();
-
-            return services;
-        }
-
-        public static IServiceCollection AddConnectionProviders(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment env)
-        {
-            Log.Information("Configuring default connection string and database context.");
-
-            string defaultConnection = configuration.GetConnectionString("DefaultConnection");
-
-            services.AddDbContext<DatabaseContext>(options =>
-            {                
-                options.UseSqlServer(defaultConnection);
-                if(env.IsDevelopment())
-                {
-                    Log.Information("Enabling SQL Server sensitive data logging.");
-                    options.EnableSensitiveDataLogging(env.IsDevelopment());
-                }                
-            }, ServiceLifetime.Scoped);
-            
-            services.AddSingleton(new DbInfo(defaultConnection));
-
-            return services;
-        }
-
-        public static IServiceCollection AddIdentityConfiguration(this IServiceCollection services, IConfiguration configuration)
-        {
-            Log.Information("Adding identity services.");
-
-            services.AddIdentityCore<ApplicationUser>(options =>
-            {
-                options.Password.RequireDigit = true;
-                options.Password.RequiredLength = 8;
-                options.Password.RequiredUniqueChars = 3;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireUppercase = true;
-                options.Password.RequireNonAlphanumeric = true;
-
-                // Lockout settings
-                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-                options.Lockout.MaxFailedAccessAttempts = 10;
-
-                options.User.RequireUniqueEmail = true;
-                options.SignIn.RequireConfirmedEmail = true;
-            })
-            .AddDefaultTokenProviders()
-            .AddTokenProvider<StaySignedInDataProtectorTokenProvider<ApplicationUser>>(ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName)
-            .AddTokenProvider<FacebookDataProtectorTokenProvider<ApplicationUser>>(ApiConstants.DataTokenProviders.ExternalLoginProviders.Facebook)
-            .AddTokenProvider<GoogleDataProtectorTokenProvider<ApplicationUser>>(ApiConstants.DataTokenProviders.ExternalLoginProviders.Google)
-            .AddTokenProvider<EmailConfirmationDataProtectorTokenProvider<ApplicationUser>>(TokenOptions.DefaultEmailProvider)
-            .AddRoles<IdentityRole>()            
-            .AddRoleManager<RoleManager<IdentityRole>>()
-            .AddSignInManager()
-            .AddUserManager<BotLeadslyUserManager>()
-            .AddEntityFrameworkStores<DatabaseContext>(); // Tell identity which EF DbContext to use;
-
-            // email token provider settings
-            services.Configure<EmailConfirmationDataProtectionTokenProviderOptions>(options =>
-            {
-                options.Name = TokenOptions.DefaultEmailProvider;
-                options.TokenLifespan = TimeSpan.FromDays(3);
-            });
-
-            // stay signed in provider settings
-            services.Configure<StaySignedInDataProtectionTokenProviderOptions>(options =>
-            {
-                options.Name = ApiConstants.DataTokenProviders.StaySignedInProvider.ProviderName;
-                options.TokenLifespan = TimeSpan.FromDays(7);
-            });
-
-            // facebook token provider settings
-            services.Configure<FacebookDataProtectionTokenProviderOptions>(options =>
-            {
-                options.Name = ApiConstants.DataTokenProviders.ExternalLoginProviders.Facebook;
-                options.TokenLifespan = TimeSpan.FromDays(120);
-                options.ClientId = configuration[ApiConstants.VaultKeys.FaceBookClientId];
-                options.ClientSecret = configuration[ApiConstants.VaultKeys.FaceBookClientSecret];
-            });
-
-            // google token provider settings
-            services.Configure<GoogleDataProtectionTokenProviderOptions>(options =>
-            {
-                options.Name = ApiConstants.DataTokenProviders.ExternalLoginProviders.Google;
-                options.TokenLifespan = TimeSpan.FromDays(120);
-                options.ClientId = configuration[ApiConstants.VaultKeys.GoogleClientId];
-                options.ClientSecret = configuration[ApiConstants.VaultKeys.GoogleClientSecret];
-            });
-
-            //Configure Claims Identity
-            services.AddScoped<IClaimsIdentityService, ClaimsIdentityService>();
-
-            return services;
-        }
-
-        public static IServiceCollection AddJsonWebTokenConfiguration(this IServiceCollection services, IConfiguration configuration)
-        {
-            Log.Information("Configuring Jwt services.");
-
-            services.AddSingleton<IJwtFactory, JwtFactory>();
-
-            IConfigurationSection jwtAppSettingOptions = configuration.GetSection(nameof(JwtIssuerOptions));
-
-            // retrieve private key from user secrets or azure vault
-            string privateKey = configuration[ApiConstants.VaultKeys.JwtSecret];
-            SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(privateKey));
-            
-            services.Configure<JwtIssuerOptions>(options =>
-            {
-                options.Issuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)];
-                options.Audience = jwtAppSettingOptions[nameof(JwtIssuerOptions.Audience)];
-                options.SigningCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256Signature);                
-            });
-
-            TokenValidationParameters tokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidIssuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)],
-
-                ValidateAudience = true,
-                ValidAudience = jwtAppSettingOptions[nameof(JwtIssuerOptions.Audience)],
-
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = signingKey,                 
-
-                RequireSignedTokens = true,
-                RequireExpirationTime = true,
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
-            };
-            
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(configureOptions =>
-            {
-                configureOptions.ClaimsIssuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)];
-                configureOptions.TokenValidationParameters = tokenValidationParameters;
-                configureOptions.SaveToken = true;                     
-                // In case of having an expired token
-                configureOptions.Events = new JwtBearerEvents
-                {
-                    OnAuthenticationFailed = context =>
-                    {
-                        if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
-                        {
-                            context.Response.Headers.Add(ApiConstants.TokenOptions.ExpiredToken, "true");
-                        }
-                        return Task.CompletedTask;
-                    }
-                };
-            });
-
-            services.AddScoped<IAccessTokenService, AccessTokenService>();
 
             return services;
         }
@@ -284,16 +122,6 @@ namespace API.Configurations
             {
                 options.SuppressModelStateInvalidFilter = true;
             });
-
-            return services;
-        }
-
-        public static IServiceCollection AddEmailServiceConfiguration(this IServiceCollection services)
-        {
-            Log.Information("Configuring AddEmailServiceConfiguration.");
-
-            services.AddScoped<IEmailService, EmailService>();
-            services.AddScoped<IHtmlTemplateGenerator, HtmlTemplateGenerator>();
 
             return services;
         }

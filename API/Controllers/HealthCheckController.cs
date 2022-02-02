@@ -1,11 +1,10 @@
 ﻿using Domain;
 using Domain.Supervisor;
-using Domain.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace API.Controllers
+namespace Api.Controllers
 {
     /// <summary>
     /// Healthcheck controller.
@@ -30,7 +29,7 @@ namespace API.Controllers
         public IActionResult HealthCheck()
         {
             _logger.LogTrace("Healthcheck action executed.");           
-            return new JsonResult(new HealthCheckViewModel 
+            return new JsonResult(new
             {
                 APIVersion = typeof(Startup).Assembly.GetName().Version.ToString()
             });

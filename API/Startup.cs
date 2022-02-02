@@ -1,5 +1,3 @@
-using API.Configurations;
-using API.Middlewares;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Domain;
@@ -11,8 +9,13 @@ using Serilog;
 using Microsoft.Extensions.FileProviders;
 using System.IO;
 using Microsoft.AspNetCore.Http;
+using Leadsly.Domain;
+using Api.Configurations;
+using Leadsly.Shared.Api.ConfigureServices;
+using Leadsly.Shared.Api.Middlewares;
+using Leadsly.Shared.Domain;
 
-namespace API
+namespace Api
 {
     public class Startup
     {
@@ -31,16 +34,13 @@ namespace API
             services.AddControllers()
                     .AddJsonOptionsConfiguration();
 
-            services.AddConnectionProviders(Configuration, Environment)
-                    .AddJsonWebTokenConfiguration(Configuration)
+            services.AddJsonWebTokenConfiguration(Configuration)
                     .AddAuthorizationConfiguration()
                     .AddCorsConfiguration(Configuration)
                     .AddApiBehaviorOptionsConfiguration()
                     .AddSupervisorConfiguration()
                     .AddSeleniumServicesConfiguration()
-                    .AddIdentityConfiguration(Configuration)
                     .AddHttpContextAccessor()
-                    .AddEmailServiceConfiguration()
                     .AddRemoveNull204FormatterConfigration();
 
             services.Configure<MvcOptions>(ApiDefaults.Configure);
@@ -74,8 +74,6 @@ namespace API
             app.UseAuthorization();
 
             app.UseSerilogRequestLogging();
-
-            app.SeedDatabase();
 
             app.UseEndpoints(endpoints =>
             {

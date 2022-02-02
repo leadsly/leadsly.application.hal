@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Leadsly.Models;
 
-namespace API.Controllers
+namespace Api.Controllers
 {
     /// <summary>
     /// Web driver controller.
@@ -38,7 +38,7 @@ namespace API.Controllers
 
             if (webDriverDestroyed == false)
             {
-                return BadRequest_FailedToDestroyWebDriver();
+                // return BadRequest_FailedToDestroyWebDriver();
             }
 
             return Ok();

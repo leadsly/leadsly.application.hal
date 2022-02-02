@@ -1,4 +1,4 @@
-﻿namespace API
+﻿namespace Api
 {
     static class FilterOrders
     {

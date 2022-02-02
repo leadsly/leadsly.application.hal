@@ -1,9 +1,9 @@
-﻿using API.Filters;
+﻿using Leadsly.Shared.Api.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using System.Linq;
 
-namespace API
+namespace Api
 {
     public class BearerTokenAuthorizeConvention : IControllerModelConvention
     {

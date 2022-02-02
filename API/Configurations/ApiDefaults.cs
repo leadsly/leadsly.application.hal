@@ -1,9 +1,10 @@
-﻿using API.Filters;
+﻿using Leadsly.Shared.Api.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Leadsly.Shared.Api.Filters;
 
-namespace API.Configurations
+namespace Api.Configurations
 {
     public static class ApiDefaults
     {
