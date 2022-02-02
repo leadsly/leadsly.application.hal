@@ -1,6 +1,6 @@
 ﻿using API.Authentication.Jwt;
 using Domain.ViewModels;
-using Domain.Models;
+using Leadsly.Models.Database;
 using JWT;
 using JWT.Algorithms;
 using JWT.Serializers;

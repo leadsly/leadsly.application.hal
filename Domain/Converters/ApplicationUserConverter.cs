@@ -1,4 +1,4 @@
-﻿using Domain.Models;
+﻿using Leadsly.Models.Database;
 using Domain.ViewModels;
 using System.Linq;
 

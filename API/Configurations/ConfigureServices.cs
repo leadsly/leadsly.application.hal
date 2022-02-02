@@ -5,7 +5,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Domain.DbInfo;
 using Microsoft.AspNetCore.Identity;
-using Domain.Models;
+using Leadsly.Models.Database;
 using API.Authentication;
 using API.Authentication.Jwt;
 using Microsoft.IdentityModel.Tokens;
@@ -47,7 +47,8 @@ namespace API.Configurations
         {
             Log.Information("Registering selenium services configuration.");
 
-            services.AddScoped<ISeleniumStartup, SeleniumStartup>();
+            services.AddScoped<ILeadslyBot, LeadslyBot>();
+            services.AddScoped<IWebDriverManager, WebDriverManager>();
 
             return services;
         }

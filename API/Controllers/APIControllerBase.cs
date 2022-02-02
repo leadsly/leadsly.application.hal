@@ -1,5 +1,5 @@
 ﻿using Domain;
-using Domain.Models;
+using Leadsly.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +9,7 @@ using Microsoft.Net.Http.Headers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Leadsly.Models.Database;
 
 namespace API.Controllers
 {
@@ -107,6 +108,22 @@ namespace API.Controllers
                 Status = StatusCodes.Status400BadRequest,
                 Title = ReasonPhrases.GetReasonPhrase(400),
                 Detail = ProblemDetailsDescriptions.FailedToSendConfirmationEmail,
+                Instance = this.HttpContext.Request.Path.Value
+            });
+        }
+
+        /// <summary>
+        /// Bad request when failed to destroy web driver.
+        /// </summary>        
+        /// <returns></returns>
+        protected ObjectResult BadRequest_FailedToDestroyWebDriver()
+        {
+            return ProblemDetailsResult(new ProblemDetails
+            {
+                Type = ProblemDetailsTypes.BadRequestType,
+                Status = StatusCodes.Status400BadRequest,
+                Title = ReasonPhrases.GetReasonPhrase(400),
+                Detail = ProblemDetailsDescriptions.FailedToDestroyWebDriver,
                 Instance = this.HttpContext.Request.Path.Value
             });
         }

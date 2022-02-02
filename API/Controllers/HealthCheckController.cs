@@ -14,13 +14,11 @@ namespace API.Controllers
     [Route("[controller]")]    
     public class HealthCheckController : ApiControllerBase
     {
-        public HealthCheckController(ILogger<HealthCheckController> logger, ISupervisor supervisor)
+        public HealthCheckController(ILogger<HealthCheckController> logger)
         {
-            _logger = logger;
-            _supervisor = supervisor;
+            _logger = logger;            
         }
 
-        private readonly ISupervisor _supervisor;
         private readonly ILogger<HealthCheckController> _logger;
 
         /// <summary>
@@ -31,8 +29,6 @@ namespace API.Controllers
         [AllowAnonymous]
         public IActionResult HealthCheck()
         {
-
-            _supervisor.Authenticate_Bot("omikolaj1@gmail.com", "somesuperlongandcomplicate");
             _logger.LogTrace("Healthcheck action executed.");           
             return new JsonResult(new HealthCheckViewModel 
             {

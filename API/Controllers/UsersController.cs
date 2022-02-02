@@ -1,6 +1,7 @@
 ﻿using API.Services;
 using Domain;
-using Domain.Models;
+using Leadsly.Models.Database;
+using Domain.Supervisor;
 using Domain.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -13,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using Leadsly.Models;
 
 namespace API.Controllers
 {
@@ -30,6 +32,7 @@ namespace API.Controllers
             IHtmlTemplateGenerator templateGenerator,
             SignInManager<ApplicationUser> signinManager,
             UrlEncoder urlEncoder,
+            ISupervisor supervisor,
             ILogger<UsersController> logger)
         {
             _userManager = userManager;
@@ -39,6 +42,7 @@ namespace API.Controllers
             _urlEncoder = urlEncoder;            
             _signinManager = signinManager;
             _logger = logger;
+            _supervisor = supervisor;
         }
 
         private readonly IConfiguration _configuration;
@@ -48,6 +52,7 @@ namespace API.Controllers
         private readonly IEmailService _emailService;        
         private readonly IHtmlTemplateGenerator _templateGenerator;
         private readonly ILogger<UsersController> _logger;
+        private readonly ISupervisor _supervisor;
 
         /// <summary>
         /// Gets users account security details.
@@ -87,6 +92,46 @@ namespace API.Controllers
             };
 
             return Ok(securityDetails);
+        }
+
+        [HttpPost("{id}/account/connect")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ConnectAccount([FromBody] ConnectAccount connectAccount)
+        {
+            ConnectAccountResult result = _supervisor.ConnectAccountWithLinkedIn(connectAccount);
+
+            if (result.DidUnexpectedErrorOccur)
+            {
+                // return 417 Expectation Failed
+            }
+
+            if (result.RequiresTwoFactorAuth)
+            {
+                // send request to notify user about two factor auth that is required
+
+                return Created("", "");
+            }
+
+            return Ok();
+        }
+
+        [HttpPost("{id}/account/connect/2fa")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ConnectAccountTwoFactor(string userId, [FromBody] ConnectAccountTwoFactorAuth twoFactorAuth)
+        {
+            TwoFactorAuthenticationResult result = _supervisor.VerifyTwoFactorAuthentication(twoFactorAuth);
+
+            if (result.DidUnexpectedErrorOccur)
+            {
+                // redirect to ConnectAccount
+                
+            }
+            else if (result.InvalidOrExpiredCode)
+            {
+                // ask for new code
+            }
+
+            return Ok();
         }
 
         /// <summary>

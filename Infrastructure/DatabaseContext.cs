@@ -1,5 +1,5 @@
 ﻿using DataCore.Configurations;
-using Domain.Models;
+using Leadsly.Models.Database;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

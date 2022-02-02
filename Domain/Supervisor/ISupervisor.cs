@@ -1,4 +1,4 @@
-﻿using Domain.Models;
+﻿using Leadsly.Models;
 using Domain.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
@@ -7,6 +7,12 @@ namespace Domain.Supervisor
 {
     public interface ISupervisor
     {
-        void Authenticate_Bot(string email, string password);
+        ConnectAccountResult ConnectAccountWithLinkedIn(ConnectAccount connectAccount);
+
+        TwoFactorAuthenticationResult VerifyTwoFactorAuthentication(ConnectAccountTwoFactorAuth twoFactorAuth);
+
+        WebDriverInformation CreateWebDriver(CreateWebDriver newWebDriver);
+
+        bool DestroyWebDriver(DestroyWebDriver destroyWebDriver);
     }
 }

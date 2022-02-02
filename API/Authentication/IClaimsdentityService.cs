@@ -1,4 +1,4 @@
-﻿using Domain.Models;
+﻿using Leadsly.Models.Database;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using System.Threading.Tasks;

@@ -1,4 +1,4 @@
-﻿using Domain.Models;
+﻿using Leadsly.Models.Database;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using System.Security.Claims;
 using Domain;
+using Leadsly.Models.Database;
 
 namespace DataCore.DatabaseInitializer
 {
@@ -83,8 +84,7 @@ namespace DataCore.DatabaseInitializer
                 Email = "admin@admin.com",
                 FirstName = "Kai",
                 LastName = "Kami",
-                PhoneNumber = "800-000-0000",
-                ApplicationId = $"{Guid.NewGuid()}"
+                PhoneNumber = "800-000-0000"
             };
 
             PasswordHasher<ApplicationUser> passwordHasher = new PasswordHasher<ApplicationUser>();

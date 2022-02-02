@@ -1,6 +1,6 @@
 ﻿using API.Authentication;
 using API.Extensions;
-using Domain.Models;
+using Leadsly.Models.Database;
 using Domain.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -168,8 +168,7 @@ namespace API.Controllers
             ApplicationUser appUser = new ApplicationUser
             {
                 Email = signupModel.Email,
-                UserName = signupModel.Email,
-                ApplicationId = $"{Guid.NewGuid()}"
+                UserName = signupModel.Email
             };
 
             if (ct.IsCancellationRequested)
@@ -332,8 +331,7 @@ namespace API.Controllers
                     UserName = externalUser.Email,
                     ExternalProvider = externalUser.Provider,
                     PhotoUrl = externalUser.PhotoUrl,
-                    ExternalProviderUserId = externalUser.Id,
-                    ApplicationId = $"{Guid.NewGuid()}"
+                    ExternalProviderUserId = externalUser.Id
                 };
 
                 PasswordHasher<ApplicationUser> passwordHasher = new PasswordHasher<ApplicationUser>();
@@ -438,8 +436,7 @@ namespace API.Controllers
                         UserName = externalUser.Email,
                         ExternalProvider = externalUser?.Provider,
                         PhotoUrl = externalUser?.PhotoUrl,
-                        ExternalProviderUserId = externalUser?.Id,
-                        ApplicationId = $"{Guid.NewGuid()}"
+                        ExternalProviderUserId = externalUser?.Id
                     };
 
                     PasswordHasher<ApplicationUser> passwordHasher = new PasswordHasher<ApplicationUser>();

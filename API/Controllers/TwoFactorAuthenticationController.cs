@@ -1,6 +1,6 @@
 ﻿using API.Authentication;
 using Domain;
-using Domain.Models;
+using Leadsly.Models.Database;
 using Domain.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
