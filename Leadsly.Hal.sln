@@ -5,11 +5,11 @@ VisualStudioVersion = 16.0.31515.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "Domain\Domain.csproj", "{CD0F6EA1-5B5B-4EC1-BE9E-92D9589F0555}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api", "API\Api.csproj", "{76A022B5-1A74-44C6-BB98-12A1C95C9B53}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api", "Api\Api.csproj", "{76A022B5-1A74-44C6-BB98-12A1C95C9B53}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PageObjects", "PageObjects\PageObjects.csproj", "{F61016DF-EB3F-446C-9762-6557F4B54CCA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Leadsly.Models", "..\leadsly.models\Leadsly.Models\Leadsly.Models.csproj", "{D9A3F7C8-4DCD-4DF7-B729-722E45A91168}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Leadsly.Models", "..\Leadsly.Models\Leadsly.Models\Leadsly.Models.csproj", "{D9A3F7C8-4DCD-4DF7-B729-722E45A91168}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Leadsly.Shared.Api", "..\Leadsly.Shared.Api\Leadsly.Shared.Api\Leadsly.Shared.Api.csproj", "{FE1BC6F9-47C7-4B6A-8A97-029479E45561}"
 EndProject
