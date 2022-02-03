@@ -1,5 +1,4 @@
-﻿using Leadsly.Models;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using System;
@@ -25,7 +24,7 @@ namespace PageObjects.Pages
         private readonly WebDriverWait _wait;
         private readonly IWebDriver _driver;
         private TwoFactorAuthType? _authType = null;
-        public TwoFactorAuthType? TwoFactorAuthenticationType
+        public TwoFactorAuthType TwoFactorAuthenticationType
         {
             get
             {

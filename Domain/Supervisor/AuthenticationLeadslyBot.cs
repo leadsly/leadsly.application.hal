@@ -1,14 +1,8 @@
-﻿using Leadsly.Models.Database;
+﻿using Domain.Models;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Support.UI;
 using PageObjects;
 using PageObjects.Pages;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Leadsly.Models;
+using TwoFactorAuthType = Domain.Models.TwoFactorAuthType;
 
 namespace Domain.Supervisor
 {
@@ -115,11 +109,11 @@ namespace Domain.Supervisor
                 Succeeded = true
             };
 
-            if (loginPage.TwoFactorAuthenticationType == TwoFactorAuthType.AuthenticatorApp)
+            if (loginPage.TwoFactorAuthenticationType.Equals(TwoFactorAuthType.AuthenticatorApp))
             {
                 result.AuthType = TwoFactorAuthType.AuthenticatorApp;
             }
-            else if (loginPage.TwoFactorAuthenticationType == TwoFactorAuthType.SMS)
+            else if (loginPage.TwoFactorAuthenticationType.Equals(TwoFactorAuthType.SMS))
             {
                 result.AuthType = TwoFactorAuthType.SMS;
             }
