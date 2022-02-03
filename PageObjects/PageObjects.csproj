@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\leadsly.models\Leadsly.Models\Leadsly.Models.csproj" />
+    <ProjectReference Include="..\..\Leadsly.Models\Leadsly.Models\Leadsly.Models.csproj" />
   </ItemGroup>
 
 </Project>

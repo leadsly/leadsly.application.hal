@@ -18,8 +18,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\leadsly.models\Leadsly.Models\Leadsly.Models.csproj" />
-      <ProjectReference Include="..\..\models.leadsly\Models.Leadsly\Models.Leadsly.csproj" />
+      <ProjectReference Include="..\..\Leadsly.Models\Leadsly.Models\Leadsly.Models.csproj" />      
       <ProjectReference Include="..\PageObjects\PageObjects.csproj" />
     </ItemGroup>
 
