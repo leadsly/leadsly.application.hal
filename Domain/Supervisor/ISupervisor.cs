@@ -6,12 +6,10 @@ namespace Domain.Supervisor
 {
     public interface ISupervisor
     {
-        ConnectAccountResult ConnectAccountWithLinkedIn(ConnectAccount connectAccount);
-
         TwoFactorAuthenticationResult VerifyTwoFactorAuthentication(ConnectAccountTwoFactorAuth twoFactorAuth);
 
-        WebDriverInformation CreateWebDriver(CreateWebDriver newWebDriver);
+        WebDriverInformation CreateWebDriver(InstantiateWebDriver newWebDriver);
 
-        bool DestroyWebDriver(DestroyWebDriver destroyWebDriver);
+        ConnectAccountResult AuthenticateAccount(AuthenticateAccount request);
     }
 }

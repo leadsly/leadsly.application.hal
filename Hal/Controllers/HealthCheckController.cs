@@ -3,13 +3,21 @@ using Domain.Supervisor;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Hal.Controllers
 {
+    public class HalHealthCheck
+    {
+        public string ApiVersion { get; set; }
+        public string HalsUniqueName { get; set; }
+        public string Status { get; set; }
+
+    }
     /// <summary>
-    /// Healthcheck controller.
+    /// Healthcheck controller
     /// </summary>
-    [ApiController]
+    [ApiController]    
     [Route("[controller]")]    
     public class HealthCheckController : ApiControllerBase
     {
@@ -29,9 +37,11 @@ namespace Hal.Controllers
         public IActionResult HealthCheck()
         {
             _logger.LogTrace("Healthcheck action executed.");           
-            return new JsonResult(new
+            return new JsonResult(new HalHealthCheck
             {
-                APIVersion = typeof(Startup).Assembly.GetName().Version.ToString()
+                ApiVersion = typeof(Startup).Assembly.GetName().Version.ToString(),
+                HalsUniqueName = Guid.NewGuid().ToString(),
+                Status = "Healthy"
             });
         }
     }

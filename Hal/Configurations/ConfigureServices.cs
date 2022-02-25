@@ -48,7 +48,7 @@ namespace Hal.Configurations
             IConfigurationSection jwtAppSettingOptions = configuration.GetSection(nameof(JwtIssuerOptions));
 
             // retrieve private key from user secrets or azure vault
-            string privateKey = configuration[ApiConstants.VaultKeys.JwtSecret];
+            string privateKey = "test"; //configuration[ApiConstants.VaultKeys.JwtSecret];
             SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(privateKey));
 
             services.Configure<JwtIssuerOptions>(options =>

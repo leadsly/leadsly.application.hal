@@ -22,25 +22,11 @@ namespace Hal.Controllers
         
         [HttpPost]
         [AllowAnonymous]
-        public IActionResult Create([FromBody] CreateWebDriver newWebDriverRequest)
+        public IActionResult Create([FromBody] InstantiateWebDriver newWebDriverRequest)
         {
             WebDriverInformation webDriverInformation = _supervisor.CreateWebDriver(newWebDriverRequest);
 
-            return Created("/webdriver", null);
-        }
-
-        [HttpDelete]
-        [AllowAnonymous]
-        public IActionResult Delete([FromBody] DestroyWebDriver destroyWebDriverRequest)
-        {
-            bool webDriverDestroyed = _supervisor.DestroyWebDriver(destroyWebDriverRequest);
-
-            if (webDriverDestroyed == false)
-            {
-                // return BadRequest_FailedToDestroyWebDriver();
-            }
-
-            return Ok();
+            return Created("/webdriver", webDriverInformation);
         }
     }
 }

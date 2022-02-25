@@ -2,34 +2,17 @@
 using OpenQA.Selenium;
 using PageObjects;
 using PageObjects.Pages;
+using System;
 using TwoFactorAuthType = Domain.Models.TwoFactorAuthType;
 
 namespace Domain.Supervisor
 {
     public partial class Supervisor : ISupervisor
     {
-        public ConnectAccountResult ConnectAccountWithLinkedIn(ConnectAccount connectAccount)
-        {
-            WebDriverInformation driverInformation = _webDriverManager.Get(connectAccount.WebDriverId);
-            IWebDriver driver = driverInformation.WebDriver;
-
-            LinkedInPage linkedInPage = this._leadslyBot.GoToLinkedIn(driver);
-
-            ConnectAccountResult result = new();
-            if (linkedInPage.IsAuthenticationRequired)
-            {
-                result = Authenticate(driver, connectAccount.Email, connectAccount.Password);
-                return result;
-            }
-
-            result.Succeeded = true;
-            return result;
-        }
-
         public TwoFactorAuthenticationResult VerifyTwoFactorAuthentication(ConnectAccountTwoFactorAuth twoFactorAuth)
         {
-            WebDriverInformation driverInformation = _webDriverManager.Get(twoFactorAuth.WebDriverId);
-            IWebDriver driver = driverInformation.WebDriver;
+            WebDriverInformation driverInformation = null;// _webDriverManager.Get(twoFactorAuth.WebDriverId);
+            IWebDriver driver = null; // driverInformation.WebDriver;
 
             TwoFactorAuthenticationResult result = EnterTwoFactorAuthentication(driver, twoFactorAuth.Code, twoFactorAuth.Email, twoFactorAuth.Password);
             
@@ -100,7 +83,6 @@ namespace Domain.Supervisor
             result.Succeeded = true;            
             return result;
         }
-
         private ConnectAccountResult DetermineTwoFactorAuthenticationType(LinkedInLoginPage loginPage)
         {
             ConnectAccountResult result = new()
@@ -109,22 +91,51 @@ namespace Domain.Supervisor
                 Succeeded = true
             };
 
-            if (loginPage.TwoFactorAuthenticationType.Equals(TwoFactorAuthType.AuthenticatorApp))
+            if (Enum.GetName(loginPage.TwoFactorAuthenticationType) == Enum.GetName(TwoFactorAuthType.AuthenticatorApp))
             {
-                result.AuthType = TwoFactorAuthType.AuthenticatorApp;
+                result.TwoFactorAuthType = TwoFactorAuthType.AuthenticatorApp;
             }
-            else if (loginPage.TwoFactorAuthenticationType.Equals(TwoFactorAuthType.SMS))
+            else if (Enum.GetName(loginPage.TwoFactorAuthenticationType) == Enum.GetName(TwoFactorAuthType.SMS))
             {
-                result.AuthType = TwoFactorAuthType.SMS;
+                result.TwoFactorAuthType = TwoFactorAuthType.SMS;
             }
             else
             {
                 // something went wrong
-                result.AuthType = TwoFactorAuthType.None;
+                result.TwoFactorAuthType = TwoFactorAuthType.None;
                 result.Succeeded = false;
             }
 
             return result;
+        }
+
+        public ConnectAccountResult AuthenticateAccount(AuthenticateAccount request)
+        {
+            if(!_memoryCache.TryGetValue(request.WebDriverId, out object driver))
+            {
+                throw new System.Exception("Cannot find webdriver in");
+            }
+
+            IWebDriver webDriver = (IWebDriver)driver;
+
+            LinkedInPage linkedInPage = this._leadslyBot.GoToLinkedIn(webDriver);
+
+            ConnectAccountResult result = new();
+            if (linkedInPage.IsAuthenticationRequired)
+            {
+                result = Authenticate(webDriver, request.Username, request.Password);
+                result.WebDriverId = request.WebDriverId;
+                return result;
+            }
+
+            result.RequiresTwoFactorAuth = linkedInPage.IsAuthenticationRequired;            
+            result.Succeeded = true;
+            return result;
+        }
+
+        public bool DestroyWebDriver(DestroyWebDriver destroyWebDriver)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

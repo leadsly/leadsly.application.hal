@@ -12,7 +12,7 @@ namespace Domain
         private static HashSet<WebDriverInformation> _webDrivers = new HashSet<WebDriverInformation>();
         public WebDriverInformation Get(string id)
         {
-            return _webDrivers.FirstOrDefault(x => x.Id == id);
+            return _webDrivers.FirstOrDefault(x => x.WebDriverId == id);
         }
 
         public void Set(WebDriverInformation webdriverInfo)

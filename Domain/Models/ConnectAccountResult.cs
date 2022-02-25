@@ -11,6 +11,6 @@ namespace Domain.Models
         public bool Succeeded { get; set; } = false;
         public bool RequiresTwoFactorAuth { get; set; } = false;
         public bool DidUnexpectedErrorOccur { get; set; } = false;
-        public TwoFactorAuthType AuthType { get; set; }
+        public TwoFactorAuthType TwoFactorAuthType { get; set; }
     }
 }

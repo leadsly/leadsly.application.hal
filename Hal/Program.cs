@@ -59,14 +59,14 @@ namespace Hal
                                IHostEnvironment env = hostBuilderContext.HostingEnvironment;
                                Log.Information($"Application is running in: {env.EnvironmentName} mode.");
 
-                               if (env.IsProduction())
-                               {
-                                   IConfigurationRoot builtConfig = builder.Build();
-                                   SecretClient secretClient = new SecretClient(
-                                       new Uri(builtConfig["VaultUri"]),
-                                       new DefaultAzureCredential());
-                                   builder.AddAzureKeyVault(secretClient, new KeyVaultSecretManager());
-                               }
+                               //if (env.IsProduction())
+                               //{
+                               //    IConfigurationRoot builtConfig = builder.Build();
+                               //    SecretClient secretClient = new SecretClient(
+                               //        new Uri(builtConfig["VaultUri"]),
+                               //        new DefaultAzureCredential());
+                               //    builder.AddAzureKeyVault(secretClient, new KeyVaultSecretManager());
+                               //}
                            });
             }
             catch(Exception ex)
