@@ -6,10 +6,10 @@ namespace Domain.Supervisor
 {
     public interface ISupervisor
     {
-        TwoFactorAuthenticationResult VerifyTwoFactorAuthentication(ConnectAccountTwoFactorAuth twoFactorAuth);
-
         WebDriverInformation CreateWebDriver(InstantiateWebDriver newWebDriver);
 
         ConnectAccountResult AuthenticateAccount(AuthenticateAccount request);
+
+        TwoFactorAuthenticationResult EnterTwoFactorAuth(TwoFactorAuthentication twoFactorAuth);
     }
 }

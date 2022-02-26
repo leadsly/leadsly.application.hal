@@ -9,8 +9,9 @@ namespace Domain.Models
     public class ConnectAccountResult : WebDriverDetails
     {
         public bool Succeeded { get; set; } = false;
-        public bool RequiresTwoFactorAuth { get; set; } = false;
-        public bool DidUnexpectedErrorOccur { get; set; } = false;
+        public bool TwoFactorAuthRequired { get; set; } = false;
+        public bool UnexpectedErrorOccured { get; set; } = false;
         public TwoFactorAuthType TwoFactorAuthType { get; set; }
+        public List<Failure> Failures { get; set; } = new();
     }
 }

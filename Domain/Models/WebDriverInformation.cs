@@ -9,6 +9,7 @@ namespace Domain.Models
 {
     public class WebDriverInformation
     {
+        public bool Succeeded { get; set; }
         public string WebDriverId { get; set; }
 
     }

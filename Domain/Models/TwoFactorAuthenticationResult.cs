@@ -11,5 +11,6 @@ namespace Domain.Models
         public bool Succeeded { get; set; } = false;
         public bool InvalidOrExpiredCode { get; set; } = false;
         public bool DidUnexpectedErrorOccur { get; set; } = false;
+        public List<Failure> Failures { get; set; } = new();
     }
 }

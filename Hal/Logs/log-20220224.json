@@ -90,3 +90,5 @@ System.Exception: Cannot find webdriver in
    at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
    at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|6_0(Endpoint endpoint, Task requestTask, ILogger logger)
    at Serilog.AspNetCore.RequestLoggingMiddleware.Invoke(HttpContext httpContext)
+2022-02-24 21:01:04.583 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-24 21:01:14.799 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.

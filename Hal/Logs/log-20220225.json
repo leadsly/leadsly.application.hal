@@ -1,0 +1,15 @@
+2022-02-25 19:10:07.045 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-25 19:10:17.260 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-25 19:12:40.766 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-25 19:12:50.937 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-25 19:17:22.105 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-25 19:17:32.336 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-25 19:22:42.045 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-25 19:22:52.213 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-25 19:26:08.445 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-25 19:26:18.625 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-25 19:26:46.303 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-25 19:27:03.477 -05:00 [Warning] [LinkedInLoginPage]: Failed to locate two factor authentication error banner. This is most likely desired behavior.
+2022-02-25 19:35:01.363 -05:00 [Error] Failed to create new web driver.
+System.Exception: Exception of type 'System.Exception' was thrown.
+   at Domain.Supervisor.Supervisor.CreateWebDriver(InstantiateWebDriver newWebDriver) in D:\Dev\Projects\leadsly\Leadsly.Application.Hal\Domain\Supervisor\WebDriverSupervisor.cs:line 27

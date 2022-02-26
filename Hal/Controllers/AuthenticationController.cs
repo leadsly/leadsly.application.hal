@@ -30,11 +30,11 @@ namespace Hal.Controllers
             return Ok(result);
         }
 
-        [HttpPost("authentication/2fa")]
+        [HttpPost("2fa")]
         [AllowAnonymous]
-        public IActionResult EnterTwoFactorAuth([FromBody] AuthenticateAccount authAccount)
+        public IActionResult EnterTwoFactorAuth([FromBody] TwoFactorAuthentication twoFactorAuth)
         {
-            ConnectAccountResult result = _supervisor.AuthenticateAccount(authAccount);
+            TwoFactorAuthenticationResult result = _supervisor.EnterTwoFactorAuth(twoFactorAuth);
 
             return Ok(result);
         }

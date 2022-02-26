@@ -1,4 +1,5 @@
 ﻿using Domain.Models;
+using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using PageObjects;
 using PageObjects.Pages;
@@ -9,16 +10,111 @@ namespace Domain.Supervisor
 {
     public partial class Supervisor : ISupervisor
     {
-        public TwoFactorAuthenticationResult VerifyTwoFactorAuthentication(ConnectAccountTwoFactorAuth twoFactorAuth)
+        public TwoFactorAuthenticationResult EnterTwoFactorAuth(TwoFactorAuthentication request)
         {
-            WebDriverInformation driverInformation = null;// _webDriverManager.Get(twoFactorAuth.WebDriverId);
-            IWebDriver driver = null; // driverInformation.WebDriver;
+            TwoFactorAuthenticationResult result = new()
+            {
+                Succeeded = false
+            };
 
-            TwoFactorAuthenticationResult result = EnterTwoFactorAuthentication(driver, twoFactorAuth.Code, twoFactorAuth.Email, twoFactorAuth.Password);
-            
+            if (GetWebDriverFromCache(request.WebDriverId, out object driver).Succeeded == false)
+            {
+                return result;
+            }
+
+            IWebDriver webDriver = (IWebDriver)driver;
+
+            return EnterTwoFactorAuthentication(webDriver, request.Code);
+        }
+        private TwoFactorAuthenticationResult EnterTwoFactorAuthentication(IWebDriver driver, string code)
+        {
+            TwoFactorAuthenticationResult result = new();
+
+            LinkedInLoginPage linkedInLoginPage = new LinkedInLoginPage(driver, _logger);
+            // notify user we need their authenticator code
+            _logger.LogInformation("Entering user's two factor authentication code");
+            linkedInLoginPage.EnterTwoFactorAuthCode(code);
+            _logger.LogInformation("Submitting user's two factor authentication code");
+            linkedInLoginPage.SubmitTwoFactorAuthCode();
+
+            // while verification keeps failing we must keep asking user for new code
+            if (linkedInLoginPage.DidVerificationCodeFailed)
+            {
+                _logger.LogWarning("Verification code entered was invalid or expired");
+                // notify user we need their code
+                result.Succeeded = false;
+                result.InvalidOrExpiredCode = true;
+                result.Failures.Add(new()
+                {
+                    Detail = "An error occured submitting two factor authentication code",
+                    Reason = "Failed to submit two factor authentication code"
+                });
+                return result;
+            }
+
+            if (linkedInLoginPage.CheckIfUnexpectedViewRendered)
+            {
+                _logger.LogWarning("Unexpected view rendered after attempting to submit two factor authentication code");
+                result.Succeeded = false;
+                result.InvalidOrExpiredCode = false;
+                result.DidUnexpectedErrorOccur = true;
+                result.Failures.Add(new()
+                {
+                    Reason = "An unexpected error rendered",
+                    Detail = "An unexpected error rendered in the view while trying to submit two factor authentication code"
+                });
+                return result;
+            }
+
+            result.Succeeded = true;
             return result;
         }
+        private ConnectAccountResult GetWebDriverFromCache(string webDriverId, out object driver)
+        {
+            ConnectAccountResult result = new()
+            {
+                Succeeded = false
+            };
 
+            if (!_memoryCache.TryGetValue(webDriverId, out driver))
+            {
+                result.Failures.Add(new()
+                {
+                    Reason = "Webdriver was not found in memory cache",
+                    Detail = $"Memory cache does not contain the webdriver instance with id: {webDriverId}"
+                });
+                return result;
+            }
+            result.Succeeded = true;
+            return result;
+        }
+        public ConnectAccountResult AuthenticateAccount(AuthenticateAccount request)
+        {
+            ConnectAccountResult result = new()
+            {
+                Succeeded = false
+            };
+
+            if (GetWebDriverFromCache(request.WebDriverId, out object driver).Succeeded == false)
+            {
+                return result;
+            }
+
+            IWebDriver webDriver = (IWebDriver)driver;
+
+            LinkedInPage linkedInPage = this._leadslyBot.GoToLinkedIn(webDriver);
+
+            if (linkedInPage.IsAuthenticationRequired)
+            {
+                result = Authenticate(webDriver, request.Username, request.Password);
+                result.WebDriverId = request.WebDriverId;
+                return result;
+            }
+
+            result.TwoFactorAuthRequired = linkedInPage.IsAuthenticationRequired;
+            result.Succeeded = true;
+            return result;
+        }        
         private ConnectAccountResult Authenticate(IWebDriver driver, string email, string password)
         {
             LinkedInLoginPage loginPage = this._leadslyBot.Authenticate(driver, email, password);
@@ -32,8 +128,8 @@ namespace Domain.Supervisor
             if (loginPage.CheckIfUnexpectedViewRendered)
             {
                 result.Succeeded = false;
-                result.RequiresTwoFactorAuth = false;
-                result.DidUnexpectedErrorOccur = true;
+                result.TwoFactorAuthRequired = false;
+                result.UnexpectedErrorOccured = true;
                 return result;
             }
 
@@ -43,7 +139,7 @@ namespace Domain.Supervisor
 
                 if (result.Succeeded == false)
                 {
-                    result.DidUnexpectedErrorOccur = true;
+                    result.UnexpectedErrorOccured = true;
                     return result;
                 }
                 
@@ -52,42 +148,12 @@ namespace Domain.Supervisor
 
             result.Succeeded = true;
             return result;
-        }
-
-        private TwoFactorAuthenticationResult EnterTwoFactorAuthentication(IWebDriver driver, string code, string email, string password)
-        {
-            TwoFactorAuthenticationResult result = new();
-
-            LinkedInLoginPage linkedInLoginPage = new LinkedInLoginPage(driver, _logger);
-            // notify user we need their authenticator code
-            linkedInLoginPage.EnterTwoFactorAuthCode(code);
-            linkedInLoginPage.SubmitTwoFactorAuthCode();
-
-            // while verification keeps failing we must keep asking user for new code
-            if(linkedInLoginPage.DidVerificationCodeFailed)
-            {
-                // notify user we need their code
-                result.Succeeded = false;
-                result.InvalidOrExpiredCode = true;
-                return result;
-            }
-
-            if (linkedInLoginPage.CheckIfUnexpectedViewRendered)
-            {
-                result.Succeeded = false;
-                result.InvalidOrExpiredCode = false;
-                result.DidUnexpectedErrorOccur = true;
-                return result;
-            }
-
-            result.Succeeded = true;            
-            return result;
-        }
+        }        
         private ConnectAccountResult DetermineTwoFactorAuthenticationType(LinkedInLoginPage loginPage)
         {
             ConnectAccountResult result = new()
             {
-                RequiresTwoFactorAuth = true,
+                TwoFactorAuthRequired = true,
                 Succeeded = true
             };
 
@@ -107,35 +173,6 @@ namespace Domain.Supervisor
             }
 
             return result;
-        }
-
-        public ConnectAccountResult AuthenticateAccount(AuthenticateAccount request)
-        {
-            if(!_memoryCache.TryGetValue(request.WebDriverId, out object driver))
-            {
-                throw new System.Exception("Cannot find webdriver in");
-            }
-
-            IWebDriver webDriver = (IWebDriver)driver;
-
-            LinkedInPage linkedInPage = this._leadslyBot.GoToLinkedIn(webDriver);
-
-            ConnectAccountResult result = new();
-            if (linkedInPage.IsAuthenticationRequired)
-            {
-                result = Authenticate(webDriver, request.Username, request.Password);
-                result.WebDriverId = request.WebDriverId;
-                return result;
-            }
-
-            result.RequiresTwoFactorAuth = linkedInPage.IsAuthenticationRequired;            
-            result.Succeeded = true;
-            return result;
-        }
-
-        public bool DestroyWebDriver(DestroyWebDriver destroyWebDriver)
-        {
-            throw new System.NotImplementedException();
-        }
+        }        
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Domain.Models;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using System;
@@ -14,13 +15,27 @@ namespace Domain.Supervisor
     {
         public WebDriverInformation CreateWebDriver(InstantiateWebDriver newWebDriver)
         {
-            ChromeOptions options = SetChromeOptions();
-            IWebDriver driver = new ChromeDriver(options);
-            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(newWebDriver.DefaultTimeoutInSeconds);
-            WebDriverInformation webDriverInfo = new WebDriverInformation
+            WebDriverInformation webDriverInfo = new()
             {
-                WebDriverId = Guid.NewGuid().ToString(),
+                Succeeded = false
             };
+
+            IWebDriver driver = null;
+            try
+            {
+                ChromeOptions options = SetChromeOptions();
+                driver = new ChromeDriver(options);
+                driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(newWebDriver.DefaultTimeoutInSeconds);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create new web driver.");
+                webDriverInfo.Succeeded = false;
+                return webDriverInfo;
+            }
+
+            webDriverInfo.WebDriverId = Guid.NewGuid().ToString();
+            webDriverInfo.Succeeded = true;
 
             _memoryCache.Set(webDriverInfo.WebDriverId, driver, TimeSpan.FromDays(2));
 
