@@ -42,7 +42,7 @@ namespace PageObjects.Pages
                 IWebElement signInContainer = null;
                 try
                 {
-                    signInContainer = _wait.Until(drv => drv.FindElement(By.ClassName("sign-in-form-container")));
+                    signInContainer = _driver.FindElement(By.ClassName("sign-in-form-container"));
                 }
                 catch(Exception ex)
                 {

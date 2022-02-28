@@ -24,7 +24,7 @@ namespace Hal.Controllers
         [AllowAnonymous]
         public IActionResult Create([FromBody] InstantiateWebDriver newWebDriverRequest)
         {
-            WebDriverInformation webDriverInformation = _supervisor.CreateWebDriver(newWebDriverRequest);
+            IWebDriverInformation webDriverInformation = _supervisor.CreateWebDriver(newWebDriverRequest);
 
             return Created("/webdriver", webDriverInformation);
         }

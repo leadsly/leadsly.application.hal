@@ -6,7 +6,7 @@ namespace Domain.Supervisor
 {
     public interface ISupervisor
     {
-        WebDriverInformation CreateWebDriver(InstantiateWebDriver newWebDriver);
+        IWebDriverInformation CreateWebDriver(InstantiateWebDriver newWebDriver);            
 
         ConnectAccountResult AuthenticateAccount(AuthenticateAccount request);
 

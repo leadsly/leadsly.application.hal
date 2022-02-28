@@ -17,6 +17,9 @@ using Domain;
 using System.Linq;
 using Serilog;
 using Hal.OptionsJsonModels;
+using Domain.OptionsJsonModels;
+using Infrastructure.Repositories;
+using Domain.Repositories;
 
 namespace Hal.Configurations
 {
@@ -31,12 +34,24 @@ namespace Hal.Configurations
             return services;
         }
 
-        public static IServiceCollection AddSeleniumServicesConfiguration(this IServiceCollection services)
+        public static IServiceCollection AddRepositoryConfiguration(this IServiceCollection services)
+        {
+            Log.Information("Registering repositories configuration.");
+
+            services.AddScoped<IWebDriverRepository, WebDriverRepository>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddSeleniumServicesConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
             Log.Information("Registering selenium services configuration.");
 
             services.AddScoped<ILeadslyBot, LeadslyBot>();
             services.AddScoped<IWebDriverManager, WebDriverManager>();
+
+            services.Configure<ChromeProfileOptions>(options => configuration.GetSection(nameof(ChromeProfileOptions)).Bind(options));
+            services.AddSingleton<IFileManager, FileManager>();
 
             return services;
         }

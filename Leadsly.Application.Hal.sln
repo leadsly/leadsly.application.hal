@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PageObjects", "PageObjects\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hal", "Hal\Hal.csproj", "{1F632170-FF57-4C9C-862C-003D22E60289}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{815C5179-8015-45AD-9177-3EB912079C77}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{1F632170-FF57-4C9C-862C-003D22E60289}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1F632170-FF57-4C9C-862C-003D22E60289}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1F632170-FF57-4C9C-862C-003D22E60289}.Release|Any CPU.Build.0 = Release|Any CPU
+		{815C5179-8015-45AD-9177-3EB912079C77}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{815C5179-8015-45AD-9177-3EB912079C77}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{815C5179-8015-45AD-9177-3EB912079C77}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{815C5179-8015-45AD-9177-3EB912079C77}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

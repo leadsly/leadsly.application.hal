@@ -36,8 +36,9 @@ namespace Hal
                     .AddCorsConfiguration(Configuration)
                     .AddApiBehaviorOptionsConfiguration()
                     .AddSupervisorConfiguration()
-                    .AddSeleniumServicesConfiguration()
+                    .AddSeleniumServicesConfiguration(Configuration)
                     .AddHttpContextAccessor()
+                    .AddRepositoryConfiguration()
                     .AddRemoveNull204FormatterConfigration()
                     .AddMemoryCache();
 

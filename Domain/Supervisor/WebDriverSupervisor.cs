@@ -5,7 +5,9 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,9 +15,9 @@ namespace Domain.Supervisor
 {
     public partial class Supervisor : ISupervisor
     {
-        public WebDriverInformation CreateWebDriver(InstantiateWebDriver newWebDriver)
+        public IWebDriverInformation CreateWebDriver(InstantiateWebDriver newWebDriver)
         {
-            WebDriverInformation webDriverInfo = new()
+            WebDriverInformation result = new()
             {
                 Succeeded = false
             };
@@ -23,31 +25,41 @@ namespace Domain.Supervisor
             IWebDriver driver = null;
             try
             {
-                ChromeOptions options = SetChromeOptions();
+                string chromeProfileName = $"Chrome_Profile_{Guid.NewGuid()}";
+                // copy template profile into default chrome directory and re-name it
+                WebDriverOptions webDriverOptions = _webDriverRepository.GetWebDriverOptions();
+                IOperationResult copyResult = _fileManager.CloneDefaultChromeProfile(chromeProfileName, webDriverOptions);
+                ChromeOptions options = SetChromeOptions(chromeProfileName, webDriverOptions.DefaultChromeUserProfilesDir);
                 driver = new ChromeDriver(options);
                 driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(newWebDriver.DefaultTimeoutInSeconds);
             }
             catch(Exception ex)
             {
                 _logger.LogError(ex, "Failed to create new web driver.");
-                webDriverInfo.Succeeded = false;
-                return webDriverInfo;
+                result.Succeeded = false;
+                result.Failures.Add(new()
+                {
+                    Code = Codes.WEBDRIVER_ERROR,
+                    Detail = ex.Message,
+                    Reason = "Failed to create web driver instance"
+                });
+                return result;
             }
 
-            webDriverInfo.WebDriverId = Guid.NewGuid().ToString();
-            webDriverInfo.Succeeded = true;
 
-            _memoryCache.Set(webDriverInfo.WebDriverId, driver, TimeSpan.FromDays(2));
-
-            return webDriverInfo;
-        }
-
-        private ChromeOptions SetChromeOptions()
+            result.WebDriverId = Guid.NewGuid().ToString();
+            _memoryCache.Set(result.WebDriverId, driver, TimeSpan.FromDays(2));
+            result.Succeeded = true;
+            return result;
+        }  
+        
+        private ChromeOptions SetChromeOptions(string profileName, string userDataDir)
         {
             ChromeOptions options = new();
             options.AddArgument("--disable-blink-features=AutomationControlled");
             options.AddArgument("window-size=1280,800");
             options.AddArgument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36");
+            options.AddArgument(@$"user-data-dir={userDataDir}\{profileName}");            
 
             return options;
         }

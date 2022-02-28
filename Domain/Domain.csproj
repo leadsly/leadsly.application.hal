@@ -4,12 +4,6 @@
     <TargetFramework>net6.0</TargetFramework>    
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Repositories\**" />
-    <EmbeddedResource Remove="Repositories\**" />
-    <None Remove="Repositories\**" />
-  </ItemGroup>
-
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="6.0.1" />
