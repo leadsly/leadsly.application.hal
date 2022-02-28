@@ -15,7 +15,7 @@ namespace PageObjects.Pages
         {
             this._driver = driver;
             this._logger = logger;
-            this._wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));            
+            this._wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));                   
         }
         private readonly ILogger _logger;
         private readonly WebDriverWait _wait;

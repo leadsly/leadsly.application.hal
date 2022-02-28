@@ -1,0 +1,54 @@
+2022-02-27 16:20:25.186 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 16:20:35.641 -05:00 [Error] Exception occured when processing request.
+2022-02-27 16:20:35.947 -05:00 [Error] HTTP "POST" "/api/authentication" responded 500 in 33822.7809 ms
+OpenQA.Selenium.WebDriverTimeoutException: Timed out after 10 seconds
+   at OpenQA.Selenium.Support.UI.DefaultWait`1.ThrowTimeoutException(String exceptionMessage, Exception lastException)
+   at OpenQA.Selenium.Support.UI.DefaultWait`1.Until[TResult](Func`2 condition, CancellationToken token)
+   at OpenQA.Selenium.Support.UI.DefaultWait`1.Until[TResult](Func`2 condition)
+   at PageObjects.Pages.LinkedInLoginPage.get_IsTwoFactorAuthRequired() in D:\Dev\Projects\leadsly\Leadsly.Application.Hal\PageObjects\Pages\LinkedInLoginPage.cs:line 118
+   at Domain.Supervisor.Supervisor.Authenticate(IWebDriver driver, String email, String password) in D:\Dev\Projects\leadsly\Leadsly.Application.Hal\Domain\Supervisor\AuthenticationLeadslyBot.cs:line 128
+   at Domain.Supervisor.Supervisor.AuthenticateAccount(AuthenticateAccount request) in D:\Dev\Projects\leadsly\Leadsly.Application.Hal\Domain\Supervisor\AuthenticationLeadslyBot.cs:line 109
+   at Hal.Controllers.AuthenticationController.Authenticate(AuthenticateAccount authAccount) in D:\Dev\Projects\leadsly\Leadsly.Application.Hal\Hal\Controllers\AuthenticationController.cs:line 28
+   at lambda_method17(Closure , Object , Object[] )
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.SyncActionResultExecutor.Execute(IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeActionMethodAsync()
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeNextActionFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeNextExceptionFilterAsync>g__Awaited|26_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ExceptionContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeFilterPipelineAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|6_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at Serilog.AspNetCore.RequestLoggingMiddleware.Invoke(HttpContext httpContext)
+2022-02-27 17:50:32.752 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 17:50:34.125 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 18:24:27.924 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 18:24:46.524 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 18:52:56.849 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 18:53:14.396 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 18:57:02.344 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 18:57:15.649 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 18:57:19.253 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 18:57:33.649 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 19:18:34.861 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 19:18:52.499 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 19:19:07.558 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 19:22:10.527 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 19:23:13.525 -05:00 [Warning] [LinkedInLoginPage]: Failed to locate two factor authentication error banner. This is most likely desired behavior.
+2022-02-27 19:24:56.548 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 19:24:56.650 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 19:26:21.295 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 19:26:21.370 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 19:26:31.325 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 19:26:47.282 -05:00 [Warning] [LinkedInLoginPage]: Failed to locate two factor authentication error banner. This is most likely desired behavior.
+2022-02-27 19:32:49.369 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 19:32:49.470 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.
+2022-02-27 19:33:01.077 -05:00 [Error] [LinkedInLoginPage]: Failed to locate two factor auth app view.

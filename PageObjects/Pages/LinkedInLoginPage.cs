@@ -32,6 +32,36 @@ namespace PageObjects.Pages
             }
         }
 
+        public bool SomethingUnexpectedHappenedToastDisplayed 
+        {
+            get
+            {
+                return SomethingUnexpectedHappenedToast != null;
+            }
+        }        
+
+        public IWebElement SomethingUnexpectedHappenedToast
+        {
+            get
+            {
+                IWebElement toast = null;
+                try
+                {
+                    toast = _driver.FindElement(By.CssSelector("artdeco-toasts"));    
+                    if(toast.GetAttribute("type") == "error")
+                    {
+                        return toast;
+                    }
+                    return null;
+                }
+                catch(Exception ex)
+                {
+
+                }
+                return toast;
+            }
+        }
+
         public bool CheckIfUnexpectedViewRendered
         {
             get
@@ -54,7 +84,7 @@ namespace PageObjects.Pages
                 IWebElement homePageView = null;
                 try
                 {
-                    homePageView = _wait.Until(drv => drv.FindElement(By.Id("voyager-feed")));
+                    homePageView = _driver.FindElement(By.Id("voyager-feed"));
                 }
                 catch(Exception ex)
                 {
@@ -64,55 +94,11 @@ namespace PageObjects.Pages
             }
         }
 
-
-        //public bool SomethingUnexpectedOccured 
-        //{
-        //    get
-        //    {
-        //        return SomethingUnexpectedToast != null || EmailInputUnExpected != null;
-        //    }
-        //}
-
-        //private IWebElement SomethingUnexpectedToast
-        //{
-        //    get
-        //    {
-        //        IWebElement somethingUnexpectedToast = null;
-        //        try
-        //        {
-        //            somethingUnexpectedToast = _wait.Until(drv => drv.FindElement(By.ClassName("artdeco-toast-inner")));
-        //        }
-        //        catch(Exception ex)
-        //        {
-
-        //        }
-        //        return somethingUnexpectedToast;
-        //    }
-        //}
-
-        //private IWebElement EmailInputUnExpected
-        //{
-        //    get
-        //    {
-        //        IWebElement emailInputUnExpected = null;
-        //        try
-        //        {
-        //            emailInputUnExpected = _wait.Until(drv => drv.FindElement(By.Id("username")));
-        //        }
-        //        catch(Exception ex)
-        //        {
-
-        //        }
-        //        return emailInputUnExpected;
-
-        //    }
-        //}
-
         public bool IsTwoFactorAuthRequired
         {
             get
             {
-                if(TwoFactorAuthAppView != null)
+                if (TwoFactorAuthAppView != null)
                 {
                     _authType = TwoFactorAuthType.AuthenticatorApp;
                     return true;
@@ -182,7 +168,7 @@ namespace PageObjects.Pages
                 IWebElement twoFactorAuthAppView = default;
                 try
                 {
-                    twoFactorAuthAppView = _wait.Until(drv => drv.FindElement(By.Id("auth-app-div")));
+                    twoFactorAuthAppView = _driver.FindElement(By.Id("auth-app-div"));
                 }
                 catch (Exception ex)
                 {
@@ -193,8 +179,6 @@ namespace PageObjects.Pages
             }
         }
 
-        private IWebElement _twoFactorAuthAppView;
-
         private IWebElement TwoFactorAuthSMSView
         {
             get
@@ -202,7 +186,20 @@ namespace PageObjects.Pages
                 IWebElement twoFactorAuthSMSView = default;
                 try
                 {
-                    twoFactorAuthSMSView = _wait.Until(drv => drv.FindElement(By.Id("app__container")));
+                    twoFactorAuthSMSView = _driver.FindElement(By.Id("app__container"));
+                    try
+                    {
+                        // verify this is two factor auth id=input__phone_verification_pin 
+                        IWebElement sms2faInput = twoFactorAuthSMSView.FindElement(By.Id("input__phone_verification_pin"));                        
+                        if(sms2faInput == null)
+                        {
+                            twoFactorAuthSMSView = null;
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        twoFactorAuthSMSView = null;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -256,27 +253,43 @@ namespace PageObjects.Pages
             }
         }
 
-        private IWebElement TwoFactorAuthEnterCodeHeader
+        public bool SMSVerificationCodeErrorDisplayed
         {
             get
             {
-                IWebElement twoFactorAuthEnterCodeHeader = null;
+                return SMSVerificationCodeError != null;
+            }
+        }
+
+        private IWebElement SMSVerificationCodeError
+        {
+            get
+            {
+                IWebElement smsVerificationCodeError = default;
                 try
                 {
-                    if(TwoFactorAuthenticationType == TwoFactorAuthType.AuthenticatorApp)
+                    smsVerificationCodeError = _driver.FindElement(By.CssSelector(".app__content .body__banner-wrapper .body__banner--error span"));
+                    if (smsVerificationCodeError.GetAttribute("role") == "alert")
                     {
-                        twoFactorAuthEnterCodeHeader = _wait.Until(drv => TwoFactorAuthAppView.FindElement(By.CssSelector("#auth-app-div .content__header")));
-                    }
-                    else
-                    {
-                        twoFactorAuthEnterCodeHeader = _wait.Until(drv => TwoFactorAuthSMSView.FindElement(By.CssSelector(".content__header")));
+                        if (smsVerificationCodeError.Displayed == false)
+                        {
+                            smsVerificationCodeError = null;
+                        }
+                        else
+                        {
+                            if (smsVerificationCodeError.Text.Contains("verification code") == false)
+                            {
+                                smsVerificationCodeError = null;
+                            }
+                        }
+
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
-                    _logger.LogError("[LinkedInLoginPage]: Failed to locate two factor authentication header. This text contains something like 'Enter the code you see...'");
+
                 }
-                return twoFactorAuthEnterCodeHeader;
+                return smsVerificationCodeError;
             }
         }
 
@@ -427,78 +440,6 @@ namespace PageObjects.Pages
             }
         }
         
-        public void GoToPage()
-        {
-            this._driver.Manage().Window.Maximize();
-            this._driver.Navigate().GoToUrl(new Uri(BaseUrl));            
-        }
-
-        //public bool AfterTwoFactorSubmitErrorDisplayed
-        //{
-        //    get
-        //    {
-        //        if(AfterTwoFactorSubmitErrorView != null)
-        //        {
-        //            _logger.LogWarning("[LinkedInLoginPage] LinkedIn displayed an error page which will automatically refresh and take us back to the login page. Sit on the page until this page is gone and login page is displayed again.");
-        //            return true;
-        //        }
-        //        else
-        //        {
-        //            // check for specific text
-        //            IWebElement errorHeader = _driver.FindElement(By.CssSelector("#main h1"));
-        //            IEnumerable<IWebElement> errorParagraphs = _driver.FindElements(By.CssSelector("#main p"));
-        //            IList<bool> errorPageElementsFound = new List<bool>();
-        //            if (errorHeader.Text.Contains("Your LinkedIn Network Will Be Back Soon"))
-        //            {
-        //                _logger.LogWarning("[LinkedInLoginPage] LinkedIn might have displayed a potential error page on which we have to wait to get back to login screen again. Keep checking for known elements.");
-        //                errorPageElementsFound.Add(true);
-        //            }
-        //            foreach (IWebElement errorParagraph in errorParagraphs)
-        //            {
-        //                if (errorParagraph.Text.Contains("We’ll get you reconnected soon"))
-        //                {
-        //                    errorPageElementsFound.Add(true);
-        //                }
-        //                if (errorParagraph.Text.Contains("You can leave this window open"))
-        //                {
-        //                    errorPageElementsFound.Add(true);
-        //                }
-        //                if(errorParagraph.Text.Contains("We apologize for the interruption"))
-        //                {
-        //                    errorPageElementsFound.Add(true);
-        //                }
-        //            }
-
-        //            if(errorPageElementsFound.Any(e => e == true))
-        //            {
-        //                _logger.LogWarning("[LinkedInLoginPage] LinkedIn displayed an error page which will automatically refresh and take us back to the login page. Sit on the page until this page is gone and login page is displayed again.");
-        //                return true;
-        //            }
-        //            else
-        //            {
-        //                return false;
-        //            }
-        //        }                
-        //    }
-        //}
-
-        private IWebElement AfterTwoFactorSubmitErrorView
-        {
-            get
-            {
-                IWebElement afterTwoFactorSubmitErrorView = null;
-                try
-                {
-                    afterTwoFactorSubmitErrorView = _driver.FindElement(By.CssSelector(".errorpg"));
-                }
-                catch(Exception ex)
-                {
-
-                }
-                return afterTwoFactorSubmitErrorView;
-            }
-        }
-
         public void EnterTwoFactorAuthCode(string twoFactorAuthCode)
         {
             Random rnd = new Random(300);

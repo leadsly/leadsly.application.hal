@@ -38,7 +38,7 @@ namespace Domain.Supervisor
             linkedInLoginPage.SubmitTwoFactorAuthCode();
 
             // while verification keeps failing we must keep asking user for new code
-            if (linkedInLoginPage.DidVerificationCodeFailed)
+            if (linkedInLoginPage.SMSVerificationCodeErrorDisplayed)
             {
                 _logger.LogWarning("Verification code entered was invalid or expired");
                 // notify user we need their code
@@ -46,8 +46,8 @@ namespace Domain.Supervisor
                 result.InvalidOrExpiredCode = true;
                 result.Failures.Add(new()
                 {
-                    Detail = "An error occured submitting two factor authentication code",
-                    Reason = "Failed to submit two factor authentication code"
+                    Detail = "Verification code entered was invalid or expired",
+                    Reason = "Something went wrong entering in two factor authentication code"
                 });
                 return result;
             }
@@ -119,17 +119,37 @@ namespace Domain.Supervisor
         {
             LinkedInLoginPage loginPage = this._leadslyBot.Authenticate(driver, email, password);
 
-            ConnectAccountResult result = new();
+            ConnectAccountResult result = new()
+            {
+                Succeeded = false
+            };
             if (loginPage.ConfirmAccountDisplayed)
             {
                 loginPage.ConfirmAccountInfo();
             }
 
+            if (loginPage.SomethingUnexpectedHappenedToastDisplayed)
+            {
+                result.UnexpectedErrorOccured = true;
+                result.TwoFactorAuthRequired = false;
+                string linkedInErrorMessage = loginPage.SomethingUnexpectedHappenedToast.GetAttribute("message");
+                result.Failures.Add(new()
+                {
+                   Reason = "LinkedIn displayed error toast message", 
+                   Detail = $"LinkedIn error: {linkedInErrorMessage}"
+                });
+                return result;
+            }
+
             if (loginPage.CheckIfUnexpectedViewRendered)
             {
-                result.Succeeded = false;
                 result.TwoFactorAuthRequired = false;
                 result.UnexpectedErrorOccured = true;
+                result.Failures.Add(new()
+                {
+                    Reason = "Something unexpected rendered",
+                    Detail = "LinkedIn did not render the new feed, two factor auth app view or two factor auth sms view"
+                });
                 return result;
             }
 
@@ -140,6 +160,11 @@ namespace Domain.Supervisor
                 if (result.Succeeded == false)
                 {
                     result.UnexpectedErrorOccured = true;
+                    result.Failures.Add(new()
+                    {
+                        Reason = "Failed to determine two factor auth type",
+                        Detail = "Two factor auth type expected was sms or app, neither was found"
+                    });
                     return result;
                 }
                 

@@ -45,7 +45,10 @@ namespace Domain
         {
             LinkedInPage linkedInPage = new LinkedInPage(driver, this._logger);
 
-            linkedInPage.GoToPage();
+            if (driver.Url.Contains("LinkedIn.com") == false)
+            {
+                linkedInPage.GoToPage();
+            }            
 
             return linkedInPage;
         }

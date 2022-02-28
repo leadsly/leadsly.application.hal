@@ -10,7 +10,7 @@ namespace Domain.Models
     {
         public bool Succeeded { get; set; } = false;
         public bool TwoFactorAuthRequired { get; set; } = false;
-        public bool UnexpectedErrorOccured { get; set; } = false;
+        public bool UnexpectedErrorOccured { get; set; } = false;        
         public TwoFactorAuthType TwoFactorAuthType { get; set; }
         public List<Failure> Failures { get; set; } = new();
     }
