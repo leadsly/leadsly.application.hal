@@ -234,4 +234,4 @@ _Pvt_Extensions
 .fake/
 
 # Logs
-api-logs.txt
+Logs/
