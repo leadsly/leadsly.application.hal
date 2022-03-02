@@ -1,8 +1,9 @@
 ﻿using Domain.Models;
+using Leadsly.Application.Model;
+using Leadsly.Application.Model.Responses;
+using Leadsly.Application.Model.Responses.Hal;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
-using PageObjects;
-using PageObjects.Pages;
 using System;
 using TwoFactorAuthType = Domain.Models.TwoFactorAuthType;
 
@@ -10,40 +11,39 @@ namespace Domain.Supervisor
 {
     public partial class Supervisor : ISupervisor
     {
-        public TwoFactorAuthenticationResult EnterTwoFactorAuth(TwoFactorAuthentication request)
+        public HalOperationResult<T> EnterTwoFactorAuth<T>(TwoFactorAuthentication request)
+            where T : IOperationResponse
         {
-            TwoFactorAuthenticationResult result = new()
+            HalOperationResult<T> result = new()
             {
                 Succeeded = false
             };
+                        
+            result = _halAuthProvider.EnterTwoFactorAuthenticationCode<T>(request.Code);
 
-            if (GetWebDriverFromCache(request.WebDriverId, out object driver).Succeeded == false)
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+            
+            result = _halAuthProvider.SubmitTwoFactorAuthCode<T>();
+
+            if(result.Succeeded == false)
             {
                 return result;
             }
 
-            IWebDriver webDriver = (IWebDriver)driver;
-
-            return EnterTwoFactorAuthentication(webDriver, request.Code);
-        }
-        private TwoFactorAuthenticationResult EnterTwoFactorAuthentication(IWebDriver driver, string code)
-        {
-            TwoFactorAuthenticationResult result = new();
-
-            LinkedInLoginPage linkedInLoginPage = new LinkedInLoginPage(driver, _logger);
-            // notify user we need their authenticator code
-            _logger.LogInformation("Entering user's two factor authentication code");
-            linkedInLoginPage.EnterTwoFactorAuthCode(code);
-            _logger.LogInformation("Submitting user's two factor authentication code");
-            linkedInLoginPage.SubmitTwoFactorAuthCode();
+            IEnterTwoFactorAuthCodeResponse response = new EnterTwoFactorAuthCodeResponse();
 
             // while verification keeps failing we must keep asking user for new code
-            if (linkedInLoginPage.SMSVerificationCodeErrorDisplayed)
+            if (_halAuthProvider.SMSVerificationCodeErrorDisplayed)
             {
                 _logger.LogWarning("Verification code entered was invalid or expired");
-                // notify user we need their code
-                result.Succeeded = false;
-                result.InvalidOrExpiredCode = true;
+                // notify user we need their code                
+                response.InvalidOrExpiredCode = true;
+                // because nothing technically is wrong, its just the incorrect two factor auth code
+                result.Succeeded = true;
+                result.Value = (T)response;
                 result.Failures.Add(new()
                 {
                     Detail = "Verification code entered was invalid or expired",
@@ -52,12 +52,12 @@ namespace Domain.Supervisor
                 return result;
             }
 
-            if (linkedInLoginPage.CheckIfUnexpectedViewRendered)
+            if (_halAuthProvider.CheckIfUnexpectedViewRendered)
             {
-                _logger.LogWarning("Unexpected view rendered after attempting to submit two factor authentication code");
-                result.Succeeded = false;
-                result.InvalidOrExpiredCode = false;
-                result.DidUnexpectedErrorOccur = true;
+                _logger.LogWarning("Unexpected view rendered after attempting to submit two factor authentication code");                
+                response.InvalidOrExpiredCode = false;
+                response.DidUnexpectedErrorOccur = true;
+                result.Value = (T)response;
                 result.Failures.Add(new()
                 {
                     Reason = "An unexpected error rendered",
@@ -69,134 +69,35 @@ namespace Domain.Supervisor
             result.Succeeded = true;
             return result;
         }
-        private ConnectAccountResult GetWebDriverFromCache(string webDriverId, out object driver)
+        public HalOperationResult<T> AuthenticateAccount<T>(AuthenticateAccount request)
+            where T : IOperationResponse
         {
-            ConnectAccountResult result = new()
+            HalOperationResult<T> result = new()
             {
                 Succeeded = false
             };
 
-            if (!_memoryCache.TryGetValue(webDriverId, out driver))
+            result = this._halAuthProvider.GoToPage<T>(request.ConnectAuthUrl);
+
+            if(result.Succeeded == false)
             {
-                result.Failures.Add(new()
-                {
-                    Reason = "Webdriver was not found in memory cache",
-                    Detail = $"Memory cache does not contain the webdriver instance with id: {webDriverId}"
-                });
                 return result;
             }
-            result.Succeeded = true;
-            return result;
-        }
-        public ConnectAccountResult AuthenticateAccount(AuthenticateAccount request)
-        {
-            ConnectAccountResult result = new()
+
+            IConnectAccountResponse response = new ConnectAccountResponse
             {
-                Succeeded = false
+                TwoFactorAuthRequired = this._halAuthProvider.IsAuthenticationRequired
             };
 
-            if (GetWebDriverFromCache(request.WebDriverId, out object driver).Succeeded == false)
+            if (this._halAuthProvider.IsAuthenticationRequired)
             {
+                result = _halAuthProvider.Authenticate<T>(request.Username, request.Password);
+                result.Value = (T)response;
                 return result;
             }
 
-            IWebDriver webDriver = (IWebDriver)driver;
-
-            LinkedInPage linkedInPage = this._leadslyBot.GoToLinkedIn(webDriver);
-
-            if (linkedInPage.IsAuthenticationRequired)
-            {
-                result = Authenticate(webDriver, request.Username, request.Password);
-                result.WebDriverId = request.WebDriverId;
-                return result;
-            }
-
-            result.TwoFactorAuthRequired = linkedInPage.IsAuthenticationRequired;
+            result.Value = (T)response;
             result.Succeeded = true;
-            return result;
-        }        
-        private ConnectAccountResult Authenticate(IWebDriver driver, string email, string password)
-        {
-            LinkedInLoginPage loginPage = this._leadslyBot.Authenticate(driver, email, password);
-
-            ConnectAccountResult result = new()
-            {
-                Succeeded = false
-            };
-            if (loginPage.ConfirmAccountDisplayed)
-            {
-                loginPage.ConfirmAccountInfo();
-            }
-
-            if (loginPage.SomethingUnexpectedHappenedToastDisplayed)
-            {
-                result.UnexpectedErrorOccured = true;
-                result.TwoFactorAuthRequired = false;
-                string linkedInErrorMessage = loginPage.SomethingUnexpectedHappenedToast.GetAttribute("message");
-                result.Failures.Add(new()
-                {
-                   Reason = "LinkedIn displayed error toast message", 
-                   Detail = $"LinkedIn error: {linkedInErrorMessage}"
-                });
-                return result;
-            }
-
-            if (loginPage.CheckIfUnexpectedViewRendered)
-            {
-                result.TwoFactorAuthRequired = false;
-                result.UnexpectedErrorOccured = true;
-                result.Failures.Add(new()
-                {
-                    Reason = "Something unexpected rendered",
-                    Detail = "LinkedIn did not render the new feed, two factor auth app view or two factor auth sms view"
-                });
-                return result;
-            }
-
-            if (loginPage.IsTwoFactorAuthRequired)
-            {
-                result = DetermineTwoFactorAuthenticationType(loginPage);
-
-                if (result.Succeeded == false)
-                {
-                    result.UnexpectedErrorOccured = true;
-                    result.Failures.Add(new()
-                    {
-                        Reason = "Failed to determine two factor auth type",
-                        Detail = "Two factor auth type expected was sms or app, neither was found"
-                    });
-                    return result;
-                }
-                
-                return result;
-            }
-
-            result.Succeeded = true;
-            return result;
-        }        
-        private ConnectAccountResult DetermineTwoFactorAuthenticationType(LinkedInLoginPage loginPage)
-        {
-            ConnectAccountResult result = new()
-            {
-                TwoFactorAuthRequired = true,
-                Succeeded = true
-            };
-
-            if (Enum.GetName(loginPage.TwoFactorAuthenticationType) == Enum.GetName(TwoFactorAuthType.AuthenticatorApp))
-            {
-                result.TwoFactorAuthType = TwoFactorAuthType.AuthenticatorApp;
-            }
-            else if (Enum.GetName(loginPage.TwoFactorAuthenticationType) == Enum.GetName(TwoFactorAuthType.SMS))
-            {
-                result.TwoFactorAuthType = TwoFactorAuthType.SMS;
-            }
-            else
-            {
-                // something went wrong
-                result.TwoFactorAuthType = TwoFactorAuthType.None;
-                result.Succeeded = false;
-            }
-
             return result;
         }        
     }

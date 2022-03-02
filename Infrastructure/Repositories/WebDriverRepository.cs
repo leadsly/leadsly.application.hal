@@ -13,21 +13,23 @@ namespace Infrastructure.Repositories
 {
     public class WebDriverRepository : IWebDriverRepository
     {
-        public WebDriverRepository(ILogger<WebDriverRepository> logger, IOptions<ChromeProfileOptions> webDriverOptions)
+        public WebDriverRepository(ILogger<WebDriverRepository> logger, IOptions<ChromeConfigOptions> webDriverOptions)
         {
             _logger = logger;
             _webDriverOptions = webDriverOptions.Value;
         }
 
         private readonly ILogger<WebDriverRepository> _logger;
-        private readonly ChromeProfileOptions _webDriverOptions;
+        private readonly ChromeConfigOptions _webDriverOptions;
 
         public WebDriverOptions GetWebDriverOptions()
         {
             return new WebDriverOptions
             {
                 DefaultChromeProfileName = _webDriverOptions.DefaultProfile,
-                DefaultChromeUserProfilesDir = _webDriverOptions.ChromeUserDirectory
+                DefaultChromeUserProfilesDir = _webDriverOptions.ChromeUserDirectory,
+                AddArguments = _webDriverOptions.AddArguments,
+                WebDriverWaitFromSeconds = _webDriverOptions.WebDriverWaitFromSeconds
             };
         }
     }

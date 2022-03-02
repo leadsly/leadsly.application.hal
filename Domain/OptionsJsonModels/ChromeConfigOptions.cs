@@ -6,9 +6,12 @@ using System.Threading.Tasks;
 
 namespace Domain.OptionsJsonModels
 {
-    public class ChromeProfileOptions
+    public class ChromeConfigOptions
     {
         public string DefaultProfile { get; set; }
         public string ChromeUserDirectory { get; set; }
+        public List<string> AddArguments { get; set; }
+        public int WebDriverWaitFromSeconds { get; set; }
+
     }
 }

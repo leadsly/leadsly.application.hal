@@ -10,5 +10,7 @@ namespace Domain.Models
     {
         public string DefaultChromeProfileName { get; set; }
         public string DefaultChromeUserProfilesDir { get; set; }
+        public List<string> AddArguments { get; set; }
+        public int WebDriverWaitFromSeconds { get; set; }
     }
 }

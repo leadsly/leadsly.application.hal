@@ -1,4 +1,6 @@
 ﻿using Domain.Models;
+using Leadsly.Application.Model;
+using Leadsly.Application.Model.Responses;
 using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
 
@@ -6,10 +8,12 @@ namespace Domain.Supervisor
 {
     public interface ISupervisor
     {
-        IWebDriverInformation CreateWebDriver(InstantiateWebDriver newWebDriver);            
+        IWebDriverInformation CreateWebDriver(InstantiateWebDriver newWebDriver);
 
-        ConnectAccountResult AuthenticateAccount(AuthenticateAccount request);
+        HalOperationResult<T> AuthenticateAccount<T>(AuthenticateAccount request)
+            where T : IOperationResponse;
 
-        TwoFactorAuthenticationResult EnterTwoFactorAuth(TwoFactorAuthentication twoFactorAuth);
+        HalOperationResult<T> EnterTwoFactorAuth<T>(TwoFactorAuthentication twoFactorAuth)
+            where T : IOperationResponse;
     }
 }

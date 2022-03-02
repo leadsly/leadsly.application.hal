@@ -1,5 +1,7 @@
 ﻿using Domain.Models;
 using Domain.Supervisor;
+using Leadsly.Application.Model;
+using Leadsly.Application.Model.Responses.Hal;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +27,7 @@ namespace Hal.Controllers
         [AllowAnonymous]
         public IActionResult Authenticate([FromBody] AuthenticateAccount authAccount)
         {
-            ConnectAccountResult result = _supervisor.AuthenticateAccount(authAccount);                
+            HalOperationResult<IConnectAccountResponse> result = _supervisor.AuthenticateAccount<IConnectAccountResponse>(authAccount);                
 
             return Ok(result);
         }
@@ -34,7 +36,7 @@ namespace Hal.Controllers
         [AllowAnonymous]
         public IActionResult EnterTwoFactorAuth([FromBody] TwoFactorAuthentication twoFactorAuth)
         {
-            TwoFactorAuthenticationResult result = _supervisor.EnterTwoFactorAuth(twoFactorAuth);
+            HalOperationResult<IEnterTwoFactorAuthCodeResponse> result = _supervisor.EnterTwoFactorAuth<IEnterTwoFactorAuthCodeResponse>(twoFactorAuth);
 
             return Ok(result);
         }

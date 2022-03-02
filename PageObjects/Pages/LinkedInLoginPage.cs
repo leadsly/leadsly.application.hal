@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Domain.Pages;
+using Leadsly.Application.Model;
+using Leadsly.Application.Model.Responses;
+using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using System;
@@ -10,17 +13,17 @@ using System.Threading.Tasks;
 
 namespace PageObjects.Pages
 {
-    public class LinkedInLoginPage : LeadslyBasePage
+    public class LinkedInLoginPage : LeadslyBasePage, ILinkedInLoginPage
     {
         private const string BaseUrl = "https://www.linkedin.com";
         
-        public LinkedInLoginPage(IWebDriver driver, ILogger logger)
+        public LinkedInLoginPage(IWebDriver driver, ILogger<LinkedInLoginPage> logger)
         {
             this._driver = driver;
             this._logger = logger;
             this._wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
         }
-        private readonly ILogger _logger;
+        private readonly ILogger<LinkedInLoginPage> _logger;
         private readonly WebDriverWait _wait;
         private readonly IWebDriver _driver;
         private TwoFactorAuthType? _authType = null;
@@ -209,7 +212,6 @@ namespace PageObjects.Pages
                 return twoFactorAuthSMSView;
             }
         }
-
 
         public bool ConfirmAccountDisplayed
         {
@@ -439,26 +441,39 @@ namespace PageObjects.Pages
                 return signInButton;
             }
         }
-        
-        public void EnterTwoFactorAuthCode(string twoFactorAuthCode)
+
+        public HalOperationResult<T> EnterTwoFactorAuthCode<T>(string twoFactorAuthCode)
+            where T : IOperationResponse
         {
+            HalOperationResult<T> result = new();
+
             Random rnd = new Random(300);
             foreach (char character in twoFactorAuthCode)
             {
                 TwoFactorAuthenticationCodeInput.SendKeys(character.ToString());
                 Thread.Sleep(rnd.Next(500));
-            }            
+            }
+            result.Succeeded = true;
+            return result;
         }
 
-        public void SubmitTwoFactorAuthCode()
+        public HalOperationResult<T> SubmitTwoFactorAuthCode<T>()
+            where T : IOperationResponse
         {
+            HalOperationResult<T> result = new();
+
             Random rnd = new Random(300);
             TwoStepAuthenticationSubmitButton.Click();
             Thread.Sleep(rnd.Next(1000));
+
+            result.Succeeded = true;
+            return result;
         }
 
-        public void ConfirmAccountInfo()
+        public HalOperationResult<T> ConfirmAccountInfo<T>()
+            where T : IOperationResponse
         {
+            HalOperationResult<T> result = new();
             Random rnd = new Random(300);
             Thread.Sleep(rnd.Next(500));
             this.ConfirmButton.Click();
@@ -466,25 +481,44 @@ namespace PageObjects.Pages
 
             if (this.ConfirmAccountDisplayed)
             {
-                ConfirmAccountInfo();
+                result = ConfirmAccountInfo<T>();
+                if(result.Succeeded == false)
+                {
+                    return result;
+                }
             }
-            
+
+            result.Succeeded = true;
+            return result;            
         }
 
-        public void SkipAccountInfoConfirmation()
+        public HalOperationResult<T> SkipAccountInfoConfirmation<T>()
+            where T : IOperationResponse
         {
+            HalOperationResult<T> result = new();
+
             Random rnd = new Random(300);
             Thread.Sleep(rnd.Next(500));
             this.SkipButton.Click();
+
+            result.Succeeded = true;
+            return result;
         }
 
-        public void SignIn()
+        public HalOperationResult<T> SignIn<T>()
+            where T : IOperationResponse
         {
+            HalOperationResult<T> result = new();
             SignInButton.Click();
+            result.Succeeded = true;
+            return result;
         }
 
-        public void EnterEmail(string email) 
+        public HalOperationResult<T> EnterEmail<T>(string email)
+            where T : IOperationResponse
         {
+            HalOperationResult<T> result = new();
+
             try
             {
                 Random sendKeysTime = new Random(200);
@@ -516,11 +550,16 @@ namespace PageObjects.Pages
             catch(Exception ex)
             {
                 _logger.LogError("[LinkedInLoginPage]: Error occured entering user email.");
-            }            
+                return result;
+            }
+            result.Succeeded = true;
+            return result;
         }
 
-        public void EnterPassword(string password)
+        public HalOperationResult<T> EnterPassword<T>(string password)
+            where T : IOperationResponse
         {
+            HalOperationResult<T> result = new();
             try
             {
                 Random sendKeysTime = new Random(100);
@@ -552,7 +591,11 @@ namespace PageObjects.Pages
             catch (Exception ex)
             {
                 _logger.LogError("[LinkedInLoginPage]: Error occured entering user email.");
+                return result;
             }
+
+            result.Succeeded = true;
+            return result;
         }
     }
 }

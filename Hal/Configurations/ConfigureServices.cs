@@ -20,6 +20,11 @@ using Hal.OptionsJsonModels;
 using Domain.OptionsJsonModels;
 using Infrastructure.Repositories;
 using Domain.Repositories;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using PageObjects.Pages;
+using OpenQA.Selenium.Support.UI;
+using Domain.Pages;
 
 namespace Hal.Configurations
 {
@@ -47,11 +52,33 @@ namespace Hal.Configurations
         {
             Log.Information("Registering selenium services configuration.");
 
-            services.AddScoped<ILeadslyBot, LeadslyBot>();
-            services.AddScoped<IWebDriverManager, WebDriverManager>();
+            
+            services.Configure<ChromeConfigOptions>(options => configuration.GetSection(nameof(ChromeConfigOptions)).Bind(options));
+            ChromeConfigOptions webDriverConfigOptions = new();
+            configuration.GetSection(nameof(ChromeConfigOptions)).Bind(webDriverConfigOptions);
 
-            services.Configure<ChromeProfileOptions>(options => configuration.GetSection(nameof(ChromeProfileOptions)).Bind(options));
+            services.AddSingleton<IWebDriver, ChromeDriver>(opt =>
+            {
+                ChromeOptions options = new();
+                foreach (string addArgument in webDriverConfigOptions.AddArguments)
+                {
+                    options.AddArgument(addArgument);
+                }
+
+                options.AddArgument(@$"user-data-dir={webDriverConfigOptions.ChromeUserDirectory}\{webDriverConfigOptions.DefaultProfile}");
+                return new ChromeDriver(options);
+            });
             services.AddSingleton<IFileManager, FileManager>();
+
+            services.AddScoped<ILinkedInLoginPage, LinkedInLoginPage>();
+            services.AddScoped<ILinkedInPage, LinkedInPage>();
+            services.AddScoped<ILinkedInHomePage, LinkedInHomePage>();
+            services.AddScoped<WebDriverWait>(opt =>
+            {
+                IWebDriver drv = opt.GetRequiredService<IWebDriver>();
+                WebDriverWait wait = new WebDriverWait(drv, TimeSpan.FromSeconds(webDriverConfigOptions.WebDriverWaitFromSeconds));
+                return wait;
+            });
 
             return services;
         }

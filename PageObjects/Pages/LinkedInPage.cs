@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Domain.Pages;
+using Leadsly.Application.Model;
+using Leadsly.Application.Model.Responses;
+using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using System;
@@ -9,20 +12,21 @@ using System.Threading.Tasks;
 
 namespace PageObjects.Pages
 {
-    public class LinkedInPage
+    public class LinkedInPage : ILinkedInPage
     {
-        private const string LinkedInUrl = "https://linkedin.com";
-        public LinkedInPage(IWebDriver driver, ILogger logger)
+        public LinkedInPage(IWebDriver driver, ILinkedInLoginPage linkedInLoginPage, ILinkedInHomePage linkedInHomePage, WebDriverWait wait, ILogger<LinkedInPage> logger)
         {
             this._driver = driver;
             this._logger = logger;
-            this._wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
-            this.LinkedInLoginPage = new LinkedInLoginPage(driver, logger);
-            this.LinkedInHomePage = new LinkedInHomePage(driver, logger);
+            this._wait = wait;
+            this._linkedInLoginPage = linkedInLoginPage;            
+            this._linkedInHomePage = linkedInHomePage;
         }
-        private readonly ILogger _logger;
+        private readonly ILogger<LinkedInPage> _logger;
         private readonly WebDriverWait _wait;
         private readonly IWebDriver _driver;
+        private readonly ILinkedInLoginPage _linkedInLoginPage;
+        private readonly ILinkedInHomePage _linkedInHomePage;
 
         public LinkedInLoginPage LinkedInLoginPage { get; private set; }
         public LinkedInHomePage LinkedInHomePage { get; set; }
@@ -52,11 +56,14 @@ namespace PageObjects.Pages
             }
         }
 
-        public void GoToPage()
+        public HalOperationResult<T> GoToPage<T>(string pageUrl)
+            where T : IOperationResponse
         {
+            HalOperationResult<T> result = new();
+
             try
             {
-                this._driver.Manage().Window.Maximize();
+                this._driver.Navigate().GoToUrl(new Uri(pageUrl));
             }
             catch(WebDriverTimeoutException timeoutEx)
             {
@@ -64,10 +71,12 @@ namespace PageObjects.Pages
             }
             catch(Exception ex)
             {
-                _logger.LogWarning("[LinkedInPage] Failed to maximize window.");
+                _logger.LogError(ex, $"Failed to navigate to page {pageUrl}");
+                return result;
             }
 
-            this._driver.Navigate().GoToUrl(new Uri(LinkedInUrl));
+            result.Succeeded = true;
+            return result;
         }
     }
 }

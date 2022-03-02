@@ -1,4 +1,5 @@
 ﻿using Domain.Models;
+using Leadsly.Application.Model;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
@@ -25,11 +26,12 @@ namespace Domain.Supervisor
             IWebDriver driver = null;
             try
             {
-                string chromeProfileName = $"Chrome_Profile_{Guid.NewGuid()}";
+                // [OMikolajczyk_3-1-2022] Keeping as proof of concept for how to request new web drivers.
+                // string chromeProfileName = $"Chrome_Profile_{Guid.NewGuid()}";
                 // copy template profile into default chrome directory and re-name it
                 WebDriverOptions webDriverOptions = _webDriverRepository.GetWebDriverOptions();
-                IOperationResult copyResult = _fileManager.CloneDefaultChromeProfile(chromeProfileName, webDriverOptions);
-                ChromeOptions options = SetChromeOptions(chromeProfileName, webDriverOptions.DefaultChromeUserProfilesDir);
+                // IOperationResult copyResult = _fileManager.CloneDefaultChromeProfile(chromeProfileName, webDriverOptions);
+                ChromeOptions options = SetChromeOptions(webDriverOptions.DefaultChromeProfileName, webDriverOptions.DefaultChromeUserProfilesDir);
                 driver = new ChromeDriver(options);
                 driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(newWebDriver.DefaultTimeoutInSeconds);
             }

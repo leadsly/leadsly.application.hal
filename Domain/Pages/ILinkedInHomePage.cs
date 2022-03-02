@@ -4,12 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PageObjects
+namespace Domain.Pages
 {
-    public enum TwoFactorAuthType
+    public interface ILinkedInHomePage
     {
-        None,
-        SMS,
-        AuthenticatorApp
+
     }
 }

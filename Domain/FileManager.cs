@@ -1,4 +1,5 @@
 ﻿using Domain.Models;
+using Leadsly.Application.Model;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
