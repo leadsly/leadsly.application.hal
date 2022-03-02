@@ -13,6 +13,7 @@ namespace Hal.Configurations
 
             options.Filters.Add<GlobalControllerExceptionAttribute>();
             options.Filters.Add<InvalidModelStateFilter>(FilterOrders.RequestValidationFilter);
+            options.Filters.Add<CustomHeaderFilter>();
             options.Filters.Add(new ProducesAttribute("application/json"));
 
             AuthorizationPolicy defaultPolicy = new AuthorizationOptions().DefaultPolicy;

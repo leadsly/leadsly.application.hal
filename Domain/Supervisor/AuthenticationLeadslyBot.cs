@@ -88,15 +88,14 @@ namespace Domain.Supervisor
             {
                 TwoFactorAuthRequired = this._halAuthProvider.IsAuthenticationRequired
             };
+            result.Value = (T)response;
 
             if (this._halAuthProvider.IsAuthenticationRequired)
             {
-                result = _halAuthProvider.Authenticate<T>(request.Username, request.Password);
-                result.Value = (T)response;
+                result = _halAuthProvider.Authenticate<T>(request.Username, request.Password);                
                 return result;
             }
 
-            result.Value = (T)response;
             result.Succeeded = true;
             return result;
         }        

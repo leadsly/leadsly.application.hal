@@ -25,6 +25,8 @@ using OpenQA.Selenium.Chrome;
 using PageObjects.Pages;
 using OpenQA.Selenium.Support.UI;
 using Domain.Pages;
+using Domain.Providers;
+using Leadsly.Application.Model;
 
 namespace Hal.Configurations
 {
@@ -78,6 +80,12 @@ namespace Hal.Configurations
                 IWebDriver drv = opt.GetRequiredService<IWebDriver>();
                 WebDriverWait wait = new WebDriverWait(drv, TimeSpan.FromSeconds(webDriverConfigOptions.WebDriverWaitFromSeconds));
                 return wait;
+            });
+
+            services.AddScoped<IHalAuthProvider, HalAuthProvider>();
+            services.AddSingleton<IHalIdentity, HalIdentity>(opt =>
+            {
+                return new HalIdentity(Guid.NewGuid().ToString());
             });
 
             return services;

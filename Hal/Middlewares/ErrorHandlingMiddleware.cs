@@ -1,4 +1,5 @@
 ﻿using Hal.Exceptions;
+using Leadsly.Application.Model;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Net;
@@ -16,7 +17,7 @@ namespace Hal.Middlewares
         }
 
         public async Task Invoke(HttpContext context)
-    {
+        {
             try
             {
                 await next(context);
@@ -36,8 +37,7 @@ namespace Hal.Middlewares
                 HttpStatusCode code = HttpStatusCode.InternalServerError; 
 
                 context.Response.ContentType = "text/plain";
-                context.Response.StatusCode = (int)code;
-                
+                context.Response.StatusCode = (int)code;                
             }
 
             return context.Response.WriteAsync("Status Code: 500; Internal Server Error.");

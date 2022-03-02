@@ -27,7 +27,19 @@ namespace Hal.Controllers
         [AllowAnonymous]
         public IActionResult Authenticate([FromBody] AuthenticateAccount authAccount)
         {
-            HalOperationResult<IConnectAccountResponse> result = _supervisor.AuthenticateAccount<IConnectAccountResponse>(authAccount);                
+            HalOperationResult<IConnectAccountResponse> result = _supervisor.AuthenticateAccount<IConnectAccountResponse>(authAccount);
+
+            if(result.Succeeded == false)
+            {
+                //return BadRequest_Test();
+                result.Failures.Add(new()
+                {
+                    Detail = "not",
+                    Reason = "Working",
+                    Code = Codes.AWS_API_ERROR
+                });
+                return BadRequest_LeadslyAuthenticationError(result.Failures);
+            }
 
             return Ok(result);
         }

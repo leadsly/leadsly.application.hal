@@ -7,5 +7,6 @@
         public const string ForbiddenDetail = "The server understood the request, but is refusing to authorize it.";
         public const string ExternalJwtIsInvalid = "External provider jwt is invalid.";
         public const string Unauthorized = "Authentication credentials are missing or invalid.";
+        public const string LeadslySocialAccountAuthenticationError = "Failed to authenticate user's social account";
     }
 }
