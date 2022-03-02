@@ -20,9 +20,9 @@ namespace Domain
         }
 
         private readonly ILogger<FileManager> _logger;
-        public IOperationResult CloneDefaultChromeProfile(string profileDirectoryName, WebDriverOptions options)
+        public ResultBase CloneDefaultChromeProfile(string profileDirectoryName, WebDriverOptions options)
         {
-            IOperationResult result = new ResultBase
+            ResultBase result = new ResultBase
             {
                 Succeeded = false
             };
@@ -55,9 +55,9 @@ namespace Domain
             return result;
         }
 
-        private IOperationResult HandleAnyErrors()
+        private ResultBase HandleAnyErrors()
         {
-            IOperationResult result = new ResultBase();
+            ResultBase result = new ResultBase();
             if (_log.Count > 0)
             {
                 int count = _log.Count;

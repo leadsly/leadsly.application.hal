@@ -10,7 +10,7 @@ namespace Domain
 {
     public interface IFileManager
     {
-        public IOperationResult CloneDefaultChromeProfile(string profileDirectoryName, WebDriverOptions options);
+        public ResultBase CloneDefaultChromeProfile(string profileDirectoryName, WebDriverOptions options);
 
     }
 }
