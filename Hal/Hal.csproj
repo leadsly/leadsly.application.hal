@@ -46,4 +46,8 @@
     <ProjectReference Include="..\PageObjects\PageObjects.csproj" />        
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Logs\" />
+  </ItemGroup>
+
 </Project>

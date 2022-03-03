@@ -58,7 +58,7 @@ namespace Hal.Configurations
             services.Configure<ChromeConfigOptions>(options => configuration.GetSection(nameof(ChromeConfigOptions)).Bind(options));
             ChromeConfigOptions webDriverConfigOptions = new();
             configuration.GetSection(nameof(ChromeConfigOptions)).Bind(webDriverConfigOptions);
-
+            string blankTabWindowHandleId = string.Empty;
             services.AddSingleton<IWebDriver, ChromeDriver>(opt =>
             {
                 ChromeOptions options = new();
@@ -68,10 +68,16 @@ namespace Hal.Configurations
                 }
 
                 options.AddArgument(@$"user-data-dir={webDriverConfigOptions.ChromeUserDirectory}\{webDriverConfigOptions.DefaultProfile}");
-                return new ChromeDriver(options);
+                ChromeDriver drv = new ChromeDriver(options);
+                blankTabWindowHandleId = drv.CurrentWindowHandle;
+                return drv;
+            });            
+            services.AddSingleton<IDefaultTabWebDriver, DefaultTabWebDriver>(opt =>
+            {
+                DefaultTabWebDriver defaultTab = new(blankTabWindowHandleId);
+                return defaultTab;
             });
             services.AddSingleton<IFileManager, FileManager>();
-
             services.AddScoped<ILinkedInLoginPage, LinkedInLoginPage>();
             services.AddScoped<ILinkedInPage, LinkedInPage>();
             services.AddScoped<ILinkedInHomePage, LinkedInHomePage>();

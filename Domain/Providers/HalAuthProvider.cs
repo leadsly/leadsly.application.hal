@@ -78,7 +78,6 @@ namespace Domain.Providers
                     return result;
                 }
             }
-
             
             if (_linkedInLoginPage.SomethingUnexpectedHappenedToastDisplayed)
             {

@@ -3,21 +3,25 @@ using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.Responses.Hal;
 using Microsoft.Extensions.Logging;
-using OpenQA.Selenium;
-using System;
-using TwoFactorAuthType = Domain.Models.TwoFactorAuthType;
 
 namespace Domain.Supervisor
 {
     public partial class Supervisor : ISupervisor
     {
-        public HalOperationResult<T> EnterTwoFactorAuth<T>(TwoFactorAuthentication request)
+        public const string DefaultUrl = "https://www.LinkedIn.com";
+        public HalOperationResult<T> EnterTwoFactorAuth<T>(TwoFactorAuthenticationRequest request)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new()
             {
                 Succeeded = false
             };
+
+            result = SwitchTo<T>(request.WindowHandleId, out string windowHandle);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
                         
             result = _halAuthProvider.EnterTwoFactorAuthenticationCode<T>(request.Code);
 
@@ -34,6 +38,7 @@ namespace Domain.Supervisor
             }
 
             IEnterTwoFactorAuthCodeResponse response = new EnterTwoFactorAuthCodeResponse();
+            result.Value = (T)response;            
 
             // while verification keeps failing we must keep asking user for new code
             if (_halAuthProvider.SMSVerificationCodeErrorDisplayed)
@@ -43,10 +48,10 @@ namespace Domain.Supervisor
                 response.InvalidOrExpiredCode = true;
                 // because nothing technically is wrong, its just the incorrect two factor auth code
                 result.Succeeded = true;
-                result.Value = (T)response;
+                result.Value.WindowHandleId = windowHandle;
                 result.Failures.Add(new()
                 {
-                    Detail = "Verification code entered was invalid or expired",
+                    Detail = "SMS verification code entered was invalid or expired",
                     Reason = "Something went wrong entering in two factor authentication code"
                 });
                 return result;
@@ -57,19 +62,31 @@ namespace Domain.Supervisor
                 _logger.LogWarning("Unexpected view rendered after attempting to submit two factor authentication code");                
                 response.InvalidOrExpiredCode = false;
                 response.DidUnexpectedErrorOccur = true;
-                result.Value = (T)response;
+
+                _logger.LogDebug("Attempting to close the tab");
+                CloseTab<T>(windowHandle);
+                result.Value.WindowTabClosed = true;
                 result.Failures.Add(new()
                 {
                     Reason = "An unexpected error rendered",
                     Detail = "An unexpected error rendered in the view while trying to submit two factor authentication code"
-                });
+                });                
                 return result;
             }
 
+            result = CloseTab<T>(result.Value.WindowHandleId);
+            if(result.Succeeded == false)
+            {
+                result.Value.WebDriverError = true;
+                return result;
+            }
+
+            result.Value.WindowHandleId = windowHandle;
             result.Succeeded = true;
             return result;
         }
-        public HalOperationResult<T> AuthenticateAccount<T>(AuthenticateAccount request)
+
+        public HalOperationResult<T> AuthenticateAccount<T>(AuthenticateAccountRequest request)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new()
@@ -77,7 +94,13 @@ namespace Domain.Supervisor
                 Succeeded = false
             };
 
-            result = this._halAuthProvider.GoToPage<T>(request.ConnectAuthUrl);
+            result = SwitchTo<T>(request.WindowHandleId, out string windowHandle);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            result = this._halAuthProvider.GoToPage<T>(request.ConnectAuthUrl ?? DefaultUrl);
 
             if(result.Succeeded == false)
             {
@@ -88,16 +111,25 @@ namespace Domain.Supervisor
             {
                 TwoFactorAuthRequired = this._halAuthProvider.IsAuthenticationRequired
             };
-            result.Value = (T)response;
-
-            if (this._halAuthProvider.IsAuthenticationRequired)
+            result.Value = (T)response;    
+            
+            if (this._halAuthProvider.IsAuthenticationRequired == false)
             {
-                result = _halAuthProvider.Authenticate<T>(request.Username, request.Password);                
+                result.Value.WindowHandleId = windowHandle;
+                result = CloseTab<T>(result.Value.WindowHandleId);
+                if (result.Succeeded == false)
+                {
+                    result.Value.WebDriverError = true;
+                    return result;
+                }
+
+                result.Value.WindowTabClosed = true;
+                result.Succeeded = true;
                 return result;
             }
 
-            result.Succeeded = true;
-            return result;
+            result.Value.WindowHandleId = windowHandle;
+            return _halAuthProvider.Authenticate<T>(request.Username, request.Password);                        
         }        
     }
 }

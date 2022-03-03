@@ -10,10 +10,11 @@ namespace Domain.Supervisor
     {
         IWebDriverInformation CreateWebDriver(InstantiateWebDriver newWebDriver);
 
-        HalOperationResult<T> AuthenticateAccount<T>(AuthenticateAccount request)
+        HalOperationResult<T> AuthenticateAccount<T>(AuthenticateAccountRequest request)
             where T : IOperationResponse;
 
-        HalOperationResult<T> EnterTwoFactorAuth<T>(TwoFactorAuthentication twoFactorAuth)
+        HalOperationResult<T> EnterTwoFactorAuth<T>(TwoFactorAuthenticationRequest twoFactorAuth)
             where T : IOperationResponse;
+
     }
 }

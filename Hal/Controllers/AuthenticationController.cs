@@ -25,32 +25,30 @@ namespace Hal.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        public IActionResult Authenticate([FromBody] AuthenticateAccount authAccount)
+        public IActionResult Authenticate([FromBody] AuthenticateAccountRequest request)
         {
-            HalOperationResult<IConnectAccountResponse> result = _supervisor.AuthenticateAccount<IConnectAccountResponse>(authAccount);
+            HalOperationResult<IConnectAccountResponse> result = _supervisor.AuthenticateAccount<IConnectAccountResponse>(request);
 
             if(result.Succeeded == false)
             {
-                //return BadRequest_Test();
-                result.Failures.Add(new()
-                {
-                    Detail = "not",
-                    Reason = "Working",
-                    Code = Codes.AWS_API_ERROR
-                });
                 return BadRequest_LeadslyAuthenticationError(result.Failures);
             }
 
-            return Ok(result);
+            return Ok(result.Value);
         }
 
         [HttpPost("2fa")]
         [AllowAnonymous]
-        public IActionResult EnterTwoFactorAuth([FromBody] TwoFactorAuthentication twoFactorAuth)
+        public IActionResult EnterTwoFactorAuth([FromBody] TwoFactorAuthenticationRequest twoFactorAuth)
         {
             HalOperationResult<IEnterTwoFactorAuthCodeResponse> result = _supervisor.EnterTwoFactorAuth<IEnterTwoFactorAuthCodeResponse>(twoFactorAuth);
 
-            return Ok(result);
+            if(result.Succeeded == false)
+            {
+                return BadRequest_LeadslyAuthenticationError(result.Failures);
+            }
+
+            return Ok(result.Value);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Domain.Models;
 using Domain.Providers;
 using Domain.Repositories;
+using Leadsly.Application.Model;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -10,7 +11,7 @@ namespace Domain.Supervisor
 {
     public partial class Supervisor : ISupervisor
     {
-        public Supervisor(IWebDriverRepository webDriverRepository, IHalAuthProvider halAuthProvider, IWebDriver driver, IFileManager fileManager, IMemoryCache memoryCache, ILogger<Supervisor> logger)
+        public Supervisor(IWebDriverRepository webDriverRepository, IHalAuthProvider halAuthProvider, IWebDriver driver, IFileManager fileManager, IDefaultTabWebDriver defaultTabWebDriver, IMemoryCache memoryCache, ILogger<Supervisor> logger)
         {
             _logger = logger;
             _memoryCache = memoryCache;
@@ -18,6 +19,7 @@ namespace Domain.Supervisor
             _webDriverRepository = webDriverRepository;
             _halAuthProvider = halAuthProvider;
             _driver = driver;
+            _defaultTabWebDriver = defaultTabWebDriver;
         }
 
         private readonly IWebDriver _driver;
@@ -26,6 +28,7 @@ namespace Domain.Supervisor
         private readonly IFileManager _fileManager;
         private readonly IMemoryCache _memoryCache;
         private readonly IWebDriverRepository _webDriverRepository;
+        private readonly IDefaultTabWebDriver _defaultTabWebDriver;
 
     }
 }
