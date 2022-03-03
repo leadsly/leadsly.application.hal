@@ -27,6 +27,7 @@ using OpenQA.Selenium.Support.UI;
 using Domain.Pages;
 using Domain.Providers;
 using Leadsly.Application.Model;
+using Domain.Services;
 
 namespace Hal.Configurations
 {
@@ -93,6 +94,9 @@ namespace Hal.Configurations
             {
                 return new HalIdentity(Guid.NewGuid().ToString());
             });
+
+            services.AddScoped<IWebDriverService, WebDriverService>();
+            services.AddScoped<IWebDriverProvider, WebDriverProvider>();
 
             return services;
         }

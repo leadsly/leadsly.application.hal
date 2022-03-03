@@ -17,7 +17,7 @@ namespace Domain.Supervisor
                 Succeeded = false
             };
 
-            result = SwitchTo<T>(request.WindowHandleId, out string windowHandle);
+            result = _webDriverProvider.SwitchTo<T>(request.WindowHandleId, out string windowHandle);
             if(result.Succeeded == false)
             {
                 return result;
@@ -64,7 +64,7 @@ namespace Domain.Supervisor
                 response.DidUnexpectedErrorOccur = true;
 
                 _logger.LogDebug("Attempting to close the tab");
-                CloseTab<T>(windowHandle);
+                _webDriverProvider.CloseTab<T>(windowHandle);
                 result.Value.WindowTabClosed = true;
                 result.Failures.Add(new()
                 {
@@ -74,7 +74,7 @@ namespace Domain.Supervisor
                 return result;
             }
 
-            result = CloseTab<T>(result.Value.WindowHandleId);
+            result = _webDriverProvider.CloseTab<T>(result.Value.WindowHandleId);
             if(result.Succeeded == false)
             {
                 result.Value.WebDriverError = true;
@@ -94,7 +94,7 @@ namespace Domain.Supervisor
                 Succeeded = false
             };
 
-            result = SwitchTo<T>(request.WindowHandleId, out string windowHandle);
+            result = _webDriverProvider.SwitchTo<T>(request.WindowHandleId, out string windowHandle);
             if(result.Succeeded == false)
             {
                 return result;
@@ -116,7 +116,7 @@ namespace Domain.Supervisor
             if (this._halAuthProvider.IsAuthenticationRequired == false)
             {
                 result.Value.WindowHandleId = windowHandle;
-                result = CloseTab<T>(result.Value.WindowHandleId);
+                result = _webDriverProvider.CloseTab<T>(result.Value.WindowHandleId);
                 if (result.Succeeded == false)
                 {
                     result.Value.WebDriverError = true;
