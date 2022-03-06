@@ -325,5 +325,15 @@ namespace Domain.Providers
             result.Value = (T)operation;
             return result;
         }
+
+        public HalOperationResult<T> GetWebDriver<T>(WebDriverOperationData operationData) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            // todo
+
+
+            return result;
+        }
     }
 }

@@ -12,6 +12,7 @@ namespace Domain.Models
     public class TwoFactorAuthenticationRequest : BaseRequest
     {
         [DataMember(IsRequired = true)]
-        public string Code { get; set; }        
+        public string Code { get; set; }
+
     }
 }

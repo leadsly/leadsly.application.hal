@@ -16,5 +16,7 @@ namespace Domain.Models.Requests
 
         [DataMember(IsRequired = true)]
         public BrowserPurpose BrowserPurpose { get; set; }
+        [DataMember(IsRequired = true)]
+        public long AttemptNumber { get; set; }
     }
 }

@@ -21,5 +21,8 @@ namespace Domain.Providers
 
         HalOperationResult<T> CreateWebDriver<T>(WebDriverOperationData operationData)
             where T : IOperationResponse;
+
+        HalOperationResult<T> GetWebDriver<T>(WebDriverOperationData operationData)
+            where T : IOperationResponse;
     }
 }

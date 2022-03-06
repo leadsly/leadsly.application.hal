@@ -35,11 +35,10 @@ namespace Domain.Providers
         public HalOperationResult<T> Authenticate<T>(WebDriverOperationData operationData, AuthenticateAccountRequest request)
             where T : IOperationResponse
         {
-            HalOperationResult<T> result = new();
-
             HalOperationResult<ICreateWebDriverOperation> driverResult = _webDriverProvider.CreateWebDriver<ICreateWebDriverOperation>(operationData);
             if(driverResult.Succeeded == false)
             {
+                HalOperationResult<T> result = new();
                 result.Failures = driverResult.Failures;
                 return result;
             }            
@@ -51,9 +50,7 @@ namespace Domain.Providers
         private HalOperationResult<T> AuthenticateUserSocialAccount<T>(IWebDriver webDriver, AuthenticateAccountRequest request)
             where T : IOperationResponse
         {
-            HalOperationResult<T> result = new();
-
-            result = GoToPage<T>(webDriver, request.ConnectAuthUrl ?? DefaultUrl);
+            HalOperationResult<T> result = GoToPage<T>(webDriver, request.ConnectAuthUrl ?? DefaultUrl);
 
             if(result.Succeeded == false)
             {
@@ -64,22 +61,26 @@ namespace Domain.Providers
 
             if (authRequired == false)
             {
+                result = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);
+
                 IConnectAccountResponse response = new ConnectAccountResponse
                 {
-                    TwoFactorAuthRequired = authRequired
-                };
-                result = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);
+                    TwoFactorAuthRequired = authRequired,
+                    BrowserClosed = result.Succeeded,
+                    TabClosed = result.Succeeded
+                };                
+
                 result.Value = (T)response;
                 if (result.Succeeded == false)
                 {
                     // close web driver if possible manually here
                     webDriver.Dispose();
-                    result.Value.WindowTabClosed = false;
+                    result.Value.TabClosed = false;
                     result.Value.BrowserClosed = false;
                 }
                 else
                 {
-                    result.Value.WindowTabClosed = true;
+                    result.Value.TabClosed = true;
                     result.Value.BrowserClosed = true;
                 }                
                 
@@ -93,26 +94,75 @@ namespace Domain.Providers
         private HalOperationResult<T> EnterAuthenticationCredentials<T>(IWebDriver webDriver, AuthenticateAccountRequest request)
             where T : IOperationResponse        
         {
-            HalOperationResult<T> result = new()
-            {
-                Succeeded = false
-            };
+            HalOperationResult<T> result = new();
 
             result = _linkedInLoginPage.EnterEmail<T>(webDriver, request.Username);
             if(result.Succeeded == false)
             {
+                if(result.WebDriverError == true)
+                {
+                    HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);                                                      
+                    IConnectAccountResponse response = new ConnectAccountResponse
+                    {
+                        UnexpectedErrorOccured = false,
+                        WebDriverError = true,
+                        TwoFactorAuthRequired = false,
+                        TwoFactorAuthType = TwoFactorAuthType.None,
+                        Failures = result.Failures,
+                        BrowserClosed = closeBrowserResult.Succeeded,
+                        TabClosed = closeBrowserResult.Succeeded,
+                        ShouldOperationBeRetried = true
+                    };
+                    result.ShouldOperationBeRetried = true;
+                    result.Value = (T)response;                    
+                }                
                 return result;
             }
 
             result = _linkedInLoginPage.EnterPassword<T>(webDriver, request.Password);
             if (result.Succeeded == false)
             {
+                if(result.WebDriverError == true)
+                {
+                    HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);                    
+                    IConnectAccountResponse response = new ConnectAccountResponse
+                    {
+                        UnexpectedErrorOccured = false,
+                        WebDriverError = true,
+                        TwoFactorAuthRequired = false,
+                        TwoFactorAuthType = TwoFactorAuthType.None,
+                        Failures = result.Failures,
+                        BrowserClosed = closeBrowserResult.Succeeded,
+                        TabClosed = closeBrowserResult.Succeeded,
+                        ShouldOperationBeRetried = true
+                    };
+                    result.ShouldOperationBeRetried = true;
+                    result.Value = (T)response;
+                }                
                 return result;
             }
 
             result = _linkedInLoginPage.SignIn<T>(webDriver);
             if (result.Succeeded == false)
             {
+                if(result.WebDriverError == true)
+                {
+                    HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);                    
+                    IConnectAccountResponse response = new ConnectAccountResponse
+                    {
+                        UnexpectedErrorOccured = false,
+                        WebDriverError = true,
+                        TwoFactorAuthRequired = false,
+                        TwoFactorAuthType = TwoFactorAuthType.None,
+                        Failures = result.Failures,
+                        BrowserClosed = closeBrowserResult.Succeeded,
+                        TabClosed = closeBrowserResult.Succeeded,
+                        ShouldOperationBeRetried = true
+                    };
+
+                    result.ShouldOperationBeRetried = true;
+                    result.Value = (T)response;
+                }
                 return result;
             }
 
@@ -132,36 +182,65 @@ namespace Domain.Providers
                 result = _linkedInLoginPage.ConfirmAccountInfo<T>(webDriver);
                 if (result.Succeeded == false)
                 {
-                    // TODO add logging here and perhaps a message                    
+                    HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);                    
+                    IConnectAccountResponse resp = new ConnectAccountResponse
+                    {
+                        UnexpectedErrorOccured = false,
+                        WebDriverError = true,
+                        TwoFactorAuthRequired = false,
+                        TwoFactorAuthType = TwoFactorAuthType.None,
+                        Failures = result.Failures,
+                        BrowserClosed = closeBrowserResult.Succeeded,
+                        TabClosed = closeBrowserResult.Succeeded,
+                        ShouldOperationBeRetried = true
+                    };
+                    result.ShouldOperationBeRetried = true;
+                    result.Value = (T)resp;
                     return result;
                 }
             }
             
             if (_linkedInLoginPage.SomethingUnexpectedHappenedToastDisplayed(webDriver) == true)
             {
-                IConnectAccountResponse unexpectedToastDisplayedResponse = new ConnectAccountResponse()
+                string linkedInErrorMessage = _linkedInLoginPage.SomethingUnexpectedHappenedToast(webDriver).GetAttribute("message");
+
+                HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);                
+                IConnectAccountResponse resp = new ConnectAccountResponse
                 {
                     UnexpectedErrorOccured = true,
-                    TwoFactorAuthRequired = false
-                };                
+                    WebDriverError = false,
+                    TwoFactorAuthRequired = false,
+                    TwoFactorAuthType = TwoFactorAuthType.None,
+                    Failures = result.Failures,
+                    BrowserClosed = closeBrowserResult.Succeeded,
+                    TabClosed = closeBrowserResult.Succeeded,
+                    ShouldOperationBeRetried = true
+                };
                 
-                string linkedInErrorMessage = _linkedInLoginPage.SomethingUnexpectedHappenedToast(webDriver).GetAttribute("message");
                 result.Failures.Add(new()
                 {
                     Reason = "LinkedIn displayed error toast message",
                     Detail = $"LinkedIn error: {linkedInErrorMessage}"
                 });
 
-                result.Value = (T)unexpectedToastDisplayedResponse;
+                result.ShouldOperationBeRetried = true;
+                result.Value = (T)resp;
                 return result;
             }
 
             if (_linkedInLoginPage.CheckIfUnexpectedViewRendered(webDriver))
             {
-                IConnectAccountResponse unexpectedViewRendered = new ConnectAccountResponse()
+                HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);                
+                IConnectAccountResponse resp = new ConnectAccountResponse
                 {
                     UnexpectedErrorOccured = true,
-                    TwoFactorAuthRequired = false
+                    WebDriverError = false,
+                    TwoFactorAuthRequired = false,
+                    TwoFactorAuthType = TwoFactorAuthType.None,
+                    Failures = result.Failures,
+                    BrowserClosed = closeBrowserResult.Succeeded,
+                    TabClosed = closeBrowserResult.Succeeded,
+                    ShouldOperationBeRetried = true
                 };
                 result.Failures.Add(new()
                 {
@@ -169,41 +248,70 @@ namespace Domain.Providers
                     Detail = "LinkedIn did not render the new feed, two factor auth app view or two factor auth sms view"
                 });
 
-                result.Value = (T)unexpectedViewRendered;
-                return result;
+                result.ShouldOperationBeRetried = true;
+                result.Value = (T)resp;
+                return result;                
             }
 
             if (_linkedInLoginPage.IsTwoFactorAuthRequired(webDriver))
             {
                 result = DetermineTwoFactorAuthenticationType<T>(webDriver);
 
-                IConnectAccountResponse twoFactorAuthRequiredResponse = new ConnectAccountResponse()
+                IConnectAccountResponse resp = new ConnectAccountResponse()
                 {
-                    UnexpectedErrorOccured = result.Succeeded
+                    UnexpectedErrorOccured = !result.Succeeded,
+                    WebDriverError = false,
+                    TwoFactorAuthRequired = true,
+                    Failures = result.Failures,
+                    TwoFactorAuthType = result.Succeeded ? ((IConnectAccountResponse)result.Value).TwoFactorAuthType : TwoFactorAuthType.NotDetermined,
+                    WindowHandleId = webDriver.CurrentWindowHandle,
+                    ShouldOperationBeRetried = true
                 };
-                result.Value = (T)twoFactorAuthRequiredResponse;
-
                 if (result.Succeeded == false)
                 {
+                    HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);
+
+                    resp = new ConnectAccountResponse()
+                    {
+                        UnexpectedErrorOccured = !result.Succeeded,
+                        WebDriverError = false,
+                        TwoFactorAuthRequired = true,
+                        TwoFactorAuthType = result.Succeeded ? ((IConnectAccountResponse)result.Value).TwoFactorAuthType : TwoFactorAuthType.NotDetermined,
+                        WindowHandleId = webDriver.CurrentWindowHandle,
+                        BrowserClosed = closeBrowserResult.Succeeded,
+                        TabClosed = closeBrowserResult.Succeeded,
+                        ShouldOperationBeRetried = true
+                    };
+                    
                     result.Failures.Add(new()
                     {
                         Reason = "Failed to determine two factor auth type",
                         Detail = "Two factor auth type expected was sms or app, neither was found"
-                    });                    
+                    });
+                    result.ShouldOperationBeRetried = true;
+                    result.Value = (T)resp;
                     return result;
                 }
+
+                result.Succeeded = true;
+                result.Value = (T)resp;
+                return result;
             }
 
+            // TODO verify user is authenticated
             result = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);
+            bool browserClosed = result.Succeeded;
             if(result.Succeeded == false)
             {
                 try
                 {
                     webDriver.Dispose();
+                    browserClosed = true;
                 }
                 catch(Exception ex)
                 {
                     _logger.LogError(ex, "Failed to dispose of web driver manually");
+                    browserClosed = false;
                 }
             }
 
@@ -211,7 +319,9 @@ namespace Domain.Providers
             {
                 UnexpectedErrorOccured = false,
                 TwoFactorAuthRequired = false,
-                TwoFactorAuthType = TwoFactorAuthType.None
+                TwoFactorAuthType = TwoFactorAuthType.None,
+                BrowserClosed = browserClosed,
+                TabClosed = browserClosed
             };
 
             result.Value = (T)response;
@@ -279,46 +389,88 @@ namespace Domain.Providers
             return result;
         }
 
+        
         public HalOperationResult<T> EnterTwoFactorAuthenticationCode<T>(WebDriverOperationData operationData, TwoFactorAuthenticationRequest request)
             where T : IOperationResponse
         {
-            HalOperationResult<T> result = new()
+            HalOperationResult<IGetWebDriverOperation> driverResult = _webDriverProvider.CreateWebDriver<IGetWebDriverOperation>(operationData);
+            if (driverResult.Succeeded == false)
             {
-                Succeeded = false
-            };
+                HalOperationResult<T> result = new();
+                result.Failures = driverResult.Failures;
+                return result;
+            }
+            IWebDriver webDriver = driverResult.Value.WebDriver;
 
-            IWebDriver webDriver = default;
+            return EnterTwoFactorAuthCode<T>(webDriver, request);            
+        }
+
+        private HalOperationResult<T> EnterTwoFactorAuthCode<T>(IWebDriver webDriver, TwoFactorAuthenticationRequest request) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
 
             _logger.LogInformation("Entering user's two factor authentication code");
             result = _linkedInLoginPage.EnterTwoFactorAuthCode<T>(webDriver, request.Code);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
+                if (result.WebDriverError == true)
+                {
+                    HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);
+                    IEnterTwoFactorAuthCodeResponse resp = new EnterTwoFactorAuthCodeResponse
+                    {
+                        UnexpectedErrorOccured = true,
+                        WebDriverError = false,
+                        Failures = result.Failures,
+                        BrowserClosed = closeBrowserResult.Succeeded,
+                        TabClosed = closeBrowserResult.Succeeded,
+                        ShouldOperationBeRetried = true
+                    };
+
+                    result.ShouldOperationBeRetried = true;
+                    result.Value = (T)resp;
+                }
                 return result;
             }
 
             result = _linkedInLoginPage.SubmitTwoFactorAuthCode<T>(webDriver);
             if (result.Succeeded == false)
             {
+                if (result.WebDriverError == true)
+                {
+                    HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);
+                    IEnterTwoFactorAuthCodeResponse resp = new EnterTwoFactorAuthCodeResponse
+                    {
+                        UnexpectedErrorOccured = true,
+                        WebDriverError = false,
+                        Failures = result.Failures,
+                        BrowserClosed = closeBrowserResult.Succeeded,
+                        TabClosed = closeBrowserResult.Succeeded,
+                        ShouldOperationBeRetried = true
+                    };
+
+                    result.ShouldOperationBeRetried = true;
+                    result.Value = (T)resp;
+                }
                 return result;
             }
 
             if (_linkedInLoginPage.SMSVerificationCodeErrorDisplayed(webDriver))
             {
-                return HandleSMSVerificationCodeErrorDisplayed<T>(operationData);   
+                return HandleSMSVerificationCodeErrorDisplayed<T>(webDriver.CurrentWindowHandle);
             }
 
             if (_linkedInLoginPage.CheckIfUnexpectedViewRendered(webDriver))
             {
-                result = HandleUnexpectedViewDisplayed<T>(operationData);
-                if(result.Succeeded == false)
+                result = HandleUnexpectedViewDisplayed<T>(request);
+                if (result.Succeeded == false)
                 {
                     try
                     {
                         webDriver.Dispose();
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Failed to manually dispose of the web driver");                        
+                        _logger.LogError(ex, "Failed to manually dispose of the web driver");
                     }
                 }
                 // there was an issue even if closing the web driver returned success
@@ -326,14 +478,14 @@ namespace Domain.Providers
                 return result;
             }
 
-            result = _webDriverProvider.CloseBrowser<T>(operationData.BrowserPurpose);
-            if(result.Succeeded == false)
+            result = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);
+            if (result.Succeeded == false)
             {
                 try
                 {
                     webDriver.Dispose();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     _logger.LogError(ex, "Failed to dispose of web driver manually");
                 }
@@ -344,18 +496,18 @@ namespace Domain.Providers
             return result;
         }
 
-        private HalOperationResult<T> HandleUnexpectedViewDisplayed<T>(WebDriverOperationData operationData) where T : IOperationResponse
+        private HalOperationResult<T> HandleUnexpectedViewDisplayed<T>(TwoFactorAuthenticationRequest request) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
             IEnterTwoFactorAuthCodeResponse response = new EnterTwoFactorAuthCodeResponse();
             _logger.LogWarning("Unexpected view rendered after attempting to submit two factor authentication code");
             response.InvalidOrExpiredCode = false;
-            response.DidUnexpectedErrorOccur = true;
+            response.UnexpectedErrorOccured = true;
 
             _logger.LogDebug("Attempting to close the tab");
             
-            result = _webDriverProvider.CloseBrowser<T>(operationData.BrowserPurpose);
+            result = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);
             result.Failures.Add(new()
             {
                 Reason = "An unexpected error rendered",
@@ -365,7 +517,7 @@ namespace Domain.Providers
             return result;
         }
 
-        private HalOperationResult<T> HandleSMSVerificationCodeErrorDisplayed<T>(WebDriverOperationData operationData) where T : IOperationResponse
+        private HalOperationResult<T> HandleSMSVerificationCodeErrorDisplayed<T>(string currentWindowHandleId) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
@@ -377,7 +529,7 @@ namespace Domain.Providers
             result.Value = (T)response;
             // because nothing technically is wrong, its just the incorrect two factor auth code
             result.Succeeded = true;
-            result.Value.WindowHandleId = operationData.RequestedWindowHandleId;
+            result.Value.WindowHandleId = currentWindowHandleId;
             result.Failures.Add(new()
             {
                 Detail = "SMS verification code entered was invalid or expired",

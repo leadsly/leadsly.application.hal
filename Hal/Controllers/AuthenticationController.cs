@@ -27,9 +27,12 @@ namespace Hal.Controllers
         [AllowAnonymous]
         public IActionResult Authenticate([FromBody] AuthenticateAccountRequest request)
         {
+            // TODO create filter that rejects requests that have attempt number higher than 2
+
             HalOperationResult<IConnectAccountResponse> result = _supervisor.AuthenticateAccount<IConnectAccountResponse>(request);
 
-            if(result.Succeeded == false)
+            // only allow up to two retries
+            if(result.Succeeded == false && result.ShouldOperationBeRetried == false)
             {
                 return BadRequest_LeadslyAuthenticationError(result.Failures);
             }
@@ -39,11 +42,14 @@ namespace Hal.Controllers
 
         [HttpPost("2fa")]
         [AllowAnonymous]
-        public IActionResult EnterTwoFactorAuth([FromBody] TwoFactorAuthenticationRequest twoFactorAuth)
+        public IActionResult EnterTwoFactorAuth([FromBody] TwoFactorAuthenticationRequest request)
         {
-            HalOperationResult<IEnterTwoFactorAuthCodeResponse> result = _supervisor.EnterTwoFactorAuth<IEnterTwoFactorAuthCodeResponse>(twoFactorAuth);
+            // TODO create filter that rejects requests that have attempt number higher than 2
 
-            if(result.Succeeded == false)
+            HalOperationResult<IEnterTwoFactorAuthCodeResponse> result = _supervisor.EnterTwoFactorAuth<IEnterTwoFactorAuthCodeResponse>(request);
+
+            // only allow up to 2 retries
+            if(result.Succeeded == false && result.ShouldOperationBeRetried == false)
             {
                 return BadRequest_LeadslyAuthenticationError(result.Failures);
             }

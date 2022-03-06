@@ -1,6 +1,7 @@
 ﻿using Domain.Pages;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
+using Leadsly.Application.Model.Responses.Hal;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
@@ -405,11 +406,27 @@ namespace PageObjects.Pages
             HalOperationResult<T> result = new();
 
             Random rnd = new Random(300);
-            foreach (char character in twoFactorAuthCode)
+            try
             {
-                TwoFactorAuthenticationCodeInput(webDriver).SendKeys(character.ToString());
-                Thread.Sleep(rnd.Next(500));
+                foreach (char character in twoFactorAuthCode)
+                {
+                    TwoFactorAuthenticationCodeInput(webDriver).SendKeys(character.ToString());
+                    Thread.Sleep(rnd.Next(500));
+                }
             }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Failed to enter two factor auth code");
+                result.WebDriverError = true;
+                result.Failures.Add(new()
+                {
+                    Code = Codes.WEBDRIVER_ERROR,
+                    Reason = "Failed to enter user's two factor auth code",
+                    Detail = ex.Message
+                });
+                return result;
+            }
+            
             result.Succeeded = true;
             return result;
         }
@@ -420,8 +437,23 @@ namespace PageObjects.Pages
             HalOperationResult<T> result = new();
 
             Random rnd = new Random(300);
-            TwoStepAuthenticationSubmitButton(webDriver).Click();
-            Thread.Sleep(rnd.Next(1000));
+            try
+            {
+                TwoStepAuthenticationSubmitButton(webDriver).Click();
+                Thread.Sleep(rnd.Next(1000));
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Failed to submit user's two factor auth code");
+                result.Failures.Add(new()
+                {
+                    Code = Codes.WEBDRIVER_ERROR,
+                    Reason = "Failed to submit user's two factor auth code",
+                    Detail = ex.Message
+                });
+                result.WebDriverError = true;
+                return result;
+            }
 
             result.Succeeded = true;
             return result;
@@ -466,7 +498,23 @@ namespace PageObjects.Pages
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
-            SignInButton(webDriver).Click();
+            try
+            {
+                SignInButton(webDriver).Click();
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Failed to click the sign in button");
+                result.Failures.Add(new()
+                {
+                    Code = Codes.WEBDRIVER_ERROR,
+                    Reason = "Failed to click the sign in button",
+                    Detail = ex.Message
+                });
+                result.WebDriverError = true;
+                return result;
+            }
+            
             result.Succeeded = true;
             return result;
         }
@@ -493,7 +541,7 @@ namespace PageObjects.Pages
                 if (enteredEmail != email)
                 {
                     _logger.LogError("[LinkedInLoginPage]: Failed to enter user email into the input field");
-                    throw new Exception();
+                    throw new Exception("The entered email by the web driver did not match the email that was specified by the user");
                 }
                 else
                 {
@@ -507,6 +555,13 @@ namespace PageObjects.Pages
             catch (Exception ex)
             {
                 _logger.LogError("[LinkedInLoginPage]: Error occured entering user email.");
+                result.Failures.Add(new()
+                {
+                    Code = Codes.WEBDRIVER_ERROR,
+                    Reason = "Failed to enter user's email",
+                    Detail = ex.Message
+                });
+                result.WebDriverError = true;
                 return result;
             }
             result.Succeeded = true;
@@ -517,6 +572,7 @@ namespace PageObjects.Pages
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
+
             try
             {
                 Random sendKeysTime = new Random(100);
@@ -534,7 +590,7 @@ namespace PageObjects.Pages
                 if (enteredPassword != password)
                 {
                     _logger.LogError("[LinkedInLoginPage]: Failed to enter user password into the input field");
-                    throw new Exception();
+                    throw new Exception("The entered password by the web driver did not match the password that was specified by the user");
                 }
                 else
                 {
@@ -547,7 +603,14 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogError("[LinkedInLoginPage]: Error occured entering user email.");
+                _logger.LogError(ex, "[LinkedInLoginPage]: Error occured entering user password.");
+                result.Failures.Add(new()
+                {
+                    Code = Codes.WEBDRIVER_ERROR,
+                    Reason = "Failed to enter user's password",
+                    Detail = ex.Message
+                });
+                result.WebDriverError = true;
                 return result;
             }
 
