@@ -14,10 +14,10 @@ namespace Domain.Supervisor
         public Supervisor(
             IWebDriverRepository webDriverRepository, 
             IHalAuthProvider halAuthProvider, 
-            IWebDriver driver, 
             IFileManager fileManager, 
             IWebDriverProvider webDriverProvider,
-            IMemoryCache memoryCache, 
+            IMemoryCache memoryCache,
+            IWebDriverManagerProvider webDriverManagerProvider,
             ILogger<Supervisor> logger)
         {
             _logger = logger;
@@ -25,11 +25,11 @@ namespace Domain.Supervisor
             _fileManager = fileManager;
             _webDriverRepository = webDriverRepository;
             _halAuthProvider = halAuthProvider;
-            _driver = driver;
             _webDriverProvider = webDriverProvider;
+            _webDriverManagerProvider = webDriverManagerProvider;
         }
 
-        private readonly IWebDriver _driver;
+        private readonly IWebDriverManagerProvider _webDriverManagerProvider;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly IHalAuthProvider _halAuthProvider;
         private readonly ILogger<Supervisor> _logger;

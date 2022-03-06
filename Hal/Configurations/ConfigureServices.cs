@@ -56,38 +56,14 @@ namespace Hal.Configurations
             Log.Information("Registering selenium services configuration.");
 
             
-            services.Configure<ChromeConfigOptions>(options => configuration.GetSection(nameof(ChromeConfigOptions)).Bind(options));
-            ChromeConfigOptions webDriverConfigOptions = new();
-            configuration.GetSection(nameof(ChromeConfigOptions)).Bind(webDriverConfigOptions);
-            string blankTabWindowHandleId = string.Empty;
-            services.AddSingleton<IWebDriver, ChromeDriver>(opt =>
-            {
-                ChromeOptions options = new();
-                foreach (string addArgument in webDriverConfigOptions.AddArguments)
-                {
-                    options.AddArgument(addArgument);
-                }
-
-                options.AddArgument(@$"user-data-dir={webDriverConfigOptions.ChromeUserDirectory}\{webDriverConfigOptions.DefaultProfile}");
-                ChromeDriver drv = new ChromeDriver(options);
-                blankTabWindowHandleId = drv.CurrentWindowHandle;
-                return drv;
-            });            
-            services.AddSingleton<IDefaultTabWebDriver, DefaultTabWebDriver>(opt =>
-            {
-                DefaultTabWebDriver defaultTab = new(blankTabWindowHandleId);
-                return defaultTab;
-            });
+            services.Configure<WebDriverConfigOptions>(options => configuration.GetSection(nameof(WebDriverConfigOptions)).Bind(options));
+            WebDriverConfigOptions webDriverConfigOptions = new();
+            configuration.GetSection(nameof(WebDriverConfigOptions)).Bind(webDriverConfigOptions);
+                
             services.AddSingleton<IFileManager, FileManager>();
             services.AddScoped<ILinkedInLoginPage, LinkedInLoginPage>();
             services.AddScoped<ILinkedInPage, LinkedInPage>();
-            services.AddScoped<ILinkedInHomePage, LinkedInHomePage>();
-            services.AddScoped<WebDriverWait>(opt =>
-            {
-                IWebDriver drv = opt.GetRequiredService<IWebDriver>();
-                WebDriverWait wait = new WebDriverWait(drv, TimeSpan.FromSeconds(webDriverConfigOptions.WebDriverWaitFromSeconds));
-                return wait;
-            });
+            services.AddScoped<ILinkedInHomePage, LinkedInHomePage>();            
 
             services.AddScoped<IHalAuthProvider, HalAuthProvider>();
             services.AddSingleton<IHalIdentity, HalIdentity>(opt =>
@@ -97,6 +73,7 @@ namespace Hal.Configurations
 
             services.AddScoped<IWebDriverService, WebDriverService>();
             services.AddScoped<IWebDriverProvider, WebDriverProvider>();
+            services.AddScoped<IWebDriverManagerProvider, WebDriverManagerProvider>();
 
             return services;
         }

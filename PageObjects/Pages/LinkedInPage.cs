@@ -14,56 +14,51 @@ namespace PageObjects.Pages
 {
     public class LinkedInPage : ILinkedInPage
     {
-        public LinkedInPage(IWebDriver driver, ILinkedInLoginPage linkedInLoginPage, ILinkedInHomePage linkedInHomePage, WebDriverWait wait, ILogger<LinkedInPage> logger)
+        public LinkedInPage(ILinkedInLoginPage linkedInLoginPage, ILinkedInHomePage linkedInHomePage, ILogger<LinkedInPage> logger)
         {
-            this._driver = driver;
             this._logger = logger;
-            this._wait = wait;
             this._linkedInLoginPage = linkedInLoginPage;            
             this._linkedInHomePage = linkedInHomePage;
         }
         private readonly ILogger<LinkedInPage> _logger;
-        private readonly WebDriverWait _wait;
-        private readonly IWebDriver _driver;
+        private readonly WebDriverWait _wait;        
         private readonly ILinkedInLoginPage _linkedInLoginPage;
         private readonly ILinkedInHomePage _linkedInHomePage;
 
         public LinkedInLoginPage LinkedInLoginPage { get; private set; }
         public LinkedInHomePage LinkedInHomePage { get; set; }
 
-        public bool IsAuthenticationRequired
+        public bool IsAuthenticationRequired(IWebDriver webDriver)
         {
-            get
-            {
-                return SignInContainer != null;
-            }
+            
+            return SignInContainer(webDriver) != null;
+            
         }
 
-        private IWebElement SignInContainer
+        private IWebElement SignInContainer(IWebDriver webDriver)
         {
-            get
-            {
+            
                 IWebElement signInContainer = null;
                 try
                 {
-                    signInContainer = _driver.FindElement(By.ClassName("sign-in-form-container"));
+                    signInContainer = webDriver.FindElement(By.ClassName("sign-in-form-container"));
                 }
                 catch(Exception ex)
                 {
 
                 }
                 return signInContainer;
-            }
+            
         }
 
-        public HalOperationResult<T> GoToPage<T>(string pageUrl)
+        public HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
             try
             {
-                this._driver.Navigate().GoToUrl(new Uri(pageUrl));
+                webDriver.Navigate().GoToUrl(new Uri(pageUrl));
             }
             catch(WebDriverTimeoutException timeoutEx)
             {

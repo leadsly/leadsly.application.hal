@@ -4,12 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Models
+namespace Domain.Providers
 {
-    public enum TwoFactorAuthType
+    public class WebDriverManagerProvider : IWebDriverManagerProvider
     {
-        None,
-        SMS,
-        AuthenticatorApp
     }
 }

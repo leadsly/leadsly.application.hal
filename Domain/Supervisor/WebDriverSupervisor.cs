@@ -19,7 +19,7 @@ namespace Domain.Supervisor
     {
         public IWebDriverInformation CreateWebDriver(InstantiateWebDriver newWebDriver)
         {
-            return _webDriverProvider.CreateWebDriver(newWebDriver);
+            return null;// _webDriverProvider.CreateWebDriver(newWebDriver);
         }          
     }
 }

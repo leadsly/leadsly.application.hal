@@ -1,6 +1,8 @@
 ﻿using Domain.Models;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
+using Leadsly.Application.Model.WebDriver;
+using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,12 +13,13 @@ namespace Domain.Providers
 {
     public interface IWebDriverProvider
     {
-        HalOperationResult<T> SwitchTo<T>(string requestedWindowHandle, out string currentWindowHandle)
+        HalOperationResult<T> CloseTab<T>(BrowserPurpose browserPurpose, string windowHandleId)
             where T : IOperationResponse;
 
-        IWebDriverInformation CreateWebDriver(InstantiateWebDriver newWebDriver);
+        HalOperationResult<T> CloseBrowser<T>(BrowserPurpose browserPurpose)
+            where T : IOperationResponse;
 
-        HalOperationResult<T> CloseTab<T>(string windowHandleId)
+        HalOperationResult<T> CreateWebDriver<T>(WebDriverOperationData operationData)
             where T : IOperationResponse;
     }
 }

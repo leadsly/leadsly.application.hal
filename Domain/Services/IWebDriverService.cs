@@ -1,6 +1,8 @@
 ﻿using Domain.Models;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
+using Leadsly.Application.Model.WebDriver;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using System;
 using System.Collections.Generic;
@@ -12,12 +14,15 @@ namespace Domain.Services
 {
     public interface IWebDriverService
     {
-        HalOperationResult<T> SwitchTo<T>(string requestedWindowHandle, out string currentWindowHandle)
+        HalOperationResult<T> SwitchTo<T>(IWebDriver webDriver, WebDriverOperationData operationData, out string currentWindowHandle)
             where T : IOperationResponse;
 
-        IWebDriverInformation Create(ChromeOptions options, long implicitDefaultTimeout);
+        HalOperationResult<T> Create<T>(BrowserPurpose browserPurpose, WebDriverOptions webDriverOptions) where T : IOperationResponse;
 
-        HalOperationResult<T> CloseTab<T>(string windowHandleId)
+        HalOperationResult<T> CloseTab<T>(IWebDriver driver, string windowHandleId)
+            where T : IOperationResponse;
+
+        HalOperationResult<T> Close<T>(IWebDriver driver)
             where T : IOperationResponse;
     }
 }

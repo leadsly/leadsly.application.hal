@@ -29,7 +29,7 @@ namespace Domain
 
             // if there is no way to ship docker containers with our default chrome profile
             //string dir = Directory.GetCurrentDirectory();
-            string defaultProfileDir = $"{options.DefaultChromeUserProfilesDir}/{options.DefaultChromeProfileName}";
+            string defaultProfileDir = $"{options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir}/{options.ChromeProfileConfigOptions.DefaultChromeProfileName}";
             if (Directory.Exists(defaultProfileDir) == false)
             {
                 _logger.LogError("Could not locate {defaultProfileDir}", defaultProfileDir);
@@ -41,7 +41,7 @@ namespace Domain
                 return result;
             }
 
-            string newProfileDir = Path.Combine(options.DefaultChromeUserProfilesDir, profileDirectoryName);
+            string newProfileDir = Path.Combine(options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir, profileDirectoryName);
 
             WalkDirectoryTree(new DirectoryInfo(defaultProfileDir), newProfileDir);
 

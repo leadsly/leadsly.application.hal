@@ -12,15 +12,13 @@ namespace PageObjects.Pages
 {
     public class LinkedInHomePage : ILinkedInHomePage
     {
-        public LinkedInHomePage(IWebDriver driver, ILogger<LinkedInHomePage> logger)
-        {
-            this._driver = driver;
+        public LinkedInHomePage(ILogger<LinkedInHomePage> logger)
+        {            
             this._logger = logger;
-            this._wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));                   
+            // this._wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));                   
         }
         private readonly ILogger<LinkedInHomePage> _logger;
-        private readonly WebDriverWait _wait;
-        private readonly IWebDriver _driver;
+        // private readonly WebDriverWait _wait;        
 
 
 

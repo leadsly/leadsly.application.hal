@@ -13,436 +13,393 @@ using System.Threading.Tasks;
 
 namespace PageObjects.Pages
 {
-    public class LinkedInLoginPage : LeadslyBasePage, ILinkedInLoginPage
+    public class LinkedInLoginPage : ILinkedInLoginPage
     {
         private const string BaseUrl = "https://www.linkedin.com";
-        
-        public LinkedInLoginPage(IWebDriver driver, ILogger<LinkedInLoginPage> logger)
+
+        public LinkedInLoginPage(ILogger<LinkedInLoginPage> logger)
         {
-            this._driver = driver;
             this._logger = logger;
-            this._wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
         }
         private readonly ILogger<LinkedInLoginPage> _logger;
-        private readonly WebDriverWait _wait;
-        private readonly IWebDriver _driver;
         private TwoFactorAuthType? _authType = null;
-        public TwoFactorAuthType TwoFactorAuthenticationType
+        public TwoFactorAuthType TwoFactorAuthenticationType(IWebDriver webDriver)
         {
-            get
-            {
-                return _authType ??= (TwoFactorAuthAppView != null ? TwoFactorAuthType.AuthenticatorApp : TwoFactorAuthType.SMS);
-            }
+            return _authType ??= (TwoFactorAuthAppView(webDriver) != null ? TwoFactorAuthType.AuthenticatorApp : TwoFactorAuthType.SMS);
         }
 
-        public bool SomethingUnexpectedHappenedToastDisplayed 
+        public bool SomethingUnexpectedHappenedToastDisplayed(IWebDriver webDriver)
         {
-            get
-            {
-                return SomethingUnexpectedHappenedToast != null;
-            }
-        }        
-
-        public IWebElement SomethingUnexpectedHappenedToast
-        {
-            get
-            {
-                IWebElement toast = null;
-                try
-                {
-                    toast = _driver.FindElement(By.CssSelector("artdeco-toasts"));    
-                    if(toast.GetAttribute("type") == "error")
-                    {
-                        return toast;
-                    }
-                    return null;
-                }
-                catch(Exception ex)
-                {
-
-                }
-                return toast;
-            }
+            return SomethingUnexpectedHappenedToast(webDriver) != null;
         }
 
-        public bool CheckIfUnexpectedViewRendered
+        public IWebElement SomethingUnexpectedHappenedToast(IWebDriver webDriver)
         {
-            get
+
+            IWebElement toast = null;
+            try
             {
-                if(HomePageView == null)
+                toast = webDriver.FindElement(By.CssSelector("artdeco-toasts"));
+                if (toast.GetAttribute("type") == "error")
                 {
-                    if(TwoFactorAuthAppView == null && TwoFactorAuthSMSView == null)
-                    {
-                        return true;
-                    }
+                    return toast;
                 }
-                return false;
+                return null;
             }
+            catch (Exception ex)
+            {
+
+            }
+            return toast;
+
         }
 
-        public IWebElement HomePageView 
+        public bool CheckIfUnexpectedViewRendered(IWebDriver webDriver)
         {
-            get
+            if (HomePageView(webDriver) == null)
             {
-                IWebElement homePageView = null;
-                try
+                if (TwoFactorAuthAppView(webDriver) == null && TwoFactorAuthSMSView(webDriver) == null)
                 {
-                    homePageView = _driver.FindElement(By.Id("voyager-feed"));
-                }
-                catch(Exception ex)
-                {
-
-                }
-                return homePageView;
-            }
-        }
-
-        public bool IsTwoFactorAuthRequired
-        {
-            get
-            {
-                if (TwoFactorAuthAppView != null)
-                {
-                    _authType = TwoFactorAuthType.AuthenticatorApp;
                     return true;
                 }
-                else if(TwoFactorAuthSMSView != null)
-                {
-                    _authType = TwoFactorAuthType.SMS;
-                    return true;
-                }
-                _authType = TwoFactorAuthType.None;
-                return false;            
             }
+            return false;
+
         }
 
-        public IWebElement TwoFactorAuthenticationCodeInput
+        public IWebElement HomePageView(IWebDriver webDriver)
         {
-            get
+
+            IWebElement homePageView = null;
+            try
             {
-                IWebElement twoFactorAuthenticationCodeInput = null;
-                try
-                {
-                    if (TwoFactorAuthenticationType == TwoFactorAuthType.AuthenticatorApp)
-                    {
-                        twoFactorAuthenticationCodeInput = _wait.Until(drv => TwoFactorAuthAppView.FindElement(By.Id("input__phone_verification_pin")));
-                    }
-                    else
-                    {
-                        twoFactorAuthenticationCodeInput = _wait.Until(drv => TwoFactorAuthSMSView.FindElement(By.Id("input__phone_verification_pin")));
-                    }
-                }
-                catch(Exception ex)
-                {
-                    _logger.LogError("[LinkedInLoginPage]: Failed to locate two factor authentication input control.");
-                }
-                return twoFactorAuthenticationCodeInput;
+                homePageView = webDriver.FindElement(By.Id("voyager-feed"));
             }
+            catch (Exception ex)
+            {
+
+            }
+            return homePageView;
+
         }
 
-        private IWebElement TwoStepAuthenticationSubmitButton
+        public bool IsTwoFactorAuthRequired(IWebDriver webDriver)
         {
-            get
+            if (TwoFactorAuthAppView(webDriver) != null)
             {
-                IWebElement twoFactorSubmitButton = null;
-                try
-                {
-                    if(TwoFactorAuthenticationType == TwoFactorAuthType.AuthenticatorApp)
-                    {
-                        twoFactorSubmitButton = _wait.Until(drv => TwoFactorAuthAppView.FindElement(By.CssSelector("#auth-app-div button#two-step-submit-button")));
-                    }
-                    else
-                    {
-                        twoFactorSubmitButton = _wait.Until(drv => TwoFactorAuthSMSView.FindElement(By.CssSelector("#app__container button#two-step-submit-button")));
-                    }
-                }
-                catch(Exception ex)
-                {
-                    _logger.LogError("[LinkedInLoginPage]: Failed to locate two step authentication submit button.");
-                }
-                return twoFactorSubmitButton;
+                _authType = TwoFactorAuthType.AuthenticatorApp;
+                return true;
             }
+            else if (TwoFactorAuthSMSView(webDriver) != null)
+            {
+                _authType = TwoFactorAuthType.SMS;
+                return true;
+            }
+            _authType = TwoFactorAuthType.None;
+            return false;
+
         }
 
-        private IWebElement TwoFactorAuthAppView
+        private IWebElement TwoFactorAuthenticationCodeInput(IWebDriver webDriver)
         {
-            get
+            IWebElement twoFactorAuthenticationCodeInput = null;
+            try
             {
-                IWebElement twoFactorAuthAppView = default;
-                try
+                if (TwoFactorAuthenticationType(webDriver) == TwoFactorAuthType.AuthenticatorApp)
                 {
-                    twoFactorAuthAppView = _driver.FindElement(By.Id("auth-app-div"));
+                    twoFactorAuthenticationCodeInput = TwoFactorAuthAppView(webDriver).FindElement(By.Id("input__phone_verification_pin"));
                 }
-                catch (Exception ex)
+                else
                 {
-                    _logger.LogError("[LinkedInLoginPage]: Failed to locate two factor auth app view.");
+                    twoFactorAuthenticationCodeInput = TwoFactorAuthSMSView(webDriver).FindElement(By.Id("input__phone_verification_pin"));
                 }
-
-                return twoFactorAuthAppView;
             }
+            catch (Exception ex)
+            {
+                _logger.LogError("[LinkedInLoginPage]: Failed to locate two factor authentication input control.");
+            }
+            return twoFactorAuthenticationCodeInput;
+
         }
 
-        private IWebElement TwoFactorAuthSMSView
+        private IWebElement TwoStepAuthenticationSubmitButton(IWebDriver webDriver)
         {
-            get
+
+            IWebElement twoFactorSubmitButton = null;
+            try
             {
-                IWebElement twoFactorAuthSMSView = default;
+                if (TwoFactorAuthenticationType(webDriver) == TwoFactorAuthType.AuthenticatorApp)
+                {
+                    twoFactorSubmitButton = TwoFactorAuthAppView(webDriver).FindElement(By.CssSelector("#auth-app-div button#two-step-submit-button"));
+                }
+                else
+                {
+                    twoFactorSubmitButton = TwoFactorAuthSMSView(webDriver).FindElement(By.CssSelector("#app__container button#two-step-submit-button"));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("[LinkedInLoginPage]: Failed to locate two step authentication submit button.");
+            }
+            return twoFactorSubmitButton;
+
+        }
+
+        private IWebElement TwoFactorAuthAppView(IWebDriver webDriver)
+        {
+            IWebElement twoFactorAuthAppView = default;
+            try
+            {
+                twoFactorAuthAppView = webDriver.FindElement(By.Id("auth-app-div"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("[LinkedInLoginPage]: Failed to locate two factor auth app view.");
+            }
+
+            return twoFactorAuthAppView;
+        }
+
+        private IWebElement TwoFactorAuthSMSView(IWebDriver webDriver)
+        {
+
+            IWebElement twoFactorAuthSMSView = default;
+            try
+            {
+                twoFactorAuthSMSView = webDriver.FindElement(By.Id("app__container"));
                 try
                 {
-                    twoFactorAuthSMSView = _driver.FindElement(By.Id("app__container"));
-                    try
-                    {
-                        // verify this is two factor auth id=input__phone_verification_pin 
-                        IWebElement sms2faInput = twoFactorAuthSMSView.FindElement(By.Id("input__phone_verification_pin"));                        
-                        if(sms2faInput == null)
-                        {
-                            twoFactorAuthSMSView = null;
-                        }
-                    }
-                    catch(Exception ex)
+                    // verify this is two factor auth id=input__phone_verification_pin 
+                    IWebElement sms2faInput = twoFactorAuthSMSView.FindElement(By.Id("input__phone_verification_pin"));
+                    if (sms2faInput == null)
                     {
                         twoFactorAuthSMSView = null;
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("[LinkedInLoginPage]: Failed to locate two factor auth sms view.");
+                    twoFactorAuthSMSView = null;
                 }
-
-                return twoFactorAuthSMSView;
             }
+            catch (Exception ex)
+            {
+                _logger.LogError("[LinkedInLoginPage]: Failed to locate two factor auth sms view.");
+            }
+
+            return twoFactorAuthSMSView;
+
         }
 
-        public bool ConfirmAccountDisplayed
+        public bool ConfirmAccountDisplayed(IWebDriver webDriver)
         {
-            get
+            string currentUrl = webDriver.Url;
+            if (currentUrl.Contains("check/manage-account"))
             {
-                string currentUrl = this._driver.Url;
-                if (currentUrl.Contains("check/manage-account"))
+                // most likely we need to confirm our account before proceeding
+                if (ConfirmButton(webDriver).Displayed)
                 {
-                    // most likely we need to confirm our account before proceeding
-                    if (ConfirmButton.Displayed)
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public bool DidVerificationCodeFailed(IWebDriver webDriver)
+        {
+            return VerificationCodeFailureBanner(webDriver) != null;
+
+        }
+
+        private IWebElement VerificationCodeFailureBanner(IWebDriver webDriver)
+        {
+            IWebElement verificationCodeFailureBanner = null;
+            try
+            {
+                verificationCodeFailureBanner = webDriver.FindElement(By.CssSelector("span[role='alert']"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("[LinkedInLoginPage]: Failed to locate two factor authentication error banner. This is most likely desired behavior.");
+            }
+            return verificationCodeFailureBanner;
+        }
+
+        public bool SMSVerificationCodeErrorDisplayed(IWebDriver webDriver)
+        {
+            return SMSVerificationCodeError(webDriver) != null;            
+        }
+
+        private IWebElement SMSVerificationCodeError(IWebDriver webDriver)
+        {
+
+            IWebElement smsVerificationCodeError = default;
+            try
+            {
+                smsVerificationCodeError = webDriver.FindElement(By.CssSelector(".app__content .body__banner-wrapper .body__banner--error span"));
+                if (smsVerificationCodeError.GetAttribute("role") == "alert")
+                {
+                    if (smsVerificationCodeError.Displayed == false)
                     {
-                        return true;
+                        smsVerificationCodeError = null;
                     }
-                }
-                return false;
-            }
-        }
-
-        public bool DidVerificationCodeFailed 
-        {
-            get
-            {
-                return VerificationCodeFailureBanner != null;
-            }
-        }
-
-        private IWebElement VerificationCodeFailureBanner 
-        {
-            get
-            {
-                IWebElement verificationCodeFailureBanner = null;
-                try
-                {
-                    verificationCodeFailureBanner = _wait.Until(drv => drv.FindElement(By.CssSelector("span[role='alert']")));
-                }
-                catch(Exception ex)
-                {
-                    _logger.LogWarning("[LinkedInLoginPage]: Failed to locate two factor authentication error banner. This is most likely desired behavior.");
-                }
-                return verificationCodeFailureBanner;
-            }
-        }
-
-        public bool SMSVerificationCodeErrorDisplayed
-        {
-            get
-            {
-                return SMSVerificationCodeError != null;
-            }
-        }
-
-        private IWebElement SMSVerificationCodeError
-        {
-            get
-            {
-                IWebElement smsVerificationCodeError = default;
-                try
-                {
-                    smsVerificationCodeError = _driver.FindElement(By.CssSelector(".app__content .body__banner-wrapper .body__banner--error span"));
-                    if (smsVerificationCodeError.GetAttribute("role") == "alert")
+                    else
                     {
-                        if (smsVerificationCodeError.Displayed == false)
+                        if (smsVerificationCodeError.Text.Contains("verification code") == false)
                         {
                             smsVerificationCodeError = null;
                         }
-                        else
-                        {
-                            if (smsVerificationCodeError.Text.Contains("verification code") == false)
-                            {
-                                smsVerificationCodeError = null;
-                            }
-                        }
-
                     }
-                }
-                catch (Exception ex)
-                {
 
                 }
-                return smsVerificationCodeError;
             }
+            catch (Exception ex)
+            {
+
+            }
+            return smsVerificationCodeError;
+
         }
 
-        private IWebElement SkipButton
+        private IWebElement SkipButton(IWebDriver webDriver)
         {
-            get
+
+            IWebElement skipButton = null;
+            IEnumerable<IWebElement> skipButtons = webDriver.FindElements(By.CssSelector("button[type='button']"));
+            foreach (IWebElement skipBttn in skipButtons)
             {
-                IWebElement skipButton = null;
-                IEnumerable<IWebElement> skipButtons = _wait.Until(drv => drv.FindElements(By.CssSelector("button[type='button']")));
-                foreach (IWebElement skipBttn in skipButtons)
+                if (skipBttn.Text == "Skip")
                 {
-                    if (skipBttn.Text == "Skip")
+                    skipButton = skipBttn;
+                    break;
+                }
+            }
+            return skipButton;
+
+        }
+
+        private IWebElement ConfirmButton(IWebDriver webDriver)
+        {
+
+            IWebElement submitButton = null;
+            IEnumerable<IWebElement> submitButtons = webDriver.FindElements(By.CssSelector("button[type='submit']"));
+            foreach (IWebElement submitBttn in submitButtons)
+            {
+                if (submitBttn.Text == "Confirm")
+                {
+                    submitButton = submitBttn;
+                    break;
+                }
+            }
+            return submitButton;
+
+        }
+
+        private IWebElement LoginContainer(IWebDriver webDriver)
+        {
+
+            IWebElement loginContainer = default;
+            try
+            {
+                loginContainer = webDriver.FindElement(By.CssSelector(".sign-in-form-container"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("[LinkedInLoginPage]: Failed to locate loginContainer.");
+            }
+
+            return loginContainer;
+
+        }
+
+        private IEnumerable<IWebElement> CredentialInputs(IWebDriver webDriver)
+        {
+
+            IEnumerable<IWebElement> inputs = default;
+            try
+            {
+                inputs = LoginContainer(webDriver)?.FindElements(By.CssSelector(".sign-in-form__form-input-container .input__input")) ?? throw new Exception();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("[LinkedInLoginPage]: Failed to locate credential inputs.");
+            }
+
+            return inputs;
+
+        }
+
+        private IWebElement EmailInput(IWebDriver webDriver)
+        {
+
+            IWebElement emailInput = null;
+            try
+            {
+                foreach (IWebElement input in CredentialInputs(webDriver))
+                {
+                    if (input.GetAttribute("autocomplete") == "username")
                     {
-                        skipButton = skipBttn;
+                        _logger.LogDebug("[LinkedInLoginPage]: Username input field found!.");
+                        emailInput = input;
                         break;
                     }
                 }
-                return skipButton;
+
             }
+            catch (Exception ex)
+            {
+                _logger.LogError("[LinkedInLoginPage]: Failed to locate username input field.");
+            }
+
+            return emailInput;
+
         }
 
-        private IWebElement ConfirmButton
+        private IWebElement PasswordInput(IWebDriver webDriver)
         {
-            get
+
+            IWebElement passwordInput = null;
+            try
             {
-                IWebElement submitButton = null;
-                IEnumerable<IWebElement> submitButtons = _wait.Until(drv => drv.FindElements(By.CssSelector("button[type='submit']")));
-                foreach (IWebElement submitBttn in submitButtons)
+                foreach (IWebElement input in CredentialInputs(webDriver))
                 {
-                    if(submitBttn.Text == "Confirm")
+                    if (input.GetAttribute("autocomplete") == "current-password")
                     {
-                        submitButton = submitBttn;
+                        _logger.LogDebug("[LinkedInLoginPage]: Password input field found!.");
+                        passwordInput = input;
                         break;
                     }
                 }
-                return submitButton;
-            }
-        }
 
-        private IWebElement LoginContainer
-        {
-            get
+                _ = passwordInput ?? throw new Exception();
+
+            }
+            catch (Exception ex)
             {
-                IWebElement loginContainer = default;
-                try
-                {
-                    loginContainer = _wait.Until(drv => drv.FindElement(By.CssSelector(".sign-in-form-container")));
-                }
-                catch(Exception ex)
-                {
-                    _logger.LogError("[LinkedInLoginPage]: Failed to locate loginContainer.");
-                }
-
-                return loginContainer;
+                _logger.LogError("[LinkedInLoginPage]: Failed to locate password input field.");
             }
+
+            return passwordInput;
+
         }
 
-        private IEnumerable<IWebElement> CredentialInputs
+        private IWebElement SignInButton(IWebDriver webDriver)
         {
-            get
-            {
-                IEnumerable<IWebElement> inputs = default;
-                try
-                {
-                    inputs = _wait.Until(drv => LoginContainer?.FindElements(By.CssSelector(".sign-in-form__form-input-container .input__input")) ?? throw new Exception());
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError("[LinkedInLoginPage]: Failed to locate credential inputs.");
-                }
 
-                return inputs;
+            IWebElement signInButton = null;
+            try
+            {
+                signInButton = webDriver.FindElement(By.CssSelector(".sign-in-form__submit-button"));
             }
+            catch (Exception ex)
+            {
+                _logger.LogError("[LinkedInLoginPage]: Failed to locate sign in button.");
+            }
+
+            return signInButton;
+
         }
 
-        private IWebElement EmailInput
-        {
-            get
-            {
-                IWebElement emailInput = null;
-                try
-                {
-                    foreach (IWebElement input in CredentialInputs)
-                    {
-                        if(input.GetAttribute("autocomplete") == "username")
-                        {
-                            _logger.LogDebug("[LinkedInLoginPage]: Username input field found!.");
-                            emailInput = input;
-                            break;
-                        }
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError("[LinkedInLoginPage]: Failed to locate username input field.");
-                }
-
-                return emailInput;
-            }
-        }
-
-        private IWebElement PasswordInput
-        {
-            get
-            {
-                IWebElement passwordInput = null;
-                try
-                {
-                    foreach (IWebElement input in CredentialInputs)
-                    {
-                        if (input.GetAttribute("autocomplete") == "current-password")
-                        {
-                            _logger.LogDebug("[LinkedInLoginPage]: Password input field found!.");
-                            passwordInput = input;
-                            break;
-                        }
-                    }
-
-                    _ = passwordInput ?? throw new Exception();
-
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError("[LinkedInLoginPage]: Failed to locate password input field.");
-                }
-
-                return passwordInput;
-            }
-        }
-
-        private IWebElement SignInButton
-        {
-            get
-            {
-                IWebElement signInButton = null;
-                try
-                {
-                    signInButton = _wait.Until(drv => drv.FindElement(By.CssSelector(".sign-in-form__submit-button")));
-                    _wait.Until(drv => signInButton.Displayed && signInButton.Enabled);                    
-                }
-                catch(Exception ex)
-                {
-                    _logger.LogError("[LinkedInLoginPage]: Failed to locate sign in button.");
-                }
-
-                return signInButton;
-            }
-        }
-
-        public HalOperationResult<T> EnterTwoFactorAuthCode<T>(string twoFactorAuthCode)
+        public HalOperationResult<T> EnterTwoFactorAuthCode<T>(IWebDriver webDriver, string twoFactorAuthCode)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -450,71 +407,71 @@ namespace PageObjects.Pages
             Random rnd = new Random(300);
             foreach (char character in twoFactorAuthCode)
             {
-                TwoFactorAuthenticationCodeInput.SendKeys(character.ToString());
+                TwoFactorAuthenticationCodeInput(webDriver).SendKeys(character.ToString());
                 Thread.Sleep(rnd.Next(500));
             }
             result.Succeeded = true;
             return result;
         }
 
-        public HalOperationResult<T> SubmitTwoFactorAuthCode<T>()
+        public HalOperationResult<T> SubmitTwoFactorAuthCode<T>(IWebDriver webDriver)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
             Random rnd = new Random(300);
-            TwoStepAuthenticationSubmitButton.Click();
+            TwoStepAuthenticationSubmitButton(webDriver).Click();
             Thread.Sleep(rnd.Next(1000));
 
             result.Succeeded = true;
             return result;
         }
 
-        public HalOperationResult<T> ConfirmAccountInfo<T>()
+        public HalOperationResult<T> ConfirmAccountInfo<T>(IWebDriver webDriver)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
             Random rnd = new Random(300);
             Thread.Sleep(rnd.Next(500));
-            this.ConfirmButton.Click();
+            this.ConfirmButton(webDriver).Click();
             Thread.Sleep(rnd.Next(500));
 
-            if (this.ConfirmAccountDisplayed)
+            if (this.ConfirmAccountDisplayed(webDriver))
             {
-                result = ConfirmAccountInfo<T>();
-                if(result.Succeeded == false)
+                result = ConfirmAccountInfo<T>(webDriver);
+                if (result.Succeeded == false)
                 {
                     return result;
                 }
             }
 
             result.Succeeded = true;
-            return result;            
+            return result;
         }
 
-        public HalOperationResult<T> SkipAccountInfoConfirmation<T>()
+        public HalOperationResult<T> SkipAccountInfoConfirmation<T>(IWebDriver webDriver)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
             Random rnd = new Random(300);
             Thread.Sleep(rnd.Next(500));
-            this.SkipButton.Click();
+            this.SkipButton(webDriver).Click();
 
             result.Succeeded = true;
             return result;
         }
 
-        public HalOperationResult<T> SignIn<T>()
+        public HalOperationResult<T> SignIn<T>(IWebDriver webDriver)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
-            SignInButton.Click();
+            SignInButton(webDriver).Click();
             result.Succeeded = true;
             return result;
         }
 
-        public HalOperationResult<T> EnterEmail<T>(string email)
+        public HalOperationResult<T> EnterEmail<T>(IWebDriver webDriver, string email)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -524,16 +481,16 @@ namespace PageObjects.Pages
                 Random sendKeysTime = new Random(200);
                 foreach (char character in email)
                 {
-                    EmailInput.SendKeys(character.ToString());
+                    EmailInput(webDriver).SendKeys(character.ToString());
 
                     // simulates user entering in email
                     Thread.Sleep(sendKeysTime.Next(300));
-                }                
+                }
 
                 // verify email has been entered
-                string enteredEmail = EmailInput.GetAttribute("value");
+                string enteredEmail = EmailInput(webDriver).GetAttribute("value");
 
-                if(enteredEmail != email)
+                if (enteredEmail != email)
                 {
                     _logger.LogError("[LinkedInLoginPage]: Failed to enter user email into the input field");
                     throw new Exception();
@@ -547,7 +504,7 @@ namespace PageObjects.Pages
                 Thread.Sleep(exitEmailTime.Next(700));
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError("[LinkedInLoginPage]: Error occured entering user email.");
                 return result;
@@ -556,7 +513,7 @@ namespace PageObjects.Pages
             return result;
         }
 
-        public HalOperationResult<T> EnterPassword<T>(string password)
+        public HalOperationResult<T> EnterPassword<T>(IWebDriver webDriver, string password)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -565,14 +522,14 @@ namespace PageObjects.Pages
                 Random sendKeysTime = new Random(100);
                 foreach (char character in password)
                 {
-                    PasswordInput.SendKeys(character.ToString());
+                    PasswordInput(webDriver).SendKeys(character.ToString());
 
                     // simulates user entering in email
                     Thread.Sleep(sendKeysTime.Next(300));
                 }
 
                 // verify email has been entered
-                string enteredPassword = PasswordInput.GetAttribute("value");
+                string enteredPassword = PasswordInput(webDriver).GetAttribute("value");
 
                 if (enteredPassword != password)
                 {

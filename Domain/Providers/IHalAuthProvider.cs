@@ -1,4 +1,5 @@
-﻿using Domain.Pages;
+﻿using Domain.Models;
+using Domain.Pages;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using OpenQA.Selenium;
@@ -12,21 +13,9 @@ namespace Domain.Providers
 {
     public interface IHalAuthProvider
     {
-        HalOperationResult<T> Authenticate<T>(string email, string password)
+        HalOperationResult<T> Authenticate<T>(WebDriverOperationData operationData, AuthenticateAccountRequest request)
             where T : IOperationResponse;
-
-        HalOperationResult<T> GoToPage<T>(string pageUrl)
+        HalOperationResult<T> EnterTwoFactorAuthenticationCode<T>(WebDriverOperationData operationData, TwoFactorAuthenticationRequest request)
             where T : IOperationResponse;
-
-        HalOperationResult<T> EnterTwoFactorAuthenticationCode<T>(string code)
-            where T : IOperationResponse;
-
-        HalOperationResult<T> SubmitTwoFactorAuthCode<T>()
-            where T : IOperationResponse;
-
-        public bool SMSVerificationCodeErrorDisplayed { get; }
-        public bool CheckIfUnexpectedViewRendered { get; }
-        public bool IsAuthenticationRequired { get; }
-        
     }
 }
