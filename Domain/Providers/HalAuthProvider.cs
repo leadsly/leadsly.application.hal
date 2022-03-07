@@ -66,24 +66,28 @@ namespace Domain.Providers
                 IConnectAccountResponse response = new ConnectAccountResponse
                 {
                     TwoFactorAuthRequired = authRequired,
-                    BrowserClosed = result.Succeeded,
-                    TabClosed = result.Succeeded
+                    OperationInformation = new OperationInformation
+                    {
+                        BrowserClosed = result.Succeeded,
+                        TabClosed = result.Succeeded
+                    }                    
                 };                
 
-                result.Value = (T)response;
+                
                 if (result.Succeeded == false)
                 {
                     // close web driver if possible manually here
                     webDriver.Dispose();
-                    result.Value.TabClosed = false;
-                    result.Value.BrowserClosed = false;
+                    response.OperationInformation.TabClosed = false;
+                    response.OperationInformation.BrowserClosed = false;
                 }
                 else
                 {
-                    result.Value.TabClosed = true;
-                    result.Value.BrowserClosed = true;
-                }                
-                
+                    response.OperationInformation.TabClosed = true;
+                    response.OperationInformation.BrowserClosed = true;
+                }
+
+                result.Value = (T)response;
                 result.Succeeded = true;
                 return result;
             }
@@ -104,14 +108,17 @@ namespace Domain.Providers
                     HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);                                                      
                     IConnectAccountResponse response = new ConnectAccountResponse
                     {
-                        UnexpectedErrorOccured = false,
-                        WebDriverError = true,
+                        UnexpectedErrorOccured = false,                        
                         TwoFactorAuthRequired = false,
-                        TwoFactorAuthType = TwoFactorAuthType.None,
-                        Failures = result.Failures,
-                        BrowserClosed = closeBrowserResult.Succeeded,
-                        TabClosed = closeBrowserResult.Succeeded,
-                        ShouldOperationBeRetried = true
+                        TwoFactorAuthType = TwoFactorAuthType.None,                        
+                        OperationInformation = new OperationInformation
+                        {
+                            WebDriverError = true,
+                            Failures = result.Failures,
+                            BrowserClosed = closeBrowserResult.Succeeded,
+                            TabClosed = closeBrowserResult.Succeeded,
+                            ShouldOperationBeRetried = true,
+                        }
                     };
                     result.ShouldOperationBeRetried = true;
                     result.Value = (T)response;                    
@@ -127,14 +134,17 @@ namespace Domain.Providers
                     HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);                    
                     IConnectAccountResponse response = new ConnectAccountResponse
                     {
-                        UnexpectedErrorOccured = false,
-                        WebDriverError = true,
+                        UnexpectedErrorOccured = false,                        
                         TwoFactorAuthRequired = false,
-                        TwoFactorAuthType = TwoFactorAuthType.None,
-                        Failures = result.Failures,
-                        BrowserClosed = closeBrowserResult.Succeeded,
-                        TabClosed = closeBrowserResult.Succeeded,
-                        ShouldOperationBeRetried = true
+                        TwoFactorAuthType = TwoFactorAuthType.None,                        
+                        OperationInformation = new OperationInformation
+                        {
+                            Failures = result.Failures,
+                            BrowserClosed = closeBrowserResult.Succeeded,
+                            TabClosed = closeBrowserResult.Succeeded,
+                            ShouldOperationBeRetried = true,
+                            WebDriverError = true
+                        }
                     };
                     result.ShouldOperationBeRetried = true;
                     result.Value = (T)response;
@@ -150,14 +160,17 @@ namespace Domain.Providers
                     HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);                    
                     IConnectAccountResponse response = new ConnectAccountResponse
                     {
-                        UnexpectedErrorOccured = false,
-                        WebDriverError = true,
+                        UnexpectedErrorOccured = false,                        
                         TwoFactorAuthRequired = false,
-                        TwoFactorAuthType = TwoFactorAuthType.None,
-                        Failures = result.Failures,
-                        BrowserClosed = closeBrowserResult.Succeeded,
-                        TabClosed = closeBrowserResult.Succeeded,
-                        ShouldOperationBeRetried = true
+                        TwoFactorAuthType = TwoFactorAuthType.None,                        
+                        OperationInformation = new OperationInformation
+                        {
+                            WebDriverError = true,
+                            Failures = result.Failures,
+                            BrowserClosed = closeBrowserResult.Succeeded,
+                            TabClosed = closeBrowserResult.Succeeded,
+                            ShouldOperationBeRetried = true,
+                        }
                     };
 
                     result.ShouldOperationBeRetried = true;
@@ -185,14 +198,17 @@ namespace Domain.Providers
                     HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);                    
                     IConnectAccountResponse resp = new ConnectAccountResponse
                     {
-                        UnexpectedErrorOccured = false,
-                        WebDriverError = true,
+                        UnexpectedErrorOccured = false,                        
                         TwoFactorAuthRequired = false,
-                        TwoFactorAuthType = TwoFactorAuthType.None,
-                        Failures = result.Failures,
-                        BrowserClosed = closeBrowserResult.Succeeded,
-                        TabClosed = closeBrowserResult.Succeeded,
-                        ShouldOperationBeRetried = true
+                        TwoFactorAuthType = TwoFactorAuthType.None,                            
+                        OperationInformation = new OperationInformation
+                        {
+                            Failures = result.Failures,
+                            BrowserClosed = closeBrowserResult.Succeeded,
+                            TabClosed = closeBrowserResult.Succeeded,
+                            ShouldOperationBeRetried = true,
+                            WebDriverError = true,
+                        }
                     };
                     result.ShouldOperationBeRetried = true;
                     result.Value = (T)resp;
@@ -207,14 +223,17 @@ namespace Domain.Providers
                 HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);                
                 IConnectAccountResponse resp = new ConnectAccountResponse
                 {
-                    UnexpectedErrorOccured = true,
-                    WebDriverError = false,
+                    UnexpectedErrorOccured = true,                    
                     TwoFactorAuthRequired = false,
-                    TwoFactorAuthType = TwoFactorAuthType.None,
-                    Failures = result.Failures,
-                    BrowserClosed = closeBrowserResult.Succeeded,
-                    TabClosed = closeBrowserResult.Succeeded,
-                    ShouldOperationBeRetried = true
+                    TwoFactorAuthType = TwoFactorAuthType.None,                    
+                    OperationInformation = new OperationInformation
+                    {
+                        Failures = result.Failures,
+                        BrowserClosed = closeBrowserResult.Succeeded,
+                        TabClosed = closeBrowserResult.Succeeded,
+                        ShouldOperationBeRetried = true,
+                        WebDriverError = false
+                    }
                 };
                 
                 result.Failures.Add(new()
@@ -233,14 +252,17 @@ namespace Domain.Providers
                 HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);                
                 IConnectAccountResponse resp = new ConnectAccountResponse
                 {
-                    UnexpectedErrorOccured = true,
-                    WebDriverError = false,
+                    UnexpectedErrorOccured = true,                    
                     TwoFactorAuthRequired = false,
-                    TwoFactorAuthType = TwoFactorAuthType.None,
-                    Failures = result.Failures,
-                    BrowserClosed = closeBrowserResult.Succeeded,
-                    TabClosed = closeBrowserResult.Succeeded,
-                    ShouldOperationBeRetried = true
+                    TwoFactorAuthType = TwoFactorAuthType.None,                    
+                    OperationInformation = new OperationInformation
+                    {
+                        Failures = result.Failures,
+                        BrowserClosed = closeBrowserResult.Succeeded,
+                        TabClosed = closeBrowserResult.Succeeded,
+                        ShouldOperationBeRetried = true,
+                        WebDriverError = false
+                    }
                 };
                 result.Failures.Add(new()
                 {
@@ -256,43 +278,45 @@ namespace Domain.Providers
             if (_linkedInLoginPage.IsTwoFactorAuthRequired(webDriver))
             {
                 result = DetermineTwoFactorAuthenticationType<T>(webDriver);
-
-                IConnectAccountResponse resp = new ConnectAccountResponse()
-                {
-                    UnexpectedErrorOccured = !result.Succeeded,
-                    WebDriverError = false,
-                    TwoFactorAuthRequired = true,
-                    Failures = result.Failures,
-                    TwoFactorAuthType = result.Succeeded ? ((IConnectAccountResponse)result.Value).TwoFactorAuthType : TwoFactorAuthType.NotDetermined,
-                    WindowHandleId = webDriver.CurrentWindowHandle,
-                    ShouldOperationBeRetried = true
-                };
+                
                 if (result.Succeeded == false)
                 {
                     HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);
 
-                    resp = new ConnectAccountResponse()
+                    IConnectAccountResponse failedToDetermineTwoFaResponse = new ConnectAccountResponse()
                     {
-                        UnexpectedErrorOccured = !result.Succeeded,
-                        WebDriverError = false,
+                        UnexpectedErrorOccured = !result.Succeeded,                        
                         TwoFactorAuthRequired = true,
-                        TwoFactorAuthType = result.Succeeded ? ((IConnectAccountResponse)result.Value).TwoFactorAuthType : TwoFactorAuthType.NotDetermined,
-                        WindowHandleId = webDriver.CurrentWindowHandle,
-                        BrowserClosed = closeBrowserResult.Succeeded,
-                        TabClosed = closeBrowserResult.Succeeded,
-                        ShouldOperationBeRetried = true
+                        TwoFactorAuthType = result.Succeeded ? ((IConnectAccountResponse)result.Value).TwoFactorAuthType : TwoFactorAuthType.NotDetermined,                        
+                        OperationInformation = new OperationInformation
+                        {
+                            WindowHandleId = webDriver.CurrentWindowHandle,
+                            BrowserClosed = closeBrowserResult.Succeeded,
+                            TabClosed = closeBrowserResult.Succeeded,
+                            ShouldOperationBeRetried = true,
+                            WebDriverError = false,
+                            Failures = result.Failures
+                        }
                     };
                     
-                    result.Failures.Add(new()
-                    {
-                        Reason = "Failed to determine two factor auth type",
-                        Detail = "Two factor auth type expected was sms or app, neither was found"
-                    });
-                    result.ShouldOperationBeRetried = true;
-                    result.Value = (T)resp;
+                    result.ShouldOperationBeRetried = true;                    
+                    result.Value = (T)failedToDetermineTwoFaResponse;
                     return result;
                 }
 
+                IConnectAccountResponse resp = new ConnectAccountResponse()
+                {
+                    UnexpectedErrorOccured = !result.Succeeded,                    
+                    TwoFactorAuthRequired = true,                                 
+                    TwoFactorAuthType = result.Succeeded ? ((IConnectAccountResponse)result.Value).TwoFactorAuthType : TwoFactorAuthType.NotDetermined,                    
+                    OperationInformation = new OperationInformation
+                    {
+                        WindowHandleId = webDriver.CurrentWindowHandle,
+                        ShouldOperationBeRetried = false,
+                        Failures = result.Failures,
+                        WebDriverError = false
+                    }
+                };
                 result.Succeeded = true;
                 result.Value = (T)resp;
                 return result;
@@ -319,9 +343,15 @@ namespace Domain.Providers
             {
                 UnexpectedErrorOccured = false,
                 TwoFactorAuthRequired = false,
-                TwoFactorAuthType = TwoFactorAuthType.None,
-                BrowserClosed = browserClosed,
-                TabClosed = browserClosed
+                TwoFactorAuthType = TwoFactorAuthType.None,                
+                OperationInformation = new OperationInformation()
+                {
+                    BrowserClosed = browserClosed,
+                    TabClosed = browserClosed,
+                    ShouldOperationBeRetried = false,
+                    WebDriverError = false                    
+                }
+                
             };
 
             result.Value = (T)response;
@@ -360,6 +390,12 @@ namespace Domain.Providers
                 {
                     TwoFactorAuthType = TwoFactorAuthType.None
                 };
+
+                result.Failures.Add(new()
+                {
+                    Reason = "Failed to determine two factor auth type",
+                    Detail = "Two factor auth type expected was sms or app, neither was found"
+                });
                 result.Value = (T)response;
                 result.Succeeded = false;
                 return result;
@@ -393,14 +429,23 @@ namespace Domain.Providers
         public HalOperationResult<T> EnterTwoFactorAuthenticationCode<T>(WebDriverOperationData operationData, TwoFactorAuthenticationRequest request)
             where T : IOperationResponse
         {
-            HalOperationResult<IGetWebDriverOperation> driverResult = _webDriverProvider.CreateWebDriver<IGetWebDriverOperation>(operationData);
+            HalOperationResult<T> result = new();
+
+            HalOperationResult<IGetWebDriverOperation> driverResult = _webDriverProvider.GetWebDriver<IGetWebDriverOperation>(operationData);
             if (driverResult.Succeeded == false)
             {
-                HalOperationResult<T> result = new();
                 result.Failures = driverResult.Failures;
                 return result;
             }
             IWebDriver webDriver = driverResult.Value.WebDriver;
+
+            // switch to the passed in window 
+            result = _webDriverProvider.SwitchTo<T>(webDriver, request.WindowHandleId);
+            if(result.Succeeded == false)
+            {
+                _logger.LogWarning("Consider closing browser window and re-trying. Perhaps commands are not successfully sent to the web driver");
+                return result;
+            }
 
             return EnterTwoFactorAuthCode<T>(webDriver, request);            
         }
@@ -419,11 +464,15 @@ namespace Domain.Providers
                     IEnterTwoFactorAuthCodeResponse resp = new EnterTwoFactorAuthCodeResponse
                     {
                         UnexpectedErrorOccured = true,
-                        WebDriverError = false,
-                        Failures = result.Failures,
-                        BrowserClosed = closeBrowserResult.Succeeded,
-                        TabClosed = closeBrowserResult.Succeeded,
-                        ShouldOperationBeRetried = true
+                        InvalidOrExpiredCode = false,                        
+                        OperationInformation = new OperationInformation
+                        {
+                            WebDriverError = false,
+                            Failures = result.Failures,
+                            BrowserClosed = closeBrowserResult.Succeeded,
+                            TabClosed = closeBrowserResult.Succeeded,
+                            ShouldOperationBeRetried = true
+                        }                        
                     };
 
                     result.ShouldOperationBeRetried = true;
@@ -441,11 +490,14 @@ namespace Domain.Providers
                     IEnterTwoFactorAuthCodeResponse resp = new EnterTwoFactorAuthCodeResponse
                     {
                         UnexpectedErrorOccured = true,
-                        WebDriverError = false,
-                        Failures = result.Failures,
-                        BrowserClosed = closeBrowserResult.Succeeded,
-                        TabClosed = closeBrowserResult.Succeeded,
-                        ShouldOperationBeRetried = true
+                        OperationInformation = new OperationInformation
+                        {
+                            WebDriverError = false,
+                            Failures = result.Failures,
+                            BrowserClosed = closeBrowserResult.Succeeded,
+                            TabClosed = closeBrowserResult.Succeeded,
+                            ShouldOperationBeRetried = true                            
+                        }                        
                     };
 
                     result.ShouldOperationBeRetried = true;
@@ -500,11 +552,13 @@ namespace Domain.Providers
         {
             HalOperationResult<T> result = new();
 
-            IEnterTwoFactorAuthCodeResponse response = new EnterTwoFactorAuthCodeResponse();
-            _logger.LogWarning("Unexpected view rendered after attempting to submit two factor authentication code");
-            response.InvalidOrExpiredCode = false;
-            response.UnexpectedErrorOccured = true;
+            IEnterTwoFactorAuthCodeResponse response = new EnterTwoFactorAuthCodeResponse
+            {
+                InvalidOrExpiredCode = false,
+                UnexpectedErrorOccured = true
+            };
 
+            _logger.LogWarning("Unexpected view rendered after attempting to submit two factor authentication code");            
             _logger.LogDebug("Attempting to close the tab");
             
             result = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);
@@ -520,21 +574,32 @@ namespace Domain.Providers
         private HalOperationResult<T> HandleSMSVerificationCodeErrorDisplayed<T>(string currentWindowHandleId) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
-
-            IEnterTwoFactorAuthCodeResponse response = new EnterTwoFactorAuthCodeResponse();
-            response.InvalidOrExpiredCode = true;            
-
+                       
             _logger.LogWarning("Verification code entered was invalid or expired");
-            // notify user we need their code                
-            result.Value = (T)response;
-            // because nothing technically is wrong, its just the incorrect two factor auth code
-            result.Succeeded = true;
-            result.Value.WindowHandleId = currentWindowHandleId;
-            result.Failures.Add(new()
+
+            IEnterTwoFactorAuthCodeResponse response = new EnterTwoFactorAuthCodeResponse
             {
-                Detail = "SMS verification code entered was invalid or expired",
-                Reason = "Something went wrong entering in two factor authentication code"
-            });
+                InvalidOrExpiredCode = true,
+                UnexpectedErrorOccured = false,
+                OperationInformation = new OperationInformation
+                {
+                    WindowHandleId = currentWindowHandleId,
+                    Failures = new()
+                    {
+                        new()
+                        {
+                            Code = Codes.WEBDRIVER_TWO_FA_CODE_ERROR,
+                            Detail = "SMS verification code entered was invalid or expired",
+                            Reason = "Something went wrong entering in two factor authentication code"
+                        }                        
+                    }
+                    
+                }
+            };
+            // notify user we need their code                
+            result.Value = (T)response;            
+            // because nothing technically is wrong, its just the incorrect two factor auth code
+            result.Succeeded = true;   
             return result;
         }
     }

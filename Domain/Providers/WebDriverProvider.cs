@@ -330,9 +330,61 @@ namespace Domain.Providers
         {
             HalOperationResult<T> result = new();
 
-            // todo
+            result = WebDriverExists<T>(operationData.BrowserPurpose);
+            if(result.Succeeded == false)
+            {
+                string browserPurpose = Enum.GetName(operationData.BrowserPurpose);
+                result.Failures.Add(new()
+                {
+                    Code = Codes.WEBDRIVER_MANAGEMENT_ERROR,
+                    Reason = "The requested web driver does not exist in the list",
+                    Detail = $"Web driver for {browserPurpose} does not exist in the list"
+                });
+                return result;
+            }
 
+            result = CheckWebDriverConnection<T>(operationData.BrowserPurpose);
+            if(result.Succeeded == false)
+            {
+                string browserPurpose = Enum.GetName(operationData.BrowserPurpose);
+                result.Failures.Add(new()
+                {
+                    Code = Codes.WEBDRIVER_ERROR,
+                    Reason = "The requested web driver is not responding to commands",
+                    Detail = $"Web driver for {browserPurpose} is not responding to commands"
+                });
+                return result;
+            }
+            HalOperationResult<IGetWebDriverOperation> getWebDriverResult = GetWebDriver<IGetWebDriverOperation>(operationData.BrowserPurpose);            
+            result.Value = (T)getWebDriverResult.Value;
+            result.Succeeded = true;
+            return result;
+        }
 
+        public HalOperationResult<T> SwitchTo<T>(IWebDriver webDriver, string windowHandleId) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+            try
+            {
+                string windownHandleToSwitchTo = webDriver.WindowHandles.Where(wH => wH == windowHandleId).FirstOrDefault();
+                if(windownHandleToSwitchTo != null)
+                {
+                    _logger.LogInformation("Requested window handle was found! Switching to it.");
+                    webDriver.SwitchTo().Window(windownHandleToSwitchTo);
+                }
+                
+            }
+            catch(Exception ex)
+            {
+                result.Failures.Add(new()
+                {
+                    Reason = "Failed to switch tabs for the given web driver",
+                    Detail = ex.Message
+                });
+                return result;
+            }
+
+            result.Succeeded = true;
             return result;
         }
     }
