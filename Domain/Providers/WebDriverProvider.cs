@@ -372,6 +372,10 @@ namespace Domain.Providers
                     _logger.LogInformation("Requested window handle was found! Switching to it.");
                     webDriver.SwitchTo().Window(windownHandleToSwitchTo);
                 }
+                else
+                {
+                    _logger.LogInformation("Requested window was not found. Keeping focus on the current tab.");
+                }
                 
             }
             catch(Exception ex)

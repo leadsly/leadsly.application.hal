@@ -28,6 +28,7 @@ using Domain.Pages;
 using Domain.Providers;
 using Leadsly.Application.Model;
 using Domain.Services;
+using RabbitMQ.Client;
 
 namespace Hal.Configurations
 {
@@ -54,26 +55,69 @@ namespace Hal.Configurations
         public static IServiceCollection AddSeleniumServicesConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
             Log.Information("Registering selenium services configuration.");
-
             
             services.Configure<WebDriverConfigOptions>(options => configuration.GetSection(nameof(WebDriverConfigOptions)).Bind(options));
             WebDriverConfigOptions webDriverConfigOptions = new();
             configuration.GetSection(nameof(WebDriverConfigOptions)).Bind(webDriverConfigOptions);
                 
             services.AddSingleton<IFileManager, FileManager>();
-            services.AddScoped<ILinkedInLoginPage, LinkedInLoginPage>();
-            services.AddScoped<ILinkedInPage, LinkedInPage>();
-            services.AddScoped<ILinkedInHomePage, LinkedInHomePage>();            
-
-            services.AddScoped<IHalAuthProvider, HalAuthProvider>();
             services.AddSingleton<IHalIdentity, HalIdentity>(opt =>
             {
-                return new HalIdentity(Guid.NewGuid().ToString());
-            });
+                string halId = Environment.GetEnvironmentVariable("HAL_ID") ?? "HAL_ID_NOT_FOUND";
+                if (halId == null)
+                {
+                    Log.Warning("HAL_ID enviornment variable was not found or its value was not set");
+                    throw new ArgumentNullException("HAL_ID env variable was null but is expected to be set");
+                }                    
 
-            services.AddScoped<IWebDriverService, WebDriverService>();
+                return new HalIdentity(halId);
+            });                       
+            
+            return services;
+        }
+
+        public static IServiceCollection AddRabbitMQConfiguration(this IServiceCollection services)
+        {
+            Log.Information("Registering rabbit mq services configuration.");
+
+            IAsyncConnectionFactory factory = new ConnectionFactory() 
+            {
+                Uri = new Uri("amqp://guest:guest@localhost:5672"),
+                
+            };
+
+
+            return services;
+        }
+
+        public static IServiceCollection AddPageObjectModelsConfiguration(this IServiceCollection services)
+        {
+            Log.Information("Registering page object models services configuration.");
+
+            services.AddScoped<ILinkedInLoginPage, LinkedInLoginPage>();
+            services.AddScoped<ILinkedInPage, LinkedInPage>();
+            services.AddScoped<ILinkedInHomePage, LinkedInHomePage>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddProvidersConfiguration(this IServiceCollection services)
+        {
+            Log.Information("Registering providers configuration.");
+
+            services.AddScoped<IHalAuthProvider, HalAuthProvider>();
             services.AddScoped<IWebDriverProvider, WebDriverProvider>();
             services.AddScoped<IWebDriverManagerProvider, WebDriverManagerProvider>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddServicesConfiguration(this IServiceCollection services)
+        {
+            Log.Information("Registering services configuration.");
+
+            services.AddScoped<IWebDriverService, WebDriverService>();
+            services.AddSingleton<IConsumingService, ConsumingService>();
 
             return services;
         }

@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Domain.Providers
@@ -56,6 +57,45 @@ namespace Domain.Providers
             {
                 return result;
             }
+
+            string templateUrl = "https://www.linkedin.com/search/results/people/?keywords=attorney&origin=SWITCH_SEARCH_VERTICAL&page={pageNum}&sid=gz4";
+            var windowHandles = new Queue<string>();
+            for (int i = 0; i < 100; i++)
+            {
+                if(i == 0)
+                    continue;
+
+                if(i % 5 == 0)
+                {
+                    for (int j = 0; j < 5; j++)
+                    {
+                        Thread.Sleep(1000);
+                        int pageNum = i - j;
+                        string searchUrl = templateUrl.Replace("{pageNum}", $"{pageNum}");
+                        webDriver.SwitchTo().NewWindow(WindowType.Tab);
+                        webDriver.Navigate().GoToUrl(searchUrl);
+                        windowHandles.Enqueue(webDriver.CurrentWindowHandle);
+                    }
+
+                    for (int h = 0; h < 5; h++)
+                    {
+                        string nextWindowHandle = windowHandles.Dequeue();
+                        webDriver.SwitchTo().Window(nextWindowHandle);
+                        Thread.Sleep(3000);
+                        webDriver.Close();
+                        try
+                        {
+                            var currwin = webDriver.CurrentWindowHandle;
+                        }
+                        catch(Exception ex)
+                        {
+
+                        }
+                        
+                    }
+                }                
+            }
+            
 
             bool authRequired = _linkedInPage.IsAuthenticationRequired(webDriver);
 

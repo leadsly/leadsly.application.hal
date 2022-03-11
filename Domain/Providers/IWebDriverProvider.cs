@@ -24,5 +24,8 @@ namespace Domain.Providers
 
         HalOperationResult<T> GetWebDriver<T>(WebDriverOperationData operationData)
             where T : IOperationResponse;
+
+        HalOperationResult<T> SwitchTo<T>(IWebDriver webDriver, string windowHandleId)
+            where T : IOperationResponse;
     }
 }

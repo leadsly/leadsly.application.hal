@@ -11,6 +11,7 @@ using System.IO;
 using Microsoft.AspNetCore.Http;
 using Hal.Middlewares;
 using Hal.Configurations;
+using Domain.Services;
 
 namespace Hal
 {
@@ -40,6 +41,11 @@ namespace Hal
                     .AddHttpContextAccessor()
                     .AddRepositoryConfiguration()
                     .AddRemoveNull204FormatterConfigration()
+                    .AddRabbitMQConfiguration()
+                    .AddPageObjectModelsConfiguration()
+                    .AddProvidersConfiguration()
+                    .AddServicesConfiguration()
+                    .AddHostedService<ConsumingHostedService>()
                     .AddMemoryCache();
 
             services.Configure<MvcOptions>(ApiDefaults.Configure);
