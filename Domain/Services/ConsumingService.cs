@@ -1,4 +1,6 @@
-﻿using Leadsly.Application.Model;
+﻿using Domain.Repositories;
+using Leadsly.Application.Model;
+using Leadsly.Application.Model.RabbitMQ;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -12,20 +14,24 @@ namespace Domain.Services
 {
     public class ConsumingService : IConsumingService
     {
-        public ConsumingService(ILogger<ConsumingService> logger, IHalIdentity halIdentity, ICampaignManagerService campaignManagerService)
+        public ConsumingService(ILogger<ConsumingService> logger, IRabbitMQRepository rabbitMQRepository, IHalIdentity halIdentity, ICampaignManagerService campaignManagerService)
         {
             _halIdentity = halIdentity;
             _logger = logger;
             _campaignManagerService = campaignManagerService;
+            _rabbitMQRepository = rabbitMQRepository;
         }
 
         private readonly ILogger<ConsumingService> _logger;
         private readonly IHalIdentity _halIdentity;
         private readonly ICampaignManagerService _campaignManagerService;
+        private readonly IRabbitMQRepository _rabbitMQRepository;
 
         public void StartConsuming()
         {
-            FollowUpMessageQueue();
+            RabbitMQOptions options = _rabbitMQRepository.GetRabbitMQConfigOptions();
+
+            FollowUpMessageQueue(options);
             MonitorForNewAcceptedConnectionsQueue();
             ScanProspectsForRepliesQueue();
             ProspectListQueue();
@@ -47,6 +53,8 @@ namespace Domain.Services
                 var consumer = new EventingBasicConsumer(channel);                
                 consumer.Received += (model, ea) =>
                 {
+                    // manually acknowledge of the message being received
+                    ((IModel)model).BasicAck(ea.DeliveryTag, false);
                     var body = ea.Body.ToArray();
                     var message = Encoding.UTF8.GetString(body);
                 };
@@ -59,7 +67,7 @@ namespace Domain.Services
                         
         }
 
-        private void FollowUpMessageQueue(string exchangeName, string exchangeType, string queueName, string routingKey)
+        private void FollowUpMessageQueue(RabbitMQOptions options)
         {
             var factory = new ConnectionFactory()
             {
@@ -87,8 +95,10 @@ namespace Domain.Services
                 consumer.Received += _campaignManagerService.OnFollowUpMessageEventReceived;
 
                 channel.BasicConsume(queue: queueName,
-                                     autoAck: true,
+                                     autoAck: false,
                                      consumer: consumer);
+
+                
             }
         }
 

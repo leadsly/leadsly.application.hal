@@ -41,7 +41,7 @@ namespace Hal
                     .AddHttpContextAccessor()
                     .AddRepositoryConfiguration()
                     .AddRemoveNull204FormatterConfigration()
-                    .AddRabbitMQConfiguration()
+                    .AddRabbitMQConfiguration(Configuration)
                     .AddPageObjectModelsConfiguration()
                     .AddProvidersConfiguration()
                     .AddServicesConfiguration()

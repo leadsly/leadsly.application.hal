@@ -1,25 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>    
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+	</PropertyGroup>
 
-    <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.1" />
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="6.0.1" />
-      <PackageReference Include="NETCore.Encrypt" Version="2.0.9" />
-      <PackageReference Include="Selenium.Support" Version="4.1.0" />
-      <PackageReference Include="Selenium.WebDriver" Version="4.1.0" />
+		<PackageReference Include="NETCore.Encrypt" Version="2.0.9" />
+		<PackageReference Include="Selenium.Support" Version="4.1.0" />
+		<PackageReference Include="Selenium.WebDriver" Version="4.1.0" />
 		<PackageReference Include="RabbitMQ.Client" Version="6.2.4" />
-    </ItemGroup>
+		<PackageReference Include="Hangfire.Core" Version="1.7.28" />
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.7.28" />
+		<PackageReference Include="Hangfire.PostgreSql" Version="1.9.6" />
+	</ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Converters\" />
-      <Folder Include="Models\Responses\" />
-    </ItemGroup>
+	<ItemGroup>
+		<Folder Include="Converters\" />
+		<Folder Include="Models\Responses\" />
+	</ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\..\Leadsly.Application.Model\Leadsly.Application.Model.csproj" />
-    </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\Leadsly.Application.Model\Leadsly.Application.Model.csproj" />
+	</ItemGroup>
 
 </Project>

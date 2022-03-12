@@ -48,6 +48,7 @@ namespace Hal.Configurations
             Log.Information("Registering repositories configuration.");
 
             services.AddScoped<IWebDriverRepository, WebDriverRepository>();
+            services.AddScoped<IRabbitMQRepository, RabbitMQRepository>();
 
             return services;
         }
@@ -76,16 +77,11 @@ namespace Hal.Configurations
             return services;
         }
 
-        public static IServiceCollection AddRabbitMQConfiguration(this IServiceCollection services)
+        public static IServiceCollection AddRabbitMQConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
             Log.Information("Registering rabbit mq services configuration.");
 
-            IAsyncConnectionFactory factory = new ConnectionFactory() 
-            {
-                Uri = new Uri("amqp://guest:guest@localhost:5672"),
-                
-            };
-
+            services.Configure<RabbitMQConfigOptions>(options => configuration.GetSection(nameof(RabbitMQConfigOptions)).Bind(options));
 
             return services;
         }
