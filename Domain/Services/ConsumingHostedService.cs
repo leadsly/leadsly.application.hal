@@ -5,20 +5,27 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Domain.Services
 {
     public class ConsumingHostedService : IHostedService
     {
-        public ConsumingHostedService(IConsumingService consumingService)
+        public ConsumingHostedService(IServiceProvider serviceProvider)
         {
-            _consumingService = consumingService;
+            _serviceProvider = serviceProvider;
         }
 
-        private readonly IConsumingService _consumingService;
+        private readonly IServiceProvider _serviceProvider;
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _consumingService.StartConsuming();
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var _consumingService = scope.ServiceProvider.GetRequiredService<IConsumingService>();
+                _consumingService.StartConsuming();
+            }
+
             return Task.CompletedTask;
         }
 

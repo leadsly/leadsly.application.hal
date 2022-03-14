@@ -27,6 +27,7 @@ namespace Infrastructure.Repositories
         {
             return new RabbitMQOptions
             {
+                RoutingKey = _rabbitMQConfigOptions.RoutingKey,
                 ConnectionFactoryOptions = new()
                 {
                     ClientProvidedName = _rabbitMQConfigOptions.ConnectionFactoryConfigOptions.ClientProvidedName,
@@ -42,6 +43,7 @@ namespace Infrastructure.Repositories
                 },
                 QueueConfigOptions = new()
                 {
+                    Name = _rabbitMQConfigOptions.QueueConfigOptions.Name,
                     AutoAcknowledge = _rabbitMQConfigOptions.QueueConfigOptions.AutoAcknowledge
                 }
             };

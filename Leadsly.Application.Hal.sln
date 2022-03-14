@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PageObjects", "PageObjects\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hal", "Hal\Hal.csproj", "{1F632170-FF57-4C9C-862C-003D22E60289}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{815C5179-8015-45AD-9177-3EB912079C77}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{815C5179-8015-45AD-9177-3EB912079C77}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Leadsly.Application.Model", "..\Leadsly.Application.Model\Leadsly.Application.Model.csproj", "{6B725237-E37E-431A-9238-5978B5AD6DA0}"
 EndProject

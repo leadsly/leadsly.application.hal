@@ -8,6 +8,7 @@ namespace Domain.OptionsJsonModels
 {
     public class RabbitMQConfigOptions
     {
+        public string RoutingKey { get; set; }
         public ConnectionFactoryConfigOptions ConnectionFactoryConfigOptions { get; set; }
         public ExchangeConfigOptions ExchangeConfigOptions { get; set; }
         public QueueConfigOptions QueueConfigOptions { get; set; }
@@ -30,6 +31,7 @@ namespace Domain.OptionsJsonModels
 
     public class QueueConfigOptions
     {
+        public string Name { get; set; }
         public bool AutoAcknowledge { get; set; }
     }
 }

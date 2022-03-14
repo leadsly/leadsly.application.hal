@@ -29,6 +29,8 @@ using Domain.Providers;
 using Leadsly.Application.Model;
 using Domain.Services;
 using RabbitMQ.Client;
+using Domain.Deserializers.Interfaces;
+using Domain.Deserializers;
 
 namespace Hal.Configurations
 {
@@ -64,8 +66,8 @@ namespace Hal.Configurations
             services.AddSingleton<IFileManager, FileManager>();
             services.AddSingleton<IHalIdentity, HalIdentity>(opt =>
             {
-                string halId = Environment.GetEnvironmentVariable("HAL_ID") ?? "HAL_ID_NOT_FOUND";
-                if (halId == null)
+                string halId = Environment.GetEnvironmentVariable("HAL_ID", EnvironmentVariableTarget.User) ?? "HAL_ID_NOT_FOUND";
+                if (halId == "HAL_ID_NOT_FOUND")
                 {
                     Log.Warning("HAL_ID enviornment variable was not found or its value was not set");
                     throw new ArgumentNullException("HAL_ID env variable was null but is expected to be set");
@@ -74,6 +76,15 @@ namespace Hal.Configurations
                 return new HalIdentity(halId);
             });                       
             
+            return services;
+        }
+
+        public static IServiceCollection AddSerializersConfiguration(this IServiceCollection services)
+        {
+            Log.Information("Registering serializers configuration.");
+
+            services.AddScoped<IFollowUpMessagesDeserializer, FollowUpMessagesDeserializer>();
+
             return services;
         }
 
@@ -104,6 +115,7 @@ namespace Hal.Configurations
             services.AddScoped<IHalAuthProvider, HalAuthProvider>();
             services.AddScoped<IWebDriverProvider, WebDriverProvider>();
             services.AddScoped<IWebDriverManagerProvider, WebDriverManagerProvider>();
+            services.AddScoped<IDeserializerProvider, DeserializerProvider>();
 
             return services;
         }
@@ -113,7 +125,8 @@ namespace Hal.Configurations
             Log.Information("Registering services configuration.");
 
             services.AddScoped<IWebDriverService, WebDriverService>();
-            services.AddSingleton<IConsumingService, ConsumingService>();
+            services.AddScoped<IConsumingService, ConsumingService>();
+            services.AddScoped<ICampaignManagerService, CampaignManagerService>();
 
             return services;
         }

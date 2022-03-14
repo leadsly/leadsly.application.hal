@@ -1,4 +1,6 @@
-﻿using Hangfire;
+﻿using Domain.Providers;
+using Domain.Providers.Campaigns.Interfaces;
+using Hangfire;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Entities.Campaigns;
 using Microsoft.Extensions.Logging;
@@ -14,16 +16,21 @@ namespace Domain.Services
 {
     public class CampaignManagerService : ICampaignManagerService
     {
-        public CampaignManagerService(ILogger<CampaignManagerService> logger)
+        public CampaignManagerService(ILogger<CampaignManagerService> logger, IFollowUpMessagesProvider followUpMessagesProvider, IDeserializerProvider deserializerProvider)
         {
             _logger = logger;
+            _followUpMessagesProvider = followUpMessagesProvider;
+            _deserializerProvider = deserializerProvider;
         }
 
+        private readonly IFollowUpMessagesProvider _followUpMessagesProvider;
         private readonly ILogger<CampaignManagerService> _logger;
+        private readonly IDeserializerProvider _deserializerProvider;
         private static CurrentJob CurrentJob { get; set; }
         private object _jobLock = new object();
         private static string ConnectionWithDrawRecurringJob = "connection-widthdraw";
-        private static Queue<Action> ExecutePhases = new();
+        private static Queue<Action> ExecutePhasesChain = new();
+        
 
         public void OnConnectionWithdrawEventReceived(object channel, BasicDeliverEventArgs eventArgs)
         {            
@@ -32,9 +39,9 @@ namespace Domain.Services
 
         public void NextPhase()
         {
-            if (ExecutePhases.Count > 0)
+            if (ExecutePhasesChain.Count > 0)
             {
-                Action nextPhase = ExecutePhases.Dequeue();
+                Action nextPhase = ExecutePhasesChain.Dequeue();
                 nextPhase();
             }
         }
@@ -56,23 +63,27 @@ namespace Domain.Services
 
         #region OnEventReceived Handlers
 
-        public void OnFollowUpMessageEventReceived(object channel, BasicDeliverEventArgs eventArgs)
+        public void OnFollowUpMessageEventReceived(object sender, BasicDeliverEventArgs eventArgs)
         {
+            //IModel channel = ((EventingBasicConsumer)sender).Model;
+
+            //channel.BasicAck(eventArgs.DeliveryTag, false);
+
             var body = eventArgs.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
+
 
             // this can be started asap and doesn't rely on any other event            
             // execute send follow up message logic
             if (CurrentJob.Executing)
             {
                 // queue up this phase for later
-                ExecutePhases.Enqueue(() => QueueFollowUpMessages(channel));
+                ExecutePhasesChain.Enqueue(() => QueueFollowUpMessages());
             }
             else
             {
-                QueueFollowUpMessages(channel);
+                QueueFollowUpMessages();
             }
-
         }        
 
         public void OnMonitorForNewAcceptedConnectionsEventReceived(object channel, BasicDeliverEventArgs eventArgs)
@@ -86,11 +97,11 @@ namespace Domain.Services
             if (CurrentJob.Executing)
             {
                 // queue up this phase for later
-                ExecutePhases.Enqueue(() => QueueProspectList(channel));
+                ExecutePhasesChain.Enqueue(() => QueueProspectList());
             }
             else
             {
-                QueueProspectList(channel);
+                QueueProspectList();
             }
         }
 
@@ -101,11 +112,11 @@ namespace Domain.Services
             if (CurrentJob.Executing)
             {
                 // queue up this phase for later
-                ExecutePhases.Enqueue(() => QueueSendConnectionRequests(channel));
+                ExecutePhasesChain.Enqueue(() => QueueSendConnectionRequests());
             }
             else
             {
-                QueueSendConnectionRequests(channel);
+                QueueSendConnectionRequests();
             }
         }        
 
@@ -115,11 +126,11 @@ namespace Domain.Services
             if (CurrentJob.Executing)
             {
                 // queue up this phase for later
-                ExecutePhases.Enqueue(() => QueueProspectList(channel));
+                ExecutePhasesChain.Enqueue(() => QueueProspectList());
             }
             else
             {
-                QueueProspectList(channel);
+                QueueProspectList();
             }
         }
 
@@ -131,11 +142,11 @@ namespace Domain.Services
             if (CurrentJob.Executing)
             {
                 // queue up this phase for later
-                ExecutePhases.Enqueue(() => QueueScanProspectsForReplies(channel));
+                ExecutePhasesChain.Enqueue(() => QueueScanProspectsForReplies());
             }
             else
             {
-                QueueScanProspectsForReplies(channel);
+                QueueScanProspectsForReplies();
             }
         }        
 
@@ -146,61 +157,58 @@ namespace Domain.Services
 
         #endregion
 
-        private void QueueScanProspectsForReplies(object channel)
+        private void QueueScanProspectsForReplies()
         {
-            SetCurrentJob(PhasesType.ProspectList, channel);
+            SetCurrentJob(PhasesType.ProspectList);
 
             BackgroundJob.Enqueue(() => StartScanProspectsForReplies());
         }
 
         private void StartScanProspectsForReplies()
         {
-            IModel channel = CurrentJob.Channel;
         }
 
-        private void QueueFollowUpMessages(object channel)
+        private void QueueFollowUpMessages()
         {
-            SetCurrentJob(PhasesType.ProspectList, channel);
+            SetCurrentJob(PhasesType.ProspectList);
 
             BackgroundJob.Enqueue(() => StartFollowUpMessages());
         }
 
         private void StartFollowUpMessages()
         {
-            IModel channel = CurrentJob.Channel;
+            
         }
 
-        private void QueueSendConnectionRequests(object channel)
+        private void QueueSendConnectionRequests()
         {
-            SetCurrentJob(PhasesType.ProspectList, channel);
+            SetCurrentJob(PhasesType.ProspectList);
 
             BackgroundJob.Enqueue(() => StartSendConnectionRequests());
         }
         private void StartSendConnectionRequests()
         {
-            IModel channel = CurrentJob.Channel;
         }
 
-        private void QueueProspectList(object channel)
+        private void QueueProspectList()
         {
-            SetCurrentJob(PhasesType.ProspectList, channel);
+            SetCurrentJob(PhasesType.ProspectList);
 
             BackgroundJob.Enqueue(() => StartProspectList());
         }
 
         private void StartProspectList()
         {
-            IModel channel = CurrentJob.Channel;
 
         }
 
-        private void SetCurrentJob(PhasesType phasesType, object channel)
+        private void SetCurrentJob(PhasesType phasesType, IModel channel)
         {
             CurrentJob job = new CurrentJob
             {
                 Executing = true,
                 PhaseType = phasesType,
-                Channel = channel as IModel
+                Channel = channel
             };
             lock (_jobLock)
             {
