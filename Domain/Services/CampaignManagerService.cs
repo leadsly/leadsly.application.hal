@@ -1,8 +1,12 @@
-﻿using Domain.Providers;
+﻿using Domain.Facades.Interfaces;
+using Domain.Providers;
 using Domain.Providers.Campaigns.Interfaces;
+using Domain.Services.Interfaces;
 using Hangfire;
 using Leadsly.Application.Model;
+using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Entities.Campaigns;
+using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -16,18 +20,20 @@ namespace Domain.Services
 {
     public class CampaignManagerService : ICampaignManagerService
     {
-        public CampaignManagerService(ILogger<CampaignManagerService> logger, IFollowUpMessagesProvider followUpMessagesProvider, IDeserializerProvider deserializerProvider)
+        public CampaignManagerService(ILogger<CampaignManagerService> logger, ICampaignPhaseFacade campaignPhaseFacade, IDeserializerFacade deserializerFacade)
         {
             _logger = logger;
-            _followUpMessagesProvider = followUpMessagesProvider;
-            _deserializerProvider = deserializerProvider;
+            _deserializerFacade = deserializerFacade;
+            _campaignPhaseFacade = campaignPhaseFacade;
         }
 
-        private readonly IFollowUpMessagesProvider _followUpMessagesProvider;
+        private readonly ICampaignPhaseFacade _campaignPhaseFacade;
         private readonly ILogger<CampaignManagerService> _logger;
-        private readonly IDeserializerProvider _deserializerProvider;
+        private readonly IDeserializerFacade _deserializerFacade;
         private static CurrentJob CurrentJob { get; set; }
-        private object _jobLock = new object();
+        private readonly object _jobLock = new object();
+        private readonly object _readJobLock_FollowUpMessages = new object();
+        private readonly object _updateJobLock_FollowUpMessages = new object();
         private static string ConnectionWithDrawRecurringJob = "connection-widthdraw";
         private static Queue<Action> ExecutePhasesChain = new();
         
@@ -37,26 +43,20 @@ namespace Domain.Services
             RecurringJob.AddOrUpdate(ConnectionWithDrawRecurringJob, () => Console.WriteLine("testestest"), "*9***");
         }
 
-        public void NextPhase()
+        private void NextPhase()
         {
             if (ExecutePhasesChain.Count > 0)
             {
                 Action nextPhase = ExecutePhasesChain.Dequeue();
                 nextPhase();
             }
+            else
+            {
+                _logger.LogInformation("There are no more queued jobs to run");
+            }
         }
 
-        public void PositiveAcknowledge(IModel channel, ulong deliveryTag)
-        {
-            channel.BasicAck(deliveryTag, false);
-        }
-
-        public void NegativeAcknowledge(IModel channel, ulong deliveryTag, bool retry)
-        {
-            channel.BasicNack(deliveryTag, false, retry);
-        }
-
-        public void ClearCurrentJob()
+        private void ClearCurrentJob()
         {
             CurrentJob = default;
         }
@@ -65,124 +65,164 @@ namespace Domain.Services
 
         public void OnFollowUpMessageEventReceived(object sender, BasicDeliverEventArgs eventArgs)
         {
-            //IModel channel = ((EventingBasicConsumer)sender).Model;
-
-            //channel.BasicAck(eventArgs.DeliveryTag, false);
-
-            var body = eventArgs.Body.ToArray();
-            var message = Encoding.UTF8.GetString(body);
-
-
+            IModel channel = ((EventingBasicConsumer)sender).Model;
             // this can be started asap and doesn't rely on any other event            
             // execute send follow up message logic
             if (CurrentJob.Executing)
             {
                 // queue up this phase for later
-                ExecutePhasesChain.Enqueue(() => QueueFollowUpMessages());
+                ExecutePhasesChain.Enqueue(() => QueueFollowUpMessages(channel, eventArgs));
             }
             else
             {
-                QueueFollowUpMessages();
+                QueueFollowUpMessages(channel, eventArgs);
             }
         }        
 
-        public void OnMonitorForNewAcceptedConnectionsEventReceived(object channel, BasicDeliverEventArgs eventArgs)
+        public void OnMonitorForNewAcceptedConnectionsEventReceived(object sender, BasicDeliverEventArgs eventArgs)
         {
             // this can be started asap and doesn't rely on any other event
             // execute monitor for new accepted connections logic
+            IModel channel = ((EventingBasicConsumer)sender).Model;
         }
 
-        public void OnProspectListEventReceived(object channel, BasicDeliverEventArgs eventArgs)
+        public void OnProspectListEventReceived(object sender, BasicDeliverEventArgs eventArgs)
         {
+            IModel channel = ((EventingBasicConsumer)sender).Model;
             if (CurrentJob.Executing)
             {
                 // queue up this phase for later
-                ExecutePhasesChain.Enqueue(() => QueueProspectList());
+                ExecutePhasesChain.Enqueue(() => QueueProspectList(channel, eventArgs));
             }
             else
             {
-                QueueProspectList();
+                QueueProspectList(channel, eventArgs);
             }
         }
 
-        public void OnSendConnectionRequestsEventReceived(object channel, BasicDeliverEventArgs eventArgs)
+        public void OnSendConnectionRequestsEventReceived(object sender, BasicDeliverEventArgs eventArgs)
         {
+            IModel channel = ((EventingBasicConsumer)sender).Model;
             // run this AFTER prospect list
             // This has to assume that ProspectList phase is either running or already ran
             if (CurrentJob.Executing)
             {
                 // queue up this phase for later
-                ExecutePhasesChain.Enqueue(() => QueueSendConnectionRequests());
+                ExecutePhasesChain.Enqueue(() => QueueSendConnectionRequests(channel, eventArgs));
             }
             else
             {
-                QueueSendConnectionRequests();
+                QueueSendConnectionRequests(channel, eventArgs);
             }
         }        
 
-        public void OnRescrapeSearchurlsEventReceived(object channel, BasicDeliverEventArgs eventArgs)
+        public void OnRescrapeSearchurlsEventReceived(object sender, BasicDeliverEventArgs eventArgs)
         {
+            IModel channel = ((EventingBasicConsumer)sender).Model;
             // run this rarely, but this would be prospect list under the hood
             if (CurrentJob.Executing)
             {
                 // queue up this phase for later
-                ExecutePhasesChain.Enqueue(() => QueueProspectList());
+                ExecutePhasesChain.Enqueue(() => QueueProspectList(channel, eventArgs));
             }
             else
             {
-                QueueProspectList();
+                QueueProspectList(channel, eventArgs);
             }
         }
 
-        public void OnScanProspectsForRepliesEventReceived(object channel, BasicDeliverEventArgs eventArgs)
+        public void OnScanProspectsForRepliesEventReceived(object sender, BasicDeliverEventArgs eventArgs)
         {
+            IModel channel = ((EventingBasicConsumer)sender).Model;
             // this can be started asap and doesn't rely on any other event
             // execute scan prospects for replies logic
             // run this rarely, but this would be prospect list under the hood
             if (CurrentJob.Executing)
             {
                 // queue up this phase for later
-                ExecutePhasesChain.Enqueue(() => QueueScanProspectsForReplies());
+                ExecutePhasesChain.Enqueue(() => QueueScanProspectsForReplies(channel, eventArgs));
             }
             else
             {
-                QueueScanProspectsForReplies();
+                QueueScanProspectsForReplies(channel, eventArgs);
             }
         }        
 
-        public void OnSendEmailInvitesEventReceived(object channel, BasicDeliverEventArgs eventArgs)
+        public void OnSendEmailInvitesEventReceived(object sender, BasicDeliverEventArgs eventArgs)
         {
+            IModel channel = ((EventingBasicConsumer)sender).Model;
             throw new NotImplementedException();
         }
 
         #endregion
 
-        private void QueueScanProspectsForReplies()
+        private void QueueScanProspectsForReplies(IModel channel, BasicDeliverEventArgs eventArgs)
         {
-            SetCurrentJob(PhasesType.ProspectList);
+            SetCurrentJob(PhasesType.ProspectList, channel, eventArgs);
 
             BackgroundJob.Enqueue(() => StartScanProspectsForReplies());
         }
 
         private void StartScanProspectsForReplies()
         {
+
         }
 
-        private void QueueFollowUpMessages()
+        private void QueueFollowUpMessages(IModel channel, BasicDeliverEventArgs eventArgs)
         {
-            SetCurrentJob(PhasesType.ProspectList);
+            SetCurrentJob(PhasesType.ProspectList, channel, eventArgs);
 
             BackgroundJob.Enqueue(() => StartFollowUpMessages());
         }
 
         private void StartFollowUpMessages()
         {
-            
+            BasicDeliverEventArgs eventArgs = default;
+            IModel channel = default;
+            lock (_readJobLock_FollowUpMessages)
+            {
+                eventArgs = CurrentJob.DeliveryEventArgs;
+                channel = CurrentJob.Channel;
+            } 
+
+            byte[] body = eventArgs.Body.ToArray();
+            string message = Encoding.UTF8.GetString(body);
+
+            // try and deserialize the response
+            FollowUpMessagesBody followUpMessages = _deserializerFacade.DeserializeFollowUpMessagesBody(message);
+
+            try
+            {
+                HalOperationResult<IOperationResponse> operationResult = _campaignPhaseFacade.ExecuteFollowUpMessagesPhase<IOperationResponse>(followUpMessages);
+                if(operationResult.Succeeded == true)
+                {
+                    _logger.LogInformation("ExecuteFollowUpMessagesPhase executed successfully. Acknowledging message");
+                    channel.BasicAck(eventArgs.DeliveryTag, false);
+                }
+                else
+                {
+                    _logger.LogWarning("Executing Follow Up Messages Phase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
+                    channel.BasicNack(eventArgs.DeliveryTag, false, true);
+                }
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Exception occured while executing Follow Up Messages Phase. Negatively acknowledging the message and re-queuing it");
+                channel.BasicNack(eventArgs.DeliveryTag, false, true);
+            }
+            finally
+            {
+                lock(_updateJobLock_FollowUpMessages)
+                {
+                    ClearCurrentJob();
+                }
+                NextPhase();
+            }            
         }
 
-        private void QueueSendConnectionRequests()
+        private void QueueSendConnectionRequests(IModel channel, BasicDeliverEventArgs eventArgs)
         {
-            SetCurrentJob(PhasesType.ProspectList);
+            SetCurrentJob(PhasesType.ProspectList, channel, eventArgs);
 
             BackgroundJob.Enqueue(() => StartSendConnectionRequests());
         }
@@ -190,9 +230,9 @@ namespace Domain.Services
         {
         }
 
-        private void QueueProspectList()
+        private void QueueProspectList(IModel channel, BasicDeliverEventArgs eventArgs)
         {
-            SetCurrentJob(PhasesType.ProspectList);
+            SetCurrentJob(PhasesType.ProspectList, channel, eventArgs);
 
             BackgroundJob.Enqueue(() => StartProspectList());
         }
@@ -202,13 +242,14 @@ namespace Domain.Services
 
         }
 
-        private void SetCurrentJob(PhasesType phasesType, IModel channel)
+        private void SetCurrentJob(PhasesType phasesType, IModel channel, BasicDeliverEventArgs eventArgs)
         {
             CurrentJob job = new CurrentJob
             {
                 Executing = true,
                 PhaseType = phasesType,
-                Channel = channel
+                Channel = channel,
+                DeliveryEventArgs = eventArgs
             };
             lock (_jobLock)
             {

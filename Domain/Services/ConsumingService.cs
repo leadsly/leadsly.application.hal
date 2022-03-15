@@ -1,4 +1,5 @@
 ﻿using Domain.Repositories;
+using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.RabbitMQ;
 using Microsoft.Extensions.Logging;

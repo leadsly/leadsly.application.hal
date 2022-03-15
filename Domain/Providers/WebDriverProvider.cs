@@ -1,9 +1,12 @@
 ﻿using Domain.Models;
+using Domain.Providers.Interfaces;
 using Domain.Repositories;
 using Domain.Services;
+using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.WebDriver;
+using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -298,6 +301,26 @@ namespace Domain.Providers
             return result;
         }
 
+        public HalOperationResult<T> CreateOrGetWebDriver<T>(WebDriverOperationData operationData) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            result = GetWebDriver<T>(operationData.BrowserPurpose);
+            if(result.Succeeded == true)
+            {
+                return result;
+            }
+
+            result = CreateWebDriver<T>(operationData);
+            if(result.Succeeded == true)
+            {
+                return result;
+            }
+
+            _logger.LogError("Failed to get or create web driver instance.");            
+            return result;
+        }
+
         public HalOperationResult<T> CreateWebDriver<T>(WebDriverOperationData operationData) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -316,16 +339,11 @@ namespace Domain.Providers
                 return result;
             }
 
-            ICreateWebDriverOperation operation = new CreateWebDriverOperation
-            {
-                WebDriver = webDriver
-            };
-
             result.Succeeded = true;
-            result.Value = (T)operation;
+            result.Value = (T)createWebDriverResult.Value;
             return result;
         }
-
+        
         public HalOperationResult<T> GetWebDriver<T>(WebDriverOperationData operationData) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -390,6 +408,6 @@ namespace Domain.Providers
 
             result.Succeeded = true;
             return result;
-        }
+        }        
     }
 }

@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Providers
+namespace Domain.Providers.Interfaces
 {
     public interface IWebDriverProvider
     {
@@ -23,6 +23,9 @@ namespace Domain.Providers
             where T : IOperationResponse;
 
         HalOperationResult<T> GetWebDriver<T>(WebDriverOperationData operationData)
+            where T : IOperationResponse;
+
+        HalOperationResult<T> CreateOrGetWebDriver<T>(WebDriverOperationData operationData) 
             where T : IOperationResponse;
 
         HalOperationResult<T> SwitchTo<T>(IWebDriver webDriver, string windowHandleId)

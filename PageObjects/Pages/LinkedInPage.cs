@@ -12,21 +12,13 @@ using System.Threading.Tasks;
 
 namespace PageObjects.Pages
 {
-    public class LinkedInPage : ILinkedInPage
+    public class LinkedInPage : LeadslyWebDriverBase, ILinkedInPage
     {
-        public LinkedInPage(ILinkedInLoginPage linkedInLoginPage, ILinkedInHomePage linkedInHomePage, ILogger<LinkedInPage> logger)
+        public LinkedInPage(ILogger<LinkedInPage> logger) : base(logger)
         {
             this._logger = logger;
-            this._linkedInLoginPage = linkedInLoginPage;            
-            this._linkedInHomePage = linkedInHomePage;
         }
         private readonly ILogger<LinkedInPage> _logger;
-        private readonly WebDriverWait _wait;        
-        private readonly ILinkedInLoginPage _linkedInLoginPage;
-        private readonly ILinkedInHomePage _linkedInHomePage;
-
-        public LinkedInLoginPage LinkedInLoginPage { get; private set; }
-        public LinkedInHomePage LinkedInHomePage { get; set; }
 
         public bool IsAuthenticationRequired(IWebDriver webDriver)
         {
@@ -49,29 +41,6 @@ namespace PageObjects.Pages
                 }
                 return signInContainer;
             
-        }
-
-        public HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)
-            where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-
-            try
-            {
-                webDriver.Navigate().GoToUrl(new Uri(pageUrl));
-            }
-            catch(WebDriverTimeoutException timeoutEx)
-            {
-                throw timeoutEx;
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError(ex, $"Failed to navigate to page {pageUrl}");
-                return result;
-            }
-
-            result.Succeeded = true;
-            return result;
         }
     }
 }

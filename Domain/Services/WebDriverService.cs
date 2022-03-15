@@ -1,7 +1,9 @@
 ﻿using Domain.Models;
+using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.WebDriver;
+using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -102,7 +104,7 @@ namespace Domain.Services
             }
             else
             {
-                
+                // if new web driver is request, then the first thing that needs to happen is that there has to be a copy made of the default authenticated chrome profile, then that profile has to be used to create a new webdriver   
             }
 
             return Create<T>(options, webDriverOptions.DefaultImplicitWait);            

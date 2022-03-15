@@ -31,6 +31,10 @@ using Domain.Services;
 using RabbitMQ.Client;
 using Domain.Deserializers.Interfaces;
 using Domain.Deserializers;
+using Domain.Facades;
+using Domain.Facades.Interfaces;
+using Domain.Providers.Interfaces;
+using Domain.Services.Interfaces;
 
 namespace Hal.Configurations
 {
@@ -79,6 +83,16 @@ namespace Hal.Configurations
             return services;
         }
 
+        public static IServiceCollection AddFacadesConfiguration(this IServiceCollection services)
+        {
+            Log.Information("Registering facades configuration.");
+
+            services.AddScoped<IDeserializerFacade, DeserializerFacade>();
+            services.AddScoped<ICampaignPhaseFacade, CampaignPhaseFacade>();
+
+            return services;
+        }
+
         public static IServiceCollection AddSerializersConfiguration(this IServiceCollection services)
         {
             Log.Information("Registering serializers configuration.");
@@ -104,6 +118,7 @@ namespace Hal.Configurations
             services.AddScoped<ILinkedInLoginPage, LinkedInLoginPage>();
             services.AddScoped<ILinkedInPage, LinkedInPage>();
             services.AddScoped<ILinkedInHomePage, LinkedInHomePage>();
+            services.AddScoped<ILinkedInMessagingPage, LinkedInMessagingPage>();
 
             return services;
         }
@@ -115,7 +130,6 @@ namespace Hal.Configurations
             services.AddScoped<IHalAuthProvider, HalAuthProvider>();
             services.AddScoped<IWebDriverProvider, WebDriverProvider>();
             services.AddScoped<IWebDriverManagerProvider, WebDriverManagerProvider>();
-            services.AddScoped<IDeserializerProvider, DeserializerProvider>();
 
             return services;
         }

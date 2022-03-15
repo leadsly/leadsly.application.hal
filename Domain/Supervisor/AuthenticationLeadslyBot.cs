@@ -31,12 +31,23 @@ namespace Domain.Supervisor
         public HalOperationResult<T> AuthenticateAccount<T>(AuthenticateAccountRequest request)
             where T : IOperationResponse
         {
+            HalOperationResult<T> result = new();
+
             WebDriverOperationData operationData = new()
             {
                 BrowserPurpose = request.BrowserPurpose
             };
 
-            return _halAuthProvider.Authenticate<T>(operationData, request);                  
+            result = _halAuthProvider.Authenticate<T>(operationData, request);
+
+            //// if operation succeeded and the browser was closed
+            //if (result.Succeeded == true && result.Value.OperationInformation.BrowserClosed == true)
+            //{
+            //    // copy over the authenticated chrome profile
+                
+            //}
+
+            return result;
         }        
     }
 }

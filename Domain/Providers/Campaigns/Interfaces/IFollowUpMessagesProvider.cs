@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Leadsly.Application.Model;
+using Leadsly.Application.Model.Campaigns;
+using Leadsly.Application.Model.Responses;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +11,8 @@ namespace Domain.Providers.Campaigns.Interfaces
 {
     public interface IFollowUpMessagesProvider
     {
-        public int MyProperty { get; set; }
+        HalOperationResult<T> ExecutePhase<T>(FollowUpMessagesBody message)
+            where T : IOperationResponse;
+
     }
 }

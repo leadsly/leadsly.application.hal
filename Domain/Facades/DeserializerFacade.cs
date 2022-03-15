@@ -1,4 +1,5 @@
 ﻿using Domain.Deserializers.Interfaces;
+using Domain.Facades.Interfaces;
 using Leadsly.Application.Model.Campaigns;
 using System;
 using System.Collections.Generic;
@@ -6,11 +7,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Providers
+namespace Domain.Facades
 {
-    public class DeserializerProvider : IDeserializerProvider
+    public class DeserializerFacade : IDeserializerFacade
     {
-        public DeserializerProvider(IFollowUpMessagesDeserializer followUpMessagesDeserializer)
+        public DeserializerFacade(IFollowUpMessagesDeserializer followUpMessagesDeserializer)
         {
             _followUpMessagesDeserializer = followUpMessagesDeserializer;
         }

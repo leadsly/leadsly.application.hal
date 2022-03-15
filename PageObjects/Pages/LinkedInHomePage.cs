@@ -1,4 +1,6 @@
 ﻿using Domain.Pages;
+using Leadsly.Application.Model;
+using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
@@ -10,17 +12,14 @@ using System.Threading.Tasks;
 
 namespace PageObjects.Pages
 {
-    public class LinkedInHomePage : ILinkedInHomePage
+    public class LinkedInHomePage : LeadslyWebDriverBase, ILinkedInHomePage
     {
-        public LinkedInHomePage(ILogger<LinkedInHomePage> logger)
+        public LinkedInHomePage(ILogger<LinkedInHomePage> logger) : base(logger)
         {            
             this._logger = logger;
-            // this._wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));                   
+            
         }
-        private readonly ILogger<LinkedInHomePage> _logger;
-        // private readonly WebDriverWait _wait;        
-
-
+        private readonly ILogger<LinkedInHomePage> _logger;        
 
     }
 }
