@@ -28,11 +28,12 @@ namespace Infrastructure.Repositories
             {
                 ChromeProfileConfigOptions = new()
                 {
+                    Suffix = _webDriverOptions.ChromeConfigOptions.Suffix,
                     DefaultChromeProfileName = _webDriverOptions.ChromeConfigOptions.DefaultProfile,
                     DefaultChromeUserProfilesDir = _webDriverOptions.ChromeConfigOptions.ChromeUserDirectory,
                     AddArguments = _webDriverOptions.ChromeConfigOptions.AddArguments
                 },
-                DefaultImplicitWait = _webDriverOptions.DefaultImplicitWait
+                DefaultImplicitWait = _webDriverOptions.DefaultImplicitWait                
             };
         }
     }

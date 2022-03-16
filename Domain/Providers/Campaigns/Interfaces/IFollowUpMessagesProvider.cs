@@ -1,5 +1,6 @@
 ﻿using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
+using Leadsly.Application.Model.RabbitMQ;
 using Leadsly.Application.Model.Responses;
 using System;
 using System.Collections.Generic;

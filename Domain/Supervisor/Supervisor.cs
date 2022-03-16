@@ -1,5 +1,6 @@
 ﻿using Domain.Models;
 using Domain.Providers;
+using Domain.Providers.Interfaces;
 using Domain.Repositories;
 using Leadsly.Application.Model;
 using Microsoft.AspNetCore.Identity;

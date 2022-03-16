@@ -14,6 +14,7 @@ namespace Domain.OptionsJsonModels
 
     public class ChromeConfigOptions
     {
+        public string Suffix { get; set; }
         public string DefaultProfile { get; set; }
         public string ChromeUserDirectory { get; set; }
         public List<string> AddArguments { get; set; }

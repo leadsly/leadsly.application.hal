@@ -2,7 +2,9 @@
 using Domain.Providers.Campaigns.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
+using Leadsly.Application.Model.RabbitMQ;
 using Leadsly.Application.Model.Responses;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -14,14 +16,15 @@ namespace Domain.Facades
 {
     public class CampaignPhaseFacade : ICampaignPhaseFacade
     {
-        public CampaignPhaseFacade(IFollowUpMessagesProvider followUpMessagesProvider, ILogger<CampaignPhaseFacade> logger)
+        public CampaignPhaseFacade(ILogger<CampaignPhaseFacade> logger, IFollowUpMessagesProvider followUpMessagesProvider)
         {
             _followUpMessagesProvider = followUpMessagesProvider;
             _logger = logger;
+            
         }
 
         private readonly IFollowUpMessagesProvider _followUpMessagesProvider;
-        private readonly ILogger<CampaignPhaseFacade> _logger;
+        private readonly ILogger<CampaignPhaseFacade> _logger;        
 
         public HalOperationResult<T> ExecuteFollowUpMessagesPhase<T>(FollowUpMessagesBody message)
             where T : IOperationResponse

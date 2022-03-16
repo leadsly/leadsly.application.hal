@@ -40,13 +40,6 @@ namespace Domain.Supervisor
 
             result = _halAuthProvider.Authenticate<T>(operationData, request);
 
-            //// if operation succeeded and the browser was closed
-            //if (result.Succeeded == true && result.Value.OperationInformation.BrowserClosed == true)
-            //{
-            //    // copy over the authenticated chrome profile
-                
-            //}
-
             return result;
         }        
     }

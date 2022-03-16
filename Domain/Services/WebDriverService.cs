@@ -27,7 +27,7 @@ namespace Domain.Services
         private readonly ILogger<WebDriverService> _logger;
         private readonly IDefaultTabWebDriver _defaultTabWebDriver;
         private readonly IFileManager _fileManager;        
-        private const long DefaultImplicitWait = 10;      
+        private const long DefaultImplicitWait = 10;
 
         public HalOperationResult<T> CloseTab<T>(IWebDriver driver, string windowHandleId) where T : IOperationResponse
         {
@@ -97,20 +97,30 @@ namespace Domain.Services
         {
             HalOperationResult<T> result = new();
             ChromeOptions options = null;
-            if(browserPurpose == BrowserPurpose.Auth)
+            string newChromeProfileDir = string.Empty;
+            if (browserPurpose == BrowserPurpose.Auth)
             {
                 // use default user-data-dir profile to authenticate, this will be the profile used later on to copy
                 options = SetChromeOptions(webDriverOptions, webDriverOptions.ChromeProfileConfigOptions.DefaultChromeProfileName, webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir);
             }
             else
             {
-                // if new web driver is request, then the first thing that needs to happen is that there has to be a copy made of the default authenticated chrome profile, then that profile has to be used to create a new webdriver   
+                string newChromeProfileName = Guid.NewGuid().ToString();
+
+                result = _fileManager.CloneDefaultChromeProfile<T>(newChromeProfileName, webDriverOptions);                
+
+                if(result.Succeeded == false)
+                {
+                    return result;
+                }
+                newChromeProfileDir = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir + newChromeProfileName;
+                options = SetChromeOptions(webDriverOptions, newChromeProfileName, webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir);                
             }
 
-            return Create<T>(options, webDriverOptions.DefaultImplicitWait);            
+            return Create<T>(options, webDriverOptions.DefaultImplicitWait, newChromeProfileDir);            
         }
 
-        private HalOperationResult<T> Create<T>(ChromeOptions options, long implicitWait = DefaultImplicitWait) where T : IOperationResponse
+        private HalOperationResult<T> Create<T>(ChromeOptions options, long implicitWait = DefaultImplicitWait, string newChromeProfileDir = null) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
             IWebDriver driver = null;
@@ -128,7 +138,12 @@ namespace Domain.Services
             }
             catch(Exception ex)
             {
-                _logger.LogError(ex, "Failed to create new web driver.");                
+                _logger.LogError(ex, "Failed to create new web driver.");
+
+                // remove created profile
+                if(newChromeProfileDir != null)
+                    _fileManager.RemoveDirectory<T>(newChromeProfileDir);
+
                 result.Failures.Add(new()
                 {
                     Code = Codes.WEBDRIVER_ERROR,
@@ -216,7 +231,7 @@ namespace Domain.Services
             try
             {
                 // close all sessions of this webdriver
-                driver.Dispose();
+                driver.Dispose();              
             }
             catch(Exception ex)
             {

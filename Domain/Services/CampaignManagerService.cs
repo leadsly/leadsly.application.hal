@@ -2,15 +2,20 @@
 using Domain.Providers;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Services.Interfaces;
+using Domain.Supervisor;
 using Hangfire;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Entities.Campaigns;
+using Leadsly.Application.Model.RabbitMQ;
 using Leadsly.Application.Model.Responses;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,23 +25,28 @@ namespace Domain.Services
 {
     public class CampaignManagerService : ICampaignManagerService
     {
-        public CampaignManagerService(ILogger<CampaignManagerService> logger, ICampaignPhaseFacade campaignPhaseFacade, IDeserializerFacade deserializerFacade)
+        public CampaignManagerService(ILogger<CampaignManagerService> logger, IServiceProvider serviceProvider)
         {
             _logger = logger;
-            _deserializerFacade = deserializerFacade;
-            _campaignPhaseFacade = campaignPhaseFacade;
+            _serviceProvider = serviceProvider;
         }
 
-        private readonly ICampaignPhaseFacade _campaignPhaseFacade;
         private readonly ILogger<CampaignManagerService> _logger;
-        private readonly IDeserializerFacade _deserializerFacade;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly ConcurrentDictionary<string, RabbitMQMessageProperties> MessageProperties = new();
+        private ConcurrentQueue<Action> ExecutePhasesChain = new();
+
         private static CurrentJob CurrentJob { get; set; }
         private readonly object _jobLock = new object();
         private readonly object _readJobLock_FollowUpMessages = new object();
         private readonly object _updateJobLock_FollowUpMessages = new object();
         private static string ConnectionWithDrawRecurringJob = "connection-widthdraw";
-        private static Queue<Action> ExecutePhasesChain = new();
         
+
+        ~CampaignManagerService()
+        {
+
+        }
 
         public void OnConnectionWithdrawEventReceived(object channel, BasicDeliverEventArgs eventArgs)
         {            
@@ -47,11 +57,15 @@ namespace Domain.Services
         {
             if (ExecutePhasesChain.Count > 0)
             {
-                Action nextPhase = ExecutePhasesChain.Dequeue();
+                ExecutePhasesChain.TryDequeue(out Action nextPhase);
                 nextPhase();
             }
             else
             {
+                lock (_updateJobLock_FollowUpMessages)
+                {
+                    ClearCurrentJob();
+                }
                 _logger.LogInformation("There are no more queued jobs to run");
             }
         }
@@ -66,16 +80,18 @@ namespace Domain.Services
         public void OnFollowUpMessageEventReceived(object sender, BasicDeliverEventArgs eventArgs)
         {
             IModel channel = ((EventingBasicConsumer)sender).Model;
+            string messageId = eventArgs.BasicProperties.MessageId;
+
             // this can be started asap and doesn't rely on any other event            
             // execute send follow up message logic
-            if (CurrentJob.Executing)
+            if (MessageProperties.Keys.Any())
             {
                 // queue up this phase for later
-                ExecutePhasesChain.Enqueue(() => QueueFollowUpMessages(channel, eventArgs));
+                ExecutePhasesChain.Enqueue(() => QueueFollowUpMessages(messageId, channel, eventArgs));                
             }
             else
             {
-                QueueFollowUpMessages(channel, eventArgs);
+                QueueFollowUpMessages(messageId, channel, eventArgs);
             }
         }        
 
@@ -168,56 +184,61 @@ namespace Domain.Services
 
         }
 
-        private void QueueFollowUpMessages(IModel channel, BasicDeliverEventArgs eventArgs)
+        private void QueueFollowUpMessages(string messageId, IModel channel, BasicDeliverEventArgs eventArgs)
         {
-            SetCurrentJob(PhasesType.ProspectList, channel, eventArgs);
+            MessageProperties.TryAdd(messageId, new()
+            {
+                BasicDeliveryEventArgs = eventArgs,
+                Channel = channel
+            });
 
-            BackgroundJob.Enqueue(() => StartFollowUpMessages());
+            BackgroundJob.Enqueue<ICampaignManagerService>((x) => x.StartFollowUpMessages(messageId)); 
         }
 
-        private void StartFollowUpMessages()
+        public void StartFollowUpMessages(string messageId)
         {
-            BasicDeliverEventArgs eventArgs = default;
-            IModel channel = default;
-            lock (_readJobLock_FollowUpMessages)
+            MessageProperties.TryGetValue(messageId, out RabbitMQMessageProperties props);
+            BasicDeliverEventArgs eventArgs = props.BasicDeliveryEventArgs;
+            IModel channel = props.Channel;          
+
+            using (var scope = _serviceProvider.CreateScope())
             {
-                eventArgs = CurrentJob.DeliveryEventArgs;
-                channel = CurrentJob.Channel;
-            } 
+                //try and deserialize the response
+                IDeserializerFacade deserializerFacade = scope.ServiceProvider.GetRequiredService<IDeserializerFacade>();
+                byte[] body = eventArgs.Body.ToArray();
+                string message = Encoding.UTF8.GetString(body);
+                FollowUpMessagesBody followUpMessages = deserializerFacade.DeserializeFollowUpMessagesBody(message);
 
-            byte[] body = eventArgs.Body.ToArray();
-            string message = Encoding.UTF8.GetString(body);
-
-            // try and deserialize the response
-            FollowUpMessagesBody followUpMessages = _deserializerFacade.DeserializeFollowUpMessagesBody(message);
-
-            try
-            {
-                HalOperationResult<IOperationResponse> operationResult = _campaignPhaseFacade.ExecuteFollowUpMessagesPhase<IOperationResponse>(followUpMessages);
-                if(operationResult.Succeeded == true)
+                try
                 {
-                    _logger.LogInformation("ExecuteFollowUpMessagesPhase executed successfully. Acknowledging message");
-                    channel.BasicAck(eventArgs.DeliveryTag, false);
+                    ICampaignPhaseFacade campaignPhaseFacade = scope.ServiceProvider.GetRequiredService<ICampaignPhaseFacade>();
+                    HalOperationResult<IOperationResponse> operationResult = campaignPhaseFacade.ExecuteFollowUpMessagesPhase<IOperationResponse>(followUpMessages);
+
+                    if (operationResult.Succeeded == true)
+                    {
+                        _logger.LogInformation("ExecuteFollowUpMessagesPhase executed successfully. Acknowledging message");
+                        MessageProperties.TryRemove(messageId, out _);
+                        channel.BasicAck(eventArgs.DeliveryTag, false);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Executing Follow Up Messages Phase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
+                        MessageProperties.TryRemove(messageId, out _);
+                        channel.BasicNack(eventArgs.DeliveryTag, false, true);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    _logger.LogWarning("Executing Follow Up Messages Phase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
+                    _logger.LogError(ex, "Exception occured while executing Follow Up Messages Phase. Negatively acknowledging the message and re-queuing it");
+                    MessageProperties.TryRemove(messageId, out _);
                     channel.BasicNack(eventArgs.DeliveryTag, false, true);
                 }
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError(ex, "Exception occured while executing Follow Up Messages Phase. Negatively acknowledging the message and re-queuing it");
-                channel.BasicNack(eventArgs.DeliveryTag, false, true);
-            }
-            finally
-            {
-                lock(_updateJobLock_FollowUpMessages)
+                finally
                 {
-                    ClearCurrentJob();
+                    NextPhase();
                 }
-                NextPhase();
-            }            
+            }
+                
         }
 
         private void QueueSendConnectionRequests(IModel channel, BasicDeliverEventArgs eventArgs)

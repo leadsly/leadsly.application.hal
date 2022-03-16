@@ -35,6 +35,10 @@ using Domain.Facades;
 using Domain.Facades.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
+using Domain.Providers.Campaigns.Interfaces;
+using Domain.Providers.Campaigns;
+using Hangfire;
+using Hangfire.PostgreSql;
 
 namespace Hal.Configurations
 {
@@ -78,7 +82,7 @@ namespace Hal.Configurations
                 }                    
 
                 return new HalIdentity(halId);
-            });                       
+            });
             
             return services;
         }
@@ -130,6 +134,7 @@ namespace Hal.Configurations
             services.AddScoped<IHalAuthProvider, HalAuthProvider>();
             services.AddScoped<IWebDriverProvider, WebDriverProvider>();
             services.AddScoped<IWebDriverManagerProvider, WebDriverManagerProvider>();
+            services.AddScoped<IFollowUpMessagesProvider, FollowUpMessagesProvider>();
 
             return services;
         }
@@ -139,8 +144,8 @@ namespace Hal.Configurations
             Log.Information("Registering services configuration.");
 
             services.AddScoped<IWebDriverService, WebDriverService>();
-            services.AddScoped<IConsumingService, ConsumingService>();
-            services.AddScoped<ICampaignManagerService, CampaignManagerService>();
+            services.AddSingleton<IConsumingService, ConsumingService>();
+            services.AddSingleton<ICampaignManagerService, CampaignManagerService>();
 
             return services;
         }
@@ -246,6 +251,19 @@ namespace Hal.Configurations
             });
 
             return builder;
+        }
+
+        public static IServiceCollection AddHangfireConfig(this IServiceCollection services, string defaultConnection)
+        {
+            Log.Information("Registering hangfire services.");
+
+            services.AddHangfire(config =>
+            {
+                config.UsePostgreSqlStorage(defaultConnection);
+                config.UseRecommendedSerializerSettings();
+            }).AddHangfireServer();
+
+            return services;
         }
 
         public static IServiceCollection AddCorsConfiguration(this IServiceCollection services, IConfiguration configuration)

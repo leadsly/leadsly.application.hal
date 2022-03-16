@@ -34,14 +34,13 @@ namespace Domain.Providers
         private readonly IWebDriverRepository _webDriverRepository;
         private readonly IMemoryCache _memoryCache;
         private readonly IWebDriverService _webDriverService;
-        private readonly object _webDriverOperationLock = new object();
-        private readonly object _getWebDriverOperation = new object();
+        private readonly object _getWebDriverLock = new object();
         private static Dictionary<BrowserPurpose, IWebDriver> Drivers { get; set; } = new Dictionary<BrowserPurpose, IWebDriver>();
         public HalOperationResult<T> CloseTab<T>(BrowserPurpose browserPurpose, string windowHandleId) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
             HalOperationResult<IGetWebDriverOperation> getWebDriverOperationResult = new();
-            lock (_getWebDriverOperation)
+            lock (_getWebDriverLock)
             {
                 getWebDriverOperationResult = GetWebDriver<IGetWebDriverOperation>(browserPurpose);
             }

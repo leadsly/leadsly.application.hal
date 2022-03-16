@@ -2,6 +2,7 @@
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.RabbitMQ;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -15,51 +16,55 @@ namespace Domain.Services
 {
     public class ConsumingService : IConsumingService
     {
-        public ConsumingService(ILogger<ConsumingService> logger, IRabbitMQRepository rabbitMQRepository, IHalIdentity halIdentity, ICampaignManagerService campaignManagerService)
+        public ConsumingService(ILogger<ConsumingService> logger, IServiceProvider serviceProvider, IHalIdentity halIdentity, ICampaignManagerService campaignManagerService)
         {
             _halIdentity = halIdentity;
             _logger = logger;
+            _serviceProvider = serviceProvider;
             _campaignManagerService = campaignManagerService;
-            _rabbitMQRepository = rabbitMQRepository;
         }
 
         ~ConsumingService()
         {
             _logger.LogInformation("Destructing Comsuming Service");
-            foreach (IModel channel in Channels)
-            {
-                channel.Close();
-                channel.Dispose();
-            }
+            //foreach (IModel channel in Channels)
+            //{
+            //    channel.Close();
+            //    channel.Dispose();
+            //}
 
-            foreach (IConnection connection in Connections)
-            {
-                connection.Close();
-                connection.Dispose();
-            }
+            //foreach (IConnection connection in Connections)
+            //{
+            //    connection.Close();
+            //    connection.Dispose();
+            //}
         }
 
         private readonly ILogger<ConsumingService> _logger;
         private readonly IHalIdentity _halIdentity;
         private readonly ICampaignManagerService _campaignManagerService;
-        private readonly IRabbitMQRepository _rabbitMQRepository;
-        private readonly List<IModel> Channels = new();
-        private readonly List<IConnection> Connections = new();
+        private readonly IServiceProvider _serviceProvider;
+        private static readonly List<IModel> Channels = new();
+        private static readonly List<IConnection> Connections = new();
 
         public void StartConsuming()
         {
-            RabbitMQOptions options = _rabbitMQRepository.GetRabbitMQConfigOptions();
-            string exchangeName = options.ExchangeOptions.Name;
-            string exchangeType = options.ExchangeOptions.ExchangeType;
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                IRabbitMQRepository rabbitMQRepository = scope.ServiceProvider.GetRequiredService<IRabbitMQRepository>();
+                RabbitMQOptions options = rabbitMQRepository.GetRabbitMQConfigOptions();
+                string exchangeName = options.ExchangeOptions.Name;
+                string exchangeType = options.ExchangeOptions.ExchangeType;
 
-            FollowUpMessageQueue(options, exchangeName, exchangeType);
-            MonitorForNewAcceptedConnectionsQueue(options, exchangeName, exchangeType);
-            ScanProspectsForRepliesQueue(options, exchangeName, exchangeType);
-            ProspectListQueue(options, exchangeName, exchangeType);
-            SendConnectionRequestsQueue(options, exchangeName, exchangeType);
-            SendEmailInvitesQueue(options, exchangeName, exchangeType);
-            ConnectionWithdrawQueue(options, exchangeName, exchangeType);
-            RescrapeSearchurlsQueue(options, exchangeName, exchangeType);
+                FollowUpMessageQueue(options, exchangeName, exchangeType);
+                MonitorForNewAcceptedConnectionsQueue(options, exchangeName, exchangeType);
+                ScanProspectsForRepliesQueue(options, exchangeName, exchangeType);
+                ProspectListQueue(options, exchangeName, exchangeType);
+                SendConnectionRequestsQueue(options, exchangeName, exchangeType);
+                SendEmailInvitesQueue(options, exchangeName, exchangeType);
+                ConnectionWithdrawQueue(options, exchangeName, exchangeType);
+                RescrapeSearchurlsQueue(options, exchangeName, exchangeType);
+            }   
         }
 
         private ConnectionFactory ConfigureConnectionFactor(RabbitMQOptions options, string clientProviderName)

@@ -26,5 +26,7 @@ namespace Domain.Services.Interfaces
         void OnConnectionWithdrawEventReceived(object sender, BasicDeliverEventArgs eventArgs);
 
         void OnRescrapeSearchurlsEventReceived(object sender, BasicDeliverEventArgs eventArgs);
+
+        void StartFollowUpMessages(string messageId);
     }
 }

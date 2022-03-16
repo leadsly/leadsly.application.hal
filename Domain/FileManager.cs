@@ -1,5 +1,6 @@
 ﻿using Domain.Models;
 using Leadsly.Application.Model;
+using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -20,12 +21,20 @@ namespace Domain
         }
 
         private readonly ILogger<FileManager> _logger;
-        public ResultBase CloneDefaultChromeProfile(string profileDirectoryName, WebDriverOptions options)
+
+        public List<string> LoadExistingChromeProfiles(string browserPurpose, WebDriverOptions options)
         {
-            ResultBase result = new ResultBase
-            {
-                Succeeded = false
-            };
+            // load existing chrome profiles
+            string chromeProfileDir = $"{options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir}";
+            string leadslyProfile = browserPurpose + options.ChromeProfileConfigOptions.Suffix;
+            List<string> leadslyChromeProfileDirectories = Directory.GetDirectories(chromeProfileDir).Where(d => d.EndsWith(leadslyProfile)).ToList();
+
+            return leadslyChromeProfileDirectories;
+        }
+
+        public HalOperationResult<T> CloneDefaultChromeProfile<T>(string newChromeProfile, WebDriverOptions options) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
 
             // if there is no way to ship docker containers with our default chrome profile
             //string dir = Directory.GetCurrentDirectory();
@@ -41,11 +50,12 @@ namespace Domain
                 return result;
             }
 
-            string newProfileDir = Path.Combine(options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir, profileDirectoryName);
+            string newProfileName = newChromeProfile + options.ChromeProfileConfigOptions.Suffix;
+            string newProfileDir = Path.Combine(options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir, newProfileName);
 
             WalkDirectoryTree(new DirectoryInfo(defaultProfileDir), newProfileDir);
 
-            result = HandleAnyErrors();
+            result = HandleAnyErrors<T>();
             if(result.Succeeded == false)
             {
                 return result;
@@ -55,9 +65,9 @@ namespace Domain
             return result;
         }
 
-        private ResultBase HandleAnyErrors()
+        private HalOperationResult<T> HandleAnyErrors<T>() where T : IOperationResponse
         {
-            ResultBase result = new ResultBase();
+            HalOperationResult<T> result = new();
             if (_log.Count > 0)
             {
                 int count = _log.Count;
@@ -139,6 +149,15 @@ namespace Domain
                     WalkDirectoryTree(dirInfo, newTarget);
                 }
             }
+        }
+
+        public HalOperationResult<T> RemoveDirectory<T>(string directory) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+            Directory.Delete(directory);
+
+            result.Succeeded = true;
+            return result;
         }
     }
 }

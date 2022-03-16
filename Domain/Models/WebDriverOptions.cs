@@ -14,6 +14,7 @@ namespace Domain.Models
 
     public class ChromeProfileConfigOptions
     {
+        public string Suffix { get; set; }
         public string DefaultChromeProfileName { get; set; }
         public string DefaultChromeUserProfilesDir { get; set; }
         public string ChromeProfileName { get; set; }
