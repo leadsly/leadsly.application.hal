@@ -49,9 +49,8 @@ namespace Domain
                 });
                 return result;
             }
-
-            string newProfileName = newChromeProfile + options.ChromeProfileConfigOptions.Suffix;
-            string newProfileDir = Path.Combine(options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir, newProfileName);
+;
+            string newProfileDir = Path.Combine(options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir, newChromeProfile);
 
             WalkDirectoryTree(new DirectoryInfo(defaultProfileDir), newProfileDir);
 
@@ -154,7 +153,34 @@ namespace Domain
         public HalOperationResult<T> RemoveDirectory<T>(string directory) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
-            Directory.Delete(directory);
+            try
+            {
+                DirectoryInfo di = new DirectoryInfo(directory);
+
+                foreach (FileInfo file in di.GetFiles())
+                {
+                    file.Delete();
+                }
+
+                foreach (DirectoryInfo dir in di.GetDirectories())
+                {
+                    dir.Delete(true);
+                }
+
+                Directory.Delete(directory);
+            }
+            catch(Exception ex)
+            {
+                string dirName = directory;
+                _logger.LogError(ex, "Failed to remove directory {dirName}", dirName);
+                result.Failures.Add(new()
+                {
+                    Code = Codes.ERROR,
+                    Reason = "Failed to delete directory",
+                    Detail = ex.Message
+                });
+                return result;
+            }            
 
             result.Succeeded = true;
             return result;

@@ -33,7 +33,8 @@ namespace Domain.Services
 
         private readonly ILogger<CampaignManagerService> _logger;
         private readonly IServiceProvider _serviceProvider;
-        private readonly ConcurrentDictionary<string, RabbitMQMessageProperties> MessageProperties = new();
+        private readonly ConcurrentDictionary<string, RabbitMQMessageProperties> MessageProperties_Theatre420 = new();
+        private readonly ConcurrentDictionary<string, RabbitMQMessageProperties> MessageProperties_Theatre007 = new();
         private ConcurrentQueue<Action> ExecutePhasesChain = new();
 
         private static CurrentJob CurrentJob { get; set; }
@@ -84,7 +85,7 @@ namespace Domain.Services
 
             // this can be started asap and doesn't rely on any other event            
             // execute send follow up message logic
-            if (MessageProperties.Keys.Any())
+            if (MessageProperties_Theatre420.Keys.Any())
             {
                 // queue up this phase for later
                 ExecutePhasesChain.Enqueue(() => QueueFollowUpMessages(messageId, channel, eventArgs));                
@@ -186,7 +187,7 @@ namespace Domain.Services
 
         private void QueueFollowUpMessages(string messageId, IModel channel, BasicDeliverEventArgs eventArgs)
         {
-            MessageProperties.TryAdd(messageId, new()
+            MessageProperties_Theatre420.TryAdd(messageId, new()
             {
                 BasicDeliveryEventArgs = eventArgs,
                 Channel = channel
@@ -197,7 +198,7 @@ namespace Domain.Services
 
         public void StartFollowUpMessages(string messageId)
         {
-            MessageProperties.TryGetValue(messageId, out RabbitMQMessageProperties props);
+            MessageProperties_Theatre420.TryGetValue(messageId, out RabbitMQMessageProperties props);
             BasicDeliverEventArgs eventArgs = props.BasicDeliveryEventArgs;
             IModel channel = props.Channel;          
 
@@ -208,7 +209,7 @@ namespace Domain.Services
                 byte[] body = eventArgs.Body.ToArray();
                 string message = Encoding.UTF8.GetString(body);
                 FollowUpMessagesBody followUpMessages = deserializerFacade.DeserializeFollowUpMessagesBody(message);
-
+                Action ackOperation = default;
                 try
                 {
                     ICampaignPhaseFacade campaignPhaseFacade = scope.ServiceProvider.GetRequiredService<ICampaignPhaseFacade>();
@@ -217,28 +218,26 @@ namespace Domain.Services
                     if (operationResult.Succeeded == true)
                     {
                         _logger.LogInformation("ExecuteFollowUpMessagesPhase executed successfully. Acknowledging message");
-                        MessageProperties.TryRemove(messageId, out _);
-                        channel.BasicAck(eventArgs.DeliveryTag, false);
+                        ackOperation = () => channel.BasicAck(eventArgs.DeliveryTag, false);
                     }
                     else
                     {
                         _logger.LogWarning("Executing Follow Up Messages Phase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
-                        MessageProperties.TryRemove(messageId, out _);
-                        channel.BasicNack(eventArgs.DeliveryTag, false, true);
+                        ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
                     }
                 }
                 catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Exception occured while executing Follow Up Messages Phase. Negatively acknowledging the message and re-queuing it");
-                    MessageProperties.TryRemove(messageId, out _);
-                    channel.BasicNack(eventArgs.DeliveryTag, false, true);
+                {                    
+                    _logger.LogError(ex, "Exception occured while executing Follow Up Messages Phase. Negatively acknowledging the message and re-queuing it");                    
+                    ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
                 }
                 finally
                 {
+                    MessageProperties_Theatre420.TryRemove(messageId, out _);
                     NextPhase();
+                    ackOperation();
                 }
-            }
-                
+            }                
         }
 
         private void QueueSendConnectionRequests(IModel channel, BasicDeliverEventArgs eventArgs)

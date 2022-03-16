@@ -257,10 +257,11 @@ namespace Hal.Configurations
         {
             Log.Information("Registering hangfire services.");
 
+            GlobalJobFilters.Filters.Add(new AutomaticRetryAttribute { Attempts = 0 });
             services.AddHangfire(config =>
             {
                 config.UsePostgreSqlStorage(defaultConnection);
-                config.UseRecommendedSerializerSettings();
+                config.UseRecommendedSerializerSettings();                 
             }).AddHangfireServer();
 
             return services;

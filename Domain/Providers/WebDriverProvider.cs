@@ -39,10 +39,10 @@ namespace Domain.Providers
         public HalOperationResult<T> CloseTab<T>(BrowserPurpose browserPurpose, string windowHandleId) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
-            HalOperationResult<IGetWebDriverOperation> getWebDriverOperationResult = new();
+            HalOperationResult<IGetOrCreateWebDriverOperation> getWebDriverOperationResult = new();
             lock (_getWebDriverLock)
             {
-                getWebDriverOperationResult = GetWebDriver<IGetWebDriverOperation>(browserPurpose);
+                getWebDriverOperationResult = GetWebDriver<IGetOrCreateWebDriverOperation>(browserPurpose);
             }
 
             if(getWebDriverOperationResult.Succeeded == false)
@@ -65,7 +65,7 @@ namespace Domain.Providers
         {
             HalOperationResult<T> result = new();
             // re-create the webdriver
-            HalOperationResult<IGetWebDriverOperation> createWebDriverResult = CreateWebDriver<IGetWebDriverOperation>(operationData.BrowserPurpose, operationData.ChromeProfileName);
+            HalOperationResult<IGetOrCreateWebDriverOperation> createWebDriverResult = CreateWebDriver<IGetOrCreateWebDriverOperation>(operationData.BrowserPurpose, operationData.ChromeProfileName);
             if (createWebDriverResult.Succeeded == false)
             {
                 result.Failures = createWebDriverResult.Failures;
@@ -102,7 +102,7 @@ namespace Domain.Providers
                 Succeeded = true
             };
 
-            HalOperationResult<IGetWebDriverOperation> getWebDriverResult = GetWebDriver<IGetWebDriverOperation>(browserPurpose);
+            HalOperationResult<IGetOrCreateWebDriverOperation> getWebDriverResult = GetWebDriver<IGetOrCreateWebDriverOperation>(browserPurpose);
             if(getWebDriverResult.Succeeded == false)
             {
                 string purpose = Enum.GetName(browserPurpose);
@@ -185,7 +185,7 @@ namespace Domain.Providers
                 return result;
             }
 
-            IGetWebDriverOperation operation = new GetWebDriverOperation
+            IGetOrCreateWebDriverOperation operation = new GetOrCreateWebDriverOperation
             {
                 WebDriver = driver
             };
@@ -198,7 +198,7 @@ namespace Domain.Providers
         {
             HalOperationResult<T> result = new();
             // re-create the webdriver
-            HalOperationResult<IGetWebDriverOperation> createWebDriverResult = CreateWebDriver<IGetWebDriverOperation>(operationData.BrowserPurpose, operationData.ChromeProfileName);
+            HalOperationResult<IGetOrCreateWebDriverOperation> createWebDriverResult = CreateWebDriver<IGetOrCreateWebDriverOperation>(operationData.BrowserPurpose, operationData.ChromeProfileName);
             if (createWebDriverResult.Succeeded == false)
             {
                 result.Failures = createWebDriverResult.Failures;
@@ -271,7 +271,7 @@ namespace Domain.Providers
             HalOperationResult<T> result = new();
             string driverPurpose = Enum.GetName(browserPurpose);
             _logger.LogInformation("Checking if {driverPurpose} has been initialized already", driverPurpose);
-            HalOperationResult<IGetWebDriverOperation> getWebDriverResult = GetWebDriver<IGetWebDriverOperation>(browserPurpose);
+            HalOperationResult<IGetOrCreateWebDriverOperation> getWebDriverResult = GetWebDriver<IGetOrCreateWebDriverOperation>(browserPurpose);
             if(getWebDriverResult.Succeeded == false)
             {
                 result.Failures = getWebDriverResult.Failures;
@@ -287,7 +287,7 @@ namespace Domain.Providers
             HalOperationResult<T> result = new();
             string driverPurpose = Enum.GetName(browserPurpose);            
             // we need to verify that we can successfully send commands to the web driver before we proceed, if we can't we need to re-create the web driver
-            HalOperationResult<IGetWebDriverOperation> getWebDriverResult = GetWebDriver<IGetWebDriverOperation>(browserPurpose);
+            HalOperationResult<IGetOrCreateWebDriverOperation> getWebDriverResult = GetWebDriver<IGetOrCreateWebDriverOperation>(browserPurpose);
             if (getWebDriverResult.Succeeded == false)
             {
                 result.Failures = getWebDriverResult.Failures;
@@ -324,7 +324,7 @@ namespace Domain.Providers
         {
             HalOperationResult<T> result = new();
 
-            HalOperationResult<ICreateWebDriverOperation> createWebDriverResult = CreateWebDriver<ICreateWebDriverOperation>(operationData.BrowserPurpose, operationData.ChromeProfileName);
+            HalOperationResult<IGetOrCreateWebDriverOperation> createWebDriverResult = CreateWebDriver<IGetOrCreateWebDriverOperation>(operationData.BrowserPurpose, operationData.ChromeProfileName);
             if (createWebDriverResult.Succeeded == false)
             {
                 result.Failures = createWebDriverResult.Failures;
@@ -372,7 +372,7 @@ namespace Domain.Providers
                 });
                 return result;
             }
-            HalOperationResult<IGetWebDriverOperation> getWebDriverResult = GetWebDriver<IGetWebDriverOperation>(operationData.BrowserPurpose);            
+            HalOperationResult<IGetOrCreateWebDriverOperation> getWebDriverResult = GetWebDriver<IGetOrCreateWebDriverOperation>(operationData.BrowserPurpose);            
             result.Value = (T)getWebDriverResult.Value;
             result.Succeeded = true;
             return result;

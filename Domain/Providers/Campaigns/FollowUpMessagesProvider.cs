@@ -47,7 +47,7 @@ namespace Domain.Providers.Campaigns
                 PageUrl = message.PageUrl
             };
 
-            HalOperationResult<IGetOrCreateWebDriverOperation> driverOperationResult = _webDriverProvider.CreateOrGetWebDriver<IGetOrCreateWebDriverOperation>(operationData);
+            HalOperationResult<T> driverOperationResult = _webDriverProvider.CreateOrGetWebDriver<T>(operationData);
 
             if(driverOperationResult.Succeeded == false)
             {
@@ -55,7 +55,7 @@ namespace Domain.Providers.Campaigns
                 return result;
             }
 
-            IWebDriver webDriver = driverOperationResult.Value.WebDriver;
+            IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)driverOperationResult.Value).WebDriver;
 
             return SendFollowUpMessages<T>(webDriver, message);
         }

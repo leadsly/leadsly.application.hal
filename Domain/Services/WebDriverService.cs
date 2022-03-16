@@ -105,7 +105,7 @@ namespace Domain.Services
             }
             else
             {
-                string newChromeProfileName = Guid.NewGuid().ToString();
+                string newChromeProfileName = Guid.NewGuid().ToString() + webDriverOptions.ChromeProfileConfigOptions.Suffix;
 
                 result = _fileManager.CloneDefaultChromeProfile<T>(newChromeProfileName, webDriverOptions);                
 
@@ -113,7 +113,8 @@ namespace Domain.Services
                 {
                     return result;
                 }
-                newChromeProfileDir = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir + newChromeProfileName;
+                newChromeProfileDir = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir + "\\" + newChromeProfileName;
+                
                 options = SetChromeOptions(webDriverOptions, newChromeProfileName, webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir);                
             }
 
@@ -126,13 +127,7 @@ namespace Domain.Services
             IWebDriver driver = null;
             try
             {
-                IEnumerable<int> pidsBefore = Process.GetProcessesByName("chrome").Select(p => p.Id);
-
                 driver = new ChromeDriver(options);
-
-                IEnumerable<int> pidsAfter = Process.GetProcessesByName("chrome").Select(p => p.Id);
-                IEnumerable<int> newChromePids = pidsAfter.Except(pidsBefore);
-
                 driver.Manage().Window.Maximize();
                 driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(implicitWait);                
             }
@@ -153,7 +148,7 @@ namespace Domain.Services
                 return result;
             }
 
-            ICreateWebDriverOperation operation = new CreateWebDriverOperation
+            IGetOrCreateWebDriverOperation operation = new GetOrCreateWebDriverOperation
             {
                 WebDriver = driver,
             };

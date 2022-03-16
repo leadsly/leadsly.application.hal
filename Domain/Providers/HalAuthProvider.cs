@@ -38,7 +38,7 @@ namespace Domain.Providers
         public HalOperationResult<T> Authenticate<T>(WebDriverOperationData operationData, AuthenticateAccountRequest request)
             where T : IOperationResponse
         {
-            HalOperationResult<ICreateWebDriverOperation> driverResult = _webDriverProvider.CreateWebDriver<ICreateWebDriverOperation>(operationData);
+            HalOperationResult<IGetOrCreateWebDriverOperation> driverResult = _webDriverProvider.CreateWebDriver<IGetOrCreateWebDriverOperation>(operationData);
             if(driverResult.Succeeded == false)
             {
                 HalOperationResult<T> result = new();
@@ -434,7 +434,7 @@ namespace Domain.Providers
         {
             HalOperationResult<T> result = new();
 
-            HalOperationResult<IGetWebDriverOperation> driverResult = _webDriverProvider.GetWebDriver<IGetWebDriverOperation>(operationData);
+            HalOperationResult<IGetOrCreateWebDriverOperation> driverResult = _webDriverProvider.GetWebDriver<IGetOrCreateWebDriverOperation>(operationData);
             if (driverResult.Succeeded == false)
             {
                 result.Failures = driverResult.Failures;
