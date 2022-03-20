@@ -27,17 +27,31 @@ namespace Domain.Services
         ~ConsumingService()
         {
             _logger.LogInformation("Destructing Comsuming Service");
-            //foreach (IModel channel in Channels)
-            //{
-            //    channel.Close();
-            //    channel.Dispose();
-            //}
+            foreach (IModel channel in Channels)
+            {
+                try
+                {
+                    channel.Close();
+                    channel.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error occured when closing rabbit mq channels");
+                }
+            }
 
-            //foreach (IConnection connection in Connections)
-            //{
-            //    connection.Close();
-            //    connection.Dispose();
-            //}
+            foreach (IConnection connection in Connections)
+            {
+                try
+                {
+                    connection.Close();
+                    connection.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error occured when closing rabbit mq connections");
+                }
+            }
         }
 
         private readonly ILogger<ConsumingService> _logger;

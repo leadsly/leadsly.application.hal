@@ -28,5 +28,14 @@ namespace Domain.Services.Interfaces
         void OnRescrapeSearchurlsEventReceived(object sender, BasicDeliverEventArgs eventArgs);
 
         void StartFollowUpMessages(string messageId);
+
+        void StartMonitorForNewConnections(string messageId);
+
+        void StartScanningProspectsForReplies(string messageId);
+
+        void StartProspectList(string messageId);
+
+        void StartSendConnectionRequests(string messageId);
+        void StartConnectionWithdraw(string messageId);
     }
 }

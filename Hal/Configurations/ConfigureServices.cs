@@ -91,7 +91,7 @@ namespace Hal.Configurations
         {
             Log.Information("Registering facades configuration.");
 
-            services.AddScoped<IDeserializerFacade, DeserializerFacade>();
+            services.AddScoped<ISerializerFacade, SerializerFacade>();
             services.AddScoped<ICampaignPhaseFacade, CampaignPhaseFacade>();
 
             return services;
@@ -101,7 +101,7 @@ namespace Hal.Configurations
         {
             Log.Information("Registering serializers configuration.");
 
-            services.AddScoped<IFollowUpMessagesDeserializer, FollowUpMessagesDeserializer>();
+            services.AddScoped<ICampaignPhaseSerializer, CampaignPhaseSerializer>();
 
             return services;
         }

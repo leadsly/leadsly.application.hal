@@ -31,5 +31,30 @@ namespace Domain.Facades
         {
             return _followUpMessagesProvider.ExecutePhase<T>(message);
         }
+
+        public HalOperationResult<T> ExecuteScanForProspectsRepliesPhase<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
+        {
+            throw new NotImplementedException();
+        }
+
+        public HalOperationResult<T> ExecuteMonitorForNewAcceptedConnectionsPhase<T>(MonitorForNewAcceptedConnectionsBody message) where T : IOperationResponse
+        {
+            throw new NotImplementedException();
+        }
+
+        public HalOperationResult<T> ExecuteProspectListPhase<T>(ProspectListBody message) where T : IOperationResponse
+        {
+            throw new NotImplementedException();
+        }
+
+        public HalOperationResult<T> ExecuteSendConnectionRequestsPhase<T>(SendConnectionRequestsBody message) where T : IOperationResponse
+        {
+            throw new NotImplementedException();
+        }
+
+        public HalOperationResult<T> ExecuteConnectionWithdrawPhasePhase<T>(ConnectionWithdrawBody message) where T : IOperationResponse
+        {
+            throw new NotImplementedException();
+        }
     }
 }

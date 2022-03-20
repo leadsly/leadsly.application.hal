@@ -13,13 +13,11 @@ namespace Domain.Services
 {
     public class ConsumingHostedService : IHostedService
     {
-        public ConsumingHostedService(IServiceProvider serviceProvider, IConsumingService consumingService)
+        public ConsumingHostedService(IConsumingService consumingService)
         {
-            _serviceProvider = serviceProvider;
             _consumingService = consumingService;
         }
 
-        private readonly IServiceProvider _serviceProvider;
         private readonly IConsumingService _consumingService;
         public Task StartAsync(CancellationToken cancellationToken)
         {
