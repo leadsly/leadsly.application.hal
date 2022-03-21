@@ -300,7 +300,7 @@ namespace Domain.Providers
             return result;
         }
 
-        public HalOperationResult<T> CreateOrGetWebDriver<T>(WebDriverOperationData operationData) where T : IOperationResponse
+        public HalOperationResult<T> GetOrCreateWebDriver<T>(WebDriverOperationData operationData) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 

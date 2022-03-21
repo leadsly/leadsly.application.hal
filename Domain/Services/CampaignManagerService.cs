@@ -255,7 +255,7 @@ namespace Domain.Services
             BackgroundJob.Enqueue<ICampaignManagerService>((x) => x.StartMonitorForNewConnections(messageId));
         }
 
-        public void StartMonitorForNewConnections(string messageId)
+        public async Task StartMonitorForNewConnections(string messageId)
         {
             MessageProperties_ConstantPhases.TryGetValue(messageId, out RabbitMQMessageProperties props);
             BasicDeliverEventArgs eventArgs = props.BasicDeliveryEventArgs;
@@ -272,7 +272,7 @@ namespace Domain.Services
                 try
                 {
                     ICampaignPhaseFacade campaignPhaseFacade = scope.ServiceProvider.GetRequiredService<ICampaignPhaseFacade>();
-                    HalOperationResult<IOperationResponse> operationResult = campaignPhaseFacade.ExecutePhase<IOperationResponse>(monitorForNewAcceptedConnections);
+                    HalOperationResult<IOperationResponse> operationResult = await campaignPhaseFacade.ExecutePhase<IOperationResponse>(monitorForNewAcceptedConnections);
 
                     if (operationResult.Succeeded == true)
                     {

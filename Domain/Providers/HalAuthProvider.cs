@@ -1,19 +1,13 @@
 ﻿using Domain.Models;
-using Domain.Pages;
+using Domain.POMs.Pages;
 using Domain.Providers.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.Responses.Hal;
-using Leadsly.Application.Model.WebDriver;
 using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Domain.Providers
 {

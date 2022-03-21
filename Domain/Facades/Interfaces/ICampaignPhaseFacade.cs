@@ -18,7 +18,7 @@ namespace Domain.Facades.Interfaces
         HalOperationResult<T> ExecutePhase<T>(ScanProspectsForRepliesBody message)
             where T : IOperationResponse;
 
-        HalOperationResult<T> ExecutePhase<T>(MonitorForNewAcceptedConnectionsBody message)
+        Task<HalOperationResult<T>> ExecutePhase<T>(MonitorForNewAcceptedConnectionsBody message)
             where T : IOperationResponse;
 
         HalOperationResult<T> ExecutePhase<T>(ProspectListBody message)

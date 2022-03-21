@@ -20,17 +20,10 @@ using Hal.OptionsJsonModels;
 using Domain.OptionsJsonModels;
 using Infrastructure.Repositories;
 using Domain.Repositories;
-using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
 using PageObjects.Pages;
-using OpenQA.Selenium.Support.UI;
-using Domain.Pages;
 using Domain.Providers;
 using Leadsly.Application.Model;
 using Domain.Services;
-using RabbitMQ.Client;
-using Domain.Deserializers.Interfaces;
-using Domain.Deserializers;
 using Domain.Facades;
 using Domain.Facades.Interfaces;
 using Domain.Providers.Interfaces;
@@ -39,6 +32,11 @@ using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Campaigns;
 using Hangfire;
 using Hangfire.PostgreSql;
+using Domain.Serializers.Interfaces;
+using Domain.Serializers;
+using Domain.POMs.Pages;
+using Domain.POMs;
+using PageObjects;
 
 namespace Hal.Configurations
 {
@@ -91,7 +89,6 @@ namespace Hal.Configurations
         {
             Log.Information("Registering facades configuration.");
 
-            services.AddScoped<ISerializerFacade, SerializerFacade>();
             services.AddScoped<ICampaignPhaseFacade, CampaignPhaseFacade>();
 
             return services;
@@ -123,6 +120,8 @@ namespace Hal.Configurations
             services.AddScoped<ILinkedInPage, LinkedInPage>();
             services.AddScoped<ILinkedInHomePage, LinkedInHomePage>();
             services.AddScoped<ILinkedInMessagingPage, LinkedInMessagingPage>();
+            services.AddScoped<ILinkedInMyNetworkPage, LinkedInMyNetworkPage>();
+            services.AddScoped<ILinkedInNavBar, LinkedInNavBar>();            
 
             return services;
         }
@@ -135,6 +134,8 @@ namespace Hal.Configurations
             services.AddScoped<IWebDriverProvider, WebDriverProvider>();
             services.AddScoped<IWebDriverManagerProvider, WebDriverManagerProvider>();
             services.AddScoped<IFollowUpMessagesProvider, FollowUpMessagesProvider>();
+            services.AddScoped<IMonitorForNewProspectsProvider, MonitorForNewProspectsProvider>();
+            services.AddScoped<IHalOperationConfigurationProvider, HalOperationConfigurationProvider>();
 
             return services;
         }

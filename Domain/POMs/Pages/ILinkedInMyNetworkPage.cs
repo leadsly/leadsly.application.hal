@@ -7,12 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Pages
+namespace Domain.POMs.Pages
 {
-    public interface ILinkedInHomePage
+    public interface ILinkedInMyNetworkPage
     {
-        HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)
-            where T : IOperationResponse;
-
+        HalOperationResult<T> CollectAllNewConnections<T>(IWebDriver webdriver) where T : IOperationResponse;
     }
 }

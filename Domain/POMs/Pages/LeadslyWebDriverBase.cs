@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Pages
+namespace Domain.POMs.Pages
 {
     public abstract class LeadslyWebDriverBase
     {

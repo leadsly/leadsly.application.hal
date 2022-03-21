@@ -16,13 +16,16 @@ namespace Domain.Facades
 {
     public class CampaignPhaseFacade : ICampaignPhaseFacade
     {
-        public CampaignPhaseFacade(ILogger<CampaignPhaseFacade> logger, IFollowUpMessagesProvider followUpMessagesProvider)
+        public CampaignPhaseFacade(ILogger<CampaignPhaseFacade> logger, 
+            IFollowUpMessagesProvider followUpMessagesProvider, 
+            IMonitorForNewProspectsProvider monitorForNewProspectsProvider)
         {
-            _followUpMessagesProvider = followUpMessagesProvider;
+            _followUpMessagesProvider = followUpMessagesProvider;            
+            _monitorForNewProspectsProvider = monitorForNewProspectsProvider;
             _logger = logger;
-            
         }
 
+        private readonly IMonitorForNewProspectsProvider _monitorForNewProspectsProvider;
         private readonly IFollowUpMessagesProvider _followUpMessagesProvider;
         private readonly ILogger<CampaignPhaseFacade> _logger;        
 
@@ -32,27 +35,32 @@ namespace Domain.Facades
             return _followUpMessagesProvider.ExecutePhase<T>(message);
         }
 
-        public HalOperationResult<T> ExecuteScanForProspectsRepliesPhase<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
+        public HalOperationResult<T> ExecutePhase<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
         {
             throw new NotImplementedException();
         }
 
-        public HalOperationResult<T> ExecuteMonitorForNewAcceptedConnectionsPhase<T>(MonitorForNewAcceptedConnectionsBody message) where T : IOperationResponse
+        public async Task<HalOperationResult<T>> ExecutePhase<T>(MonitorForNewAcceptedConnectionsBody message) where T : IOperationResponse
+        {
+            return await _monitorForNewProspectsProvider.ExecutePhase<T>(message);
+        }
+
+        public HalOperationResult<T> ExecutePhase<T>(ProspectListBody message) where T : IOperationResponse
         {
             throw new NotImplementedException();
         }
 
-        public HalOperationResult<T> ExecuteProspectListPhase<T>(ProspectListBody message) where T : IOperationResponse
+        public HalOperationResult<T> ExecutePhase<T>(SendConnectionRequestsBody message) where T : IOperationResponse
         {
             throw new NotImplementedException();
         }
 
-        public HalOperationResult<T> ExecuteSendConnectionRequestsPhase<T>(SendConnectionRequestsBody message) where T : IOperationResponse
+        public HalOperationResult<T> ExecutePhase<T>(ConnectionWithdrawBody message) where T : IOperationResponse
         {
             throw new NotImplementedException();
         }
 
-        public HalOperationResult<T> ExecuteConnectionWithdrawPhasePhase<T>(ConnectionWithdrawBody message) where T : IOperationResponse
+        public HalOperationResult<T> ExecutePhase<T>(FollowUpMessagesBody message) where T : IOperationResponse
         {
             throw new NotImplementedException();
         }

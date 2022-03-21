@@ -1,4 +1,4 @@
-﻿using Domain.Pages;
+﻿using Domain.POMs.Pages;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
 using Leadsly.Application.Model;
@@ -8,13 +8,6 @@ using Leadsly.Application.Model.WebDriver;
 using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Providers.Campaigns
 {
@@ -47,7 +40,7 @@ namespace Domain.Providers.Campaigns
                 PageUrl = message.PageUrl
             };
 
-            HalOperationResult<T> driverOperationResult = _webDriverProvider.CreateOrGetWebDriver<T>(operationData);
+            HalOperationResult<T> driverOperationResult = _webDriverProvider.GetOrCreateWebDriver<T>(operationData);
 
             if(driverOperationResult.Succeeded == false)
             {

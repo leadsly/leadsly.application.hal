@@ -25,7 +25,7 @@ namespace Domain.Providers.Interfaces
         HalOperationResult<T> GetWebDriver<T>(WebDriverOperationData operationData)
             where T : IOperationResponse;
 
-        HalOperationResult<T> CreateOrGetWebDriver<T>(WebDriverOperationData operationData) 
+        HalOperationResult<T> GetOrCreateWebDriver<T>(WebDriverOperationData operationData) 
             where T : IOperationResponse;
 
         HalOperationResult<T> SwitchTo<T>(IWebDriver webDriver, string windowHandleId)

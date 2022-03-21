@@ -15,6 +15,12 @@ namespace Domain.Serializers
         {
 
         }
+
+        public ConnectionWithdrawBody DeserializeConnectionWithdrawBody(string body)
+        {
+            throw new NotImplementedException();
+        }
+
         public FollowUpMessagesBody DeserializeFollowUpMessagesBody(string body)
         {
             FollowUpMessagesBody followUpMessageBody = null;
@@ -30,6 +36,16 @@ namespace Domain.Serializers
             return followUpMessageBody;
         }
 
+        public MonitorForNewAcceptedConnectionsBody DeserializeMonitorForNewAcceptedConnectionsBody(string body)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ProspectListBody DeserializeProspectListBody(string body)
+        {
+            throw new NotImplementedException();
+        }
+
         public ScanProspectsForRepliesBody DeserializeScanProspectsForRepliesBody(string body)
         {
             ScanProspectsForRepliesBody scanProspectsForRepliesBody = null;
@@ -43,6 +59,11 @@ namespace Domain.Serializers
             }
 
             return scanProspectsForRepliesBody;
+        }
+
+        public SendConnectionRequestsBody DeserializeSendConnectionRequestsBody(string body)
+        {
+            throw new NotImplementedException();
         }
     }
 }
