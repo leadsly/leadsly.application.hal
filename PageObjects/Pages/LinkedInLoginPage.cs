@@ -1,16 +1,11 @@
-﻿using Domain.Pages;
+﻿using Domain.POMs.Pages;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
-using Leadsly.Application.Model.Responses.Hal;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Support.UI;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace PageObjects.Pages
 {

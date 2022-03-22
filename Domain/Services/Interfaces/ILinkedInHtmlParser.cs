@@ -7,10 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.POMs.Pages
+namespace Domain.Services.Interfaces
 {
-    public interface ILinkedInMyNetworkPage
+    public interface ILinkedInHtmlParser
     {
-        HalOperationResult<T> CollectAllNewConnections<T>(IWebDriver webdriver, int newConnectionCount) where T : IOperationResponse;
+        HalOperationResult<T> ParseMyNetworkConnections<T>(IReadOnlyCollection<IWebElement> myNetworkNewConnections) where T : IOperationResponse;
     }
 }

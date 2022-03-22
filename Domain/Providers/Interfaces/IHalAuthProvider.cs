@@ -1,5 +1,4 @@
 ﻿using Domain.Models;
-using Domain.Pages;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using OpenQA.Selenium;

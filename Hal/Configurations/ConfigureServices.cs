@@ -64,7 +64,14 @@ namespace Hal.Configurations
         public static IServiceCollection AddSeleniumServicesConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
             Log.Information("Registering selenium services configuration.");
-            
+
+            services.AddHttpClient<ICampaignPhaseProcessingService, CampaignPhaseProcessingService>(opt =>
+            {
+                opt.BaseAddress = new Uri("http://localhost:5000/api", UriKind.Absolute);
+            });
+
+            services.AddScoped<ILinkedInHtmlParser, LinkedInHtmlParser>();
+
             services.Configure<WebDriverConfigOptions>(options => configuration.GetSection(nameof(WebDriverConfigOptions)).Bind(options));
             WebDriverConfigOptions webDriverConfigOptions = new();
             configuration.GetSection(nameof(WebDriverConfigOptions)).Bind(webDriverConfigOptions);

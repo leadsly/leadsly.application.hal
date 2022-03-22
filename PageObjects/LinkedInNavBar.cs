@@ -21,9 +21,35 @@ namespace PageObjects
         }
 
         private readonly ILogger<LinkedInNavBar> _logger;
-        public HalOperationResult<T> ClickMyNetworkTab<T>(IWebDriver webdriver) where T : IOperationResponse
+        public HalOperationResult<T> ClickMyNetworkTab<T>(IWebDriver webDriver) where T : IOperationResponse
         {
-            throw new NotImplementedException();
+            HalOperationResult<T> result = new();
+
+            IWebElement myNetworkAnchor = MyNetworkAnchor(webDriver);
+            if(myNetworkAnchor == null)
+            {
+                return result;
+            }
+
+            try
+            {
+                myNetworkAnchor.Click();
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Failed to click my network anchor nav bar control");
+                result.Failures.Add(new()
+                {
+                    Code = Codes.WEBDRIVER_ERROR,
+                    Reason = "Could not click on my network tab in the nav bar",
+                    Detail = ex.Message
+                });
+
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
         }
 
         public HalOperationResult<T> IsNewConnectionNotification<T>(IWebDriver webdriver) where T : IOperationResponse
@@ -120,9 +146,29 @@ namespace PageObjects
                 return result;
             }
 
-            IMyNetworkNavBarControl newNetworkNavBar = new MyNetworkNavBarControl
+            int connCount = 0;
+            try
+            {
+                connCount = int.Parse(connCountElement.Text);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error occured parsing connCountElement text property into a number");
+                result.Failures.Add(new()
+                {
+                    Code = Codes.WEBDRIVER_ERROR,
+                    Reason = "Failed to extract count number from banner",
+                    Detail = "Could not get text property on the connCountElement"
+                });
+                return result;
+            }
 
-            result.Value = (T);
+            IMyNetworkNavBarControl newNetworkNavBar = new MyNetworkNavBarControl
+            {
+                ConnectionsCount = connCount
+            };
+
+            result.Value = (T)newNetworkNavBar;
             result.Succeeded = true;
             return result;
         }

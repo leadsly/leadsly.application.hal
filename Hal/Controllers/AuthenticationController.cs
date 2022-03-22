@@ -2,6 +2,7 @@
 using Domain.Supervisor;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses.Hal;
+using Leadsly.Application.Model.Responses.Hal.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

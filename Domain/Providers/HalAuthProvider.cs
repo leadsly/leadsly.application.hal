@@ -4,6 +4,7 @@ using Domain.Providers.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.Responses.Hal;
+using Leadsly.Application.Model.Responses.Hal.Interfaces;
 using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;

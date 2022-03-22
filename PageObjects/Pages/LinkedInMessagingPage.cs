@@ -1,4 +1,4 @@
-﻿using Domain.Pages;
+﻿using Domain.POMs.Pages;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.Responses.Hal;

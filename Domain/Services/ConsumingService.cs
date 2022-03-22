@@ -78,7 +78,7 @@ namespace Domain.Services
                 SendEmailInvitesQueue(options, exchangeName, exchangeType);
                 ConnectionWithdrawQueue(options, exchangeName, exchangeType);
                 RescrapeSearchurlsQueue(options, exchangeName, exchangeType);
-            }   
+            }
         }
 
         private ConnectionFactory ConfigureConnectionFactor(RabbitMQOptions options, string clientProviderName)
@@ -132,37 +132,37 @@ namespace Domain.Services
 
         private void MonitorForNewAcceptedConnectionsQueue(RabbitMQOptions options, string exchangeName, string exchangeType)
         {
-            const string queueName = "monitor.for.new.connections";
-
             string clientProviderName = options.ConnectionFactoryOptions.ClientProvidedName.Replace("{halId}", this._halIdentity.Id);
-            clientProviderName = clientProviderName.Replace("{queue}", queueName);
+            clientProviderName = clientProviderName.Replace("{queue}", RabbitMQConstants.MonitorNewAcceptedConnections.QueueName);
             var factory = ConfigureConnectionFactor(options, clientProviderName);
 
-            using (var connection = factory.CreateConnection())
-            using (var channel = connection.CreateModel())
-            {
-                channel.ExchangeDeclare(exchangeName, exchangeType);
+            var connection = factory.CreateConnection();
+            Connections.Add(connection);
+            var channel = connection.CreateModel();
+            Channels.Add(channel);
 
-                string name = options.QueueConfigOptions.Name.Replace("{halId}", this._halIdentity.Id);
-                name = name.Replace("{queueName}", queueName);
+            channel.ExchangeDeclare(exchangeName, exchangeType);
 
-                channel.QueueDeclare(queue: name,
-                                 durable: false,
-                                 exclusive: false,
-                                 autoDelete: false,
-                                 arguments: null);
+            string name = options.QueueConfigOptions.Name.Replace("{halId}", this._halIdentity.Id);
+            name = name.Replace("{queueName}", RabbitMQConstants.MonitorNewAcceptedConnections.QueueName);
 
-                string routingKey = options.RoutingKey.Replace("{halId}", this._halIdentity.Id);
-                routingKey = routingKey.Replace("{purpose}", "monitor-new-connections");
-                channel.QueueBind(name, exchangeName, routingKey, null);
+            channel.QueueDeclare(queue: name,
+                             durable: false,
+                             exclusive: false,
+                             autoDelete: false,
+                             arguments: null);
 
-                EventingBasicConsumer consumer = new EventingBasicConsumer(channel);
-                consumer.Received += _campaignManagerService.OnMonitorForNewAcceptedConnectionsEventReceived;
+            string routingKey = options.RoutingKey.Replace("{halId}", this._halIdentity.Id);
+            routingKey = routingKey.Replace("{purpose}", RabbitMQConstants.MonitorNewAcceptedConnections.RoutingKey);
+            channel.QueueBind(name, exchangeName, routingKey, null);
 
-                channel.BasicConsume(queue: name,
-                                     autoAck: false,
-                                     consumer: consumer);
-            }
+            EventingBasicConsumer consumer = new EventingBasicConsumer(channel);
+            consumer.Received += _campaignManagerService.OnMonitorForNewAcceptedConnectionsEventReceived;
+
+            channel.BasicConsume(queue: name,
+                                 autoAck: false,
+                                 consumer: consumer);
+
         }
 
         private void ScanProspectsForRepliesQueue(RabbitMQOptions options, string exchangeName, string exchangeType)

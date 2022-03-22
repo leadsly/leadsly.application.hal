@@ -38,7 +38,17 @@ namespace Domain.Serializers
 
         public MonitorForNewAcceptedConnectionsBody DeserializeMonitorForNewAcceptedConnectionsBody(string body)
         {
-            throw new NotImplementedException();
+            MonitorForNewAcceptedConnectionsBody message = null;
+            try
+            {
+                message = JsonConvert.DeserializeObject<MonitorForNewAcceptedConnectionsBody>(body);
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return message;
         }
 
         public ProspectListBody DeserializeProspectListBody(string body)

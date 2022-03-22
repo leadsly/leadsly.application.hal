@@ -2,15 +2,19 @@
 using Domain.POMs.Pages;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
+using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Entities;
+using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
+using Leadsly.Application.Model.Responses.Hal.Interfaces;
 using Leadsly.Application.Model.WebDriver;
 using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Domain.Providers.Campaigns
@@ -24,13 +28,17 @@ namespace Domain.Providers.Campaigns
             IWebDriverProvider webDriverProvider,
             IHalIdentity halIdentity,
             ILinkedInNavBar linkedInNavBar,
+            ICampaignPhaseProcessingService campaignProcessingPhase,
+            ILinkedInHtmlParser linkedInHtmlParser,
             IHalOperationConfigurationProvider halConfigurationProvider)
         {
             _logger = logger;
             _linkedInMyNetworkPage = linkedInMyNetworkPage;
+            _campaignProcessingPhase = campaignProcessingPhase;
             _webDriverProvider = webDriverProvider;
             _linkedInNavBar = linkedInNavBar;
             _linkedInHomePage = linkedInHomePage;
+            _linkedInHtmlParser = linkedInHtmlParser;
             _halConfigurationProvider = halConfigurationProvider;
             _halIdentity = halIdentity;
         }
@@ -39,7 +47,9 @@ namespace Domain.Providers.Campaigns
         private readonly ILinkedInNavBar _linkedInNavBar;
         private readonly ILogger<MonitorForNewProspectsProvider> _logger;
         private readonly ILinkedInHomePage _linkedInHomePage;
+        private readonly ILinkedInHtmlParser _linkedInHtmlParser;
         private readonly ILinkedInMyNetworkPage _linkedInMyNetworkPage;
+        private readonly ICampaignPhaseProcessingService _campaignProcessingPhase;
         private readonly IHalOperationConfigurationProvider _halConfigurationProvider;
         private readonly IHalIdentity _halIdentity;
 
@@ -90,7 +100,7 @@ namespace Domain.Providers.Campaigns
             {
                 try
                 {
-                    result = LookForNewConnections<T>(webDriver);
+                    result = await LookForNewConnections<T>(webDriver);
                     if(result.Succeeded == false)
                     {
                         return result;
@@ -107,7 +117,7 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        private HalOperationResult<T> LookForNewConnections<T>(IWebDriver webDriver)
+        private async Task<HalOperationResult<T>> LookForNewConnections<T>(IWebDriver webDriver)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -118,8 +128,74 @@ namespace Domain.Providers.Campaigns
                 return result;
             }
 
-            result.Succeeded = true;
-            return result;
+            bool? isNewConnection = ((IMyNetworkNavBarControl)result.Value).NewConnection;
+
+            // no new connections
+            if(isNewConnection != null && isNewConnection == false)
+            {
+                result.Succeeded = true;
+                return result;
+            }
+
+            return await RefreshMyNetworkView<T>(webDriver);
+        }
+
+        private async Task<HalOperationResult<T>> RefreshMyNetworkView<T>(IWebDriver webDriver)
+            where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            // click on the my network tab
+            result = _linkedInNavBar.ClickMyNetworkTab<T>(webDriver);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            result = _linkedInNavBar.GetNewConnectionCount<T>(webDriver);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            int newConnCount = ((IMyNetworkNavBarControl)result.Value).ConnectionsCount;
+
+            // gather new connections
+            return await GatherNewlyConnectedProspects<T>(webDriver, newConnCount);
+        }
+
+        private async Task<HalOperationResult<T>> GatherNewlyConnectedProspects<T>(IWebDriver webDriver, int newConnectionsCount)
+            where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+            
+            result = _linkedInMyNetworkPage.CollectAllNewConnections<T>(webDriver, newConnectionsCount);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            IReadOnlyCollection<IWebElement> myNetworkNewConn = ((INewInvitationsMyNetwork)result.Value).NewConnections;
+            // we need to send the new list of individuals to the server for processing and triggering send follow up message event
+            result = _linkedInHtmlParser.ParseMyNetworkConnections<T>(myNetworkNewConn);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            INewConnectionProspects newProspectsPayload = (INewConnectionProspects)result.Value;
+            return await SendNewConnectionsPayloadAsync<T>(newProspectsPayload);
+        }
+
+        private async Task<HalOperationResult<T>> SendNewConnectionsPayloadAsync<T>(INewConnectionProspects payload)
+            where T : IOperationResponse
+        {
+            NewConnectionRequest request = new()
+            {
+                NewConnectionProspects = payload.NewProspects
+            };
+
+            return await _campaignProcessingPhase.ProcessNewConnectionsAsync<T>(request);
         }
 
         private HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)
