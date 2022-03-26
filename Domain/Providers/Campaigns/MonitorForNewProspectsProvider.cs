@@ -15,6 +15,8 @@ using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Domain.Providers.Campaigns
@@ -92,15 +94,17 @@ namespace Domain.Providers.Campaigns
                 return result;
             }
 
-            HalOperationConfiguration operationConfiguration = await _halConfigurationProvider.GetOperationConfigurationByIdAsync(_halIdentity.Id);
+            // HalOperationConfiguration operationConfiguration = await _halConfigurationProvider.GetOperationConfigurationByIdAsync(_halIdentity.Id);
 
             TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById(message.TimeZoneId) ?? TimeZoneInfo.Utc;
-            DateTime dateTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.Now, timeZone);
             while (TimeZoneInfo.ConvertTimeFromUtc(DateTime.Now, timeZone) > message.EndWorkTiem)
             {
+                // sleep for 5 seconds
+                Thread.Sleep(5);
+
                 try
                 {
-                    result = await LookForNewConnections<T>(webDriver);
+                    result = await LookForNewConnections<T>(webDriver, message);
                     if(result.Succeeded == false)
                     {
                         return result;
@@ -117,7 +121,7 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        private async Task<HalOperationResult<T>> LookForNewConnections<T>(IWebDriver webDriver)
+        private async Task<HalOperationResult<T>> LookForNewConnections<T>(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -137,10 +141,10 @@ namespace Domain.Providers.Campaigns
                 return result;
             }
 
-            return await RefreshMyNetworkView<T>(webDriver);
+            return await RefreshMyNetworkView<T>(webDriver, message);
         }
 
-        private async Task<HalOperationResult<T>> RefreshMyNetworkView<T>(IWebDriver webDriver)
+        private async Task<HalOperationResult<T>> RefreshMyNetworkView<T>(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -161,10 +165,10 @@ namespace Domain.Providers.Campaigns
             int newConnCount = ((IMyNetworkNavBarControl)result.Value).ConnectionsCount;
 
             // gather new connections
-            return await GatherNewlyConnectedProspects<T>(webDriver, newConnCount);
+            return await GatherNewlyConnectedProspects<T>(webDriver, newConnCount, message);
         }
 
-        private async Task<HalOperationResult<T>> GatherNewlyConnectedProspects<T>(IWebDriver webDriver, int newConnectionsCount)
+        private async Task<HalOperationResult<T>> GatherNewlyConnectedProspects<T>(IWebDriver webDriver, int newConnectionsCount, MonitorForNewAcceptedConnectionsBody message)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -184,18 +188,35 @@ namespace Domain.Providers.Campaigns
             }
 
             INewConnectionProspects newProspectsPayload = (INewConnectionProspects)result.Value;
-            return await SendNewConnectionsPayloadAsync<T>(newProspectsPayload);
+            return await SendNewConnectionsPayloadAsync<T>(newProspectsPayload, message);
         }
 
-        private async Task<HalOperationResult<T>> SendNewConnectionsPayloadAsync<T>(INewConnectionProspects payload)
+        private async Task<HalOperationResult<T>> SendNewConnectionsPayloadAsync<T>(INewConnectionProspects payload, MonitorForNewAcceptedConnectionsBody message)
             where T : IOperationResponse
         {
+            HalOperationResult<T> result = new();
             NewConnectionRequest request = new()
             {
-                NewConnectionProspects = payload.NewProspects
+                ApiServerUrl = message.ApiServerUrl,
+                NewConnectionProspects = payload.NewProspects,
+                HalId = _halIdentity.Id
             };
 
-            return await _campaignProcessingPhase.ProcessNewConnectionsAsync<T>(request);
+            // fire and forget here
+            HttpResponseMessage response = await _campaignProcessingPhase.ProcessNewConnectionsAsync<T>(request);
+            if(response == null)
+            {
+                result.Failures.Add(new()
+                {
+                    Code = Codes.HTTP_REQUEST_ERROR,
+                    Reason = "Failed to send request to api server to process new connections",
+                    Detail = "Connection error occured sending request"
+                });
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
         }
 
         private HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)

@@ -105,7 +105,7 @@ namespace Domain.Services
             }
             else
             {
-                string newChromeProfileName = Guid.NewGuid().ToString() + webDriverOptions.ChromeProfileConfigOptions.Suffix;
+                string newChromeProfileName = webDriverOptions.ChromeProfileConfigOptions.ChromeProfileName + webDriverOptions.ChromeProfileConfigOptions.Suffix;
 
                 result = _fileManager.CloneDefaultChromeProfile<T>(newChromeProfileName, webDriverOptions);                
 
