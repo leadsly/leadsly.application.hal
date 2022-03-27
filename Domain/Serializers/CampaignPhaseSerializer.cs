@@ -53,7 +53,16 @@ namespace Domain.Serializers
 
         public ProspectListBody DeserializeProspectListBody(string body)
         {
-            throw new NotImplementedException();
+            ProspectListBody prospectListBody = null;
+            try
+            {
+                prospectListBody = JsonConvert.DeserializeObject<ProspectListBody>(body);
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return prospectListBody;
         }
 
         public ScanProspectsForRepliesBody DeserializeScanProspectsForRepliesBody(string body)
@@ -71,7 +80,7 @@ namespace Domain.Serializers
             return scanProspectsForRepliesBody;
         }
 
-        public SendConnectionRequestsBody DeserializeSendConnectionRequestsBody(string body)
+        public SendConnectionsBody DeserializeSendConnectionRequestsBody(string body)
         {
             throw new NotImplementedException();
         }

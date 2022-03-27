@@ -407,6 +407,27 @@ namespace Domain.Providers
 
             result.Succeeded = true;
             return result;
-        }        
+        }
+
+        public HalOperationResult<T> NewTab<T>(IWebDriver webDriver) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            INewTabOperation operation = new NewTabOperation();
+            try
+            {
+                webDriver.SwitchTo().NewWindow(WindowType.Tab);
+                operation.WindowHandleId = webDriver.CurrentWindowHandle;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create a new tab for the given webdriver");
+                return result;
+            }
+
+            result.Value = (T)operation;
+            result.Succeeded = true;
+            return result;
+        }
     }
 }

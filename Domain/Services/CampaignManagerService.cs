@@ -329,7 +329,7 @@ namespace Domain.Services
             BackgroundJob.Enqueue<ICampaignManagerService>((x) => x.StartProspectList(messageId));
         }
 
-        public void StartProspectList(string messageId)
+        public async Task StartProspectList(string messageId)
         {
             MessageProperties_Sync.TryGetValue(messageId, out RabbitMQMessageProperties props);
             BasicDeliverEventArgs eventArgs = props.BasicDeliveryEventArgs;
@@ -346,7 +346,7 @@ namespace Domain.Services
                 try
                 {
                     ICampaignPhaseFacade campaignPhaseFacade = scope.ServiceProvider.GetRequiredService<ICampaignPhaseFacade>();
-                    HalOperationResult<IOperationResponse> operationResult = campaignPhaseFacade.ExecutePhase<IOperationResponse>(prospectListBody);
+                    HalOperationResult<IOperationResponse> operationResult = await campaignPhaseFacade.ExecutePhase<IOperationResponse>(prospectListBody);
 
                     if (operationResult.Succeeded == true)
                     {
@@ -417,7 +417,7 @@ namespace Domain.Services
                 ICampaignPhaseSerializer serializer = scope.ServiceProvider.GetRequiredService<ICampaignPhaseSerializer>();
                 byte[] body = eventArgs.Body.ToArray();
                 string message = Encoding.UTF8.GetString(body);
-                SendConnectionRequestsBody sendConnections = serializer.DeserializeSendConnectionRequestsBody(message);
+                SendConnectionsBody sendConnections = serializer.DeserializeSendConnectionRequestsBody(message);
                 Action ackOperation = default;
                 try
                 {

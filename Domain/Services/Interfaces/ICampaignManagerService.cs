@@ -33,7 +33,7 @@ namespace Domain.Services.Interfaces
 
         void StartScanningProspectsForReplies(string messageId);
 
-        void StartProspectList(string messageId);
+        Task StartProspectList(string messageId);
 
         void StartSendConnectionRequests(string messageId);
         void StartConnectionWithdraw(string messageId);

@@ -18,15 +18,18 @@ namespace Domain.Facades
     {
         public CampaignPhaseFacade(ILogger<CampaignPhaseFacade> logger, 
             IFollowUpMessagesProvider followUpMessagesProvider, 
+            IProspectListProvider prospectListProvider,
             IMonitorForNewProspectsProvider monitorForNewProspectsProvider)
         {
             _followUpMessagesProvider = followUpMessagesProvider;            
             _monitorForNewProspectsProvider = monitorForNewProspectsProvider;
+            _prospectListProvider = prospectListProvider;
             _logger = logger;
         }
 
         private readonly IMonitorForNewProspectsProvider _monitorForNewProspectsProvider;
         private readonly IFollowUpMessagesProvider _followUpMessagesProvider;
+        private readonly IProspectListProvider _prospectListProvider;
         private readonly ILogger<CampaignPhaseFacade> _logger;        
 
         public HalOperationResult<T> ExecuteFollowUpMessagesPhase<T>(FollowUpMessagesBody message)
@@ -45,12 +48,12 @@ namespace Domain.Facades
             return await _monitorForNewProspectsProvider.ExecutePhase<T>(message);
         }
 
-        public HalOperationResult<T> ExecutePhase<T>(ProspectListBody message) where T : IOperationResponse
+        public async Task<HalOperationResult<T>> ExecutePhase<T>(ProspectListBody message) where T : IOperationResponse
         {
-            throw new NotImplementedException();
+            return await _prospectListProvider.ExecutePhase<T>(message);
         }
 
-        public HalOperationResult<T> ExecutePhase<T>(SendConnectionRequestsBody message) where T : IOperationResponse
+        public HalOperationResult<T> ExecutePhase<T>(SendConnectionsBody message) where T : IOperationResponse
         {
             throw new NotImplementedException();
         }

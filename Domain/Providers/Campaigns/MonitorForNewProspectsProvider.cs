@@ -97,7 +97,7 @@ namespace Domain.Providers.Campaigns
             // HalOperationConfiguration operationConfiguration = await _halConfigurationProvider.GetOperationConfigurationByIdAsync(_halIdentity.Id);
 
             TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById(message.TimeZoneId) ?? TimeZoneInfo.Utc;
-            while (TimeZoneInfo.ConvertTimeFromUtc(DateTime.Now, timeZone) > message.EndWorkTiem)
+            while (TimeZoneInfo.ConvertTimeFromUtc(DateTime.Now, timeZone) > message.EndWorkTime)
             {
                 // sleep for 5 seconds
                 Thread.Sleep(5);

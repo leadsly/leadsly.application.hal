@@ -30,5 +30,8 @@ namespace Domain.Providers.Interfaces
 
         HalOperationResult<T> SwitchTo<T>(IWebDriver webDriver, string windowHandleId)
             where T : IOperationResponse;
+
+        HalOperationResult<T> NewTab<T>(IWebDriver webDriver)
+            where T : IOperationResponse;
     }
 }

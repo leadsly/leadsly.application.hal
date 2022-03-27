@@ -21,10 +21,10 @@ namespace Domain.Facades.Interfaces
         Task<HalOperationResult<T>> ExecutePhase<T>(MonitorForNewAcceptedConnectionsBody message)
             where T : IOperationResponse;
 
-        HalOperationResult<T> ExecutePhase<T>(ProspectListBody message)
+        Task<HalOperationResult<T>> ExecutePhase<T>(ProspectListBody message)
             where T : IOperationResponse;
 
-        HalOperationResult<T> ExecutePhase<T>(SendConnectionRequestsBody message)
+        HalOperationResult<T> ExecutePhase<T>(SendConnectionsBody message)
             where T : IOperationResponse;
 
         HalOperationResult<T> ExecutePhase<T>(ConnectionWithdrawBody message)

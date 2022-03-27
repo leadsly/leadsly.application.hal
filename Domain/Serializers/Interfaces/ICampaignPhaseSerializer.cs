@@ -17,7 +17,7 @@ namespace Domain.Serializers.Interfaces
 
         ProspectListBody DeserializeProspectListBody(string body);
 
-        SendConnectionRequestsBody DeserializeSendConnectionRequestsBody(string body);
+        SendConnectionsBody DeserializeSendConnectionRequestsBody(string body);
 
         ConnectionWithdrawBody DeserializeConnectionWithdrawBody(string body);
 

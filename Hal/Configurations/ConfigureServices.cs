@@ -128,7 +128,8 @@ namespace Hal.Configurations
             services.AddScoped<ILinkedInHomePage, LinkedInHomePage>();
             services.AddScoped<ILinkedInMessagingPage, LinkedInMessagingPage>();
             services.AddScoped<ILinkedInMyNetworkPage, LinkedInMyNetworkPage>();
-            services.AddScoped<ILinkedInNavBar, LinkedInNavBar>();            
+            services.AddScoped<ILinkedInNavBar, LinkedInNavBar>();
+            services.AddScoped<ILinkedInSearchPage, LinkedInSearchPage>();
 
             return services;
         }
@@ -143,6 +144,7 @@ namespace Hal.Configurations
             services.AddScoped<IFollowUpMessagesProvider, FollowUpMessagesProvider>();
             services.AddScoped<IMonitorForNewProspectsProvider, MonitorForNewProspectsProvider>();
             services.AddScoped<IHalOperationConfigurationProvider, HalOperationConfigurationProvider>();
+            services.AddScoped<IProspectListProvider, ProspectListProvider>();
 
             return services;
         }
