@@ -14,7 +14,8 @@ namespace Domain.Services.Interfaces
 {
     public interface ICampaignPhaseProcessingService
     {
-        Task<HttpResponseMessage> ProcessNewConnectionsAsync<T>(NewConnectionRequest request, CancellationToken ct = default) 
-            where T : IOperationResponse;
+        Task<HttpResponseMessage> ProcessNewConnectionsAsync(NewConnectionRequest request, CancellationToken ct = default);
+
+        Task<HttpResponseMessage> ProcessProspectListAsync(ProspectListPhaseCompleteRequest request, CancellationToken ct = default);
     }
 }

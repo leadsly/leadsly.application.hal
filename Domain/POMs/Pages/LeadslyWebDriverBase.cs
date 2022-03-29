@@ -1,5 +1,7 @@
 ﻿using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
+using Leadsly.Application.Model.WebDriver;
+using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
@@ -37,7 +39,7 @@ namespace Domain.POMs.Pages
                 return result;
             }
 
-            result.Succeeded = true;
+            result.Succeeded = true;            
             return result;
         }
     }

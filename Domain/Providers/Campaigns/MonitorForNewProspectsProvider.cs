@@ -203,7 +203,7 @@ namespace Domain.Providers.Campaigns
             };
 
             // fire and forget here
-            HttpResponseMessage response = await _campaignProcessingPhase.ProcessNewConnectionsAsync<T>(request);
+            HttpResponseMessage response = await _campaignProcessingPhase.ProcessNewConnectionsAsync(request);
             if(response == null)
             {
                 result.Failures.Add(new()

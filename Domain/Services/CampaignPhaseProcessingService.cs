@@ -26,7 +26,7 @@ namespace Domain.Services
         private readonly HttpClient _httpClient;
         private readonly ILogger<CampaignPhaseProcessingService> _logger;
 
-        public async Task<HttpResponseMessage> ProcessNewConnectionsAsync<T>(NewConnectionRequest request, CancellationToken ct = default) where T : IOperationResponse
+        public async Task<HttpResponseMessage> ProcessNewConnectionsAsync(NewConnectionRequest request, CancellationToken ct = default)
         {
             string apiServerUrl = "http://localhost:5010"; //; request.ApiServerUrl;
 
@@ -48,6 +48,37 @@ namespace Domain.Services
                 response = await _httpClient.SendAsync(req, ct);
             }
             catch(Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send reequest to process my new network connections.");
+            }
+
+            return response;
+        }
+
+        public async Task<HttpResponseMessage> ProcessProspectListAsync(ProspectListPhaseCompleteRequest request, CancellationToken ct = default)
+        {
+            string apiServerUrl = "https://localhost:5001/api/prospect-list";
+            
+            HttpResponseMessage response = default;
+            try
+            {
+                HttpRequestMessage req = new()
+                {
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    Content = JsonContent.Create(new
+                    {
+                        PrimaryProspectListId = request.PrimaryProspectListId,
+                        UserId = request.UserId,
+                        HalId = request.HalId,
+                        Prospects = request.Prospects,
+                    })
+                };
+
+                _logger.LogInformation("Sending request to process my new network connections.");
+                response = await _httpClient.SendAsync(req, ct);
+            }
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to send reequest to process my new network connections.");
             }
