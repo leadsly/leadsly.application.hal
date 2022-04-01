@@ -10,6 +10,7 @@ using Leadsly.Application.Model.Campaigns.ProspectList;
 using Leadsly.Application.Model.Entities.Campaigns;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage.Interfaces;
+using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.WebDriver;
 using Leadsly.Application.Model.WebDriver.Interfaces;
@@ -26,43 +27,25 @@ namespace Domain.Providers.Campaigns
     public class ProspectListProvider : IProspectListProvider
     {
         public ProspectListProvider(
-            ILinkedInHomePage linkedInHomePage,
-            ILinkedInMyNetworkPage linkedInMyNetworkPage,
+            ILinkedInHomePage linkedInHomePage,            
             ILogger<ProspectListProvider> logger,
-            IWebDriverProvider webDriverProvider,
-            IHalIdentity halIdentity,
-            ILinkedInNavBar linkedInNavBar,
-            ICampaignPhaseProcessingService campaignProcessingPhase,
-            ILinkedInHtmlParser linkedInHtmlParser,
-            ILinkedInSearchPage linkedInSearchPage,
-            IHalOperationConfigurationProvider halConfigurationProvider)
+            IWebDriverProvider webDriverProvider,                                                
+            ILinkedInSearchPage linkedInSearchPage)
         {
             _logger = logger;
-            _linkedInMyNetworkPage = linkedInMyNetworkPage;
-            _campaignProcessingPhase = campaignProcessingPhase;
             _linkedInSearchPage = linkedInSearchPage;
-            _webDriverProvider = webDriverProvider;
-            _linkedInNavBar = linkedInNavBar;
-            _linkedInHomePage = linkedInHomePage;
-            _linkedInHtmlParser = linkedInHtmlParser;
-            _halConfigurationProvider = halConfigurationProvider;
-            _halIdentity = halIdentity;
+            _webDriverProvider = webDriverProvider;            
+            _linkedInHomePage = linkedInHomePage;                
         }
 
-        private readonly IWebDriverProvider _webDriverProvider;
-        private readonly ILinkedInNavBar _linkedInNavBar;
+        private readonly IWebDriverProvider _webDriverProvider;        
         private readonly ILogger<ProspectListProvider> _logger;
-        private readonly ILinkedInHomePage _linkedInHomePage;
-        private readonly ILinkedInHtmlParser _linkedInHtmlParser;
-        private readonly ILinkedInMyNetworkPage _linkedInMyNetworkPage;
-        private readonly ICampaignPhaseProcessingService _campaignProcessingPhase;
-        private readonly ILinkedInSearchPage _linkedInSearchPage;
-        private readonly IHalOperationConfigurationProvider _halConfigurationProvider;
-        private readonly IHalIdentity _halIdentity;
+        private readonly ILinkedInHomePage _linkedInHomePage;        
+        private readonly ILinkedInSearchPage _linkedInSearchPage;        
 
         #region Execute ProspectList Phase
 
-        public async Task<HalOperationResult<T>> ExecutePhase<T>(ProspectListBody message) 
+        public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ProspectListBody message) 
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -89,19 +72,21 @@ namespace Domain.Providers.Campaigns
         private HalOperationResult<T> ProspectList<T>(IWebDriver webDriver, ProspectListBody message)
             where T : IOperationResponse
         {
+            string defaultWindowHandle = webDriver.CurrentWindowHandle;
+
             HalOperationResult<T> result = new();
-            IEnumerable<PrimaryProspect> prospects = new List<PrimaryProspect>();
+            IList<PrimaryProspectRequest> prospects = new List<PrimaryProspectRequest>();            
             foreach (string searchUrl in message.SearchUrls)
             {
-                result = GoToPage<T>(webDriver, searchUrl);
-                if (result.Succeeded == false)
+                result = _webDriverProvider.NewTab<T>(webDriver);
+                if(result.Succeeded == false)
                 {
-                    result.Failures.Add(new()
-                    {
-                        Code = Codes.WEBDRIVER_ERROR,
-                        Reason = "Failed to navigate to the given page",
-                        Detail = $"Failed to go to page {searchUrl}"
-                    });
+                    return result;
+                }
+
+                result = GoToPage<T>(webDriver, searchUrl);
+                if(result.Succeeded == false)
+                {
                     return result;
                 }
 
@@ -117,11 +102,14 @@ namespace Domain.Providers.Campaigns
                 }
                 int totalResults = ((IGetTotalNumberOfResults)result.Value).NumberOfResults;
 
-                IEnumerable<PrimaryProspect> primaryProspects = CollectProspects(webDriver, searchUrl, totalResults, message.PrimaryProspectListId);
+                _webDriverProvider.CloseTab<T>(BrowserPurpose.ProspectList, webDriver.CurrentWindowHandle);
+                _webDriverProvider.SwitchTo<T>(webDriver, defaultWindowHandle);
+
+                IList<PrimaryProspectRequest> primaryProspects = CollectProspects(webDriver, searchUrl, totalResults, message.PrimaryProspectListId);
 
                 if (primaryProspects != null)
                 {
-                    prospects = prospects.Concat(primaryProspects);
+                    prospects = prospects.Concat(primaryProspects).ToList();
                 }
             }
 
@@ -130,59 +118,87 @@ namespace Domain.Providers.Campaigns
                 Prospects = prospects
             };
 
+            result = _webDriverProvider.SwitchTo<T>(webDriver, defaultWindowHandle);
+            if(result.Succeeded == false)
+            {
+                _logger.LogError("Failed to switch back to default tab in ProspectList browser");
+                return result;
+            };
+
             result.Value = (T)primaryProspectsPayload;
             return result;
         }
 
         #endregion
 
-        private IEnumerable<PrimaryProspect> CollectProspects(IWebDriver webDriver, string searchUrl, int totalResults, string primaryProspectListId)            
+        private IList<PrimaryProspectRequest> CollectProspects(IWebDriver webDriver, string searchUrl, int totalResults, string primaryProspectListId)            
         {
-            string queryParam = "&page={num}";
-            string nextPageUrl = searchUrl;
-            List<IWebElement> prospectsAsWebElements = new();            
             List<string> windowHandles = new();
-            for (int i = 1; i < totalResults; i++)
+            IList<PrimaryProspectRequest> prospects = new List<PrimaryProspectRequest>();
+
+            try
             {
-                nextPageUrl += queryParam.Replace("{num}", i.ToString());
-
-                HalOperationResult<INewTabOperation> newTabOperation = _webDriverProvider.NewTab<INewTabOperation>(webDriver);
-                if(newTabOperation.Succeeded == false)
+                for (int i = 0; i < totalResults; i++)
                 {
-                    continue;
+                    if(i == 0)
+                    {
+                        HalOperationResult<INewTabOperation> newTabOperation = _webDriverProvider.NewTab<INewTabOperation>(webDriver);
+                        if (newTabOperation.Succeeded == false)
+                        {
+                            break;
+                        }
+
+                        windowHandles.Add(newTabOperation.Value.WindowHandleId);
+
+                        HalOperationResult<IOperationResponse> goToPageResult = GoToPage<IOperationResponse>(webDriver, searchUrl);
+                        if (goToPageResult.Succeeded == false)
+                        {
+                            break;
+                        }
+                    }
+
+                    bool isNoSearchResultsContainerDisplayed = _linkedInSearchPage.IsNoSearchResultsContainerDisplayed(webDriver);
+                    if(isNoSearchResultsContainerDisplayed == true)
+                    {
+                        HalOperationResult<IOperationResponse> retrySearchResult = _linkedInSearchPage.ClickRetrySearch<IOperationResponse>(webDriver);
+                        if(retrySearchResult.Succeeded == false)
+                        {
+                            break;
+                        }
+                    }
+
+                    HalOperationResult<IGatherProspects> result = _linkedInSearchPage.GatherProspects<IGatherProspects>(webDriver);
+                    if (result.Succeeded == false)
+                    {
+                        continue;
+                    }
+
+                    List<IWebElement> propsAsWebElements = result.Value.ProspectElements;
+                    prospects = prospects.Concat(CreatePrimaryProspects(propsAsWebElements, primaryProspectListId)).ToList();
+
+                    HalOperationResult<IOperationResponse> clickNextResult = _linkedInSearchPage.ClickNext<IOperationResponse>(webDriver);
+                    if(clickNextResult.Succeeded == false)
+                    {
+                        _logger.LogError("Failed to navigate to the next page");
+                        break;
+                    }
+
+                    if (i == 60)
+                        break;
                 }
-                windowHandles.Add(newTabOperation.Value.WindowHandleId);
-
-                HalOperationResult<IOperationResponse> goToPageResult = GoToPage<IOperationResponse>(webDriver, nextPageUrl);
-                if(goToPageResult.Succeeded == false)
-                {
-                    continue;
-                }
-
-                HalOperationResult<IGatherProspects> result = _linkedInSearchPage.GatherProspects<IGatherProspects>(webDriver);
-                if(result.Succeeded == false) 
-                {
-                    continue;
-                }
-
-                List<IWebElement> propsAsWebElements = result.Value.ProspectElements;
-                prospectsAsWebElements.AddRange(propsAsWebElements);
-
-                if (i == 1)
-                    break;
             }
-
-            IEnumerable<PrimaryProspect> prospects = CreatePrimaryProspects(prospectsAsWebElements, primaryProspectListId);
-
-            // close all opened tabs
-            windowHandles.ForEach(windowHandle => _webDriverProvider.CloseTab<IOperationResponse>(BrowserPurpose.ProspectList, windowHandle));
+            finally
+            {
+                // close all opened tabs
+                windowHandles.ForEach(windowHandle => _webDriverProvider.CloseTab<IOperationResponse>(BrowserPurpose.ProspectList, windowHandle));
+            }
 
             return prospects;
         }
 
-        private IEnumerable<PrimaryProspect> CreatePrimaryProspects(List<IWebElement> prospects, string primaryProspectListId)
+        private IList<PrimaryProspectRequest> CreatePrimaryProspects(List<IWebElement> prospects, string primaryProspectListId)
         {
-            IList<PrimaryProspect> primaryProspects = new List<PrimaryProspect>();
+            IList<PrimaryProspectRequest> primaryProspects = new List<PrimaryProspectRequest>();
 
             foreach (IWebElement webElement in prospects)
             {
@@ -209,11 +225,20 @@ namespace Domain.Providers.Campaigns
             try
             {
                 IWebElement prospectNameSpan = webElement.FindElement(By.CssSelector(".entity-result__title-text"));
-                prospectName = prospectNameSpan.Text;
+                try
+                {
+                    IWebElement thirdConnectionProspectName = prospectNameSpan.FindElement(By.CssSelector("span[aria-hidden=true]"));
+                    prospectName = thirdConnectionProspectName.Text;
+                }
+                catch(Exception ex)
+                {
+                    // ignore the error and proceed
+                    prospectName = prospectNameSpan.Text;
+                }
             }
             catch(Exception ex)
             {
-                _logger.LogError(ex, "Webdriver error occured extracting prospects name");
+                _logger.LogWarning(ex, "Webdriver error occured extracting prospects name");
             }
 
             return prospectName;
@@ -237,7 +262,7 @@ namespace Domain.Providers.Campaigns
             }
             catch(Exception ex)
             {
-                _logger.LogError(ex, "Webdriver error occured extracting prospects profile url");
+                _logger.LogWarning(ex, "Webdriver error occured extracting prospects profile url");
             }            
 
             return profileUrl;
@@ -252,7 +277,7 @@ namespace Domain.Providers.Campaigns
             }
             catch(Exception ex)
             {
-                _logger.LogError(ex, "Webdriver error occured extracting prospects avatar url");
+                _logger.LogWarning(ex, "Webdriver error occured extracting prospects avatar url");
             }
             return avatarSrc;
         }
@@ -266,7 +291,7 @@ namespace Domain.Providers.Campaigns
             }
             catch(Exception ex)
             {
-                _logger.LogError(ex, "Webdriver error occured extracting prospects area");
+                _logger.LogWarning(ex, "Webdriver error occured extracting prospects area");
             }
             return prospectArea;
         }
@@ -280,7 +305,7 @@ namespace Domain.Providers.Campaigns
             }
             catch(Exception ex)
             {
-                _logger.LogError(ex, "Webdriver error occured extracting prospects employment info");
+                _logger.LogWarning(ex, "Webdriver error occured extracting prospects employment info");
             }
 
             return prospectEmploymentInfo;

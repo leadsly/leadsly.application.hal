@@ -346,7 +346,7 @@ namespace Domain.Services
                 try
                 {
                     ICampaignPhaseFacade campaignPhaseFacade = scope.ServiceProvider.GetRequiredService<ICampaignPhaseFacade>();
-                    HalOperationResult<IOperationResponse> operationResult = await campaignPhaseFacade.ExecutePhase<IOperationResponse>(prospectListBody);
+                    HalOperationResult<IOperationResponse> operationResult = await campaignPhaseFacade.ExecutePhaseAsync<IOperationResponse>(prospectListBody);
 
                     if (operationResult.Succeeded == true)
                     {
@@ -381,17 +381,8 @@ namespace Domain.Services
         {
             IModel channel = ((EventingBasicConsumer)sender).Model;
             string messageId = eventArgs.BasicProperties.MessageId;
-            // run this AFTER prospect list
-            // This has to assume that ProspectList phase is either running or already ran
-            if (MessageProperties_Sync.Keys.Any())
-            {
-                // queue up this phase for later
-                ExecutePhasesChain.Enqueue(() => QueueSendConnectionRequests(messageId, channel, eventArgs));
-            }
-            else
-            {
-                QueueSendConnectionRequests(messageId, channel, eventArgs);
-            }
+
+            QueueSendConnectionRequests(messageId, channel, eventArgs);
         }
 
         private void QueueSendConnectionRequests(string messageId, IModel channel, BasicDeliverEventArgs eventArgs)
@@ -402,10 +393,57 @@ namespace Domain.Services
                 Channel = channel
             });
 
-            BackgroundJob.Enqueue<ICampaignManagerService>((x) => x.StartSendConnectionRequests(messageId));
+            ScheduleSendConnectionsPhaseRequests(messageId);
         }
 
-        public void StartSendConnectionRequests(string messageId)
+        private void ScheduleSendConnectionsPhaseRequests(string messageId)
+        {
+            // represents the phases when hal sends out connections
+            // 7:04 AM < 8:00 AM = true
+            if (DateTime.Now.TimeOfDay < TimeSpan.Parse("8:00 AM"))
+            {
+                // schedule at 8:00 AM
+                BackgroundJob.Schedule<ICampaignManagerService>((x) => x.StartSendConnectionRequests(messageId, 1), TimeSpan.Parse("8:00 AM"));
+                BackgroundJob.Schedule<ICampaignManagerService>((x) => x.StartSendConnectionRequests(messageId, 2), TimeSpan.Parse("12:00 PM"));
+                BackgroundJob.Schedule<ICampaignManagerService>((x) => x.StartSendConnectionRequests(messageId, 3), TimeSpan.Parse("5:00 PM"));
+            }
+            // 11:14 AM < 12:00 PM = true                
+            else if (DateTime.Now.TimeOfDay < TimeSpan.Parse("12:00 PM"))
+            {
+                // fire immediately and schedule at 12:00 PM
+                BackgroundJob.Enqueue<ICampaignManagerService>((x) => x.StartSendConnectionRequests(messageId, 1));
+                BackgroundJob.Schedule<ICampaignManagerService>((x) => x.StartSendConnectionRequests(messageId, 2), TimeSpan.Parse("12:00 PM"));
+                BackgroundJob.Schedule<ICampaignManagerService>((x) => x.StartSendConnectionRequests(messageId, 3), TimeSpan.Parse("5:00 PM"));
+            }
+            // 11:43 AM < 5:00 PM
+            else if (DateTime.Now.TimeOfDay < TimeSpan.Parse("5:00 PM"))
+            {
+                // fire immediately and schedule at 12:00 PM
+                BackgroundJob.Enqueue<ICampaignManagerService>((x) => x.StartSendConnectionRequests(messageId, 2));
+                BackgroundJob.Schedule<ICampaignManagerService>((x) => x.StartSendConnectionRequests(messageId, 3), TimeSpan.Parse("5:00 PM"));
+            }
+            else
+            {
+                BackgroundJob.Enqueue<ICampaignManagerService>((x) => x.StartSendConnectionRequests(messageId, 3));
+            }
+        }
+
+        public async Task StartSendConnectionRequests(string messageId, int sendConnectionsStageOrder)
+        {
+            //run this AFTER prospect list
+            //This has to assume that ProspectList phase is either running or already ran
+            if (MessageProperties_Sync.Keys.Any())
+            {
+                // queue up this phase for later
+                ExecutePhasesChain.Enqueue(() => SendConnectionRequests(messageId, sendConnectionsStageOrder));
+            }
+            else
+            {
+                await SendConnectionRequests(messageId, sendConnectionsStageOrder);
+            }
+        }
+
+        private async Task SendConnectionRequests(string messageId, int sendConnectionsStageOrder)
         {
             MessageProperties_Sync.TryGetValue(messageId, out RabbitMQMessageProperties props);
             BasicDeliverEventArgs eventArgs = props.BasicDeliveryEventArgs;
@@ -422,22 +460,22 @@ namespace Domain.Services
                 try
                 {
                     ICampaignPhaseFacade campaignPhaseFacade = scope.ServiceProvider.GetRequiredService<ICampaignPhaseFacade>();
-                    HalOperationResult<IOperationResponse> operationResult = campaignPhaseFacade.ExecutePhase<IOperationResponse>(sendConnections);
+                    HalOperationResult<IOperationResponse> operationResult = await campaignPhaseFacade.ExecutePhaseAsync<IOperationResponse>(sendConnections, sendConnectionsStageOrder);
 
                     if (operationResult.Succeeded == true)
                     {
-                        _logger.LogInformation("ExecuteFollowUpMessagesPhase executed successfully. Acknowledging message");
+                        _logger.LogInformation("SendConnectionRequests executed successfully. Acknowledging message");
                         ackOperation = () => channel.BasicAck(eventArgs.DeliveryTag, false);
                     }
                     else
                     {
-                        _logger.LogWarning("Executing Follow Up Messages Phase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
+                        _logger.LogWarning("SendConnectionRequests phase did not successfully execute. Negatively acknowledging the message and re-queuing it");
                         ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Exception occured while executing Follow Up Messages Phase. Negatively acknowledging the message and re-queuing it");
+                    _logger.LogError(ex, "Exception occured while executing send connection requests. Negatively acknowledging the message and re-queuing it");
                     ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
                 }
                 finally

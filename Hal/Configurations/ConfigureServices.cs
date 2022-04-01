@@ -146,6 +146,7 @@ namespace Hal.Configurations
             services.AddScoped<IHalOperationConfigurationProvider, HalOperationConfigurationProvider>();
             services.AddScoped<IProspectListProvider, ProspectListProvider>();
             services.AddScoped<ICampaignProcessingProvider, CampaignProcessingProvider>();
+            services.AddScoped<ISendConnectionsProvider, SendConnectionsProvider>();
 
             return services;
         }

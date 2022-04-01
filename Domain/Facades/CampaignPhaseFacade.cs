@@ -22,19 +22,22 @@ namespace Domain.Facades
             ICampaignProcessingProvider campaignProcessingProvider,            
             IFollowUpMessagesProvider followUpMessagesProvider, 
             IProspectListProvider prospectListProvider,
+            ISendConnectionsProvider sendConnectionsProvider,
             IMonitorForNewProspectsProvider monitorForNewProspectsProvider)
         {
             _campaignProcessingProvider = campaignProcessingProvider;
             _followUpMessagesProvider = followUpMessagesProvider;            
             _monitorForNewProspectsProvider = monitorForNewProspectsProvider;
-            _prospectListProvider = prospectListProvider;            
+            _prospectListProvider = prospectListProvider;
+            _sendConnectionsProvider = sendConnectionsProvider;
             _logger = logger;
         }
 
         private readonly IMonitorForNewProspectsProvider _monitorForNewProspectsProvider;
         private readonly ICampaignProcessingProvider _campaignProcessingProvider;
         private readonly IFollowUpMessagesProvider _followUpMessagesProvider;
-        private readonly IProspectListProvider _prospectListProvider;        
+        private readonly IProspectListProvider _prospectListProvider;
+        private readonly ISendConnectionsProvider _sendConnectionsProvider;
         private readonly ILogger<CampaignPhaseFacade> _logger;        
 
         public HalOperationResult<T> ExecuteFollowUpMessagesPhase<T>(FollowUpMessagesBody message)
@@ -53,15 +56,33 @@ namespace Domain.Facades
             return await _monitorForNewProspectsProvider.ExecutePhase<T>(message);
         }
 
-        public async Task<HalOperationResult<T>> ExecutePhase<T>(ProspectListBody message) where T : IOperationResponse
+        public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ProspectListBody message) where T : IOperationResponse
         {
-            HalOperationResult<T> result = await _prospectListProvider.ExecutePhase<T>(message);
+            HalOperationResult<T> result = await _prospectListProvider.ExecutePhaseAsync<T>(message);
+            if(result.Succeeded == false)
+            {
+                return result;                
+            }
+
             return await _campaignProcessingProvider.PersistProspectListAsync<T>(result.Value, message);
+
         }
 
-        public HalOperationResult<T> ExecutePhase<T>(SendConnectionsBody message) where T : IOperationResponse
+        public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(SendConnectionsBody message, int sendConnectionsStageOrder) where T : IOperationResponse
         {
-            throw new NotImplementedException();
+            HalOperationResult<T> result = await _sendConnectionsProvider.ExecutePhaseAsync<T>(message, sendConnectionsStageOrder);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            result = await _campaignProcessingProvider.PerssistCampaingProspectsAsync<T>(result.Value, message);            
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            return await _campaignProcessingProvider.TriggerSendConnectionsPhaseAsync<T>(message);
         }
 
         public HalOperationResult<T> ExecutePhase<T>(ConnectionWithdrawBody message) where T : IOperationResponse

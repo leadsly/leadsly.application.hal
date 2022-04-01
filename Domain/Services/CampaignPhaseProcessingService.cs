@@ -25,6 +25,7 @@ namespace Domain.Services
 
         private readonly HttpClient _httpClient;
         private readonly ILogger<CampaignPhaseProcessingService> _logger;
+        private const string HttpPrefix = "http://";
 
         public async Task<HttpResponseMessage> ProcessNewConnectionsAsync(NewConnectionRequest request, CancellationToken ct = default)
         {
@@ -57,8 +58,8 @@ namespace Domain.Services
 
         public async Task<HttpResponseMessage> ProcessProspectListAsync(ProspectListPhaseCompleteRequest request, CancellationToken ct = default)
         {
-            string apiServerUrl = "https://localhost:5001/api/prospect-list";
-            
+            string apiServerUrl = "https://localhost:5001/api/prospect-list"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+
             HttpResponseMessage response = default;
             try
             {
@@ -71,7 +72,47 @@ namespace Domain.Services
                         PrimaryProspectListId = request.PrimaryProspectListId,
                         UserId = request.UserId,
                         HalId = request.HalId,
+                        CampaignId = request.CampaignId,
                         Prospects = request.Prospects,
+
+                    })
+                };
+
+                _logger.LogInformation("Sending request to process my new network connections.");
+                response = await _httpClient.SendAsync(req, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send reequest to process my new network connections.");
+            }
+
+            return response;
+        }
+
+        public Task<HttpResponseMessage> ProcessCampaignProspectListAsync(CampaignProspectListRequest request, CancellationToken ct = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<HttpResponseMessage> TriggerCampaignProspectListAsync(TriggerSendConnectionsRequest request, CancellationToken ct = default)
+        {
+            string apiServerUrl = "https://localhost:5001/api/prospect-list"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+
+            HttpResponseMessage response = default;
+            try
+            {
+                HttpRequestMessage req = new()
+                {
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    Content = JsonContent.Create(new
+                    {
+                        PrimaryProspectListId = request.PrimaryProspectListId,
+                        UserId = request.UserId,
+                        HalId = request.HalId,
+                        CampaignId = request.CampaignId,
+                        Prospects = request.Prospects,
+
                     })
                 };
 

@@ -16,5 +16,16 @@ namespace Domain.POMs.Pages
 
         HalOperationResult<T> GatherProspects<T>(IWebDriver driver)
             where T : IOperationResponse;
+
+        HalOperationResult<T> ClickNext<T>(IWebDriver driver)
+            where T : IOperationResponse;
+
+        bool IsNoSearchResultsContainerDisplayed(IWebDriver driver);
+
+        HalOperationResult<T> ClickRetrySearch<T>(IWebDriver driver)
+            where T : IOperationResponse;
+
+        HalOperationResult<T> SendConnectionRequest<T>(IWebElement prospect)
+            where T : IOperationResponse;
     }
 }

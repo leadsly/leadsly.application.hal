@@ -25,7 +25,6 @@ namespace Domain.Services
         }
 
         private readonly ILogger<WebDriverService> _logger;
-        private readonly IDefaultTabWebDriver _defaultTabWebDriver;
         private readonly IFileManager _fileManager;        
         private const long DefaultImplicitWait = 10;
 
@@ -57,23 +56,6 @@ namespace Domain.Services
                     }
                     _logger.LogInformation("Closing web driver window requested to be closed");
                     driver.Close();
-
-                    // ensure default tab window is still available
-                    string defaultTabWindow = driver.WindowHandles.FirstOrDefault(wH => wH == _defaultTabWebDriver.DefaultTabWindowHandleId);
-                    if (defaultTabWindow == null)
-                    {
-                        _logger.LogWarning("Web driver's default blank tab is not found, it might have been closed on accident");
-                        result.Failures.Add(new()
-                        {
-                            Reason = "Couldn't locate the default blank tab",
-                            Detail = "Failed to locate web driver's default blank tab"
-                        });
-                        return result;
-                    }
-                    else
-                    {
-                        driver.SwitchTo().Window(_defaultTabWebDriver.DefaultTabWindowHandleId);
-                    }
                 }
             }
             catch (Exception ex)

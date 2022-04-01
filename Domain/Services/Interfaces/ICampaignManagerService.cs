@@ -35,7 +35,7 @@ namespace Domain.Services.Interfaces
 
         Task StartProspectList(string messageId);
 
-        void StartSendConnectionRequests(string messageId);
+        Task StartSendConnectionRequests(string messageId, int sendConnectionsStageOrder);
         void StartConnectionWithdraw(string messageId);
     }
 }

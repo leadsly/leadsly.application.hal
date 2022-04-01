@@ -16,5 +16,11 @@ namespace Domain.Providers.Campaigns.Interfaces
     {
         Task<HalOperationResult<T>> PersistProspectListAsync<T>(IOperationResponse resultValue, ProspectListBody message, CancellationToken ct = default)
             where T : IOperationResponse;
+
+        Task<HalOperationResult<T>> PerssistCampaingProspectsAsync<T>(IOperationResponse resultValue, SendConnectionsBody message, CancellationToken ct = default)
+            where T : IOperationResponse;
+
+        Task<HalOperationResult<T>> TriggerSendConnectionsPhaseAsync<T>(SendConnectionsBody message, CancellationToken ct = default)
+            where T : IOperationResponse;
     }
 }

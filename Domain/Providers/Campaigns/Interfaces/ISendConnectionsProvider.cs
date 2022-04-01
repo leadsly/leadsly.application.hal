@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace Domain.Providers.Campaigns.Interfaces
 {
-    public interface IProspectListProvider
+    public interface ISendConnectionsProvider
     {
-        Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ProspectListBody message)
+        Task<HalOperationResult<T>> ExecutePhaseAsync<T>(SendConnectionsBody message, int sendConnectionsStageOrder)
             where T : IOperationResponse;
     }
 }
