@@ -18,7 +18,7 @@ namespace Domain.Services.Interfaces
 
         Task<HttpResponseMessage> ProcessProspectListAsync(ProspectListPhaseCompleteRequest request, CancellationToken ct = default);
 
-        Task<HttpResponseMessage> ProcessCampaignProspectListAsync(CampaignProspectListRequest request, CancellationToken ct = default);
+        Task<HttpResponseMessage> UpdateContactedCampaignProspectListAsync(CampaignProspectListRequest request, CancellationToken ct = default);
 
         Task<HttpResponseMessage> TriggerCampaignProspectListAsync(TriggerSendConnectionsRequest request, CancellationToken ct = default);
     }

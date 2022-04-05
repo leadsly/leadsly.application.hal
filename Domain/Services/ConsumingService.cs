@@ -70,18 +70,21 @@ namespace Domain.Services
                 string exchangeName = options.ExchangeOptions.Name;
                 string exchangeType = options.ExchangeOptions.ExchangeType;
 
+                // Combines the SendConnectionRequestsPhase and ProspectListPhase into a single queue
+                // to ensure we are only ever executing one phase at a time
+                NetworkingConnectionsQueue(options, exchangeName, exchangeType);
                 FollowUpMessageQueue(options, exchangeName, exchangeType);
                 MonitorForNewAcceptedConnectionsQueue(options, exchangeName, exchangeType);
                 ScanProspectsForRepliesQueue(options, exchangeName, exchangeType);
-                ProspectListQueue(options, exchangeName, exchangeType);
-                SendConnectionRequestsQueue(options, exchangeName, exchangeType);
+                //ProspectListQueue(options, exchangeName, exchangeType);
+                //SendConnectionRequestsQueue(options, exchangeName, exchangeType);
                 SendEmailInvitesQueue(options, exchangeName, exchangeType);
                 ConnectionWithdrawQueue(options, exchangeName, exchangeType);
                 RescrapeSearchurlsQueue(options, exchangeName, exchangeType);
             }
         }
 
-        private ConnectionFactory ConfigureConnectionFactor(RabbitMQOptions options, string clientProviderName)
+        private ConnectionFactory ConfigureConnectionFactor(RabbitMQOptions options, string clientProviderName, bool dispatchConsumerAsync = false)
         {
             return new ConnectionFactory()
             {
@@ -89,8 +92,47 @@ namespace Domain.Services
                 Password = options.ConnectionFactoryOptions.Password,
                 HostName = options.ConnectionFactoryOptions.HostName,
                 Port = options.ConnectionFactoryOptions.Port,
-                ClientProvidedName = clientProviderName
+                ClientProvidedName = clientProviderName,
+                DispatchConsumersAsync = dispatchConsumerAsync
             };
+        }
+
+        private void NetworkingConnectionsQueue(RabbitMQOptions options, string exchangeName, string exchangeType)
+        {
+            string clientProviderName = options.ConnectionFactoryOptions.ClientProvidedName.Replace("{halId}", this._halIdentity.Id);
+            clientProviderName = clientProviderName.Replace("{queue}", RabbitMQConstants.NetworkingConnections.QueueName);
+            var factory = ConfigureConnectionFactor(options, clientProviderName, true);
+
+            var connection = factory.CreateConnection();
+            Connections.Add(connection);
+            var channel = connection.CreateModel();
+            Channels.Add(channel);
+
+            channel.ExchangeDeclare(exchangeName, exchangeType);
+
+            string name = options.QueueConfigOptions.Name.Replace("{halId}", this._halIdentity.Id);
+            name = name.Replace("{queueName}", RabbitMQConstants.NetworkingConnections.QueueName);
+
+            channel.QueueDeclare(queue: name,
+                             durable: false,
+                             exclusive: false,
+                             autoDelete: false,
+                             arguments: null);
+
+            string routingKey = options.RoutingKey.Replace("{halId}", this._halIdentity.Id);
+            routingKey = routingKey.Replace("{purpose}", RabbitMQConstants.NetworkingConnections.RoutingKey);
+            channel.QueueBind(name, exchangeName, routingKey, null);
+
+            AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(channel);
+            consumer.Received += _campaignManagerService.OnNetworkingConnectionsEventReceived;
+
+            // process only one message at a time
+            channel.BasicQos(0, 1, false);
+
+            channel.BasicConsume(queue: name,
+                                 autoAck: false,
+                                 consumer: consumer);
+
         }
 
         private void FollowUpMessageQueue(RabbitMQOptions options, string exchangeName, string exchangeType)
@@ -200,75 +242,76 @@ namespace Domain.Services
             }
         }
 
-        private void ProspectListQueue(RabbitMQOptions options, string exchangeName, string exchangeType)
-        {
-            string clientProviderName = options.ConnectionFactoryOptions.ClientProvidedName.Replace("{halId}", this._halIdentity.Id);
-            clientProviderName = clientProviderName.Replace("{queue}", RabbitMQConstants.ProspectList.QueueName);
-            var factory = ConfigureConnectionFactor(options, clientProviderName);
+        //private void ProspectListQueue(RabbitMQOptions options, string exchangeName, string exchangeType)
+        //{
+        //    string clientProviderName = options.ConnectionFactoryOptions.ClientProvidedName.Replace("{halId}", this._halIdentity.Id);
+        //    clientProviderName = clientProviderName.Replace("{queue}", RabbitMQConstants.ProspectList.QueueName);
+        //    var factory = ConfigureConnectionFactor(options, clientProviderName);
 
-            var connection = factory.CreateConnection();
-            Connections.Add(connection);
-            var channel = connection.CreateModel();
-            Channels.Add(channel);
+        //    var connection = factory.CreateConnection();
+        //    Connections.Add(connection);
+        //    var channel = connection.CreateModel();
+        //    Channels.Add(channel);
 
-            channel.ExchangeDeclare(exchangeName, exchangeType);
+        //    channel.ExchangeDeclare(exchangeName, exchangeType);
 
-            string name = options.QueueConfigOptions.Name.Replace("{halId}", this._halIdentity.Id);
-            name = name.Replace("{queueName}", RabbitMQConstants.ProspectList.QueueName);
+        //    string name = options.QueueConfigOptions.Name.Replace("{halId}", this._halIdentity.Id);
+        //    name = name.Replace("{queueName}", RabbitMQConstants.ProspectList.QueueName);
 
-            channel.QueueDeclare(queue: name,
-                             durable: false,
-                             exclusive: false,
-                             autoDelete: false,
-                             arguments: null);
+        //    channel.QueueDeclare(queue: name,
+        //                     durable: false,
+        //                     exclusive: false,
+        //                     autoDelete: false,
+        //                     arguments: null);
 
-            string routingKey = options.RoutingKey.Replace("{halId}", this._halIdentity.Id);
-            routingKey = routingKey.Replace("{purpose}", RabbitMQConstants.ProspectList.RoutingKey);
-            channel.QueueBind(name, exchangeName, routingKey, null);
+        //    string routingKey = options.RoutingKey.Replace("{halId}", this._halIdentity.Id);
+        //    routingKey = routingKey.Replace("{purpose}", RabbitMQConstants.ProspectList.RoutingKey);
+        //    channel.QueueBind(name, exchangeName, routingKey, null);
 
-            EventingBasicConsumer consumer = new EventingBasicConsumer(channel);
-            consumer.Received += _campaignManagerService.OnProspectListEventReceived;
+        //    EventingBasicConsumer consumer = new EventingBasicConsumer(channel);
+        //    consumer.Received += _campaignManagerService.OnProspectListEventReceived;
 
-            channel.BasicConsume(queue: name,
-                                 autoAck: false,
-                                 consumer: consumer);
+        //    channel.BasicConsume(queue: name,
+        //                         autoAck: false,
+        //                         consumer: consumer);
 
-        }
+        //}
 
-        private void SendConnectionRequestsQueue(RabbitMQOptions options, string exchangeName, string exchangeType)
-        {
-            const string queueName = "send.connection.requests";
+        //private void SendConnectionRequestsQueue(RabbitMQOptions options, string exchangeName, string exchangeType)
+        //{
+        //    string clientProviderName = options.ConnectionFactoryOptions.ClientProvidedName.Replace("{halId}", this._halIdentity.Id);
+        //    clientProviderName = clientProviderName.Replace("{queue}", RabbitMQConstants.SendConnections.QueueName);
+        //    var factory = ConfigureConnectionFactor(options, clientProviderName);
 
-            string clientProviderName = options.ConnectionFactoryOptions.ClientProvidedName.Replace("{halId}", this._halIdentity.Id);
-            clientProviderName = clientProviderName.Replace("{queue}", queueName);
-            var factory = ConfigureConnectionFactor(options, clientProviderName);
+        //    var connection = factory.CreateConnection();
+        //    Connections.Add(connection);
+        //    var channel = connection.CreateModel();
+        //    Channels.Add(channel);
 
-            using (var connection = factory.CreateConnection())
-            using (var channel = connection.CreateModel())
-            {
-                channel.ExchangeDeclare(exchangeName, exchangeType);
+        //    channel.ExchangeDeclare(exchangeName, exchangeType);
 
-                string name = options.QueueConfigOptions.Name.Replace("{halId}", this._halIdentity.Id);
-                name = name.Replace("{queueName}", queueName);
+        //    string name = options.QueueConfigOptions.Name.Replace("{halId}", this._halIdentity.Id);
+        //    name = name.Replace("{queueName}", RabbitMQConstants.SendConnections.QueueName);
 
-                channel.QueueDeclare(queue: name,
-                                 durable: false,
-                                 exclusive: false,
-                                 autoDelete: false,
-                                 arguments: null);
+        //    channel.QueueDeclare(queue: name,
+        //                     durable: false,
+        //                     exclusive: false,
+        //                     autoDelete: false,
+        //                     arguments: null);
 
-                string routingKey = options.RoutingKey.Replace("{halId}", this._halIdentity.Id);
-                routingKey = routingKey.Replace("{purpose}", "send-connection-requests");
-                channel.QueueBind(name, exchangeName, routingKey, null);
+        //    string routingKey = options.RoutingKey.Replace("{halId}", this._halIdentity.Id);
+        //    routingKey = routingKey.Replace("{purpose}", RabbitMQConstants.SendConnections.RoutingKey);
+        //    channel.QueueBind(name, exchangeName, routingKey, null);
 
-                EventingBasicConsumer consumer = new EventingBasicConsumer(channel);
-                consumer.Received += _campaignManagerService.OnSendConnectionRequestsEventReceived;
+        //    EventingBasicConsumer consumer = new EventingBasicConsumer(channel);
+        //    consumer.Received += _campaignManagerService.OnSendConnectionRequestsEventReceived;
 
-                channel.BasicConsume(queue: name,
-                                     autoAck: false,
-                                     consumer: consumer);
-            }
-        }
+        //    channel.BasicQos(0, 1, false);
+
+        //    channel.BasicConsume(queue: name,
+        //                         autoAck: false,
+        //                         consumer: consumer);
+        //}
 
         private void SendEmailInvitesQueue(RabbitMQOptions options, string exchangeName, string exchangeType)
         {

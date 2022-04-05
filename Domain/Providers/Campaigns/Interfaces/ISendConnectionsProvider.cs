@@ -11,7 +11,7 @@ namespace Domain.Providers.Campaigns.Interfaces
 {
     public interface ISendConnectionsProvider
     {
-        Task<HalOperationResult<T>> ExecutePhaseAsync<T>(SendConnectionsBody message, int sendConnectionsStageOrder)
+        HalOperationResult<T> ExecutePhase<T>(SendConnectionsBody message)
             where T : IOperationResponse;
     }
 }

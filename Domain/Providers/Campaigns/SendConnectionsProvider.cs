@@ -43,7 +43,7 @@ namespace Domain.Providers.Campaigns
         private readonly ILinkedInHomePage _linkedInHomePage;
         private readonly ICampaignPhaseProcessingService _campaignProcessingPhase;
 
-        public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(SendConnectionsBody message, int sendConnectionsStageOrder) where T : IOperationResponse
+        public HalOperationResult<T> ExecutePhase<T>(SendConnectionsBody message) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
@@ -64,10 +64,10 @@ namespace Domain.Providers.Campaigns
 
             IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)driverOperationResult.Value).WebDriver;
 
-            return SendConnections<T>(webDriver, message, sendConnectionsStageOrder);
+            return SendConnections<T>(webDriver, message);
         }
 
-        private HalOperationResult<T> SendConnections<T>(IWebDriver webDriver, SendConnectionsBody message, int sendConnectionsStageOrder)
+        private HalOperationResult<T> SendConnections<T>(IWebDriver webDriver, SendConnectionsBody message)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -86,13 +86,7 @@ namespace Domain.Providers.Campaigns
                 return result;
             }
 
-            SendConnectionsStageBody sendConnectionsStageBody = message.SendConnectionsStages.Where(s => s.Order == sendConnectionsStageOrder).FirstOrDefault();
-            if(sendConnectionsStageBody == null)
-            {
-                return result;
-            }
-
-            result = SendConnectionRequests<T>(webDriver, sendConnectionsStageBody.ConnectionsLimit, message.CampaignId);
+            result = SendConnectionRequests<T>(webDriver, message.SendConnectionsStage.ConnectionsLimit, message.CampaignId);
             if(result.Succeeded == false)
             {
                 return result;
@@ -144,10 +138,26 @@ namespace Domain.Providers.Campaigns
                     {
                         continue;
                     }
+
+                    result = _linkedInSearchPage.ClickSendInModal<T>(webDriver);
+                    if(result.Succeeded == false)
+                    {
+                        continue;
+                    }
                     campaignProspectsAsWebElements.Add(prospect);
                 }
 
                 connectedProspects.AddRange(CreateCampaignProspects(campaignProspectsAsWebElements, campaignId));
+
+                bool nextDisabled = _linkedInSearchPage.IsNextButtonDisabled(webDriver);
+                if (nextDisabled)
+                {
+                    // this means were on the last page and we need to break out of the loop
+                    break;
+                }
+
+                // check if we're on the last result                
+                stageLimit -= campaignProspectsAsWebElements.Count;
 
                 HalOperationResult<IOperationResponse> clickNextResult = _linkedInSearchPage.ClickNext<IOperationResponse>(webDriver);
                 if (clickNextResult.Succeeded == false)
@@ -155,8 +165,6 @@ namespace Domain.Providers.Campaigns
                     _logger.LogError("[SendConnectionRequests]: Failed to navigate to the next page");
                     return result;
                 }
-
-                stageLimit--;
             }
 
             ICampaignProspectListPayload campaignProspectsPayload = new CampaignProspectListPayload
@@ -177,7 +185,7 @@ namespace Domain.Providers.Campaigns
             {
                 campaignProspects.Add(new()
                 {
-                    CreatedTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds(),
+                    ConnectionSentTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds(),
                     Name = GetProspectsName(webElement),
                     ProfileUrl = GetProspectsProfileUrl(webElement),
                     CampaignId = campaignId

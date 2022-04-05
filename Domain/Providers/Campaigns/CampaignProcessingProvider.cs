@@ -68,7 +68,7 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        public async Task<HalOperationResult<T>> PerssistCampaingProspectsAsync<T>(IOperationResponse resultValue, SendConnectionsBody message, CancellationToken ct = default) where T : IOperationResponse
+        public async Task<HalOperationResult<T>> ProcessConnectionRequestSentForCampaignProspectsAsync<T>(IOperationResponse resultValue, SendConnectionsBody message, CancellationToken ct = default) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
@@ -86,12 +86,12 @@ namespace Domain.Providers.Campaigns
                 UserId = message.UserId,
                 CampaignId = message.CampaignId,
                 CampaignProspects = campaignProspectList.CampaignProspects,
-                RequestUrl = "api/campaign/prospects",
+                RequestUrl = $"api/campaigns/{message.CampaignId}/prospects",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
             };
 
-            HttpResponseMessage responseMessage = await _campaignPhaseProcessingService.ProcessCampaignProspectListAsync(request, ct);
+            HttpResponseMessage responseMessage = await _campaignPhaseProcessingService.UpdateContactedCampaignProspectListAsync(request, ct);
             if (responseMessage == null)
             {
                 _logger.LogError("Response from application server was null. The request was responsible for saving primary prospects to the database");
@@ -108,14 +108,15 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        public async Task<HalOperationResult<T>> TriggerSendConnectionsPhaseAsync<T>(string campaignId, string userId, SendConnectionsBody message, CancellationToken ct = default) where T : IOperationResponse
+        public async Task<HalOperationResult<T>> TriggerSendConnectionsPhaseAsync<T>(ProspectListBody message, CancellationToken ct = default) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
             TriggerSendConnectionsRequest request = new()
             {
-                CampaignId = campaignId,
-                UserId = userId,
+                CampaignId = message.CampaignId,
+                UserId = message.UserId,
+                HalId = message.HalId,
                 RequestUrl = "api/campaignphases/trigger-send-connection-requests",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,

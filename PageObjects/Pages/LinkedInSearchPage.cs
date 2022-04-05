@@ -22,9 +22,11 @@ namespace PageObjects.Pages
         public LinkedInSearchPage(ILogger<LinkedInSearchPage> logger)
         {
             _logger = logger;
+            _rnd = new Random();
         }
 
         private readonly ILogger<LinkedInSearchPage> _logger;
+        private readonly Random _rnd;
         private const int Timeout = 30;
 
         private IWebElement SearchResultFooter(IWebDriver webDriver)
@@ -247,6 +249,18 @@ namespace PageObjects.Pages
             return nextBtn;
         }
 
+        private void RandomWait(int minWaitTime, int maxWaitTime)
+        {
+            int number = _rnd.Next(minWaitTime, maxWaitTime);
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            while (sw.Elapsed.TotalSeconds < number)
+            {
+                continue;
+            }
+            sw.Stop();
+        }
+
         public HalOperationResult<T> ClickNext<T>(IWebDriver driver) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -259,11 +273,11 @@ namespace PageObjects.Pages
                 return result;
             }
 
-            Random random = new Random();
             Stopwatch stopwatch = new();
             try
             {
-                Thread.Sleep(1000);
+                RandomWait(1, 4);
+
                 nextButton.Click();
 
                 Stopwatch sw = Stopwatch.StartNew();
@@ -376,6 +390,9 @@ namespace PageObjects.Pages
             try
             {
                 _logger.LogInformation("[ClickRetrySearch] Clicking retry search results because we've gotten an error page");
+
+                RandomWait(1, 5);
+
                 retryButton.Click();
 
                 WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
@@ -417,7 +434,13 @@ namespace PageObjects.Pages
             {
                 if (actionButton.Text == "Connect")
                 {
+                    RandomWait(1, 7);
+
                     actionButton.Click();
+                }
+                else
+                {
+                    return result;
                 }
             }
             else
@@ -442,6 +465,66 @@ namespace PageObjects.Pages
                 _logger.LogDebug(ex, "Prospect does not contain action button");
             }
             return actionButton;
+        }
+
+        private IWebElement CustomizeThisInvitationModal(IWebDriver webDriver)
+        {
+            IWebElement modal = default;
+            try
+            {
+                modal = webDriver.FindElement(By.CssSelector("#artdeco-modal-outlet .artdeco-modal"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to locate modal");
+            }
+            return modal;
+        }
+
+        private IWebElement SendNowButton(IWebDriver webDriver)
+        {
+            IWebElement button = default;
+            try
+            {
+                button = CustomizeThisInvitationModal(webDriver).FindElement(By.CssSelector("button[aria-label='Send now']"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to locate send now button");
+            }
+            return button;
+        }
+
+        public HalOperationResult<T> ClickSendInModal<T>(IWebDriver webDriver) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            IWebElement button = SendNowButton(webDriver);
+            if(button == null)
+            {
+                return result;
+            }
+
+            RandomWait(1, 8);
+
+            button.Click();
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        public bool IsNextButtonDisabled(IWebDriver webDriver)
+        {
+            IWebElement nextButton = NextButton(webDriver);
+
+            if(nextButton == null)
+            {
+                return false;
+            }
+
+            string disabledAttribute = nextButton.GetAttribute("disabled");
+            bool.TryParse(disabledAttribute, out bool result);
+            return result;
         }
     }
 }

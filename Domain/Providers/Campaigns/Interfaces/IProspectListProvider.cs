@@ -11,7 +11,7 @@ namespace Domain.Providers.Campaigns.Interfaces
 {
     public interface IProspectListProvider
     {
-        Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ProspectListBody message)
+        HalOperationResult<T> ExecutePhase<T>(ProspectListBody message)
             where T : IOperationResponse;
     }
 }

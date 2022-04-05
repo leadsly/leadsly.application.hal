@@ -45,7 +45,7 @@ namespace Domain.Providers.Campaigns
 
         #region Execute ProspectList Phase
 
-        public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ProspectListBody message) 
+        public HalOperationResult<T> ExecutePhase<T>(ProspectListBody message) 
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -183,7 +183,7 @@ namespace Domain.Providers.Campaigns
                         break;
                     }
 
-                    if (i == 60)
+                   if (i == 60)
                         break;
                 }
             }

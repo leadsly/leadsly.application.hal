@@ -24,7 +24,7 @@ namespace Domain.Facades.Interfaces
         Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ProspectListBody message)
             where T : IOperationResponse;
 
-        Task<HalOperationResult<T>> ExecutePhaseAsync<T>(SendConnectionsBody message, int sendConnectionsStageOrder)
+        Task<HalOperationResult<T>> ExecutePhaseAsync<T>(SendConnectionsBody message)
             where T : IOperationResponse;
 
         HalOperationResult<T> ExecutePhase<T>(ConnectionWithdrawBody message)

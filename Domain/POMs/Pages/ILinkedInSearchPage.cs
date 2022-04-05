@@ -27,5 +27,11 @@ namespace Domain.POMs.Pages
 
         HalOperationResult<T> SendConnectionRequest<T>(IWebElement prospect)
             where T : IOperationResponse;
+
+        HalOperationResult<T> ClickSendInModal<T>(IWebDriver webDriver)
+            where T : IOperationResponse;
+
+        bool IsNextButtonDisabled(IWebDriver webDriver);
+        
     }
 }

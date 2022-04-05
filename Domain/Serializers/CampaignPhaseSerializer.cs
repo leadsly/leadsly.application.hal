@@ -74,7 +74,7 @@ namespace Domain.Serializers
             }
             catch (Exception ex)
             {
-
+                
             }
 
             return scanProspectsForRepliesBody;
@@ -82,7 +82,17 @@ namespace Domain.Serializers
 
         public SendConnectionsBody DeserializeSendConnectionRequestsBody(string body)
         {
-            throw new NotImplementedException();
+            SendConnectionsBody sendConnectionsBody = null;
+            try
+            {
+                sendConnectionsBody = JsonConvert.DeserializeObject<SendConnectionsBody>(body);
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return sendConnectionsBody;
         }
     }
 }

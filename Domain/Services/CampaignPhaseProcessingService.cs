@@ -89,14 +89,9 @@ namespace Domain.Services
             return response;
         }
 
-        public Task<HttpResponseMessage> ProcessCampaignProspectListAsync(CampaignProspectListRequest request, CancellationToken ct = default)
+        public async Task<HttpResponseMessage> UpdateContactedCampaignProspectListAsync(CampaignProspectListRequest request, CancellationToken ct = default)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<HttpResponseMessage> TriggerCampaignProspectListAsync(TriggerSendConnectionsRequest request, CancellationToken ct = default)
-        {
-            string apiServerUrl = "https://localhost:5001/api/prospect-list"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
 
             HttpResponseMessage response = default;
             try
@@ -107,12 +102,40 @@ namespace Domain.Services
                     RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
-                        PrimaryProspectListId = request.PrimaryProspectListId,
                         UserId = request.UserId,
                         HalId = request.HalId,
                         CampaignId = request.CampaignId,
-                        Prospects = request.Prospects,
+                        CampaignProspects = request.CampaignProspects
+                    })
+                };
 
+                _logger.LogInformation("Sending request to process my new network connections.");
+                response = await _httpClient.SendAsync(req, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send reequest to process my new network connections.");
+            }
+
+            return response;
+        }
+
+        public async Task<HttpResponseMessage> TriggerCampaignProspectListAsync(TriggerSendConnectionsRequest request, CancellationToken ct = default)
+        {
+            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+
+            HttpResponseMessage response = default;
+            try
+            {
+                HttpRequestMessage req = new()
+                {
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    Content = JsonContent.Create(new
+                    {
+                        CampaignId = request.CampaignId,
+                        UserId = request.UserId,
+                        HalId = request.HalId
                     })
                 };
 

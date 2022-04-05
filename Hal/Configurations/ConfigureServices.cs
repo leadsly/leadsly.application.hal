@@ -270,10 +270,20 @@ namespace Hal.Configurations
             Log.Information("Registering hangfire services.");
 
             GlobalJobFilters.Filters.Add(new AutomaticRetryAttribute { Attempts = 0 });
+
+            GlobalConfiguration.Configuration.UseSerilogLogProvider();
+
+            //JsonSerializerSettings settings = new()
+            //{
+            //    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+            //};
+
+            //GlobalConfiguration.Configuration.UseSerializerSettings(settings);
+
             services.AddHangfire(config =>
             {
                 config.UsePostgreSqlStorage(defaultConnection);
-                config.UseRecommendedSerializerSettings();                 
+                config.UseRecommendedSerializerSettings();
             }).AddHangfireServer();
 
             return services;

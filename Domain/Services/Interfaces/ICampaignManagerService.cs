@@ -1,4 +1,5 @@
-﻿using RabbitMQ.Client;
+﻿using Leadsly.Application.Model.Campaigns;
+using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 using System.Collections.Generic;
@@ -10,16 +11,16 @@ namespace Domain.Services.Interfaces
 {
     public interface ICampaignManagerService
     {
-
+        Task OnNetworkingConnectionsEventReceived(object sender, BasicDeliverEventArgs eventArgs);
         void OnFollowUpMessageEventReceived(object sender, BasicDeliverEventArgs eventArgs);
         
         void OnMonitorForNewAcceptedConnectionsEventReceived(object sender, BasicDeliverEventArgs eventArgs);
 
         void OnScanProspectsForRepliesEventReceived(object sender, BasicDeliverEventArgs eventArgs);
 
-        void OnProspectListEventReceived(object sender, BasicDeliverEventArgs eventArgs);
+        //void OnProspectListEventReceived(object sender, BasicDeliverEventArgs eventArgs);
 
-        void OnSendConnectionRequestsEventReceived(object sender, BasicDeliverEventArgs eventArgs);
+        //void OnSendConnectionRequestsEventReceived(object sender, BasicDeliverEventArgs eventArgs);
 
         void OnSendEmailInvitesEventReceived(object sender, BasicDeliverEventArgs eventArgs);
 
@@ -33,9 +34,10 @@ namespace Domain.Services.Interfaces
 
         void StartScanningProspectsForReplies(string messageId);
 
-        Task StartProspectList(string messageId);
+        //Task StartProspectList(string messageId);
 
-        Task StartSendConnectionRequests(string messageId, int sendConnectionsStageOrder);
+        //Task StartSendConnectionRequests(string messageId);
+
         void StartConnectionWithdraw(string messageId);
     }
 }

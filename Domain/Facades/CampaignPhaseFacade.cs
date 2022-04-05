@@ -58,31 +58,30 @@ namespace Domain.Facades
 
         public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ProspectListBody message) where T : IOperationResponse
         {
-            HalOperationResult<T> result = await _prospectListProvider.ExecutePhaseAsync<T>(message);
+            HalOperationResult<T> result = _prospectListProvider.ExecutePhase<T>(message);
             if(result.Succeeded == false)
             {
                 return result;                
             }
 
-            return await _campaignProcessingProvider.PersistProspectListAsync<T>(result.Value, message);
-
-        }
-
-        public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(SendConnectionsBody message, int sendConnectionsStageOrder) where T : IOperationResponse
-        {
-            HalOperationResult<T> result = await _sendConnectionsProvider.ExecutePhaseAsync<T>(message, sendConnectionsStageOrder);
-            if(result.Succeeded == false)
-            {
-                return result;
-            }
-
-            result = await _campaignProcessingProvider.PerssistCampaingProspectsAsync<T>(result.Value, message);            
+            result = await _campaignProcessingProvider.PersistProspectListAsync<T>(result.Value, message);
             if(result.Succeeded == false)
             {
                 return result;
             }
 
             return await _campaignProcessingProvider.TriggerSendConnectionsPhaseAsync<T>(message);
+        }
+
+        public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(SendConnectionsBody message) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = _sendConnectionsProvider.ExecutePhase<T>(message);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            return await _campaignProcessingProvider.ProcessConnectionRequestSentForCampaignProspectsAsync<T>(result.Value, message);                        
         }
 
         public HalOperationResult<T> ExecutePhase<T>(ConnectionWithdrawBody message) where T : IOperationResponse
