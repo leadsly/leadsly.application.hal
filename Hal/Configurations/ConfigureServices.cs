@@ -70,6 +70,11 @@ namespace Hal.Configurations
                 opt.BaseAddress = new Uri("http://localhost:5000/api", UriKind.Absolute);
             });
 
+            services.AddHttpClient<ICampaignService, CampaignService>(opt =>
+            {
+                opt.BaseAddress = new Uri("http://localhost:5000/api", UriKind.Absolute);
+            });
+
             services.AddScoped<ILinkedInHtmlParser, LinkedInHtmlParser>();
 
             services.Configure<WebDriverConfigOptions>(options => configuration.GetSection(nameof(WebDriverConfigOptions)).Bind(options));
@@ -106,6 +111,7 @@ namespace Hal.Configurations
             Log.Information("Registering serializers configuration.");
 
             services.AddScoped<ICampaignPhaseSerializer, CampaignPhaseSerializer>();
+            services.AddScoped<ICampaignSerializer, CampaignSerializer>();
 
             return services;
         }
@@ -145,7 +151,7 @@ namespace Hal.Configurations
             services.AddScoped<IMonitorForNewProspectsProvider, MonitorForNewProspectsProvider>();
             services.AddScoped<IHalOperationConfigurationProvider, HalOperationConfigurationProvider>();
             services.AddScoped<IProspectListProvider, ProspectListProvider>();
-            services.AddScoped<ICampaignProcessingProvider, CampaignProcessingProvider>();
+            services.AddScoped<ICampaignProvider, CampaignProvider>();
             services.AddScoped<ISendConnectionsProvider, SendConnectionsProvider>();
 
             return services;

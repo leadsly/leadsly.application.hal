@@ -392,6 +392,7 @@ namespace Domain.Providers
                 else
                 {
                     _logger.LogInformation("Requested window was not found. Keeping focus on the current tab.");
+                    return result;
                 }
                 
             }

@@ -10,6 +10,8 @@ using Leadsly.Application.Model.Campaigns.SendConnections;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage.Interfaces;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
+using Leadsly.Application.Model.Responses.Hal;
+using Leadsly.Application.Model.Responses.Hal.Interfaces;
 using Leadsly.Application.Model.WebDriver;
 using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -43,7 +45,7 @@ namespace Domain.Providers.Campaigns
         private readonly ILinkedInHomePage _linkedInHomePage;
         private readonly ICampaignPhaseProcessingService _campaignProcessingPhase;
 
-        public HalOperationResult<T> ExecutePhase<T>(SendConnectionsBody message) where T : IOperationResponse
+        public HalOperationResult<T> ExecutePhase<T>(SendConnectionsBody message, IList<SentConnectionsUrlStatusRequest> sentConnectionsUrlStatusPayload) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
@@ -51,8 +53,7 @@ namespace Domain.Providers.Campaigns
             WebDriverOperationData operationData = new()
             {
                 BrowserPurpose = BrowserPurpose.Connect,
-                ChromeProfileName = message.ChromeProfileName,
-                PageUrl = message.PageUrl
+                ChromeProfileName = message.ChromeProfileName
             };
 
             HalOperationResult<T> driverOperationResult = _webDriverProvider.GetOrCreateWebDriver<T>(operationData);
@@ -64,49 +65,76 @@ namespace Domain.Providers.Campaigns
 
             IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)driverOperationResult.Value).WebDriver;
 
-            return SendConnections<T>(webDriver, message);
+            return SendConnections<T>(webDriver, message, sentConnectionsUrlStatusPayload);
         }
 
-        private HalOperationResult<T> SendConnections<T>(IWebDriver webDriver, SendConnectionsBody message)
+        private HalOperationResult<T> SendConnections<T>(IWebDriver webDriver, SendConnectionsBody message, IList<SentConnectionsUrlStatusRequest> sentConnectionsUrlStatusPayload)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
-            string defaultWindowHandle = webDriver.CurrentWindowHandle;
-
-            result = _webDriverProvider.NewTab<T>(webDriver);
-            if (result.Succeeded == false)
+            SentConnectionsUrlStatusRequest sentConnectionsUrlStatus = sentConnectionsUrlStatusPayload.FirstOrDefault();
+            if (sentConnectionsUrlStatus == null)
             {
+                _logger.LogWarning("No sent connections url status provided! Web driver does not know where to start sending connections!");
                 return result;
             }
 
-            result = GoToPage<T>(webDriver, message.PageUrl);
-            if (result.Succeeded == false)
+            // only open up a new tab if we aren't trying to re-use a window handle from before
+            if (sentConnectionsUrlStatus.WindowHandleId != null)
             {
-                return result;
+                result = _webDriverProvider.SwitchTo<T>(webDriver, sentConnectionsUrlStatus.WindowHandleId);
+                if(result.Succeeded == false)
+                {
+                    result = _webDriverProvider.NewTab<T>(webDriver);
+                    if (result.Succeeded == false)
+                    {
+                        return result;
+                    }
+                    // if the switch has failed, its possible we have a stale window reference so just go to a new page
+                    result = GoToPage<T>(webDriver, sentConnectionsUrlStatus.CurrentUrl);
+                    if (result.Succeeded == false)
+                    {
+                        return result;
+                    }
+                }
+            }
+            else
+            {
+                result = _webDriverProvider.NewTab<T>(webDriver);
+                if (result.Succeeded == false)
+                {
+                    return result;
+                }
+
+                result = GoToPage<T>(webDriver, sentConnectionsUrlStatus.CurrentUrl);
+                if (result.Succeeded == false)
+                {
+                    return result;
+                }
             }
 
-            result = SendConnectionRequests<T>(webDriver, message.SendConnectionsStage.ConnectionsLimit, message.CampaignId);
+            result = SendConnectionRequests<T>(webDriver, message.SendConnectionsStage.ConnectionsLimit, message.CampaignId, sentConnectionsUrlStatusPayload);
             if(result.Succeeded == false)
             {
                 return result;
             }
 
-            string currentUrl = webDriver.Url;
-
             result.Succeeded = true;
             return result;
         }
 
-        private HalOperationResult<T> SendConnectionRequests<T>(IWebDriver webDriver, int stageConnectionsLimit, string campaignId)
+        private HalOperationResult<T> SendConnectionRequests<T>(IWebDriver webDriver, int stageConnectionsLimit, string campaignId, IList<SentConnectionsUrlStatusRequest> sentConnectionsUrlStatusPayload)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
+            // we skip one because by the time we are in this method, we have already navigated to the first url
+            Queue<SentConnectionsUrlStatusRequest> allSentConnectionsUrlStatuses = new(sentConnectionsUrlStatusPayload);
+            IList<SentConnectionsUrlStatusRequest> updatedSentConnectionsUrlStatusRequests = new List<SentConnectionsUrlStatusRequest>();
+            SentConnectionsUrlStatusRequest currentSentConnectionsUrlStatus = allSentConnectionsUrlStatuses.Dequeue();
 
             List<CampaignProspectRequest> connectedProspects = new();
-
-            int stageLimit = stageConnectionsLimit;
-            while (stageLimit != 0)
+            while (stageConnectionsLimit != 0)
             {
                 bool isNoSearchResultsContainerDisplayed = _linkedInSearchPage.IsNoSearchResultsContainerDisplayed(webDriver);
                 if (isNoSearchResultsContainerDisplayed == true)
@@ -127,11 +155,22 @@ namespace Domain.Providers.Campaigns
                     return result;
                 }
 
-                IList<IWebElement> propsAsWebElements = gatherProspectsResult.Value.ProspectElements;
-                IList<IWebElement> campaignProspectsAsWebElements = new List<IWebElement>();
+                //IList<IWebElement> campaignProspectsAsWebElements = new List<IWebElement>();
                 // find prospects that have an action button // .entity-result__actions
-                foreach (IWebElement prospect in propsAsWebElements)
+                foreach (IWebElement prospect in gatherProspectsResult.Value.ProspectElements)
                 {
+                    if(stageConnectionsLimit == 0)
+                    {
+                        // update sent connections url status
+                        currentSentConnectionsUrlStatus.CurrentUrl = webDriver.Url;
+                        currentSentConnectionsUrlStatus.StartedCrawling = true;
+                        currentSentConnectionsUrlStatus.LastActivityTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                        currentSentConnectionsUrlStatus.WindowHandleId = webDriver.CurrentWindowHandle;
+                        updatedSentConnectionsUrlStatusRequests.Add(currentSentConnectionsUrlStatus);
+
+                        goto finalize;
+                    }
+
                     _logger.LogInformation("[SendConnectionRequests]: Sending connection request to the given prospect");
                     result = _linkedInSearchPage.SendConnectionRequest<T>(prospect);
                     if (result.Succeeded == false)
@@ -144,21 +183,41 @@ namespace Domain.Providers.Campaigns
                     {
                         continue;
                     }
-                    campaignProspectsAsWebElements.Add(prospect);
+                    //campaignProspectsAsWebElements.Add(prospect);
+                    connectedProspects.Add(CreateCampaignProspects(prospect, campaignId));
+
+                    stageConnectionsLimit -= 1;
                 }
 
-                connectedProspects.AddRange(CreateCampaignProspects(campaignProspectsAsWebElements, campaignId));
+                //connectedProspects.AddRange(CreateCampaignProspects(campaignProspectsAsWebElements, campaignId));                
 
                 bool nextDisabled = _linkedInSearchPage.IsNextButtonDisabled(webDriver);
                 if (nextDisabled)
                 {
-                    // this means were on the last page and we need to break out of the loop
-                    break;
+                    currentSentConnectionsUrlStatus.CurrentUrl = webDriver.Url;
+                    currentSentConnectionsUrlStatus.StartedCrawling = true;
+                    currentSentConnectionsUrlStatus.FinishedCrawling = true;
+                    currentSentConnectionsUrlStatus.WindowHandleId = string.Empty;
+                    currentSentConnectionsUrlStatus.LastActivityTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    updatedSentConnectionsUrlStatusRequests.Add(currentSentConnectionsUrlStatus);
+
+                    if(allSentConnectionsUrlStatuses.Count > 0)
+                    {
+                        currentSentConnectionsUrlStatus = allSentConnectionsUrlStatuses.Dequeue();
+
+                        result = GoToPage<T>(webDriver, currentSentConnectionsUrlStatus.CurrentUrl);
+                        if (result.Succeeded == false)
+                        {
+                            return result;
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
 
-                // check if we're on the last result                
-                stageLimit -= campaignProspectsAsWebElements.Count;
-
+                // go to the next page
                 HalOperationResult<IOperationResponse> clickNextResult = _linkedInSearchPage.ClickNext<IOperationResponse>(webDriver);
                 if (clickNextResult.Succeeded == false)
                 {
@@ -167,10 +226,15 @@ namespace Domain.Providers.Campaigns
                 }
             }
 
-            ICampaignProspectListPayload campaignProspectsPayload = new CampaignProspectListPayload
+            ISendConnectionsPayload campaignProspectsPayload = default;
+            finalize:
             {
-                CampaignProspects = connectedProspects
-            };
+                campaignProspectsPayload = new SendConnectionsPayload
+                {
+                    CampaignProspects = connectedProspects,
+                    SentConnectionsUrlStatuses = updatedSentConnectionsUrlStatusRequests
+                };
+            }
 
             result.Value = (T)campaignProspectsPayload;
             result.Succeeded = true;
@@ -193,6 +257,17 @@ namespace Domain.Providers.Campaigns
             }
 
             return campaignProspects;
+        }
+
+        private CampaignProspectRequest CreateCampaignProspects(IWebElement prospect, string campaignId)
+        {
+            return new CampaignProspectRequest()
+            {
+                ConnectionSentTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds(),
+                Name = GetProspectsName(prospect),
+                ProfileUrl = GetProspectsProfileUrl(prospect),
+                CampaignId = campaignId
+            };
         }
 
         private string GetProspectsName(IWebElement webElement)

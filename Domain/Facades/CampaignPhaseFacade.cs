@@ -3,6 +3,7 @@ using Domain.Providers.Campaigns.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
+using Leadsly.Application.Model.Campaigns.Interfaces;
 using Leadsly.Application.Model.RabbitMQ;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
@@ -19,13 +20,13 @@ namespace Domain.Facades
     public class CampaignPhaseFacade : ICampaignPhaseFacade
     {
         public CampaignPhaseFacade(ILogger<CampaignPhaseFacade> logger,
-            ICampaignProcessingProvider campaignProcessingProvider,            
+            ICampaignProvider campaignProvider,            
             IFollowUpMessagesProvider followUpMessagesProvider, 
             IProspectListProvider prospectListProvider,
             ISendConnectionsProvider sendConnectionsProvider,
             IMonitorForNewProspectsProvider monitorForNewProspectsProvider)
         {
-            _campaignProcessingProvider = campaignProcessingProvider;
+            _campaignProvider = campaignProvider;
             _followUpMessagesProvider = followUpMessagesProvider;            
             _monitorForNewProspectsProvider = monitorForNewProspectsProvider;
             _prospectListProvider = prospectListProvider;
@@ -34,7 +35,7 @@ namespace Domain.Facades
         }
 
         private readonly IMonitorForNewProspectsProvider _monitorForNewProspectsProvider;
-        private readonly ICampaignProcessingProvider _campaignProcessingProvider;
+        private readonly ICampaignProvider _campaignProvider;
         private readonly IFollowUpMessagesProvider _followUpMessagesProvider;
         private readonly IProspectListProvider _prospectListProvider;
         private readonly ISendConnectionsProvider _sendConnectionsProvider;
@@ -64,24 +65,51 @@ namespace Domain.Facades
                 return result;                
             }
 
-            result = await _campaignProcessingProvider.PersistProspectListAsync<T>(result.Value, message);
+            result = await _campaignProvider.PersistProspectListAsync<T>(result.Value, message);
             if(result.Succeeded == false)
             {
                 return result;
             }
 
-            return await _campaignProcessingProvider.TriggerSendConnectionsPhaseAsync<T>(message);
+            return await _campaignProvider.TriggerSendConnectionsPhaseAsync<T>(message);
         }
 
         public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(SendConnectionsBody message) where T : IOperationResponse
         {
-            HalOperationResult<T> result = _sendConnectionsProvider.ExecutePhase<T>(message);
+            HalOperationResult<T> result = new();
+            // grab latest status of the connection request urls
+            result = await _campaignProvider.GetLatestSendConnectionsUrlStatusesAsync<T>(message);
             if(result.Succeeded == false)
             {
                 return result;
             }
 
-            return await _campaignProcessingProvider.ProcessConnectionRequestSentForCampaignProspectsAsync<T>(result.Value, message);                        
+            IGetSentConnectionsUrlStatusPayload getSentConnectionsUrlStatusPayload = ((IGetSentConnectionsUrlStatusPayload)result.Value);
+            if(getSentConnectionsUrlStatusPayload == null)
+            {
+                return result;
+            }
+
+            result = _sendConnectionsProvider.ExecutePhase<T>(message, getSentConnectionsUrlStatusPayload.SentConnectionsUrlStatuses);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            // update latest status of the connection request urls
+            ISendConnectionsPayload sendConnectionspayload = ((ISendConnectionsPayload)result.Value);
+            if(sendConnectionspayload == null)
+            {
+                return null;
+            }
+
+            result = await _campaignProvider.UpdateSendConnectionsUrlStatusesAsync<T>(sendConnectionspayload.SentConnectionsUrlStatuses, message);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            return await _campaignProvider.ProcessConnectionRequestSentForCampaignProspectsAsync<T>(sendConnectionspayload.CampaignProspects, message);                        
         }
 
         public HalOperationResult<T> ExecutePhase<T>(ConnectionWithdrawBody message) where T : IOperationResponse

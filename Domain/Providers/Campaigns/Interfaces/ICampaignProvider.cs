@@ -12,15 +12,21 @@ using System.Threading.Tasks;
 
 namespace Domain.Providers.Campaigns.Interfaces
 {
-    public interface ICampaignProcessingProvider
+    public interface ICampaignProvider
     {
         Task<HalOperationResult<T>> PersistProspectListAsync<T>(IOperationResponse resultValue, ProspectListBody message, CancellationToken ct = default)
             where T : IOperationResponse;
 
-        Task<HalOperationResult<T>> ProcessConnectionRequestSentForCampaignProspectsAsync<T>(IOperationResponse resultValue, SendConnectionsBody message, CancellationToken ct = default)
+        Task<HalOperationResult<T>> ProcessConnectionRequestSentForCampaignProspectsAsync<T>(IList<CampaignProspectRequest> campaignProspects, SendConnectionsBody message, CancellationToken ct = default)
             where T : IOperationResponse;
 
         Task<HalOperationResult<T>> TriggerSendConnectionsPhaseAsync<T>(ProspectListBody message, CancellationToken ct = default)
+            where T : IOperationResponse;
+
+        Task<HalOperationResult<T>> UpdateSendConnectionsUrlStatusesAsync<T>(IList<SentConnectionsUrlStatusRequest> updatedSearchUrlsStatuses, SendConnectionsBody message, CancellationToken ct = default)
+            where T : IOperationResponse;
+
+        Task<HalOperationResult<T>> GetLatestSendConnectionsUrlStatusesAsync<T>(SendConnectionsBody message, CancellationToken ct = default)
             where T : IOperationResponse;
     }
 }

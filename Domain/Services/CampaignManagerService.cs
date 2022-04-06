@@ -93,7 +93,6 @@ namespace Domain.Services
         public async Task OnNetworkingConnectionsEventReceived(object sender, BasicDeliverEventArgs eventArgs)
         {
             IModel channel = ((AsyncEventingBasicConsumer)sender).Model;
-            string messageId = eventArgs.BasicProperties.MessageId;
 
             var headers = eventArgs.BasicProperties.Headers;
             headers.TryGetValue(RabbitMQConstants.NetworkingConnections.NetworkingType, out object networkTypeObj);
@@ -109,11 +108,11 @@ namespace Domain.Services
 
             if((networkType as string) == RabbitMQConstants.NetworkingConnections.ProspectList)
             {
-                await StartProspectList(messageId, channel, eventArgs);
+                await StartProspectList(channel, eventArgs);
             }
             else if((networkType as string) == RabbitMQConstants.NetworkingConnections.SendConnectionRequests)
             {
-                await StartSendingConnectionRequests(messageId, channel, eventArgs);
+                await StartSendingConnectionRequests(channel, eventArgs);
             }
             else
             {
@@ -386,7 +385,7 @@ namespace Domain.Services
         //    return Task.CompletedTask;
         //}
 
-        private async Task StartProspectList(string messageId, IModel channel, BasicDeliverEventArgs eventArgs)
+        private async Task StartProspectList(IModel channel, BasicDeliverEventArgs eventArgs)
         {
             //MessageDetails_Queue.TryGetValue(messageId, out RabbitMQMessageProperties props);
             //BasicDeliverEventArgs eventArgs = props.BasicDeliveryEventArgs;
@@ -434,7 +433,7 @@ namespace Domain.Services
 
         #region SendConnectionRequests
 
-        private async Task StartSendingConnectionRequests(string messageId, IModel channel, BasicDeliverEventArgs eventArgs)
+        private async Task StartSendingConnectionRequests(IModel channel, BasicDeliverEventArgs eventArgs)
         {
 
             using (var scope = _serviceProvider.CreateScope())
