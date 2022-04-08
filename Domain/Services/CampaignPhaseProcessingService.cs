@@ -27,7 +27,7 @@ namespace Domain.Services
         private readonly ILogger<CampaignPhaseProcessingService> _logger;
         private const string HttpPrefix = "http://";
 
-        public async Task<HttpResponseMessage> ProcessNewConnectionsAsync(NewConnectionRequest request, CancellationToken ct = default)
+        public async Task<HttpResponseMessage> ProcessNewConnectionsAsync(NewProspectConnectionRequest request, CancellationToken ct = default)
         {
             string apiServerUrl = "http://localhost:5010"; //; request.ApiServerUrl;
 
