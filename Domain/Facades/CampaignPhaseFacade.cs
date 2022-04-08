@@ -90,6 +90,19 @@ namespace Domain.Facades
                 return result;
             }
 
+            if(getSentConnectionsUrlStatusPayload.SentConnectionsUrlStatuses.Count == 0)
+            {
+                // there are no more urls left to crawl
+                _logger.LogInformation("There aren't any search urls left to crawl");
+                // mark campaign as expired and inactive, if this request here fails for whatever reason
+                // don't handle it just fire and forget
+                await _campaignProvider.MarkCampaignExhaustedAsync<T>(message);
+
+                // just return a success
+                result.Succeeded = true;
+                return result;
+            }
+
             result = _sendConnectionsProvider.ExecutePhase<T>(message, getSentConnectionsUrlStatusPayload.SentConnectionsUrlStatuses);
             if(result.Succeeded == false)
             {

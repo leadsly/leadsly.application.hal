@@ -28,5 +28,8 @@ namespace Domain.Providers.Campaigns.Interfaces
 
         Task<HalOperationResult<T>> GetLatestSendConnectionsUrlStatusesAsync<T>(SendConnectionsBody message, CancellationToken ct = default)
             where T : IOperationResponse;
+
+        Task<HalOperationResult<T>> MarkCampaignExhaustedAsync<T>(SendConnectionsBody message, CancellationToken ct = default)
+            where T : IOperationResponse;        
     }
 }

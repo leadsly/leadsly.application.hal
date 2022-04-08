@@ -11,8 +11,8 @@ namespace Domain.POMs
 {
     public interface ILinkedInNavBar
     {
-        HalOperationResult<T> ClickMyNetworkTab<T>(IWebDriver webdriver) where T : IOperationResponse;
-        HalOperationResult<T> IsNewConnectionNotification<T>(IWebDriver webdriver) where T : IOperationResponse;
+        HalOperationResult<T> ClickNotificationsTab<T>(IWebDriver webdriver) where T : IOperationResponse;
+        HalOperationResult<T> IsNewNotification<T>(IWebDriver webdriver) where T : IOperationResponse;
 
         HalOperationResult<T> GetNewConnectionCount<T>(IWebDriver webdriver) where T : IOperationResponse;
     }

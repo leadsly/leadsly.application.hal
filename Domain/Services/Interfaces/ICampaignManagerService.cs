@@ -30,7 +30,7 @@ namespace Domain.Services.Interfaces
 
         void StartFollowUpMessages(string messageId);
 
-        Task StartMonitorForNewConnections(string messageId);
+        Task StartMonitorForNewConnections(MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections);
 
         void StartScanningProspectsForReplies(string messageId);
 

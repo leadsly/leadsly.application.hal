@@ -5,6 +5,7 @@ using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
+using Leadsly.Application.Model.Campaigns.Interfaces;
 using Leadsly.Application.Model.Entities;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
@@ -30,6 +31,7 @@ namespace Domain.Providers.Campaigns
             IWebDriverProvider webDriverProvider,
             IHalIdentity halIdentity,
             ILinkedInNavBar linkedInNavBar,
+            ILinkedInNotificationsPage linkedInNotificationsPage,
             ICampaignPhaseProcessingService campaignProcessingPhase,
             ILinkedInHtmlParser linkedInHtmlParser,
             IHalOperationConfigurationProvider halConfigurationProvider)
@@ -42,6 +44,7 @@ namespace Domain.Providers.Campaigns
             _linkedInHomePage = linkedInHomePage;
             _linkedInHtmlParser = linkedInHtmlParser;
             _halConfigurationProvider = halConfigurationProvider;
+            _linkedInNotificationsPage = linkedInNotificationsPage;
             _halIdentity = halIdentity;
         }
 
@@ -50,6 +53,7 @@ namespace Domain.Providers.Campaigns
         private readonly ILogger<MonitorForNewProspectsProvider> _logger;
         private readonly ILinkedInHomePage _linkedInHomePage;
         private readonly ILinkedInHtmlParser _linkedInHtmlParser;
+        private readonly ILinkedInNotificationsPage _linkedInNotificationsPage;
         private readonly ILinkedInMyNetworkPage _linkedInMyNetworkPage;
         private readonly ICampaignPhaseProcessingService _campaignProcessingPhase;
         private readonly IHalOperationConfigurationProvider _halConfigurationProvider;
@@ -77,7 +81,24 @@ namespace Domain.Providers.Campaigns
 
             IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)driverOperationResult.Value).WebDriver;
 
-            return await MonitorForNewConnections<T>(webDriver, message);
+            try
+            {
+                await MonitorForNewConnections<T>(webDriver, message);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error occured while monitoring for new connections");
+                throw;
+            }
+            finally
+            {
+                // whenever any exception occurs try to close out the web driver if not possible just remove it from the list
+                _logger.LogInformation("Attempting to close down the web driver and remove it from the list of web drivers");
+                _webDriverProvider.CloseBrowser<T>(BrowserPurpose.MonitorForNewAcceptedConnections);
+            }
+
+            result.Succeeded = true;
+            return result;
         }
 
         private async Task<HalOperationResult<T>> MonitorForNewConnections<T>(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
@@ -97,11 +118,9 @@ namespace Domain.Providers.Campaigns
             // HalOperationConfiguration operationConfiguration = await _halConfigurationProvider.GetOperationConfigurationByIdAsync(_halIdentity.Id);
 
             TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById(message.TimeZoneId) ?? TimeZoneInfo.Utc;
-            while (TimeZoneInfo.ConvertTimeFromUtc(DateTime.Now, timeZone) > message.EndWorkTime)
+            DateTimeOffset endOfWorkDay = DateTimeOffset.FromUnixTimeSeconds(message.EndWorkTime);
+            while (TimeZoneInfo.ConvertTimeFromUtc(DateTime.Now, timeZone) > endOfWorkDay)
             {
-                // sleep for 5 seconds
-                Thread.Sleep(5);
-
                 try
                 {
                     result = await LookForNewConnections<T>(webDriver, message);
@@ -126,46 +145,52 @@ namespace Domain.Providers.Campaigns
         {
             HalOperationResult<T> result = new();
 
-            result = _linkedInNavBar.IsNewConnectionNotification<T>(webDriver);
+            result = _linkedInNavBar.IsNewNotification<T>(webDriver);
             if(result.Succeeded == false)
             {
                 return result;
             }
 
-            bool? isNewConnection = ((IMyNetworkNavBarControl)result.Value).NewConnection;
+            bool? isNewNotification = ((INotificationNavBarControl)result.Value).NewNotification;
 
             // no new connections
-            if(isNewConnection != null && isNewConnection == false)
+            if(isNewNotification != null && isNewNotification == false)
             {
                 result.Succeeded = true;
                 return result;
             }
 
-            return await RefreshMyNetworkView<T>(webDriver, message);
+            // else we have a new notification lets try to click 'New notifications' button and grab all of the notifications
+            return await GrabLatestNotifications<T>(webDriver, message);
         }
 
-        private async Task<HalOperationResult<T>> RefreshMyNetworkView<T>(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
+        private async Task<HalOperationResult<T>> GrabLatestNotifications<T>(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
-            // click on the my network tab
-            result = _linkedInNavBar.ClickMyNetworkTab<T>(webDriver);
+            result = _linkedInNotificationsPage.ClickNewNotificationsButton<T>(webDriver);
+
+            if(result.Succeeded == false)
+            {
+                // if web driver failed to locate or click new notifications button, click Notifications tab directly
+                result = _linkedInNavBar.ClickNotificationsTab<T>(webDriver);
+                if (result.Succeeded == false)
+                {
+                    return result;
+                }
+            }
+
+            result = _linkedInNotificationsPage.GatherAllNewProspectInfo<T>(webDriver);
             if(result.Succeeded == false)
             {
                 return result;
             }
 
-            result = _linkedInNavBar.GetNewConnectionCount<T>(webDriver);
-            if(result.Succeeded == false)
-            {
-                return result;
-            }
+            INewProspectAcceptedPayload payload = ((INewProspectAcceptedPayload)result.Value);
+            // here we need to send over the payload with new prospects and check if they come from any of our campaigns and then send them a message
 
-            int newConnCount = ((IMyNetworkNavBarControl)result.Value).ConnectionsCount;
-
-            // gather new connections
-            return await GatherNewlyConnectedProspects<T>(webDriver, newConnCount, message);
+            return await GatherNewlyConnectedProspects<T>(webDriver, newNotificationsCount, message);
         }
 
         private async Task<HalOperationResult<T>> GatherNewlyConnectedProspects<T>(IWebDriver webDriver, int newConnectionsCount, MonitorForNewAcceptedConnectionsBody message)
@@ -195,7 +220,7 @@ namespace Domain.Providers.Campaigns
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
-            NewConnectionRequest request = new()
+            NewProspectConnectionRequest request = new()
             {
                 ApiServerUrl = message.ApiServerUrl,
                 NewConnectionProspects = payload.NewProspects,

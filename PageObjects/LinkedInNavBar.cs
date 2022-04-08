@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,14 +19,30 @@ namespace PageObjects
         public LinkedInNavBar(ILogger<LinkedInNavBar> logger)
         {
             _logger = logger;
+            _rnd = new Random();
+        }
+        private readonly Random _rnd;
+        private readonly ILogger<LinkedInNavBar> _logger;
+
+        private void RandomWait(int minWaitTime, int maxWaitTime)
+        {
+            int number = _rnd.Next(minWaitTime, maxWaitTime);
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            while (sw.Elapsed.TotalSeconds < number)
+            {
+                continue;
+            }
+            sw.Stop();
         }
 
-        private readonly ILogger<LinkedInNavBar> _logger;
-        public HalOperationResult<T> ClickMyNetworkTab<T>(IWebDriver webDriver) where T : IOperationResponse
+        public HalOperationResult<T> ClickNotificationsTab<T>(IWebDriver webDriver) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
-            IWebElement myNetworkAnchor = MyNetworkAnchor(webDriver);
+            RandomWait(2, 4);
+
+            IWebElement myNetworkAnchor = NotificationsTab(webDriver);
             if(myNetworkAnchor == null)
             {
                 return result;
@@ -37,11 +54,11 @@ namespace PageObjects
             }
             catch(Exception ex)
             {
-                _logger.LogError(ex, "Failed to click my network anchor nav bar control");
+                _logger.LogError(ex, "Failed to click notifications nav bar control");
                 result.Failures.Add(new()
                 {
                     Code = Codes.WEBDRIVER_ERROR,
-                    Reason = "Could not click on my network tab in the nav bar",
+                    Reason = "Could not click on notifications tab in the nav bar",
                     Detail = ex.Message
                 });
 
@@ -52,14 +69,14 @@ namespace PageObjects
             return result;
         }
 
-        public HalOperationResult<T> IsNewConnectionNotification<T>(IWebDriver webdriver) where T : IOperationResponse
+        public HalOperationResult<T> IsNewNotification<T>(IWebDriver webdriver) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
-            bool? newConnection = null;
+            bool? newNotification = null;
             try
             {
-                newConnection = NewConnectionNotificationBanner != null;
+                newNotification = NewNotificationBanner != null;
             }
             catch(Exception ex)
             {
@@ -73,9 +90,9 @@ namespace PageObjects
                 return result;
             }
 
-            IMyNetworkNavBarControl myNetwork = new MyNetworkNavBarControl
+            INotificationNavBarControl myNetwork = new NotificationsNavBarControl
             {
-                NewConnection = newConnection
+                NewNotification = newNotification
             };
 
             result.Value = (T)myNetwork;
@@ -83,28 +100,28 @@ namespace PageObjects
             return result;
         }
 
-        private IWebElement NewConnectionNotificationBanner(IWebDriver webdriver)
+        private IWebElement NewNotificationBanner(IWebDriver webdriver)
         {
-            IWebElement newConnectionsBanner = default;
+            IWebElement newNotificationBanner = default;
             try
             {
-                newConnectionsBanner = MyNetworkAnchor(webdriver).FindElement(By.ClassName("notification-badge--show")) ?? webdriver.FindElement(By.ClassName("notification-badge--show"));
+                newNotificationBanner = NotificationsTab(webdriver).FindElement(By.ClassName("notification-badge--show")) ?? webdriver.FindElement(By.ClassName("notification-badge--show"));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to locate NewConnectionBanner");
             }
-            return newConnectionsBanner;
+            return newNotificationBanner;
         }
 
-        private IWebElement _myNetworkAnchor;
-        private IWebElement MyNetworkAnchor(IWebDriver webdriver)
+        private IWebElement _notificationsAnchor;
+        private IWebElement NotificationsTab(IWebDriver webdriver)
         {
-            if(_myNetworkAnchor == null)
+            if(_notificationsAnchor == null)
             {
                 try
                 {
-                    _myNetworkAnchor = webdriver.FindElement(By.Id("ember20"));
+                    _notificationsAnchor = webdriver.FindElement(By.XPath("//div[contains(@class, 'global-nav__primary-link-notif')]/following-sibling::span[contains(text(), 'Notifications')]/parent::a"));
                 }
                 catch (Exception ex)
                 {
@@ -112,7 +129,7 @@ namespace PageObjects
                 }                
             }
 
-            return _myNetworkAnchor;
+            return _notificationsAnchor;
         }
 
         private IWebElement NewConnectionsCount(IWebDriver webDriver)
@@ -120,7 +137,7 @@ namespace PageObjects
             IWebElement newConnectionsCount = default;
             try
             {
-                newConnectionsCount = NewConnectionNotificationBanner(webDriver).FindElement(By.CssSelector("#ember2802 .notification-badge__count")) ?? webDriver.FindElement(By.CssSelector("#ember2802 .notification-badge__count"));
+                newConnectionsCount = NewNotificationBanner(webDriver).FindElement(By.CssSelector("#ember2802 .notification-badge__count")) ?? webDriver.FindElement(By.CssSelector("#ember2802 .notification-badge__count"));
             }
             catch (Exception ex)
             {
@@ -163,9 +180,9 @@ namespace PageObjects
                 return result;
             }
 
-            IMyNetworkNavBarControl newNetworkNavBar = new MyNetworkNavBarControl
+            INotificationNavBarControl newNetworkNavBar = new NotificationsNavBarControl
             {
-                ConnectionsCount = connCount
+               NotificationCount  = connCount
             };
 
             result.Value = (T)newNetworkNavBar;

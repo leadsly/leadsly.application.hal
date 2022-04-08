@@ -17,5 +17,7 @@ namespace Domain.Services.Interfaces
         Task<HttpResponseMessage> GetLatestSentConnectionsUrlStatusesAsync(SentConnectionsUrlStatusRequest request, CancellationToken ct = default);
 
         Task<HttpResponseMessage> UpdateSendConnectionsUrlStatusesAsync(UpdateSentConnectionsUrlStatusRequest requestuest, CancellationToken ct = default);
+
+        Task<HttpResponseMessage> MarkCampaignExhausted(MarkCampaignExhaustedRequest request, CancellationToken ct = default);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
+using Leadsly.Application.Model.Requests;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
@@ -80,6 +81,46 @@ namespace Domain.Services
             }
 
             return response;
-        }        
+        }
+
+        public async Task<HttpResponseMessage> MarkCampaignExhausted(MarkCampaignExhaustedRequest request, CancellationToken ct = default)
+        {
+            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; //$"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+
+            HttpResponseMessage response = default;
+
+            try
+            {
+                HttpRequestMessage req = new()
+                {
+                    Method = HttpMethod.Patch,
+                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    Content = JsonContent.Create(new[]
+                    {
+                        new
+                        {
+                            op = "replace",
+                            path = "/active",
+                            value = "false"
+                        },
+                        new
+                        {
+                            op = "replace",
+                            path = "/expired",
+                            value = "true"
+                        }
+                    })
+                };
+
+                _logger.LogInformation("Sending request to update sent connections url statuses");
+                response = await _httpClient.SendAsync(req, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send request to update latest sent connections url statuses");
+            }
+
+            return response;
+        }
     }
 }

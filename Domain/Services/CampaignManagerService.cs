@@ -282,47 +282,26 @@ namespace Domain.Services
 
         public void OnMonitorForNewAcceptedConnectionsEventReceived(object sender, BasicDeliverEventArgs eventArgs)
         {
-            // this can be started asap and doesn't rely on any other event
-            // execute monitor for new accepted connections logic
-            IModel channel = ((EventingBasicConsumer)sender).Model;
-            string messageId = eventArgs.BasicProperties.MessageId;
-            //if (MessageDetails_ConstantPhases.Keys.Any())
-            //{
-            //    // queue up this phase for later
-            //    ExecutePhasesQueue.Enqueue(() => QueueMonitorForNewAcceptedConnections(messageId, channel, eventArgs));
-            //}
-            //else
-            //{
-            //    QueueMonitorForNewAcceptedConnections(messageId, channel, eventArgs);
-            //}
-            QueueMonitorForNewAcceptedConnections(messageId, channel, eventArgs);
-        }
+            IModel channel = ((EventingBasicConsumer)sender).Model;            
+            channel.BasicAck(eventArgs.DeliveryTag, false);
 
-        private void QueueMonitorForNewAcceptedConnections(string messageId, IModel channel, BasicDeliverEventArgs eventArgs)
-        {
-            MessageDetails_ConstantPhases.TryAdd(messageId, new()
-            {
-                BasicDeliveryEventArgs = eventArgs,
-                Channel = channel
-            });
-
-            BackgroundJob.Enqueue<ICampaignManagerService>((x) => x.StartMonitorForNewConnections(messageId));
-        }
-
-        public async Task StartMonitorForNewConnections(string messageId)
-        {
-            MessageDetails_ConstantPhases.TryGetValue(messageId, out RabbitMQMessageProperties props);
-            BasicDeliverEventArgs eventArgs = props.BasicDeliveryEventArgs;
-            IModel channel = props.Channel;
-
+            MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections = default;
             using (var scope = _serviceProvider.CreateScope())
             {
-                //try and deserialize the response
                 ICampaignPhaseSerializer serializer = scope.ServiceProvider.GetRequiredService<ICampaignPhaseSerializer>();
                 byte[] body = eventArgs.Body.ToArray();
                 string message = Encoding.UTF8.GetString(body);
-                MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections = serializer.DeserializeMonitorForNewAcceptedConnectionsBody(message);
-                Action ackOperation = default;
+                monitorForNewAcceptedConnections = serializer.DeserializeMonitorForNewAcceptedConnectionsBody(message);
+            }
+
+            BackgroundJob.Enqueue<ICampaignManagerService>(x => x.StartMonitorForNewConnections(monitorForNewAcceptedConnections));
+        }
+
+        [AutomaticRetry(Attempts = 10)]
+        public async Task StartMonitorForNewConnections(MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections)
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
                 try
                 {
                     ICampaignPhaseFacade campaignPhaseFacade = scope.ServiceProvider.GetRequiredService<ICampaignPhaseFacade>();
@@ -331,24 +310,24 @@ namespace Domain.Services
                     if (operationResult.Succeeded == true)
                     {
                         _logger.LogInformation("ExecuteFollowUpMessagesPhase executed successfully. Acknowledging message");
-                        ackOperation = () => channel.BasicAck(eventArgs.DeliveryTag, false);
+                        //ackOperation = () => channel.BasicAck(eventArgs.DeliveryTag, false);
                     }
                     else
                     {
                         _logger.LogWarning("Executing Follow Up Messages Phase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
-                        ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
+                        //ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Exception occured while executing Follow Up Messages Phase. Negatively acknowledging the message and re-queuing it");
-                    ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
+                    //ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
                 }
                 finally
                 {
-                    MessageDetails_ConstantPhases.TryRemove(messageId, out _);
-                    NextPhase();
-                    ackOperation();
+                    //MessageDetails_ConstantPhases.TryRemove(messageId, out _);
+                    //NextPhase();
+                    //ackOperation();
                 }
             }
         }

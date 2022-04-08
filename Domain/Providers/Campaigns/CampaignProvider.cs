@@ -195,5 +195,29 @@ namespace Domain.Providers.Campaigns
             result.Succeeded = true;
             return result;
         }
+
+        public async Task<HalOperationResult<T>> MarkCampaignExhaustedAsync<T>(SendConnectionsBody message, CancellationToken ct = default) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            MarkCampaignExhaustedRequest request = new()
+            {
+                RequestUrl = $"api/campaigns/{message.CampaignId}",
+                NamespaceName = message.NamespaceName,
+                ServiceDiscoveryName = message.ServiceDiscoveryName,
+                HalId = message.HalId
+            };
+
+            HttpResponseMessage responseMessage = await _campaignService.MarkCampaignExhausted(request, ct);
+
+            if(responseMessage.IsSuccessStatusCode == false)
+            {
+                _logger.LogError("Response from application server was not a successful status code. The request was responsible for updating campaign");
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
     }
 }

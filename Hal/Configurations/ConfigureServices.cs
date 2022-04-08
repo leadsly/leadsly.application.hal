@@ -136,6 +136,9 @@ namespace Hal.Configurations
             services.AddScoped<ILinkedInMyNetworkPage, LinkedInMyNetworkPage>();
             services.AddScoped<ILinkedInNavBar, LinkedInNavBar>();
             services.AddScoped<ILinkedInSearchPage, LinkedInSearchPage>();
+            services.AddScoped<ILinkedInNotificationsPage, LinkedInNotificationsPage>();
+
+            services.AddScoped<IAcceptedInvitiationsView, AcceptedInvitationsView>();
 
             return services;
         }
