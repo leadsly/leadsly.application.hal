@@ -1,4 +1,5 @@
 ﻿using Leadsly.Application.Model;
+using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
 using OpenQA.Selenium;
 using System;
@@ -14,8 +15,7 @@ namespace Domain.POMs.Pages
         public HalOperationResult<T> ClickNewNotificationsButton<T>(IWebDriver webDriver)
             where T : IOperationResponse;
 
-        public HalOperationResult<T> GatherAllNewProspectNames<T>(IWebDriver webDriver)
-            where T : IOperationResponse;
+        public IList<NewProspectConnectionRequest> GatherAllNewProspectInfo(IWebDriver webDriver, string timeZoneId);
         
     }
 }

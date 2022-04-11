@@ -81,9 +81,21 @@ namespace Domain.Providers.Campaigns
 
             IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)driverOperationResult.Value).WebDriver;
 
+            // first navigate to messages
+            result = GoToPage<T>(webDriver, message.PageUrl);
+            if (result.Succeeded == false)
+            {
+                string pageUrl = message.PageUrl;
+                _logger.LogError("Failed to navigate to {pageUrl}", pageUrl);
+                return result;
+            }
+
             try
             {
-                await MonitorForNewConnections<T>(webDriver, message);
+                // grab the new notifications on initial page load
+                await CheckForNewConnectionsOnPageLoad(webDriver, message);
+
+                await MonitorForNewConnections(webDriver, message);
             }
             catch(Exception ex)
             {
@@ -101,147 +113,81 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        private async Task<HalOperationResult<T>> MonitorForNewConnections<T>(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
-            where T : IOperationResponse
+        private async Task CheckForNewConnectionsOnPageLoad(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
         {
-            HalOperationResult<T> result = new();
-
-            // first navigate to messages
-            result = GoToPage<T>(webDriver, message.PageUrl);
-            if (result.Succeeded == false)
+            IList<NewProspectConnectionRequest> newProspects = _linkedInNotificationsPage.GatherAllNewProspectInfo(webDriver, message.TimeZoneId);
+            if(newProspects.Count > 0)
             {
-                string pageUrl = message.PageUrl;
-                _logger.LogError("Failed to navigate to {pageUrl}", pageUrl);
-                return result;
+                // fire off request to initiate follow up message phase
+                NewProspectsConnectionsAcceptedRequest request = new()
+                {
+                    HalId = message.HalId,
+                    NamespaceName = message.NamespaceName,                    
+                    ServiceDiscoveryName = message.ServiceDiscoveryName,
+                    RequestUrl = "api/campaignphases/process-newly-accepted-prospects",
+                    NewAcceptedProspectsConnections = newProspects,
+                    ApplicationUserId = message.UserId
+                };
+
+                await _campaignProcessingPhase.TriggerFollowUpMessagesAsync(request);
             }
+        }
 
-            // HalOperationConfiguration operationConfiguration = await _halConfigurationProvider.GetOperationConfigurationByIdAsync(_halIdentity.Id);
-
+        private async Task MonitorForNewConnections(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
+        {
             TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById(message.TimeZoneId) ?? TimeZoneInfo.Utc;
             DateTimeOffset endOfWorkDay = DateTimeOffset.FromUnixTimeSeconds(message.EndWorkTime);
-            while (TimeZoneInfo.ConvertTimeFromUtc(DateTime.Now, timeZone) > endOfWorkDay)
+            while (TimeZoneInfo.ConvertTime(DateTimeOffset.Now, timeZone) < endOfWorkDay)
             {
-                try
+                await LookForNewConnections(webDriver, message);
+            }
+        }
+
+        private async Task LookForNewConnections(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
+        {
+            // first grab any new notifications displayed in the view 
+
+            bool areNewNotification = _linkedInNavBar.AreNewNotifications(webDriver);            
+
+            if (areNewNotification == true)
+            {
+                IList<NewProspectConnectionRequest> newProspects = GrabNewlyConnectedProspectsInfo(webDriver, message);
+
+                if (newProspects.Count > 0)
                 {
-                    result = await LookForNewConnections<T>(webDriver, message);
-                    if(result.Succeeded == false)
+                    // fire off request to initiate follow up message phase
+                    NewProspectsConnectionsAcceptedRequest request = new()
                     {
-                        return result;
-                    }
-                }
-                catch(Exception ex)
-                {
-                    _logger.LogError(ex, "Error occured executing MonitorForNewProspects phase.");                    
-                    return result;
+                        HalId = message.HalId,
+                        NamespaceName = message.NamespaceName,
+                        ServiceDiscoveryName = message.ServiceDiscoveryName,
+                        RequestUrl = "api/campaignphases/process-newly-accepted-prospects",
+                        NewAcceptedProspectsConnections = newProspects
+                    };
+
+                    await _campaignProcessingPhase.TriggerFollowUpMessagesAsync(request);
                 }
             }
-
-            result.Succeeded = true;
-            return result;
         }
 
-        private async Task<HalOperationResult<T>> LookForNewConnections<T>(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
-            where T : IOperationResponse
+        private IList<NewProspectConnectionRequest> GrabNewlyConnectedProspectsInfo(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)            
         {
-            HalOperationResult<T> result = new();
+            IList<NewProspectConnectionRequest> newProspectInfoRequests = new List<NewProspectConnectionRequest>();
 
-            result = _linkedInNavBar.IsNewNotification<T>(webDriver);
-            if(result.Succeeded == false)
-            {
-                return result;
-            }
-
-            bool? isNewNotification = ((INotificationNavBarControl)result.Value).NewNotification;
-
-            // no new connections
-            if(isNewNotification != null && isNewNotification == false)
-            {
-                result.Succeeded = true;
-                return result;
-            }
-
-            // else we have a new notification lets try to click 'New notifications' button and grab all of the notifications
-            return await GrabLatestNotifications<T>(webDriver, message);
-        }
-
-        private async Task<HalOperationResult<T>> GrabLatestNotifications<T>(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
-            where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-
-            result = _linkedInNotificationsPage.ClickNewNotificationsButton<T>(webDriver);
-
+            HalOperationResult<IOperationResponse> result = _linkedInNotificationsPage.ClickNewNotificationsButton<IOperationResponse>(webDriver);
+            // if the button was not clicked successfully, or it wasn't found
             if(result.Succeeded == false)
             {
                 // if web driver failed to locate or click new notifications button, click Notifications tab directly
-                result = _linkedInNavBar.ClickNotificationsTab<T>(webDriver);
+                result = _linkedInNavBar.ClickNotificationsTab<IOperationResponse>(webDriver);
                 if (result.Succeeded == false)
                 {
-                    return result;
+                    return newProspectInfoRequests;
                 }
             }
 
-            result = _linkedInNotificationsPage.GatherAllNewProspectInfo<T>(webDriver);
-            if(result.Succeeded == false)
-            {
-                return result;
-            }
-
-            INewProspectAcceptedPayload payload = ((INewProspectAcceptedPayload)result.Value);
-            // here we need to send over the payload with new prospects and check if they come from any of our campaigns and then send them a message
-
-            return await GatherNewlyConnectedProspects<T>(webDriver, newNotificationsCount, message);
-        }
-
-        private async Task<HalOperationResult<T>> GatherNewlyConnectedProspects<T>(IWebDriver webDriver, int newConnectionsCount, MonitorForNewAcceptedConnectionsBody message)
-            where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-            
-            result = _linkedInMyNetworkPage.CollectAllNewConnections<T>(webDriver, newConnectionsCount);
-            if(result.Succeeded == false)
-            {
-                return result;
-            }
-
-            IReadOnlyCollection<IWebElement> myNetworkNewConn = ((INewInvitationsMyNetwork)result.Value).NewConnections;
-            // we need to send the new list of individuals to the server for processing and triggering send follow up message event
-            result = _linkedInHtmlParser.ParseMyNetworkConnections<T>(myNetworkNewConn);
-            if(result.Succeeded == false)
-            {
-                return result;
-            }
-
-            INewConnectionProspects newProspectsPayload = (INewConnectionProspects)result.Value;
-            return await SendNewConnectionsPayloadAsync<T>(newProspectsPayload, message);
-        }
-
-        private async Task<HalOperationResult<T>> SendNewConnectionsPayloadAsync<T>(INewConnectionProspects payload, MonitorForNewAcceptedConnectionsBody message)
-            where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-            NewProspectConnectionRequest request = new()
-            {
-                ApiServerUrl = message.ApiServerUrl,
-                NewConnectionProspects = payload.NewProspects,
-                HalId = _halIdentity.Id
-            };
-
-            // fire and forget here
-            HttpResponseMessage response = await _campaignProcessingPhase.ProcessNewConnectionsAsync(request);
-            if(response == null)
-            {
-                result.Failures.Add(new()
-                {
-                    Code = Codes.HTTP_REQUEST_ERROR,
-                    Reason = "Failed to send request to api server to process new connections",
-                    Detail = "Connection error occured sending request"
-                });
-                return result;
-            }
-
-            result.Succeeded = true;
-            return result;
+            newProspectInfoRequests = _linkedInNotificationsPage.GatherAllNewProspectInfo(webDriver, message.TimeZoneId);
+            return newProspectInfoRequests;
         }
 
         private HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)

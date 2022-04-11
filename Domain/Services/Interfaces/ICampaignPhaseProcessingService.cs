@@ -14,12 +14,14 @@ namespace Domain.Services.Interfaces
 {
     public interface ICampaignPhaseProcessingService
     {
-        Task<HttpResponseMessage> ProcessNewConnectionsAsync(NewConnectionRequest request, CancellationToken ct = default);
+        Task<HttpResponseMessage> ProcessNewConnectionsAsync(NewProspectConnectionRequest request, CancellationToken ct = default);
 
         Task<HttpResponseMessage> ProcessProspectListAsync(ProspectListPhaseCompleteRequest request, CancellationToken ct = default);
 
         Task<HttpResponseMessage> UpdateContactedCampaignProspectListAsync(CampaignProspectListRequest request, CancellationToken ct = default);
 
         Task<HttpResponseMessage> TriggerCampaignProspectListAsync(TriggerSendConnectionsRequest request, CancellationToken ct = default);
+
+        Task<HttpResponseMessage> TriggerFollowUpMessagesAsync(NewProspectsConnectionsAcceptedRequest request, CancellationToken ct = default);
     }
 }

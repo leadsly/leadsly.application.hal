@@ -283,7 +283,7 @@ namespace Domain.Services
         public void OnMonitorForNewAcceptedConnectionsEventReceived(object sender, BasicDeliverEventArgs eventArgs)
         {
             IModel channel = ((EventingBasicConsumer)sender).Model;            
-            channel.BasicAck(eventArgs.DeliveryTag, false);
+            // channel.BasicAck(eventArgs.DeliveryTag, false);
 
             MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections = default;
             using (var scope = _serviceProvider.CreateScope())

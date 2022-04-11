@@ -59,6 +59,12 @@ namespace PageObjects.Pages
             sw.Stop();
         }
 
+        /// <summary>
+        /// Clicks the 'New notifications' button that shows up on the notifications view when a new notification is present
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="webDriver"></param>
+        /// <returns></returns>
         public HalOperationResult<T> ClickNewNotificationsButton<T>(IWebDriver webDriver)
             where T : IOperationResponse
         {
@@ -92,10 +98,8 @@ namespace PageObjects.Pages
             return newNotificationsElements;
         }
 
-        public HalOperationResult<T> GatherAllNewProspectNames<T>(IWebDriver webDriver) where T : IOperationResponse
+        public IList<NewProspectConnectionRequest> GatherAllNewProspectInfo(IWebDriver webDriver, string timeZoneId)
         {
-            HalOperationResult<T> result = new();
-
             List<NewProspectConnectionRequest> newlyAcceptedProspectNames = new List<NewProspectConnectionRequest>();            
             IReadOnlyCollection<IWebElement> newNotifications = GetAllNewNotifications(webDriver);
 
@@ -105,11 +109,10 @@ namespace PageObjects.Pages
                 IWebElement multipleNotification = default;
                 try
                 {
-                    multipleNotification = n.FindElement(By.XPath("//a//span[contains(text(), 'others accepted your invitations to connect')]"));
+                    multipleNotification = n.FindElement(By.XPath(".//a//span[contains(text(), 'other accepted your invitations to connect')]")) ?? n.FindElement(By.XPath("//a//span[contains(text(), 'others accepted your invitations to connect')]"));
                 }
                 catch (Exception ex)
                 {
-
                 }
                 return multipleNotification != null;
             });
@@ -118,9 +121,9 @@ namespace PageObjects.Pages
             {
                 // we've got new notifications that contain multiple accepted connections in one.
                 // Navigate to each one and extract the connections name
-                foreach (IWebElement multipleProspectsNotification in notificationWithMultipleConnections)
+                foreach (IWebElement multipleProspectsNotification in notificationWithMultipleConnections.ToList())
                 {
-                    newlyAcceptedProspectNames.AddRange(GetProspectNamesFromSingleNotification(multipleProspectsNotification, webDriver));
+                    newlyAcceptedProspectNames.AddRange(GetProspectInfoFromSingleNotification(multipleProspectsNotification, webDriver, timeZoneId));
                 }
             }
 
@@ -130,11 +133,10 @@ namespace PageObjects.Pages
                 IWebElement newConnectionNotification = default;
                 try
                 {
-                    newConnectionNotification = n.FindElement(By.XPath("//a//span[contains(text(), 'accepted your invitation to connect')]"));
+                    newConnectionNotification = n.FindElement(By.XPath(".//a//span[contains(text(), 'accepted your invitation to connect')]"));
                 }
                 catch (Exception ex)
-                {
-
+                {                    
                 }
                 return newConnectionNotification != null;
             });
@@ -144,44 +146,27 @@ namespace PageObjects.Pages
                 // get prospect name from each notification
                 foreach (IWebElement prospectNotification in newConnectionNotifications)
                 {
-                    newlyAcceptedProspectNames.Add(GetProspectNameFromSingleNotification(prospectNotification));
+                    NewProspectConnectionRequest newProspectRequest = GetProspectInfoFromNotification(prospectNotification);
+                    if(newProspectRequest != null)
+                    {
+                        newlyAcceptedProspectNames.Add(newProspectRequest);
+                    }                    
                 }
             }
 
-
-            INewProspectAcceptedPayload payload = new NewProspectAcceptedPayload
-            {
-                NewProspectConnections = 
-            };
-
-            return result;
+            return newlyAcceptedProspectNames;
         }
 
-        private string GetProspectNameFromSingleNotification(IWebElement notification)
-        {
-            RandomWait(2, 4);
-
-            IWebElement strongElement = default;
-            try
-            {
-                strongElement = notification.FindElement(By.XPath("//a//span[contains(text(), 'accepted your invitation to connect.')]//strong"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Could not locate strong html tag inside the notification. That is where the prospects name is expected to be.");
-            }
-
-            return strongElement.Text;
-        }
-
-        private IList<NewProspectConnectionRequest> GetProspectInfoFromSingleNotification(IWebElement notification, IWebDriver webDriver)
+        private IList<NewProspectConnectionRequest> GetProspectInfoFromSingleNotification(IWebElement notification, IWebDriver webDriver, string timeZoneId)
         {
             IList<NewProspectConnectionRequest> prospectsInfo = new List<NewProspectConnectionRequest>();
             IWebElement notificationAnchor = default;
+            string notificationAnchorHref = string.Empty;
             try
             {
                 // first locate the anchor tag element
-                notificationAnchor = notification.FindElement(By.XPath("//a"));
+                notificationAnchor = notification.FindElement(By.XPath(".//a"));
+                notificationAnchorHref = notificationAnchor.GetAttribute("href");
             }
             catch(Exception ex)
             {
@@ -193,31 +178,62 @@ namespace PageObjects.Pages
 
             string mainWindowHandle = webDriver.CurrentWindowHandle;
             HalOperationResult<IOperationResponse> result = _webDriverProvider.NewTab<IOperationResponse>(webDriver);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 return null;
             }
 
-            string pageUrlBefore = webDriver.Url;
-            // then navigate to it
-            notificationAnchor.Click();
-
-            string pageUrlAfter = webDriver.Url;
-
-            if(pageUrlBefore == pageUrlAfter)
-            {
-                // something went wrong and we did not navigate to a new page
-                return null;
-            }
+            webDriver.Navigate().GoToUrl(notificationAnchorHref);
 
             // now gather prospects names
-            prospectNames = _acceptedInvitiationsView.GetAllProspectsNames(webDriver);
+            prospectsInfo = _acceptedInvitiationsView.GetAllProspectsInfo(webDriver, timeZoneId);
 
             _webDriverProvider.CloseTab<IOperationResponse>(BrowserPurpose.MonitorForNewAcceptedConnections, webDriver.CurrentWindowHandle);
             _webDriverProvider.SwitchTo<IOperationResponse>(webDriver, mainWindowHandle);
 
-            return prospectNames;
+            return prospectsInfo;
             
+        }
+
+        private NewProspectConnectionRequest GetProspectInfoFromNotification(IWebElement notification)
+        {
+            NewProspectConnectionRequest newProspectInfo = new();
+            IWebElement strongElement = default;
+            try
+            {
+                strongElement = notification.FindElement(By.XPath(".//a//span[contains(text(), 'accepted your invitation to connect.')]//strong"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Failed to locate new prospects name in the notification");
+            }
+            
+            if (strongElement != null)
+            {
+                newProspectInfo.ProspectName = strongElement.Text;
+            }
+
+            IWebElement profileUrl = default;
+            try
+            {
+                profileUrl = notification.FindElement(By.XPath(".//a//span[contains(text(), 'accepted your invitation to connect.')]/parent::span/parent::a"));
+            }
+            catch(Exception ex)
+            {
+                _logger.LogWarning("Failed to locate new prospects profile url");
+            }
+
+            if (profileUrl != null)
+            {
+                newProspectInfo.ProfileUrl = profileUrl.GetAttribute("href");
+            }
+
+            if(newProspectInfo.ProspectName == null || newProspectInfo.ProfileUrl == null)
+            {
+                return null;
+            }
+
+            return newProspectInfo;
         }
     }
 }

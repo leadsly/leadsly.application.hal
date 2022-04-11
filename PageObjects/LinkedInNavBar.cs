@@ -29,11 +29,13 @@ namespace PageObjects
             int number = _rnd.Next(minWaitTime, maxWaitTime);
             Stopwatch sw = new Stopwatch();
             sw.Start();
+            _logger.LogInformation("Entering random wait time. Waiting for {number}", number);
             while (sw.Elapsed.TotalSeconds < number)
             {
                 continue;
             }
             sw.Stop();
+            _logger.LogInformation("Finished waiting moving on.");
         }
 
         public HalOperationResult<T> ClickNotificationsTab<T>(IWebDriver webDriver) where T : IOperationResponse
@@ -69,38 +71,24 @@ namespace PageObjects
             return result;
         }
 
-        public HalOperationResult<T> IsNewNotification<T>(IWebDriver webdriver) where T : IOperationResponse
+        /// <summary>
+        /// Checks if the notifications tab has a red banner, if it does, we have new notifications
+        /// </summary>
+        /// <param name="webDriver"></param>
+        /// <returns></returns>
+        public bool AreNewNotifications(IWebDriver webDriver)
         {
-            HalOperationResult<T> result = new();
+            RandomWait(30, 40);
 
-            bool? newNotification = null;
-            try
-            {
-                newNotification = NewNotificationBanner != null;
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError(ex, "Failed to determine if user has a new connection");
-                result.Failures.Add(new()
-                {
-                    Code = Codes.WEBDRIVER_ERROR,
-                    Reason = "Failed to determine if user has gotten new connections",
-                    Detail = ex.Message
-                });
-                return result;
-            }
-
-            INotificationNavBarControl myNetwork = new NotificationsNavBarControl
-            {
-                NewNotification = newNotification
-            };
-
-            result.Value = (T)myNetwork;
-            result.Succeeded = true;
-            return result;
+            return NewNotificationsBanner(webDriver) != null;
         }
 
-        private IWebElement NewNotificationBanner(IWebDriver webdriver)
+        /// <summary>
+        /// Checks if the notifications tab has a red banner, if it does, we have new notifications
+        /// </summary>
+        /// <param name="webDriver"></param>
+        /// <returns></returns>
+        private IWebElement NewNotificationsBanner(IWebDriver webdriver)
         {
             IWebElement newNotificationBanner = default;
             try
@@ -121,11 +109,11 @@ namespace PageObjects
             {
                 try
                 {
-                    _notificationsAnchor = webdriver.FindElement(By.XPath("//div[contains(@class, 'global-nav__primary-link-notif')]/following-sibling::span[contains(text(), 'Notifications')]/parent::a"));
+                    _notificationsAnchor = webdriver.FindElement(By.CssSelector("a[data-link-to='notifications']"));
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to locate MyNetworkAnchor");
+                    _logger.LogError(ex, "Failed to locate Notifications anchor");
                 }                
             }
 
@@ -137,7 +125,7 @@ namespace PageObjects
             IWebElement newConnectionsCount = default;
             try
             {
-                newConnectionsCount = NewNotificationBanner(webDriver).FindElement(By.CssSelector("#ember2802 .notification-badge__count")) ?? webDriver.FindElement(By.CssSelector("#ember2802 .notification-badge__count"));
+                newConnectionsCount = NewNotificationsBanner(webDriver).FindElement(By.CssSelector("#ember2802 .notification-badge__count")) ?? webDriver.FindElement(By.CssSelector("#ember2802 .notification-badge__count"));
             }
             catch (Exception ex)
             {

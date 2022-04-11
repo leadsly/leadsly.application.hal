@@ -10,8 +10,6 @@ namespace Domain.POMs
 {
     public interface IAcceptedInvitiationsView
     {
-        IList<string> GetAllProspectsNames(IWebDriver webDriver);
-
-        IList<NewProspectConnectionRequest> GetAllProspectsInfo(IWebDriver webDriver);
+        IList<NewProspectConnectionRequest> GetAllProspectsInfo(IWebDriver webDriver, string timeZoneId);
     }
 }

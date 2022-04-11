@@ -114,7 +114,7 @@ namespace Domain.Providers.Campaigns
                 }
             }
 
-            result = SendConnectionRequests<T>(webDriver, message.SendConnectionsStage.ConnectionsLimit, message.CampaignId, sentConnectionsUrlStatusPayload);
+            result = SendConnectionRequests<T>(webDriver, message.SendConnectionsStage.ConnectionsLimit, message.CampaignId, message.TimeZoneId, sentConnectionsUrlStatusPayload);
             if(result.Succeeded == false)
             {
                 return result;
@@ -124,7 +124,7 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        private HalOperationResult<T> SendConnectionRequests<T>(IWebDriver webDriver, int stageConnectionsLimit, string campaignId, IList<SentConnectionsUrlStatusRequest> sentConnectionsUrlStatusPayload)
+        private HalOperationResult<T> SendConnectionRequests<T>(IWebDriver webDriver, int stageConnectionsLimit, string campaignId, string timeZoneId, IList<SentConnectionsUrlStatusRequest> sentConnectionsUrlStatusPayload)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -155,7 +155,6 @@ namespace Domain.Providers.Campaigns
                     return result;
                 }
 
-                //IList<IWebElement> campaignProspectsAsWebElements = new List<IWebElement>();
                 // find prospects that have an action button // .entity-result__actions
                 foreach (IWebElement prospect in gatherProspectsResult.Value.ProspectElements)
                 {
@@ -164,7 +163,7 @@ namespace Domain.Providers.Campaigns
                         // update sent connections url status
                         currentSentConnectionsUrlStatus.CurrentUrl = webDriver.Url;
                         currentSentConnectionsUrlStatus.StartedCrawling = true;
-                        currentSentConnectionsUrlStatus.LastActivityTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                        currentSentConnectionsUrlStatus.LastActivityTimestamp = new DateTimeOffset(new DateTimeWithZone(DateTime.Now, TimeZoneInfo.FindSystemTimeZoneById(timeZoneId)).LocalTime).ToUnixTimeSeconds();
                         currentSentConnectionsUrlStatus.WindowHandleId = webDriver.CurrentWindowHandle;
                         updatedSentConnectionsUrlStatusRequests.Add(currentSentConnectionsUrlStatus);
 
@@ -183,13 +182,10 @@ namespace Domain.Providers.Campaigns
                     {
                         continue;
                     }
-                    //campaignProspectsAsWebElements.Add(prospect);
                     connectedProspects.Add(CreateCampaignProspects(prospect, campaignId));
 
                     stageConnectionsLimit -= 1;
-                }
-
-                //connectedProspects.AddRange(CreateCampaignProspects(campaignProspectsAsWebElements, campaignId));                
+                }         
 
                 bool nextDisabled = _linkedInSearchPage.IsNextButtonDisabled(webDriver);
                 if (nextDisabled)
@@ -198,7 +194,7 @@ namespace Domain.Providers.Campaigns
                     currentSentConnectionsUrlStatus.StartedCrawling = true;
                     currentSentConnectionsUrlStatus.FinishedCrawling = true;
                     currentSentConnectionsUrlStatus.WindowHandleId = string.Empty;
-                    currentSentConnectionsUrlStatus.LastActivityTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    currentSentConnectionsUrlStatus.LastActivityTimestamp = new DateTimeOffset(new DateTimeWithZone(DateTime.Now, TimeZoneInfo.FindSystemTimeZoneById(timeZoneId)).LocalTime).ToUnixTimeSeconds();
                     updatedSentConnectionsUrlStatusRequests.Add(currentSentConnectionsUrlStatus);
 
                     if(allSentConnectionsUrlStatuses.Count > 0)

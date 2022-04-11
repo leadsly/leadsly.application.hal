@@ -29,31 +29,33 @@ namespace Domain.Services
 
         public async Task<HttpResponseMessage> ProcessNewConnectionsAsync(NewProspectConnectionRequest request, CancellationToken ct = default)
         {
-            string apiServerUrl = "http://localhost:5010"; //; request.ApiServerUrl;
+            //string apiServerUrl = "http://localhost:5010"; //; request.ApiServerUrl;
 
-            HttpRequestMessage req = new()
-            {
-                Method = HttpMethod.Post,
-                RequestUri = new Uri(apiServerUrl, UriKind.Relative),
-                Content = JsonContent.Create(new
-                {
-                    NewConnectionProspects = request.NewConnectionProspects,
-                    HalId = request.HalId
-                })
-            };
+            //HttpRequestMessage req = new()
+            //{
+            //    Method = HttpMethod.Post,
+            //    RequestUri = new Uri(apiServerUrl, UriKind.Relative),
+            //    Content = JsonContent.Create(new
+            //    {
+            //        // NewConnectionProspects = request.NewConnectionProspects,
+            //        HalId = request.HalId
+            //    })
+            //};
 
-            HttpResponseMessage response = default;
-            try
-            {
-                _logger.LogInformation("Sending request to process my new network connections.");
-                response = await _httpClient.SendAsync(req, ct);
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send reequest to process my new network connections.");
-            }
+            //HttpResponseMessage response = default;
+            //try
+            //{
+            //    _logger.LogInformation("Sending request to process my new network connections.");
+            //    response = await _httpClient.SendAsync(req, ct);
+            //}
+            //catch(Exception ex)
+            //{
+            //    _logger.LogError(ex, "Failed to send reequest to process my new network connections.");
+            //}
 
-            return response;
+            //return response;
+
+            return null;
         }
 
         public async Task<HttpResponseMessage> ProcessProspectListAsync(ProspectListPhaseCompleteRequest request, CancellationToken ct = default)
@@ -149,5 +151,35 @@ namespace Domain.Services
 
             return response;
         }
+
+        public async Task<HttpResponseMessage> TriggerFollowUpMessagesAsync(NewProspectsConnectionsAcceptedRequest request, CancellationToken ct = default)
+        {
+            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+
+            HttpResponseMessage response = default;
+            try
+            {
+                HttpRequestMessage req = new()
+                {
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    Content = JsonContent.Create(new
+                    {
+                        HalId = request.HalId,
+                        NewAcceptedProspectsConnections = request.NewAcceptedProspectsConnections
+                    })
+                };
+
+                _logger.LogInformation("Sending request to process my new network connections.");
+                response = await _httpClient.SendAsync(req, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send reequest to process my new network connections.");
+            }
+
+            return response;
+        }
     }
+    
 }

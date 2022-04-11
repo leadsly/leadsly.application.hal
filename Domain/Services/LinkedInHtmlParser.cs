@@ -29,19 +29,19 @@ namespace Domain.Services
         {
             HalOperationResult<T> result = new();
 
-            INewConnectionProspects newProspects = new NewConnectionProspects();
-            foreach (IWebElement connection in myNetworkNewConnections)
-            {
-                NewConnectionProspect newProsp = new()
-                {
-                    NewConnectionInnerText = ExtractNewConnectionInnerText(connection),
-                    ProfileUrl = ExtractProfileUrl(connection),
-                    SmallProfilePhotoUrl = ExtractProfileUrl(connection)
-                };
-                newProspects.NewProspects.Add(newProsp);
-            }
+            //INewConnectionProspects newProspects = new NewConnectionProspects();
+            //foreach (IWebElement connection in myNetworkNewConnections)
+            //{
+            //    NewConnectionProspect newProsp = new()
+            //    {
+            //        NewConnectionInnerText = ExtractNewConnectionInnerText(connection),
+            //        ProfileUrl = ExtractProfileUrl(connection),
+            //        SmallProfilePhotoUrl = ExtractProfileUrl(connection)
+            //    };
+            //    newProspects.NewProspects.Add(newProsp);
+            //}
 
-            result.Value = (T)newProspects;
+            //result.Value = (T)newProspects;
             result.Succeeded = true;
             return result;
         }
