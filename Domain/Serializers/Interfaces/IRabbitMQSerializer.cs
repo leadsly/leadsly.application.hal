@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Domain.Serializers.Interfaces
 {
-    public interface ICampaignPhaseSerializer
+    public interface IRabbitMQSerializer
     {
         FollowUpMessagesBody DeserializeFollowUpMessagesBody(string body);
 
@@ -20,6 +20,5 @@ namespace Domain.Serializers.Interfaces
         SendConnectionsBody DeserializeSendConnectionRequestsBody(string body);
 
         ConnectionWithdrawBody DeserializeConnectionWithdrawBody(string body);
-
     }
 }

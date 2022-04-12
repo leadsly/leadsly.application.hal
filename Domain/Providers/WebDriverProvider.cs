@@ -38,6 +38,9 @@ namespace Domain.Providers
         private static Dictionary<BrowserPurpose, IWebDriver> Drivers { get; set; } = new Dictionary<BrowserPurpose, IWebDriver>();
         public HalOperationResult<T> CloseTab<T>(BrowserPurpose browserPurpose, string windowHandleId) where T : IOperationResponse
         {
+            string browser = Enum.GetName(browserPurpose);
+            _logger.LogInformation("Closing WebDriver tab for browser purpose: {browser}", browser);
+
             HalOperationResult<T> result = new();
             HalOperationResult<IGetOrCreateWebDriverOperation> getWebDriverOperationResult = new();
             lock (_getWebDriverLock)
@@ -142,12 +145,16 @@ namespace Domain.Providers
         private HalOperationResult<T> AddWebDriver<T>(BrowserPurpose browserPurpose, IWebDriver webDriver) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
+            string browser = Enum.GetName(browserPurpose);
             try
             {
+                _logger.LogTrace("Adding new WebDriver instance to Drivers list. Browser purpose is: {browser}", browser);
                 Drivers.Add(browserPurpose, webDriver);
+                _logger.LogTrace("Successfully added new WebDriver instance to Drivers list. Browser purpose is: {browser}", browser);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to add WebDriver instance to Drivers list. Browser purpose is: {browser}", browser);
                 result.Failures.Add(new()
                 {
                     Code = Codes.WEBDRIVER_MANAGEMENT_ERROR,
@@ -162,6 +169,8 @@ namespace Domain.Providers
 
         private HalOperationResult<T> GetWebDriver<T>(BrowserPurpose browserPurpose) where T : IOperationResponse
         {
+            string browser = Enum.GetName(browserPurpose);
+            _logger.LogInformation("Attempting to retrieve WebDriver from existing list by browser purpose: {browser}", browser);
             HalOperationResult<T> result = new();
             IWebDriver driver = default;
             try
@@ -170,21 +179,23 @@ namespace Domain.Providers
                 Drivers.TryGetValue(browserPurpose, out driver);
                 if(driver == null)
                 {
+                    _logger.LogDebug("WebDriver does not exist in the list. New WebDriver instance will need to be created for browser purpose: {browser}", browser);
                     return result;
-                }
+                }                
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to get new webdriver to the list");
+                _logger.LogError(ex, "Error occured getting WebDriver from the list by browser purpose: {browser}", browser);
                 result.Failures.Add(new()
                 {
                     Code = Codes.WEBDRIVER_ERROR,
-                    Reason = "Failed to get webdriver to the list",
+                    Reason = "Failed to get WebDriver from the list",
                     Detail = ex.Message
                 });
                 return result;
             }
 
+            _logger.LogDebug("WebDriver instance exist for browser purpose: {browser}", browser);
             IGetOrCreateWebDriverOperation operation = new GetOrCreateWebDriverOperation
             {
                 WebDriver = driver
@@ -256,9 +267,12 @@ namespace Domain.Providers
 
         private WebDriverOptions GetWebDriverOptions(string chromeProfileName)
         {
+            _logger.LogInformation("Retrieving WebDriver options. ChromeProfileName that will be used is: {chromeProfileName}", chromeProfileName);
+
             WebDriverOptions webDriverOptions = default;
             if (_memoryCache.TryGetValue(CacheKeys.WebDriverOptions, out webDriverOptions) == false)
             {
+                _logger.LogDebug("WebDriver options has not been yet loaded. Retrieving configuration options and saving them in memory.");
                 webDriverOptions = _webDriverRepository.GetWebDriverOptions();
                 webDriverOptions.ChromeProfileConfigOptions.ChromeProfileName = chromeProfileName ?? string.Empty;
                 _memoryCache.Set(CacheKeys.WebDriverOptions, webDriverOptions, TimeSpan.FromHours(16));
@@ -380,6 +394,7 @@ namespace Domain.Providers
 
         public HalOperationResult<T> SwitchTo<T>(IWebDriver webDriver, string windowHandleId) where T : IOperationResponse
         {
+            _logger.LogInformation("Switching to window handle id {windowHandleId}", windowHandleId);
             HalOperationResult<T> result = new();
             try
             {
@@ -412,13 +427,19 @@ namespace Domain.Providers
 
         public HalOperationResult<T> NewTab<T>(IWebDriver webDriver) where T : IOperationResponse
         {
+            _logger.LogInformation("Attempting to create a new tab.");
             HalOperationResult<T> result = new();
 
             INewTabOperation operation = new NewTabOperation();
             try
             {
+                _logger.LogTrace("Opening new tab");
                 webDriver.SwitchTo().NewWindow(WindowType.Tab);
+                _logger.LogTrace("New tab has been successfully created");
+
                 operation.WindowHandleId = webDriver.CurrentWindowHandle;
+                string windowHandleId = operation.WindowHandleId;
+                _logger.LogTrace("New tab's window handle id is: {windowHandleId}", windowHandleId);
             }
             catch (Exception ex)
             {

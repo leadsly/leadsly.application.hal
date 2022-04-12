@@ -39,6 +39,8 @@ namespace Domain
             // if there is no way to ship docker containers with our default chrome profile
             //string dir = Directory.GetCurrentDirectory();
             string defaultProfileDir = $"{options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir}/{options.ChromeProfileConfigOptions.DefaultChromeProfileName}";
+            _logger.LogDebug("Default chrome profile directory is: {defaultProfileDir} " +
+                "\r\n This is the chrome profile used to authenticate user. After this point all browser instances will be coping this chrome profile and using the copy to launch browsers", defaultProfileDir);
             if (Directory.Exists(defaultProfileDir) == false)
             {
                 _logger.LogError("Could not locate {defaultProfileDir}", defaultProfileDir);
@@ -52,8 +54,9 @@ namespace Domain
 ;
             string newProfileDir = Path.Combine(options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir, newChromeProfile);
 
+            _logger.LogInformation("Starting to copy all contents of default chrome profile directory, which is: {defaultProfileDir}", defaultProfileDir);
             WalkDirectoryTree(new DirectoryInfo(defaultProfileDir), newProfileDir);
-
+    
             result = HandleAnyErrors<T>();
             if(result.Succeeded == false)
             {
@@ -70,7 +73,7 @@ namespace Domain
             if (_log.Count > 0)
             {
                 int count = _log.Count;
-                _logger.LogWarning("Cloning default chrome profile encountered some issues. Error logs detected {count}", count);
+                _logger.LogWarning("Cloning default chrome profile encountered some issues. Number of rrror logs detected {count}", count);
                 if (_log.Count <= 5)
                 {
                     foreach (string log in _log)

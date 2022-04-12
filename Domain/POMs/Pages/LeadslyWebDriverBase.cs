@@ -23,14 +23,19 @@ namespace Domain.POMs.Pages
         public HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)
             where T : IOperationResponse
         {
+            _logger.LogInformation("Navigating to url {pageUrl}", pageUrl);
+
             HalOperationResult<T> result = new();
 
             try
             {
+                _logger.LogTrace("Starting navigation to {pageUrl}", pageUrl);
                 webDriver.Navigate().GoToUrl(new Uri(pageUrl));
+                _logger.LogTrace("Successfully navigated to {pageUrl}", pageUrl);
             }
             catch (WebDriverTimeoutException timeoutEx)
             {
+                _logger.LogError(timeoutEx, "WebDriver WebDriverTimeoutException during navigation to url {pageUrl}", pageUrl);
                 throw timeoutEx;
             }
             catch (Exception ex)

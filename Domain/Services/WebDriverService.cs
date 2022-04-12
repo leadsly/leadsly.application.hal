@@ -30,6 +30,7 @@ namespace Domain.Services
 
         public HalOperationResult<T> CloseTab<T>(IWebDriver driver, string windowHandleId) where T : IOperationResponse
         {
+            _logger.LogInformation("Closing WebDriver tab by windowHandleId: {windowHandleId}", windowHandleId);
             HalOperationResult<T> result = new();
             string windowHandleToClose = string.Empty;
             try
@@ -77,6 +78,8 @@ namespace Domain.Services
 
         public HalOperationResult<T> Create<T>(BrowserPurpose browserPurpose, WebDriverOptions webDriverOptions) where T : IOperationResponse
         {
+            string browser = Enum.GetName(browserPurpose);
+            _logger.LogInformation("Creating a new WebDriver instance for browser purpose {browser}", browser);
             HalOperationResult<T> result = new();
             ChromeOptions options = null;
             string newChromeProfileDir = string.Empty;
@@ -96,7 +99,9 @@ namespace Domain.Services
                     return result;
                 }
                 newChromeProfileDir = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir + "\\" + newChromeProfileName;
-                
+
+                _logger.LogDebug("New chrome profile directory that will be used is: {newChromeProfileDir}", newChromeProfileDir);
+
                 options = SetChromeOptions(webDriverOptions, newChromeProfileName, webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir);                
             }
 
@@ -109,13 +114,21 @@ namespace Domain.Services
             IWebDriver driver = null;
             try
             {
+                _logger.LogTrace("Creating new WebDriver instance");
                 driver = new ChromeDriver(options);
+                _logger.LogTrace("New WebDriver instance successfully created");
+
+                _logger.LogTrace("Maximizing WebDriver's main window.");
                 driver.Manage().Window.Maximize();
-                driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(implicitWait);                
+                _logger.LogTrace("WebDriver main window was successfully maximized.");
+
+                _logger.LogTrace("Setting WebDriver ImplicitWait to {implicitWait}", implicitWait);
+                driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(implicitWait);
+                _logger.LogTrace("Successfully set WebDriver's ImplicitWait");
             }
             catch(Exception ex)
             {
-                _logger.LogError(ex, "Failed to create new web driver.");
+                _logger.LogError(ex, "Failed to create new WebDriver instance");
 
                 // remove created profile
                 if(newChromeProfileDir != null)
@@ -142,12 +155,17 @@ namespace Domain.Services
 
         private ChromeOptions SetChromeOptions(WebDriverOptions webDriverOptions, string profileName, string userDataDir)
         {
+            _logger.LogInformation("Setting chrome options" +
+                "\r\n Chrome profile name: {profileName}" +
+                "\r\n UserDataDir is: {userDataDir}", profileName, userDataDir);
+
             ChromeOptions options = new();
             //options.AddArgument("--disable-blink-features=AutomationControlled");
             //options.AddArgument("window-size=1280,800");
             //options.AddArgument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36");
             foreach (string addArgument in webDriverOptions.ChromeProfileConfigOptions.AddArguments)
             {
+                _logger.LogDebug("New WebDriver argument: {addArgument}", addArgument);
                 options.AddArgument(addArgument);
             }
             options.AddArgument(@$"user-data-dir={userDataDir}\{profileName}");            

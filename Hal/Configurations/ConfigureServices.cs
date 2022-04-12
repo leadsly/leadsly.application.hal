@@ -110,7 +110,7 @@ namespace Hal.Configurations
         {
             Log.Information("Registering serializers configuration.");
 
-            services.AddScoped<ICampaignPhaseSerializer, CampaignPhaseSerializer>();
+            services.AddScoped<IRabbitMQSerializer, RabbitMQSerializer>();
             services.AddScoped<ICampaignSerializer, CampaignSerializer>();
 
             return services;

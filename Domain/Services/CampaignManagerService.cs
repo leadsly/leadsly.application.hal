@@ -164,7 +164,7 @@ namespace Domain.Services
             using (var scope = _serviceProvider.CreateScope())
             {
                 //try and deserialize the response
-                ICampaignPhaseSerializer serializer = scope.ServiceProvider.GetRequiredService<ICampaignPhaseSerializer>();
+                IRabbitMQSerializer serializer = scope.ServiceProvider.GetRequiredService<IRabbitMQSerializer>();
                 byte[] body = eventArgs.Body.ToArray();
                 string message = Encoding.UTF8.GetString(body);
                 FollowUpMessagesBody followUpMessages = serializer.DeserializeFollowUpMessagesBody(message);
@@ -241,7 +241,7 @@ namespace Domain.Services
             using (var scope = _serviceProvider.CreateScope())
             {
                 //try and deserialize the response
-                ICampaignPhaseSerializer serializer = scope.ServiceProvider.GetRequiredService<ICampaignPhaseSerializer>();
+                IRabbitMQSerializer serializer = scope.ServiceProvider.GetRequiredService<IRabbitMQSerializer>();
                 byte[] body = eventArgs.Body.ToArray();
                 string message = Encoding.UTF8.GetString(body);
                 ConnectionWithdrawBody connectionWithdraw = serializer.DeserializeConnectionWithdrawBody(message);
@@ -288,7 +288,7 @@ namespace Domain.Services
             MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections = default;
             using (var scope = _serviceProvider.CreateScope())
             {
-                ICampaignPhaseSerializer serializer = scope.ServiceProvider.GetRequiredService<ICampaignPhaseSerializer>();
+                IRabbitMQSerializer serializer = scope.ServiceProvider.GetRequiredService<IRabbitMQSerializer>();
                 byte[] body = eventArgs.Body.ToArray();
                 string message = Encoding.UTF8.GetString(body);
                 monitorForNewAcceptedConnections = serializer.DeserializeMonitorForNewAcceptedConnectionsBody(message);
@@ -373,7 +373,7 @@ namespace Domain.Services
             using (var scope = _serviceProvider.CreateScope())
             {
                 //try and deserialize the response
-                ICampaignPhaseSerializer serializer = scope.ServiceProvider.GetRequiredService<ICampaignPhaseSerializer>();
+                IRabbitMQSerializer serializer = scope.ServiceProvider.GetRequiredService<IRabbitMQSerializer>();
                 byte[] body = eventArgs.Body.ToArray();
                 string message = Encoding.UTF8.GetString(body);
                 ProspectListBody prospectListBody = serializer.DeserializeProspectListBody(message);
@@ -418,7 +418,7 @@ namespace Domain.Services
             using (var scope = _serviceProvider.CreateScope())
             {
                 //try and deserialize the response
-                ICampaignPhaseSerializer serializer = scope.ServiceProvider.GetRequiredService<ICampaignPhaseSerializer>();
+                IRabbitMQSerializer serializer = scope.ServiceProvider.GetRequiredService<IRabbitMQSerializer>();
                 byte[] body = eventArgs.Body.ToArray();
                 string message = Encoding.UTF8.GetString(body);
                 SendConnectionsBody sendConnectionsBody = serializer.DeserializeSendConnectionRequestsBody(message);
@@ -629,7 +629,7 @@ namespace Domain.Services
             using (var scope = _serviceProvider.CreateScope())
             {
                 //try and deserialize the response
-                ICampaignPhaseSerializer serializer = scope.ServiceProvider.GetRequiredService<ICampaignPhaseSerializer>();
+                IRabbitMQSerializer serializer = scope.ServiceProvider.GetRequiredService<IRabbitMQSerializer>();
                 byte[] body = eventArgs.Body.ToArray();
                 string message = Encoding.UTF8.GetString(body);
                 ScanProspectsForRepliesBody scanProspectsForRepliesBody = serializer.DeserializeScanProspectsForRepliesBody(message);

@@ -99,8 +99,6 @@ namespace PageObjects
 
                 if(newProspectInfo.ProspectName != null && newProspectInfo.ProfileUrl != null)
                 {
-                    DateTime timeUtc = DateTime.UtcNow;
-                    TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
                     newProspectInfo.AcceptedTimestamp = new DateTimeOffset(new DateTimeWithZone(DateTime.Now, TimeZoneInfo.FindSystemTimeZoneById(timeZoneId)).LocalTime).ToUnixTimeSeconds();
                     prospectsInfo.Add(newProspectInfo);
                 }

@@ -119,17 +119,7 @@ namespace Domain.Providers.Campaigns
             if(newProspects.Count > 0)
             {
                 // fire off request to initiate follow up message phase
-                NewProspectsConnectionsAcceptedRequest request = new()
-                {
-                    HalId = message.HalId,
-                    NamespaceName = message.NamespaceName,                    
-                    ServiceDiscoveryName = message.ServiceDiscoveryName,
-                    RequestUrl = "api/campaignphases/process-newly-accepted-prospects",
-                    NewAcceptedProspectsConnections = newProspects,
-                    ApplicationUserId = message.UserId
-                };
-
-                await _campaignProcessingPhase.TriggerFollowUpMessagesAsync(request);
+                await ProcessNewlyAcceptedProspects(newProspects, message);
             }
         }
 
@@ -155,19 +145,25 @@ namespace Domain.Providers.Campaigns
 
                 if (newProspects.Count > 0)
                 {
-                    // fire off request to initiate follow up message phase
-                    NewProspectsConnectionsAcceptedRequest request = new()
-                    {
-                        HalId = message.HalId,
-                        NamespaceName = message.NamespaceName,
-                        ServiceDiscoveryName = message.ServiceDiscoveryName,
-                        RequestUrl = "api/campaignphases/process-newly-accepted-prospects",
-                        NewAcceptedProspectsConnections = newProspects
-                    };
-
-                    await _campaignProcessingPhase.TriggerFollowUpMessagesAsync(request);
+                    await ProcessNewlyAcceptedProspects(newProspects, message);
                 }
             }
+        }
+
+        private async Task ProcessNewlyAcceptedProspects(IList<NewProspectConnectionRequest> newProspects, MonitorForNewAcceptedConnectionsBody message)
+        {
+            // fire off request to initiate follow up message phase
+            NewProspectsConnectionsAcceptedRequest request = new()
+            {
+                HalId = message.HalId,
+                NamespaceName = message.NamespaceName,
+                ServiceDiscoveryName = message.ServiceDiscoveryName,
+                RequestUrl = "api/campaignphases/process-newly-accepted-prospects",
+                NewAcceptedProspectsConnections = newProspects,
+                ApplicationUserId = message.UserId
+            };
+
+            await _campaignProcessingPhase.ProcessNewlyAcceptedProspectsAsync(request);
         }
 
         private IList<NewProspectConnectionRequest> GrabNewlyConnectedProspectsInfo(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)            

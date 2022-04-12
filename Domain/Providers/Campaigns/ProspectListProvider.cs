@@ -48,6 +48,9 @@ namespace Domain.Providers.Campaigns
         public HalOperationResult<T> ExecutePhase<T>(ProspectListBody message) 
             where T : IOperationResponse
         {
+            string halId = message.HalId;
+            _logger.LogInformation("Executing ProspectList Phase on hal id {halId}", halId);
+
             HalOperationResult<T> result = new();
 
             // assume user is authenticated
@@ -73,6 +76,7 @@ namespace Domain.Providers.Campaigns
             where T : IOperationResponse
         {
             string defaultWindowHandle = webDriver.CurrentWindowHandle;
+            _logger.LogDebug("Current window handle is: {defaultWindowHandle}", defaultWindowHandle);
 
             HalOperationResult<T> result = new();
             IList<PrimaryProspectRequest> prospects = new List<PrimaryProspectRequest>();            
@@ -100,7 +104,9 @@ namespace Domain.Providers.Campaigns
                     });
                     return result;
                 }
+
                 int totalResults = ((IGetTotalNumberOfResults)result.Value).NumberOfResults;
+                _logger.LogDebug("Total results in the hitlist {totalResults}", totalResults);
 
                 _webDriverProvider.CloseTab<T>(BrowserPurpose.ProspectList, webDriver.CurrentWindowHandle);
                 _webDriverProvider.SwitchTo<T>(webDriver, defaultWindowHandle);
@@ -133,6 +139,10 @@ namespace Domain.Providers.Campaigns
 
         private IList<PrimaryProspectRequest> CollectProspects(IWebDriver webDriver, string searchUrl, int totalResults, string primaryProspectListId)            
         {
+            _logger.LogInformation("Starting to collect all of the prospects from search url {searchUrl}." +
+                "\r\n Total results for the search results are: {totalResults} " +
+                "\r\n Primary prospect list id is {primaryProspectListId}", searchUrl, totalResults, primaryProspectListId);
+
             List<string> windowHandles = new();
             IList<PrimaryProspectRequest> prospects = new List<PrimaryProspectRequest>();
 
@@ -142,6 +152,7 @@ namespace Domain.Providers.Campaigns
                 {
                     if(i == 0)
                     {
+                        _logger.LogDebug("This is the first iteration over the search results list. Creating a new tab.");
                         HalOperationResult<INewTabOperation> newTabOperation = _webDriverProvider.NewTab<INewTabOperation>(webDriver);
                         if (newTabOperation.Succeeded == false)
                         {
@@ -150,6 +161,7 @@ namespace Domain.Providers.Campaigns
 
                         windowHandles.Add(newTabOperation.Value.WindowHandleId);
 
+                        _logger.LogDebug("This is the first iteration over the search results list. Navigating to url: {searchUrl}.", searchUrl);
                         HalOperationResult<IOperationResponse> goToPageResult = GoToPage<IOperationResponse>(webDriver, searchUrl);
                         if (goToPageResult.Succeeded == false)
                         {
@@ -174,6 +186,7 @@ namespace Domain.Providers.Campaigns
                     }
 
                     List<IWebElement> propsAsWebElements = result.Value.ProspectElements;
+                    _logger.LogTrace("Creating PrimaryProspects from IWebElements");
                     prospects = prospects.Concat(CreatePrimaryProspects(propsAsWebElements, primaryProspectListId)).ToList();
 
                     HalOperationResult<IOperationResponse> clickNextResult = _linkedInSearchPage.ClickNext<IOperationResponse>(webDriver);
@@ -189,7 +202,7 @@ namespace Domain.Providers.Campaigns
             }
             finally
             {
-                // close all opened tabs
+                // close all opened tabs                
                 windowHandles.ForEach(windowHandle => _webDriverProvider.CloseTab<IOperationResponse>(BrowserPurpose.ProspectList, windowHandle));
             }
 

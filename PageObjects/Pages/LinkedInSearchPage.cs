@@ -53,10 +53,11 @@ namespace PageObjects.Pages
             List<IWebElement> lis = default;
             try
             {
-                _logger.LogInformation("Getting last page of the total search results from the hitlist");
+                _logger.LogTrace("Getting last page of the search results from the hitlist");
                 IWebElement ul = SearchResultFooter(webDriver).FindElement(By.CssSelector(".artdeco-pagination .artdeco-pagination__pages"));
                 lis = ul.FindElements(By.TagName("li")).ToList();
-                
+                string last = lis.LastOrDefault()?.Text;
+                _logger.LogTrace("Successfully found total hit list page result count. Last page is: {last}", last);
             }
             catch (Exception ex)
             {
@@ -144,14 +145,14 @@ namespace PageObjects.Pages
             List<IWebElement> prospects = default;
             try
             {
-                _logger.LogInformation("[ProspectsAsWebElements] Temporarily changing web driver's implicit wait time to {Timeout}", Timeout);
+                _logger.LogTrace("[ProspectsAsWebElements] Temporarily changing web driver's implicit wait time to {Timeout}", Timeout);
                 TimeSpan defaultTimeSpan = webDriver.Manage().Timeouts().ImplicitWait;
                 webDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(Timeout);
 
                 prospects = ProspectList(webDriver).FindElements(By.TagName("li")).ToList();
 
                 double defaultTimeout = defaultTimeSpan.TotalSeconds;
-                _logger.LogInformation("[ProspectsAsWebElements] Reverting web drivers timeout back to it's default value {defaultTimeout}", defaultTimeout);
+                _logger.LogTrace("[ProspectsAsWebElements] Reverting web drivers timeout back to it's default value {defaultTimeout}", defaultTimeout);
                 webDriver.Manage().Timeouts().ImplicitWait = defaultTimeSpan;
             }
             catch (Exception ex)
@@ -189,6 +190,7 @@ namespace PageObjects.Pages
 
             if(numberOfPages == null)
             {
+                _logger.LogWarning("Could not determine the number of pages in the hitlist");
                 result.Failures.Add(new()
                 {
                     Code = Codes.WEBDRIVER_ERROR,
@@ -217,7 +219,7 @@ namespace PageObjects.Pages
             IWebElement nextBtn = default;
             try
             {
-                _logger.LogInformation("[NextButton] Temporarily changing web driver's implicit wait time to {Timeout}", Timeout);
+                _logger.LogTrace("[NextButton] Temporarily changing web driver's implicit wait time to {Timeout}", Timeout);
                 TimeSpan defaultTimeSpan = webDriver.Manage().Timeouts().ImplicitWait;
                 webDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(Timeout);
 
@@ -225,12 +227,12 @@ namespace PageObjects.Pages
 
                 if (footer == null)
                 {
-                    _logger.LogInformation("[NextButton] Footer could not be located. Returning null");
+                    _logger.LogTrace("[NextButton] Footer could not be located. Returning null");
                     return null;
                 }
                 else
                 {
-                    _logger.LogInformation("[NextButton] Executing javascript 'scrollIntoView' to scroll footer into view");
+                    _logger.LogTrace("[NextButton] Executing javascript 'scrollIntoView' to scroll footer into view");
                     IJavaScriptExecutor js = (IJavaScriptExecutor)webDriver;
                     js.ExecuteScript("arguments[0].scrollIntoView();", footer);                    
                 }
@@ -238,7 +240,7 @@ namespace PageObjects.Pages
                 nextBtn = webDriver.FindElement(By.CssSelector("button[aria-label='Next']"));
 
                 double defaultTimeout = defaultTimeSpan.TotalSeconds;
-                _logger.LogInformation("[NextButton] Reverting web drivers timeout back to it's default value {defaultTimeout}", defaultTimeout);
+                _logger.LogTrace("[NextButton] Reverting web drivers timeout back to it's default value {defaultTimeout}", defaultTimeout);
                 webDriver.Manage().Timeouts().ImplicitWait = defaultTimeSpan;
             }
             catch (Exception ex)
@@ -278,6 +280,7 @@ namespace PageObjects.Pages
             {
                 RandomWait(1, 4);
 
+                _logger.LogTrace("Clicking next button");
                 nextButton.Click();
 
                 Stopwatch sw = Stopwatch.StartNew();
@@ -285,6 +288,7 @@ namespace PageObjects.Pages
 
                 IWebElement searchResultsContainer = default;
                 IWebElement noSearchResultsContainer = default;
+                _logger.LogTrace("Entering in while loop to ensure we either view the NoSearchResultsContainer or the next page's search results");
                 while ((sw.Elapsed.TotalSeconds <= Timeout))
                 {
                     try
@@ -347,11 +351,12 @@ namespace PageObjects.Pages
             bool isDisplayed = false;
             try
             {
-                _logger.LogInformation("[IsNoSearchResultsContainerDisplayed]: Determining if NoSearchResultsContainer is displayed");
+                _logger.LogTrace("[IsNoSearchResultsContainerDisplayed]: Determining if NoSearchResultsContainer is displayed");
                 IWebElement noResultsSearchContainer = NoSearchResultsContainer(driver);
                 if(noResultsSearchContainer != null)
                 {
                     isDisplayed = noResultsSearchContainer.Displayed;
+                    _logger.LogTrace("NoSearchResultsContainer element was found. Is it displayed: {isDisplayed}", isDisplayed);                    
                 }
             }
             catch(Exception ex)
@@ -389,7 +394,7 @@ namespace PageObjects.Pages
 
             try
             {
-                _logger.LogInformation("[ClickRetrySearch] Clicking retry search results because we've gotten an error page");
+                _logger.LogTrace("[ClickRetrySearch] Clicking retry search results because we've gotten an error page");
 
                 RandomWait(1, 5);
 
@@ -398,11 +403,11 @@ namespace PageObjects.Pages
                 WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
                 IWebElement searchResults = wait.Until<IWebElement>(webDriver =>
                 {
-                    _logger.LogInformation("[ClickRetrySearch] locating search results container");
+                    _logger.LogTrace("[ClickRetrySearch] locating search results container");
                     IWebElement searchResultContainer = SearchResultContainerQuery(webDriver);
                     if(searchResultContainer == null)
                     {
-                        _logger.LogInformation("[ClickRetrySearch] Failed to locate search results container. Attemping to click retry button again");
+                        _logger.LogTrace("[ClickRetrySearch] Failed to locate search results container. Attemping to click retry button again");
                         retryButton.Click();
                     }
                     return searchResultContainer;
@@ -410,7 +415,7 @@ namespace PageObjects.Pages
 
                 if (searchResults == null)
                 {
-                    _logger.LogInformation("[ClickRetrySearch] Search results container is null");
+                    _logger.LogTrace("[ClickRetrySearch] Search results container is null");
                     return result;
                 }
 
