@@ -41,7 +41,7 @@ namespace Domain.Facades
         private readonly ISendConnectionsProvider _sendConnectionsProvider;
         private readonly ILogger<CampaignPhaseFacade> _logger;        
 
-        public HalOperationResult<T> ExecuteFollowUpMessagesPhase<T>(FollowUpMessagesBody message)
+        public HalOperationResult<T> ExecuteFollowUpMessagesPhase<T>(FollowUpMessageBody message)
             where T : IOperationResponse
         {
             return _followUpMessagesProvider.ExecutePhase<T>(message);
@@ -130,7 +130,7 @@ namespace Domain.Facades
             throw new NotImplementedException();
         }
 
-        public HalOperationResult<T> ExecutePhase<T>(FollowUpMessagesBody message) where T : IOperationResponse
+        public HalOperationResult<T> ExecutePhase<T>(FollowUpMessageBody message) where T : IOperationResponse
         {
             throw new NotImplementedException();
         }

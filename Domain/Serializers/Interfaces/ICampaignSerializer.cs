@@ -10,5 +10,7 @@ namespace Domain.Serializers.Interfaces
     public interface ICampaignSerializer
     {
         public GetSentConnectionsUrlStatusPayload DeserializeSentConnectionsUrlStatuses(string json);
+
+        public NewAcceptedCampaignProspectsPayload DeserializeNewAcceptedCampaignProspects(string json);
     }
 }

@@ -167,7 +167,7 @@ namespace Domain.Services
                 IRabbitMQSerializer serializer = scope.ServiceProvider.GetRequiredService<IRabbitMQSerializer>();
                 byte[] body = eventArgs.Body.ToArray();
                 string message = Encoding.UTF8.GetString(body);
-                FollowUpMessagesBody followUpMessages = serializer.DeserializeFollowUpMessagesBody(message);
+                FollowUpMessageBody followUpMessages = serializer.DeserializeFollowUpMessagesBody(message);
                 Action ackOperation = default;
                 try
                 {

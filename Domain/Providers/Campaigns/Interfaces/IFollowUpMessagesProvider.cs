@@ -12,7 +12,7 @@ namespace Domain.Providers.Campaigns.Interfaces
 {
     public interface IFollowUpMessagesProvider
     {
-        HalOperationResult<T> ExecutePhase<T>(FollowUpMessagesBody message)
+        HalOperationResult<T> ExecutePhase<T>(FollowUpMessageBody message)
             where T : IOperationResponse;
 
     }

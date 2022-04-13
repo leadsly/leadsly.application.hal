@@ -24,18 +24,18 @@ namespace Domain.Serializers
             throw new NotImplementedException();
         }
 
-        public FollowUpMessagesBody DeserializeFollowUpMessagesBody(string body)
+        public FollowUpMessageBody DeserializeFollowUpMessagesBody(string body)
         {
-            _logger.LogInformation("Deserializing FollowUpMessagesBody");
-            FollowUpMessagesBody followUpMessageBody = null;
+            _logger.LogInformation("Deserializing FollowUpMessageBody");
+            FollowUpMessageBody followUpMessageBody = null;
             try
             {
-                followUpMessageBody = JsonConvert.DeserializeObject<FollowUpMessagesBody>(body);
-                _logger.LogDebug("Successfully deserialized FollowUpMessagesBody");
+                followUpMessageBody = JsonConvert.DeserializeObject<FollowUpMessageBody>(body);
+                _logger.LogDebug("Successfully deserialized FollowUpMessageBody");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to deserialize FollowUpMessagesBody. Returning an explicit null");
+                _logger.LogError(ex, "Failed to deserialize FollowUpMessageBody. Returning an explicit null");
                 return null;
             }
 

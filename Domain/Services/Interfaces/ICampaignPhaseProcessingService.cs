@@ -22,6 +22,6 @@ namespace Domain.Services.Interfaces
 
         Task<HttpResponseMessage> TriggerCampaignProspectListAsync(TriggerSendConnectionsRequest request, CancellationToken ct = default);
 
-        Task<HttpResponseMessage> TriggerFollowUpMessagesAsync(NewProspectsConnectionsAcceptedRequest request, CancellationToken ct = default);
+        Task<HttpResponseMessage> ProcessNewlyAcceptedProspectsAsync(NewProspectsConnectionsAcceptedRequest request, CancellationToken ct = default);
     }
 }

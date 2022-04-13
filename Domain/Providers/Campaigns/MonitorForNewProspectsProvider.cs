@@ -2,6 +2,7 @@
 using Domain.POMs.Pages;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
+using Domain.Serializers.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
@@ -30,6 +31,7 @@ namespace Domain.Providers.Campaigns
             ILogger<MonitorForNewProspectsProvider> logger, 
             IWebDriverProvider webDriverProvider,
             IHalIdentity halIdentity,
+            ICampaignSerializer serializer,
             ILinkedInNavBar linkedInNavBar,
             ILinkedInNotificationsPage linkedInNotificationsPage,
             ICampaignPhaseProcessingService campaignProcessingPhase,
@@ -41,6 +43,7 @@ namespace Domain.Providers.Campaigns
             _campaignProcessingPhase = campaignProcessingPhase;
             _webDriverProvider = webDriverProvider;
             _linkedInNavBar = linkedInNavBar;
+            _serializer = serializer;
             _linkedInHomePage = linkedInHomePage;
             _linkedInHtmlParser = linkedInHtmlParser;
             _halConfigurationProvider = halConfigurationProvider;
@@ -55,6 +58,7 @@ namespace Domain.Providers.Campaigns
         private readonly ILinkedInHtmlParser _linkedInHtmlParser;
         private readonly ILinkedInNotificationsPage _linkedInNotificationsPage;
         private readonly ILinkedInMyNetworkPage _linkedInMyNetworkPage;
+        private readonly ICampaignSerializer _serializer;
         private readonly ICampaignPhaseProcessingService _campaignProcessingPhase;
         private readonly IHalOperationConfigurationProvider _halConfigurationProvider;
         private readonly IHalIdentity _halIdentity;
@@ -165,6 +169,7 @@ namespace Domain.Providers.Campaigns
 
             await _campaignProcessingPhase.ProcessNewlyAcceptedProspectsAsync(request);
         }
+
 
         private IList<NewProspectConnectionRequest> GrabNewlyConnectedProspectsInfo(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)            
         {

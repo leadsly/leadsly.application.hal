@@ -12,7 +12,7 @@ namespace Domain.Facades.Interfaces
 {
     public interface ICampaignPhaseFacade
     {
-        HalOperationResult<T> ExecutePhase<T>(FollowUpMessagesBody message)
+        HalOperationResult<T> ExecutePhase<T>(FollowUpMessageBody message)
             where T : IOperationResponse;
 
         HalOperationResult<T> ExecutePhase<T>(ScanProspectsForRepliesBody message)

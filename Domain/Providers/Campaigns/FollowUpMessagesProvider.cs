@@ -26,7 +26,7 @@ namespace Domain.Providers.Campaigns
         private readonly ILinkedInHomePage _linkedInHomePage;
         private readonly ILinkedInMessagingPage _linkedInMessagingPage;
 
-        public HalOperationResult<T> ExecutePhase<T>(FollowUpMessagesBody message)
+        public HalOperationResult<T> ExecutePhase<T>(FollowUpMessageBody message)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -36,7 +36,6 @@ namespace Domain.Providers.Campaigns
             {
                 BrowserPurpose = BrowserPurpose.FollowUpMessages,
                 ChromeProfileName = message.ChromeProfileName,
-                RequestedWindowHandleId = message.RequestedWindowHandleId,
                 PageUrl = message.PageUrl
             };
 
@@ -53,7 +52,7 @@ namespace Domain.Providers.Campaigns
             return SendFollowUpMessages<T>(webDriver, message);
         }
 
-        private HalOperationResult<T> SendFollowUpMessages<T>(IWebDriver webDriver, FollowUpMessagesBody message)
+        private HalOperationResult<T> SendFollowUpMessages<T>(IWebDriver webDriver, FollowUpMessageBody message)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -65,20 +64,6 @@ namespace Domain.Providers.Campaigns
                 string pageUrl = message.PageUrl;
                 _logger.LogError("Failed to navigate to {pageUrl}", pageUrl);
                 return result;
-            }
-
-            // for each prospect in the list navigate to the messages section on the page and send a message
-            foreach (var prospectEntity in message.Data.ProspectEntities)
-            {
-                string messageContent = message.Data.ProspectsMessages[prospectEntity.Id];
-                result = SendFollowUpMessage<T>(webDriver, prospectEntity.Name, messageContent);
-
-                if(result.Succeeded == false)
-                {
-                    // log the exception and try another prospect
-                    string name = prospectEntity.Name;
-                    _logger.LogWarning("Failed to send follow up message to {name}", name);
-                }
             }
 
             result.Succeeded = true;

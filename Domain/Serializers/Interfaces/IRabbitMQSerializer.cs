@@ -9,7 +9,7 @@ namespace Domain.Serializers.Interfaces
 {
     public interface IRabbitMQSerializer
     {
-        FollowUpMessagesBody DeserializeFollowUpMessagesBody(string body);
+        FollowUpMessageBody DeserializeFollowUpMessagesBody(string body);
 
         ScanProspectsForRepliesBody DeserializeScanProspectsForRepliesBody(string body);
 
