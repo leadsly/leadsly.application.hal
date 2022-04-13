@@ -152,7 +152,7 @@ namespace Domain.Services
             return response;
         }
 
-        public async Task<HttpResponseMessage> TriggerFollowUpMessagesAsync(NewProspectsConnectionsAcceptedRequest request, CancellationToken ct = default)
+        public async Task<HttpResponseMessage> ProcessNewlyAcceptedProspectsAsync(NewProspectsConnectionsAcceptedRequest request, CancellationToken ct = default)
         {
             string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
 
@@ -170,12 +170,13 @@ namespace Domain.Services
                     })
                 };
 
-                _logger.LogInformation("Sending request to process my new network connections.");
+                _logger.LogInformation("Sending request to process newly accepted connections");
                 response = await _httpClient.SendAsync(req, ct);
+                _logger.LogInformation("Successfully sent request to process newly accepted connections");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send reequest to process my new network connections.");
+                _logger.LogError(ex, "Failed to send request to process newly accepted connections");
             }
 
             return response;

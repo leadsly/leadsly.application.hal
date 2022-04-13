@@ -20,14 +20,32 @@ namespace Domain.Serializers
         private readonly ILogger<CampaignSerializer> _logger;
         public GetSentConnectionsUrlStatusPayload DeserializeSentConnectionsUrlStatuses(string json)
         {
+            _logger.LogInformation("Deserializing SentConnectionUrlStatuses");
             GetSentConnectionsUrlStatusPayload payload = default;
             try
             {
                 payload = JsonConvert.DeserializeObject<GetSentConnectionsUrlStatusPayload>(json);
+                _logger.LogDebug("Successfully deserialized SentConnectionUrlStatuses");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to deserialize sent connections url statuses");
+                _logger.LogError(ex, "Failed to deserialize SentConnectionUrlStatuses");
+            }
+            return payload;
+        }
+
+        public NewAcceptedCampaignProspectsPayload DeserializeNewAcceptedCampaignProspects(string json)
+        {
+            _logger.LogInformation("Deserializing NewAcceptedCampaignProspectsPayload");
+            NewAcceptedCampaignProspectsPayload payload = default;
+            try
+            {
+                payload = JsonConvert.DeserializeObject<NewAcceptedCampaignProspectsPayload>(json);
+                _logger.LogDebug("Successfully deserialized NewAcceptedCampaignProspectsPayload");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to deserialize NewAcceptedCampaignProspectsPayload");
             }
             return payload;
         }
