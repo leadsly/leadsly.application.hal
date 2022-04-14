@@ -32,6 +32,7 @@ namespace Domain.Providers.Campaigns
             IWebDriverProvider webDriverProvider,
             IHalIdentity halIdentity,
             ICampaignSerializer serializer,
+            ITimestampService timestampService,
             ILinkedInNavBar linkedInNavBar,
             ILinkedInNotificationsPage linkedInNotificationsPage,
             ICampaignPhaseProcessingService campaignProcessingPhase,
@@ -39,6 +40,7 @@ namespace Domain.Providers.Campaigns
             IHalOperationConfigurationProvider halConfigurationProvider)
         {
             _logger = logger;
+            _timestampService = timestampService;
             _linkedInMyNetworkPage = linkedInMyNetworkPage;
             _campaignProcessingPhase = campaignProcessingPhase;
             _webDriverProvider = webDriverProvider;
@@ -51,6 +53,7 @@ namespace Domain.Providers.Campaigns
             _halIdentity = halIdentity;
         }
 
+        private readonly ITimestampService _timestampService;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILinkedInNavBar _linkedInNavBar;
         private readonly ILogger<MonitorForNewProspectsProvider> _logger;
@@ -129,9 +132,8 @@ namespace Domain.Providers.Campaigns
 
         private async Task MonitorForNewConnections(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
         {
-            TimeZoneInfo timeZone = TimeZoneInfo.FindSystemTimeZoneById(message.TimeZoneId) ?? TimeZoneInfo.Utc;
-            DateTimeOffset endOfWorkDay = DateTimeOffset.FromUnixTimeSeconds(message.EndWorkTime);
-            while (TimeZoneInfo.ConvertTime(DateTimeOffset.Now, timeZone) < endOfWorkDay)
+            DateTimeOffset endOfWorkDayInZone = DateTimeOffset.FromUnixTimeSeconds(message.EndWorkTime);
+            while (_timestampService.GetDateTimeNowWithZone(message.TimeZoneId) < endOfWorkDayInZone)
             {
                 await LookForNewConnections(webDriver, message);
             }

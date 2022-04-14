@@ -294,6 +294,7 @@ namespace Domain.Services
                 monitorForNewAcceptedConnections = serializer.DeserializeMonitorForNewAcceptedConnectionsBody(message);
             }
 
+            // let hangfire handle failures and re runs of this method
             BackgroundJob.Enqueue<ICampaignManagerService>(x => x.StartMonitorForNewConnections(monitorForNewAcceptedConnections));
         }
 
@@ -336,40 +337,8 @@ namespace Domain.Services
 
         #region ProspectList
 
-        //public void OnProspectListEventReceived(object sender, BasicDeliverEventArgs eventArgs)
-        //{
-        //    IModel channel = ((EventingBasicConsumer)sender).Model;
-        //    string messageId = eventArgs.BasicProperties.MessageId;
-        //    if (MessageDetails_Queue.Keys.Any())
-        //    {
-        //        // queue up this phase for later
-        //        ExecuteSynchronousPhasesQueue.Enqueue(() => QueueProspectList(messageId, channel, eventArgs));
-        //    }
-        //    else
-        //    {
-        //        QueueProspectList(messageId, channel, eventArgs);
-        //    }
-        //}
-
-        //private Task QueueProspectList(string messageId, IModel channel, BasicDeliverEventArgs eventArgs)
-        //{
-        //    MessageDetails_Queue.TryAdd(messageId, new()
-        //    {
-        //        BasicDeliveryEventArgs = eventArgs,
-        //        Channel = channel
-        //    });
-
-        //    BackgroundJob.Enqueue<ICampaignManagerService>((x) => x.StartProspectList(messageId));
-
-        //    return Task.CompletedTask;
-        //}
-
         private async Task StartProspectList(IModel channel, BasicDeliverEventArgs eventArgs)
         {
-            //MessageDetails_Queue.TryGetValue(messageId, out RabbitMQMessageProperties props);
-            //BasicDeliverEventArgs eventArgs = props.BasicDeliveryEventArgs;
-            //IModel channel = props.Channel;
-
             using (var scope = _serviceProvider.CreateScope())
             {
                 //try and deserialize the response
@@ -401,8 +370,6 @@ namespace Domain.Services
                 }
                 finally
                 {
-                    //MessageDetails_Queue.TryRemove(messageId, out _);
-                    //await NextSynchronousPhase();
                     ackOperation();
                 }
             }
@@ -589,77 +556,82 @@ namespace Domain.Services
         #endregion
 
         #region ScanProspectsForReplies
-
-        public void OnScanProspectsForRepliesEventReceived(object sender, BasicDeliverEventArgs eventArgs)
+        public async Task OnScanProspectsForRepliesEventReceivedAsync(object sender, BasicDeliverEventArgs eventArgs)
         {
             IModel channel = ((EventingBasicConsumer)sender).Model;
-            string messageId = eventArgs.BasicProperties.MessageId;
-            // this can be started asap and doesn't rely on any other event
-            // execute scan prospects for replies logic
-            // run this rarely, but this would be prospect list under the hood
-            //if (MessageDetails_ConstantPhases.Keys.Any())
-            //{
-            //    // queue up this phase for later
-            //    ExecutePhasesQueue.Enqueue(() => QueueScanProspectsForReplies(messageId, channel, eventArgs));
-            //}
-            //else
-            //{
-            //    QueueScanProspectsForReplies(messageId, channel, eventArgs);
-            //}
-            QueueScanProspectsForReplies(messageId, channel, eventArgs);
-        }
 
-        private void QueueScanProspectsForReplies(string messageId, IModel channel, BasicDeliverEventArgs eventArgs)
-        {
-            MessageDetails_ConstantPhases.TryAdd(messageId, new()
+            var headers = eventArgs.BasicProperties.Headers;
+            headers.TryGetValue(RabbitMQConstants.ScanProspectsForReplies.ExecutionType, out object networkTypeObj);
+
+            byte[] networkTypeArr = networkTypeObj as byte[];
+            string networkType = Encoding.UTF8.GetString(networkTypeArr);
+            if (networkType == null)
             {
-                BasicDeliveryEventArgs = eventArgs,
-                Channel = channel
-            });
+                _logger.LogError("Failed to determine execution type for ScanProspectsForRepliesPhase. It should be a header either for 'ExecuteOnce' or 'ExecutePhase'. " +
+                    "ExecuteOnce is to check off hours responses and ExecutePhase is for round the clock phase");
+                throw new ArgumentException("A header value must be provided!");
+            }
 
-            BackgroundJob.Enqueue<ICampaignManagerService>((x) => x.StartScanningProspectsForReplies(messageId));
-        }
-
-        public void StartScanningProspectsForReplies(string messageId)
-        {
-            MessageDetails_ConstantPhases.TryGetValue(messageId, out RabbitMQMessageProperties props);
-            BasicDeliverEventArgs eventArgs = props.BasicDeliveryEventArgs;
-            IModel channel = props.Channel;
-
+            ScanProspectsForRepliesBody scanProspectsForRepliesBody = default;
             using (var scope = _serviceProvider.CreateScope())
             {
-                //try and deserialize the response
                 IRabbitMQSerializer serializer = scope.ServiceProvider.GetRequiredService<IRabbitMQSerializer>();
                 byte[] body = eventArgs.Body.ToArray();
                 string message = Encoding.UTF8.GetString(body);
-                ScanProspectsForRepliesBody scanProspectsForRepliesBody = serializer.DeserializeScanProspectsForRepliesBody(message);
-                Action ackOperation = default;
+                scanProspectsForRepliesBody = serializer.DeserializeScanProspectsForRepliesBody(message);
+            }
+
+            if (networkType == RabbitMQConstants.ScanProspectsForReplies.ExecuteOnce)
+            {
+                try
+                {
+                    await StartScanningProspectsForRepliesAsync(scanProspectsForRepliesBody, networkType);
+                    channel.BasicAck(eventArgs.DeliveryTag, false);
+                }
+                catch(Exception ex)
+                {
+                    _logger.LogError("Error occured execution ScanProspectsForReplies 'ExecuteOnce' phase. Requeing message");
+                    channel.BasicNack(eventArgs.DeliveryTag, false, true);
+                }
+                
+            }
+            else if (networkType == RabbitMQConstants.ScanProspectsForReplies.ExecutePhase)
+            {
+                channel.BasicAck(eventArgs.DeliveryTag, false);
+                BackgroundJob.Enqueue<ICampaignManagerService>((x) => x.StartScanningProspectsForRepliesAsync(scanProspectsForRepliesBody, networkType));
+            }
+        }
+
+        public async Task StartScanningProspectsForRepliesAsync(ScanProspectsForRepliesBody scanProspectsForRepliesBody, string executionType)
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
                 try
                 {
                     ICampaignPhaseFacade campaignPhaseFacade = scope.ServiceProvider.GetRequiredService<ICampaignPhaseFacade>();
-                    HalOperationResult<IOperationResponse> operationResult = campaignPhaseFacade.ExecutePhase<IOperationResponse>(scanProspectsForRepliesBody);
-
-                    if (operationResult.Succeeded == true)
+                    HalOperationResult<IOperationResponse> operationResult = new();
+                    if (executionType == RabbitMQConstants.ScanProspectsForReplies.ExecuteOnce)
                     {
-                        _logger.LogInformation("ExecuteScanProspectsForRepliesPhase executed successfully. Acknowledging message");
-                        ackOperation = () => channel.BasicAck(eventArgs.DeliveryTag, false);
+                        operationResult = await campaignPhaseFacade.ExecutePhaseOnceAsync<IOperationResponse>(scanProspectsForRepliesBody);
                     }
                     else
                     {
-                        _logger.LogWarning("Executing Scan Prospects For Replies phase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
-                        ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
+                        operationResult = await campaignPhaseFacade.ExecutePhaseAsync<IOperationResponse>(scanProspectsForRepliesBody);
+                    }
+
+                    if (operationResult.Succeeded == true)
+                    {
+                        _logger.LogInformation("ExecuteScanProspectsForRepliesPhase executed successfully. Acknowledging message");                        
+                    }
+                    else
+                    {
+                        _logger.LogWarning("ExecuteScanProspectsForRepliesPhase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");                        
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Exception occured while executing Follow Up Messages Phase. Negatively acknowledging the message and re-queuing it");
-                    ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
-                }
-                finally
-                {
-                    MessageDetails_ConstantPhases.TryRemove(messageId, out _);
-                    NextPhase();
-                    ackOperation();
+                    _logger.LogError(ex, "Exception occured while executing ExecuteScanProspectsForRepliesPhase");
+                    throw;
                 }
             }
         }

@@ -23,10 +23,12 @@ namespace Domain.Facades
             ICampaignProvider campaignProvider,            
             IFollowUpMessagesProvider followUpMessagesProvider, 
             IProspectListProvider prospectListProvider,
+            IScanProspectsForRepliesProvider scanProspectsForRepliesProvider,
             ISendConnectionsProvider sendConnectionsProvider,
             IMonitorForNewProspectsProvider monitorForNewProspectsProvider)
         {
             _campaignProvider = campaignProvider;
+            _scanProspectsForRepliesProvider = scanProspectsForRepliesProvider;
             _followUpMessagesProvider = followUpMessagesProvider;            
             _monitorForNewProspectsProvider = monitorForNewProspectsProvider;
             _prospectListProvider = prospectListProvider;
@@ -34,6 +36,7 @@ namespace Domain.Facades
             _logger = logger;
         }
 
+        private readonly IScanProspectsForRepliesProvider _scanProspectsForRepliesProvider;
         private readonly IMonitorForNewProspectsProvider _monitorForNewProspectsProvider;
         private readonly ICampaignProvider _campaignProvider;
         private readonly IFollowUpMessagesProvider _followUpMessagesProvider;
@@ -47,9 +50,32 @@ namespace Domain.Facades
             return _followUpMessagesProvider.ExecutePhase<T>(message);
         }
 
-        public HalOperationResult<T> ExecutePhase<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
+        public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
         {
-            throw new NotImplementedException();
+            HalOperationResult<T> result = new();
+
+            result = _scanProspectsForRepliesProvider.ExecutePhase<T>(message);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        public async Task<HalOperationResult<T>> ExecutePhaseOnceAsync<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            result = _scanProspectsForRepliesProvider.ExecutePhaseOnce<T>(message);
+            if (result.Succeeded == false)
+            {
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
         }
 
         public async Task<HalOperationResult<T>> ExecutePhase<T>(MonitorForNewAcceptedConnectionsBody message) where T : IOperationResponse

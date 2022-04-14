@@ -156,6 +156,7 @@ namespace Hal.Configurations
             services.AddScoped<IProspectListProvider, ProspectListProvider>();
             services.AddScoped<ICampaignProvider, CampaignProvider>();
             services.AddScoped<ISendConnectionsProvider, SendConnectionsProvider>();
+            services.AddScoped<IScanProspectsForRepliesProvider, ScanProspectsForRepliesProvider>();
 
             return services;
         }
@@ -165,6 +166,8 @@ namespace Hal.Configurations
             Log.Information("Registering services configuration.");
 
             services.AddScoped<IWebDriverService, WebDriverService>();
+            services.AddScoped<ITimestampService, TimestampService>();
+
             services.AddSingleton<IConsumingService, ConsumingService>();
             services.AddSingleton<ICampaignManagerService, CampaignManagerService>();
 

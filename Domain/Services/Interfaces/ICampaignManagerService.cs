@@ -16,7 +16,7 @@ namespace Domain.Services.Interfaces
         
         void OnMonitorForNewAcceptedConnectionsEventReceived(object sender, BasicDeliverEventArgs eventArgs);
 
-        void OnScanProspectsForRepliesEventReceived(object sender, BasicDeliverEventArgs eventArgs);
+        Task OnScanProspectsForRepliesEventReceivedAsync(object sender, BasicDeliverEventArgs eventArgs);
 
         //void OnProspectListEventReceived(object sender, BasicDeliverEventArgs eventArgs);
 
@@ -32,7 +32,7 @@ namespace Domain.Services.Interfaces
 
         Task StartMonitorForNewConnections(MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections);
 
-        void StartScanningProspectsForReplies(string messageId);
+        Task StartScanningProspectsForRepliesAsync(ScanProspectsForRepliesBody scanProspectsForReplies, string executionType);
 
         //Task StartProspectList(string messageId);
 

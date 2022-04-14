@@ -233,8 +233,11 @@ namespace Domain.Services
                 routingKey = routingKey.Replace("{purpose}", "scan-for-replies");
                 channel.QueueBind(name, exchangeName, routingKey, null);
 
-                EventingBasicConsumer consumer = new EventingBasicConsumer(channel);
-                consumer.Received += _campaignManagerService.OnScanProspectsForRepliesEventReceived;
+                AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(channel);
+                consumer.Received += _campaignManagerService.OnScanProspectsForRepliesEventReceivedAsync;
+
+                // process only one message at a time
+                channel.BasicQos(0, 1, false);
 
                 channel.BasicConsume(queue: name,
                                      autoAck: false,
