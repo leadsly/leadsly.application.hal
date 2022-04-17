@@ -23,7 +23,16 @@ namespace Domain.Providers.Campaigns.Interfaces
         Task<HalOperationResult<T>> TriggerSendConnectionsPhaseAsync<T>(ProspectListBody message, CancellationToken ct = default)
             where T : IOperationResponse;
 
+        Task<HalOperationResult<T>> TriggerScanProspectsForRepliesPhaseAsync<T>(ScanProspectsForRepliesBody message, CancellationToken ct = default)
+            where T : IOperationResponse;
+
+        Task<HalOperationResult<T>> TriggerFollowUpMessagesPhaseAsync<T>(ScanProspectsForRepliesBody message, CancellationToken ct = default)
+            where T : IOperationResponse;
+
         Task<HalOperationResult<T>> UpdateSendConnectionsUrlStatusesAsync<T>(IList<SentConnectionsUrlStatusRequest> updatedSearchUrlsStatuses, SendConnectionsBody message, CancellationToken ct = default)
+            where T : IOperationResponse;
+
+        Task<HalOperationResult<T>> UpdateCampaignProspectsRepliedAsync<T>(IList<ProspectRepliedRequest> prospectsReplied, ScanProspectsForRepliesBody message, CancellationToken ct = default)
             where T : IOperationResponse;
 
         Task<HalOperationResult<T>> GetLatestSendConnectionsUrlStatusesAsync<T>(SendConnectionsBody message, CancellationToken ct = default)

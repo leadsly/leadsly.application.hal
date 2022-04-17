@@ -102,6 +102,7 @@ namespace Hal.Configurations
             Log.Information("Registering facades configuration.");
 
             services.AddScoped<ICampaignPhaseFacade, CampaignPhaseFacade>();
+            services.AddScoped<ILinkedInPageFacade, LinkedInPageFacade>();
 
             return services;
         }

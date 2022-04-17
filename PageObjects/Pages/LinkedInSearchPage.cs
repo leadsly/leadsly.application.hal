@@ -17,16 +17,14 @@ using System.Threading.Tasks;
 
 namespace PageObjects.Pages
 {
-    public class LinkedInSearchPage : ILinkedInSearchPage
+    public class LinkedInSearchPage : LeadslyBase, ILinkedInSearchPage
     {
-        public LinkedInSearchPage(ILogger<LinkedInSearchPage> logger)
+        public LinkedInSearchPage(ILogger<LinkedInSearchPage> logger) : base(logger)
         {
             _logger = logger;
-            _rnd = new Random();
         }
 
         private readonly ILogger<LinkedInSearchPage> _logger;
-        private readonly Random _rnd;
         private const int Timeout = 30;
 
         private IWebElement SearchResultFooter(IWebDriver webDriver)
@@ -249,18 +247,6 @@ namespace PageObjects.Pages
             }
 
             return nextBtn;
-        }
-
-        private void RandomWait(int minWaitTime, int maxWaitTime)
-        {
-            int number = _rnd.Next(minWaitTime, maxWaitTime);
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            while (sw.Elapsed.TotalSeconds < number)
-            {
-                continue;
-            }
-            sw.Stop();
         }
 
         public HalOperationResult<T> ClickNext<T>(IWebDriver driver) where T : IOperationResponse

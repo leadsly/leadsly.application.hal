@@ -181,6 +181,66 @@ namespace Domain.Services
 
             return response;
         }
+
+        public async Task<HttpResponseMessage> TriggerScanProspectsForRepliesAsync(TriggerScanProspectsForRepliesRequest request, CancellationToken ct = default)
+        {
+            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+
+            HttpResponseMessage response = default;
+            try
+            {
+                HttpRequestMessage req = new()
+                {
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    Content = JsonContent.Create(new
+                    {
+                        HalId = request.HalId,
+                        UserId = request.UserId
+                    })
+                };
+
+                _logger.LogInformation("Sending request to trigger ScanProspectsForReplies phase");
+                response = await _httpClient.SendAsync(req, ct);
+                _logger.LogInformation("Successfully sent request to trigger ScanProspectsForReplies phase");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send request to trigger ScanProspectsForReplies phase");
+            }
+
+            return response;
+        }
+
+        public async Task<HttpResponseMessage> TriggerFollowUpMessageAsync(TriggerFollowUpMessageRequest request, CancellationToken ct = default)
+        {
+            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+
+            HttpResponseMessage response = default;
+            try
+            {
+                HttpRequestMessage req = new()
+                {
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    Content = JsonContent.Create(new
+                    {
+                        HalId = request.HalId,
+                        UserId = request.UserId
+                    })
+                };
+
+                _logger.LogInformation("Sending request to trigger FollowUpMessagePhase");
+                response = await _httpClient.SendAsync(req, ct);
+                _logger.LogInformation("Successfully sent request to trigger FollowUpMessagePhase");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send request to trigger FollowUpMessagePhase");
+            }
+
+            return response;
+        }
     }
     
 }

@@ -1,4 +1,5 @@
-﻿using Domain.POMs;
+﻿using Domain.Facades.Interfaces;
+using Domain.POMs;
 using Domain.POMs.Pages;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
@@ -28,22 +29,16 @@ namespace Domain.Providers.Campaigns
     {
         public SendConnectionsProvider(
             ILogger<SendConnectionsProvider> logger,
-            IWebDriverProvider webDriverProvider,
-            ILinkedInHomePage linkedInHomePage,
-            ILinkedInSearchPage linkedInSearchPage
+            ILinkedInPageFacade linkedInPageFacade
             )
         {
-            _logger = logger;
-            _webDriverProvider = webDriverProvider;
-            _linkedInSearchPage = linkedInSearchPage;
-            _linkedInHomePage = linkedInHomePage;
+            _linkedInPageFacade = linkedInPageFacade;
+            _logger = logger;            
         }
         
         private readonly ILogger<SendConnectionsProvider> _logger;
         private readonly IWebDriverProvider _webDriverProvider;
-        private readonly ILinkedInSearchPage _linkedInSearchPage;
-        private readonly ILinkedInHomePage _linkedInHomePage;
-        private readonly ICampaignPhaseProcessingService _campaignProcessingPhase;
+        private readonly ILinkedInPageFacade _linkedInPageFacade;
 
         public HalOperationResult<T> ExecutePhase<T>(SendConnectionsBody message, IList<SentConnectionsUrlStatusRequest> sentConnectionsUrlStatusPayload) where T : IOperationResponse
         {
@@ -136,11 +131,11 @@ namespace Domain.Providers.Campaigns
             List<CampaignProspectRequest> connectedProspects = new();
             while (stageConnectionsLimit != 0)
             {
-                bool isNoSearchResultsContainerDisplayed = _linkedInSearchPage.IsNoSearchResultsContainerDisplayed(webDriver);
+                bool isNoSearchResultsContainerDisplayed = _linkedInPageFacade.LinkedInSearchPage.IsNoSearchResultsContainerDisplayed(webDriver);
                 if (isNoSearchResultsContainerDisplayed == true)
                 {
                     _logger.LogWarning("[SendConnectionRequests]: No search results container displayed. Attempting to find and click retry serach button");
-                    HalOperationResult<IOperationResponse> retrySearchResult = _linkedInSearchPage.ClickRetrySearch<IOperationResponse>(webDriver);
+                    HalOperationResult<IOperationResponse> retrySearchResult = _linkedInPageFacade.LinkedInSearchPage.ClickRetrySearch<IOperationResponse>(webDriver);
                     if (retrySearchResult.Succeeded == false)
                     {
                         _logger.LogError("[SendConnectionRequests]: Failed to recover from no search results container being displayed");
@@ -148,7 +143,7 @@ namespace Domain.Providers.Campaigns
                     }
                 }
 
-                HalOperationResult<IGatherProspects> gatherProspectsResult = _linkedInSearchPage.GatherProspects<IGatherProspects>(webDriver);
+                HalOperationResult<IGatherProspects> gatherProspectsResult = _linkedInPageFacade.LinkedInSearchPage.GatherProspects<IGatherProspects>(webDriver);
                 if (gatherProspectsResult.Succeeded == false)
                 {
                     _logger.LogError("Failed to gather prospects from the search results hitlist");
@@ -171,13 +166,13 @@ namespace Domain.Providers.Campaigns
                     }
 
                     _logger.LogInformation("[SendConnectionRequests]: Sending connection request to the given prospect");
-                    result = _linkedInSearchPage.SendConnectionRequest<T>(prospect);
+                    result = _linkedInPageFacade.LinkedInSearchPage.SendConnectionRequest<T>(prospect);
                     if (result.Succeeded == false)
                     {
                         continue;
                     }
 
-                    result = _linkedInSearchPage.ClickSendInModal<T>(webDriver);
+                    result = _linkedInPageFacade.LinkedInSearchPage.ClickSendInModal<T>(webDriver);
                     if(result.Succeeded == false)
                     {
                         continue;
@@ -187,7 +182,7 @@ namespace Domain.Providers.Campaigns
                     stageConnectionsLimit -= 1;
                 }         
 
-                bool nextDisabled = _linkedInSearchPage.IsNextButtonDisabled(webDriver);
+                bool nextDisabled = _linkedInPageFacade.LinkedInSearchPage.IsNextButtonDisabled(webDriver);
                 if (nextDisabled)
                 {
                     currentSentConnectionsUrlStatus.CurrentUrl = webDriver.Url;
@@ -214,7 +209,7 @@ namespace Domain.Providers.Campaigns
                 }
 
                 // go to the next page
-                HalOperationResult<IOperationResponse> clickNextResult = _linkedInSearchPage.ClickNext<IOperationResponse>(webDriver);
+                HalOperationResult<IOperationResponse> clickNextResult = _linkedInPageFacade.LinkedInSearchPage.ClickNext<IOperationResponse>(webDriver);
                 if (clickNextResult.Succeeded == false)
                 {
                     _logger.LogError("[SendConnectionRequests]: Failed to navigate to the next page");
@@ -324,7 +319,7 @@ namespace Domain.Providers.Campaigns
             if (webDriver.Url.Contains(pageUrl) == false)
             {
                 // first navigate to messages
-                result = _linkedInHomePage.GoToPage<T>(webDriver, pageUrl);
+                result = _linkedInPageFacade.LinkedInHomePage.GoToPage<T>(webDriver, pageUrl);
             }
             else
             {

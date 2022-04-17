@@ -18,20 +18,19 @@ using System.Threading.Tasks;
 
 namespace PageObjects.Pages
 {
-    public class LinkedInNotificationsPage : ILinkedInNotificationsPage
+    public class LinkedInNotificationsPage : LeadslyBase, ILinkedInNotificationsPage
     {
-        public LinkedInNotificationsPage(ILogger<LinkedInNotificationsPage> logger, IAcceptedInvitiationsView acceptedInvitationsView, IWebDriverProvider webDriverProvider)
+        public LinkedInNotificationsPage(ILogger<LinkedInNotificationsPage> logger, IAcceptedInvitiationsView acceptedInvitationsView, IWebDriverProvider webDriverProvider) : base(logger)
         {
             _logger = logger;
             _acceptedInvitiationsView = acceptedInvitationsView;
             _webDriverProvider = webDriverProvider;
-            _rnd = new Random();
+            
         }
 
         private ILogger<LinkedInNotificationsPage> _logger;
         private IAcceptedInvitiationsView _acceptedInvitiationsView;
-        private readonly IWebDriverProvider _webDriverProvider;
-        private readonly Random _rnd;
+        private readonly IWebDriverProvider _webDriverProvider;        
 
         private IWebElement NewNotificationsButton(IWebDriver webDriver)
         {
@@ -45,18 +44,6 @@ namespace PageObjects.Pages
                 _logger.LogWarning(ex, "Failed to locate new notifications button");
             }
             return newNotificationsButton;
-        }
-
-        private void RandomWait(int minWaitTime, int maxWaitTime)
-        {
-            int number = _rnd.Next(minWaitTime, maxWaitTime);
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            while (sw.Elapsed.TotalSeconds < number)
-            {
-                continue;
-            }
-            sw.Stop();
         }
 
         /// <summary>

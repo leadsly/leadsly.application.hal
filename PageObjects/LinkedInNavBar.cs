@@ -5,6 +5,7 @@ using Leadsly.Application.Model.Responses.Hal.Interfaces;
 using Leadsly.Application.Model.Responses.Hal.POMs;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
+using PageObjects.Pages;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,9 +15,9 @@ using System.Threading.Tasks;
 
 namespace PageObjects
 {
-    public class LinkedInNavBar : ILinkedInNavBar
+    public class LinkedInNavBar : LeadslyBase, ILinkedInNavBar
     {
-        public LinkedInNavBar(ILogger<LinkedInNavBar> logger)
+        public LinkedInNavBar(ILogger<LinkedInNavBar> logger) : base(logger)
         {
             _logger = logger;
             _rnd = new Random();
@@ -24,19 +25,7 @@ namespace PageObjects
         private readonly Random _rnd;
         private readonly ILogger<LinkedInNavBar> _logger;
 
-        private void RandomWait(int minWaitTime, int maxWaitTime)
-        {
-            int number = _rnd.Next(minWaitTime, maxWaitTime);
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            _logger.LogInformation("Entering random wait time. Waiting for {number}", number);
-            while (sw.Elapsed.TotalSeconds < number)
-            {
-                continue;
-            }
-            sw.Stop();
-            _logger.LogInformation("Finished waiting moving on.");
-        }
+       
 
         public HalOperationResult<T> ClickNotificationsTab<T>(IWebDriver webDriver) where T : IOperationResponse
         {

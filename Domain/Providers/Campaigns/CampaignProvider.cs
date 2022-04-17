@@ -219,5 +219,82 @@ namespace Domain.Providers.Campaigns
             result.Succeeded = true;
             return result;
         }
+
+        public async Task<HalOperationResult<T>> UpdateCampaignProspectsRepliedAsync<T>(IList<ProspectRepliedRequest> prospectsReplied, ScanProspectsForRepliesBody message, CancellationToken ct = default) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            ProspectsRepliedRequest request = new()
+            {
+                HalId = message.HalId,
+                NamespaceName = message.NamespaceName,
+                ServiceDiscoveryName = message.ServiceDiscoveryName,
+                RequestUrl = $"api/prospect-list/prospects-replied",                
+                ProspectsReplied = prospectsReplied
+            };
+
+            HttpResponseMessage responseMessage = await _campaignService.UpdateProspectsRepliedAsync(request, ct);
+
+            if (responseMessage.IsSuccessStatusCode == false)
+            {
+                _logger.LogError("Response from application server was not a successful status code. The request was responsible for updating campaign prospects who have responded to our messages and recording their response");
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        public async Task<HalOperationResult<T>> TriggerScanProspectsForRepliesPhaseAsync<T>(ScanProspectsForRepliesBody message, CancellationToken ct = default) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            TriggerScanProspectsForRepliesRequest request = new()
+            {
+                HalId = message.HalId,
+                NamespaceName = message.NamespaceName,
+                ServiceDiscoveryName = message.ServiceDiscoveryName,
+                RequestUrl = $"api/campaignphases/trigger-scan-prospects-for-replies",
+                UserId = message.UserId                
+            };
+
+            HttpResponseMessage responseMessage = await _campaignPhaseProcessingService.TriggerScanProspectsForRepliesAsync(request, ct);
+
+            if (responseMessage.IsSuccessStatusCode == false)
+            {
+                string halId = message.HalId;
+                _logger.LogError("Response from application server was not a successful status code. The request was responsible for triggering ScanProspectsForRepliesPhase for hal id {halId}", halId);
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        public async Task<HalOperationResult<T>> TriggerFollowUpMessagesPhaseAsync<T>(ScanProspectsForRepliesBody message, CancellationToken ct = default) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            TriggerFollowUpMessageRequest request = new()
+            {
+                HalId = message.HalId,
+                NamespaceName = message.NamespaceName,
+                ServiceDiscoveryName = message.ServiceDiscoveryName,
+                RequestUrl = $"api/campaignphases/trigger-follow-up-messages",
+                UserId = message.UserId
+            };
+
+            HttpResponseMessage responseMessage = await _campaignPhaseProcessingService.TriggerFollowUpMessageAsync(request, ct);
+
+            if (responseMessage.IsSuccessStatusCode == false)
+            {
+                string halId = message.HalId;
+                _logger.LogError("Response from application server was not a successful status code. The request was responsible for triggering FollowUpMessagePhase for hal id {halId}", halId);
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
     }
 }

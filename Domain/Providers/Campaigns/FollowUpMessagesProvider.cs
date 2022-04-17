@@ -1,4 +1,5 @@
-﻿using Domain.POMs.Pages;
+﻿using Domain.Facades.Interfaces;
+using Domain.POMs.Pages;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
 using Leadsly.Application.Model;
@@ -13,18 +14,16 @@ namespace Domain.Providers.Campaigns
 {
     public class FollowUpMessagesProvider : IFollowUpMessagesProvider
     {
-        public FollowUpMessagesProvider(ILinkedInMessagingPage linkedInMessagingPage, ILinkedInHomePage linkedInHomePage, ILogger<FollowUpMessagesProvider> logger, IWebDriverProvider webDriverProvider)
+        public FollowUpMessagesProvider(ILinkedInPageFacade linkedInPageFacade, ILogger<FollowUpMessagesProvider> logger, IWebDriverProvider webDriverProvider)
         {
             _logger = logger;
-            _linkedInHomePage = linkedInHomePage;
-            _webDriverProvider = webDriverProvider;
-            _linkedInMessagingPage = linkedInMessagingPage;
+            _linkedInPageFacade = linkedInPageFacade;
+            _webDriverProvider = webDriverProvider;            
         }
 
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<FollowUpMessagesProvider> _logger;
-        private readonly ILinkedInHomePage _linkedInHomePage;
-        private readonly ILinkedInMessagingPage _linkedInMessagingPage;
+        private readonly ILinkedInPageFacade _linkedInPageFacade;
 
         public HalOperationResult<T> ExecutePhase<T>(FollowUpMessageBody message)
             where T : IOperationResponse
@@ -75,21 +74,21 @@ namespace Domain.Providers.Campaigns
         {
             HalOperationResult<T> result = new();
 
-            result = _linkedInMessagingPage.ClickCreateNewMessage<T>(webDriver);
+            result = _linkedInPageFacade.LinkedInMessagingPage.ClickCreateNewMessage<T>(webDriver);
             if(result.Succeeded == false)
             {
                 _logger.LogWarning("Failed to click create new message button");
                 return result;
             }
 
-            result = _linkedInMessagingPage.EnterProspectsName<T>(webDriver, prospectName);
+            result = _linkedInPageFacade.LinkedInMessagingPage.EnterProspectsName<T>(webDriver, prospectName);
             if(result.Succeeded == false)
             {
                 _logger.LogWarning("Failed to enter user's name when creating new message");
                 return result;
             }
 
-            result = _linkedInMessagingPage.EnterMessageContent<T>(webDriver, messageContent);
+            result = _linkedInPageFacade.LinkedInMessagingPage.EnterMessageContent<T>(webDriver, messageContent);
             if(result.Succeeded == false)
             {
                 _logger.LogWarning("Failed to enter message content");
@@ -108,7 +107,7 @@ namespace Domain.Providers.Campaigns
             if (webDriver.Url.Contains(pageUrl) == false)
             {
                 // first navigate to messages
-                result = _linkedInHomePage.GoToPage<T>(webDriver, pageUrl);
+                result = _linkedInPageFacade.LinkedInHomePage.GoToPage<T>(webDriver, pageUrl);
             }
             else
             {

@@ -12,9 +12,9 @@ using System.Linq;
 
 namespace PageObjects.Pages
 {
-    public class LinkedInMyNetworkPage : ILinkedInMyNetworkPage
+    public class LinkedInMyNetworkPage : LeadslyBase, ILinkedInMyNetworkPage
     {
-        public LinkedInMyNetworkPage(ILogger<LinkedInMyNetworkPage> logger)
+        public LinkedInMyNetworkPage(ILogger<LinkedInMyNetworkPage> logger) : base(logger)
         {
             _logger = logger;
         }

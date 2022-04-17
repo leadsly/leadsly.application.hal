@@ -22,5 +22,29 @@ namespace Domain.POMs.Pages
 
         HalOperationResult<T> ClickSend<T>(IWebDriver webDriver)
             where T : IOperationResponse;
+
+        HalOperationResult<T> GetVisibleConversationListItems<T>(IWebDriver webDriver)
+            where T : IOperationResponse;
+
+        bool ConversationItemContainsNotificationBadge(IWebElement conversationListItem);
+
+        string GetProspectNameFromConversationItem(IWebElement conversationListItem);
+
+        bool IsConversationListItemActive(IWebElement conversationListItem);
+
+        void ClickConverstaionListItem(IWebElement conversationListItem);
+
+        HalOperationResult<T> EnterSearchMessagesCriteria<T>(IWebDriver webDriver, string searchCriteria)
+            where T : IOperationResponse;
+
+        HalOperationResult<T> GetMessagesContent<T>(IWebDriver webDriver)
+            where T : IOperationResponse;
+
+        string GetMessageContent(IWebElement message);
+
+        string GetProspectNameFromMessageDetailDiv(IWebElement messageDiv);
+
+        HalOperationResult<T> ClearMessagingSearchCriteria<T>(IWebDriver webDriver)
+            where T : IOperationResponse;
     }
 }

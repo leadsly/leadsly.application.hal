@@ -54,7 +54,7 @@ namespace Domain.Facades
         {
             HalOperationResult<T> result = new();
 
-            result = _scanProspectsForRepliesProvider.ExecutePhase<T>(message);
+            result = await _scanProspectsForRepliesProvider.ExecutePhaseAsync<T>(message);
             if(result.Succeeded == false)
             {
                 return result;
@@ -64,12 +64,38 @@ namespace Domain.Facades
             return result;
         }
 
-        public async Task<HalOperationResult<T>> ExecutePhaseOnceAsync<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
+        public async Task<HalOperationResult<T>> ExecuteDeepScanPhaseAsync<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
             result = _scanProspectsForRepliesProvider.ExecutePhaseOnce<T>(message);
             if (result.Succeeded == false)
+            {
+                return result;
+            }
+
+            // send request to the server to update all of the prospects that have replied to our messages
+            IProspectsRepliedPayload prospectsReplied = ((IProspectsRepliedPayload)result.Value);
+            if (prospectsReplied == null)
+            {
+                return result;
+            }
+
+            result = await _campaignProvider.UpdateCampaignProspectsRepliedAsync<T>(prospectsReplied.ProspectsReplied, message);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            // trigger ScanProspectsForRepliesPhase and FollowUpMessagePhase
+            result = await _campaignProvider.TriggerScanProspectsForRepliesPhaseAsync<T>(message);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            result = await _campaignProvider.TriggerFollowUpMessagesPhaseAsync<T>(message);
+            if(result.Succeeded == false)
             {
                 return result;
             }

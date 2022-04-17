@@ -11,7 +11,7 @@ namespace Domain.Providers.Campaigns.Interfaces
 {
     public interface IScanProspectsForRepliesProvider
     {
-        HalOperationResult<T> ExecutePhase<T>(ScanProspectsForRepliesBody message)
+        Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ScanProspectsForRepliesBody message)
             where T : IOperationResponse;
 
         HalOperationResult<T> ExecutePhaseOnce<T>(ScanProspectsForRepliesBody message)

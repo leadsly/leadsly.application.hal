@@ -1,4 +1,5 @@
-﻿using Domain.POMs;
+﻿using Domain.Facades.Interfaces;
+using Domain.POMs;
 using Domain.POMs.Pages;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
@@ -26,22 +27,20 @@ namespace Domain.Providers.Campaigns
 {
     public class ProspectListProvider : IProspectListProvider
     {
-        public ProspectListProvider(
-            ILinkedInHomePage linkedInHomePage,            
+        public ProspectListProvider(                       
             ILogger<ProspectListProvider> logger,
-            IWebDriverProvider webDriverProvider,                                                
-            ILinkedInSearchPage linkedInSearchPage)
+            IWebDriverProvider webDriverProvider,
+            ILinkedInPageFacade linkedInPageFacade
+            )
         {
-            _logger = logger;
-            _linkedInSearchPage = linkedInSearchPage;
-            _webDriverProvider = webDriverProvider;            
-            _linkedInHomePage = linkedInHomePage;                
+            _logger = logger;            
+            _webDriverProvider = webDriverProvider;
+            _linkedInPageFacade = linkedInPageFacade;
         }
 
         private readonly IWebDriverProvider _webDriverProvider;        
         private readonly ILogger<ProspectListProvider> _logger;
-        private readonly ILinkedInHomePage _linkedInHomePage;        
-        private readonly ILinkedInSearchPage _linkedInSearchPage;        
+        private readonly ILinkedInPageFacade _linkedInPageFacade;    
 
         #region Execute ProspectList Phase
 
@@ -94,7 +93,7 @@ namespace Domain.Providers.Campaigns
                     return result;
                 }
 
-                result = _linkedInSearchPage.GetTotalSearchResults<T>(webDriver);
+                result = _linkedInPageFacade.LinkedInSearchPage.GetTotalSearchResults<T>(webDriver);
                 if (result.Succeeded == false)
                 {
                     result.Failures.Add(new()
@@ -169,17 +168,17 @@ namespace Domain.Providers.Campaigns
                         }
                     }
 
-                    bool isNoSearchResultsContainerDisplayed = _linkedInSearchPage.IsNoSearchResultsContainerDisplayed(webDriver);
+                    bool isNoSearchResultsContainerDisplayed = _linkedInPageFacade.LinkedInSearchPage.IsNoSearchResultsContainerDisplayed(webDriver);
                     if(isNoSearchResultsContainerDisplayed == true)
                     {
-                        HalOperationResult<IOperationResponse> retrySearchResult = _linkedInSearchPage.ClickRetrySearch<IOperationResponse>(webDriver);
+                        HalOperationResult<IOperationResponse> retrySearchResult = _linkedInPageFacade.LinkedInSearchPage.ClickRetrySearch<IOperationResponse>(webDriver);
                         if(retrySearchResult.Succeeded == false)
                         {
                             break;
                         }
                     }
 
-                    HalOperationResult<IGatherProspects> result = _linkedInSearchPage.GatherProspects<IGatherProspects>(webDriver);
+                    HalOperationResult<IGatherProspects> result = _linkedInPageFacade.LinkedInSearchPage.GatherProspects<IGatherProspects>(webDriver);
                     if (result.Succeeded == false)
                     {
                         continue;
@@ -189,7 +188,7 @@ namespace Domain.Providers.Campaigns
                     _logger.LogTrace("Creating PrimaryProspects from IWebElements");
                     prospects = prospects.Concat(CreatePrimaryProspects(propsAsWebElements, primaryProspectListId)).ToList();
 
-                    HalOperationResult<IOperationResponse> clickNextResult = _linkedInSearchPage.ClickNext<IOperationResponse>(webDriver);
+                    HalOperationResult<IOperationResponse> clickNextResult = _linkedInPageFacade.LinkedInSearchPage.ClickNext<IOperationResponse>(webDriver);
                     if(clickNextResult.Succeeded == false)
                     {
                         _logger.LogError("Failed to navigate to the next page");
@@ -334,7 +333,7 @@ namespace Domain.Providers.Campaigns
             if (webDriver.Url.Contains(pageUrl) == false)
             {
                 // first navigate to messages
-                result = _linkedInHomePage.GoToPage<T>(webDriver, pageUrl);
+                result = _linkedInPageFacade.LinkedInHomePage.GoToPage<T>(webDriver, pageUrl);
             }
             else
             {

@@ -1,4 +1,5 @@
-﻿using Domain.Models;
+﻿using Domain.Facades.Interfaces;
+using Domain.Models;
 using Domain.POMs.Pages;
 using Domain.Providers.Interfaces;
 using Leadsly.Application.Model;
@@ -15,18 +16,16 @@ namespace Domain.Providers
     public class HalAuthProvider : IHalAuthProvider
     {
 
-        public HalAuthProvider(ILogger<HalAuthProvider> logger, IWebDriverProvider webDriverProvider, ILinkedInLoginPage linkedInLoginPage, ILinkedInPage linkedInPage)
+        public HalAuthProvider(ILogger<HalAuthProvider> logger, IWebDriverProvider webDriverProvider, ILinkedInPageFacade linkedInPageFacade)
         {
             _logger = logger;
-            _linkedInLoginPage = linkedInLoginPage;
-            _linkedInPage = linkedInPage;
+            _linkedInPageFacade = linkedInPageFacade;
             _webDriverProvider = webDriverProvider;
         }
 
-        private readonly IWebDriverProvider _webDriverProvider;
-        private readonly ILinkedInLoginPage _linkedInLoginPage;
-        private readonly IWebDriverManagerProvider _webDriverManagerProvider;
-        private readonly ILinkedInPage _linkedInPage;
+        private readonly ILinkedInPageFacade _linkedInPageFacade;
+        private readonly IWebDriverProvider _webDriverProvider;        
+        private readonly IWebDriverManagerProvider _webDriverManagerProvider;        
         private readonly ILogger<HalAuthProvider> _logger;
         public const string DefaultUrl = "https://www.LinkedIn.com";
 
@@ -55,7 +54,7 @@ namespace Domain.Providers
                 return result;
             }            
 
-            bool authRequired = _linkedInPage.IsAuthenticationRequired(webDriver);
+            bool authRequired = _linkedInPageFacade.LinkedInPage.IsAuthenticationRequired(webDriver);
 
             if (authRequired == false)
             {
@@ -98,7 +97,7 @@ namespace Domain.Providers
         {
             HalOperationResult<T> result = new();
 
-            result = _linkedInLoginPage.EnterEmail<T>(webDriver, request.Username);
+            result = _linkedInPageFacade.LinkedInLoginPage.EnterEmail<T>(webDriver, request.Username);
             if(result.Succeeded == false)
             {
                 if(result.WebDriverError == true)
@@ -124,7 +123,7 @@ namespace Domain.Providers
                 return result;
             }
 
-            result = _linkedInLoginPage.EnterPassword<T>(webDriver, request.Password);
+            result = _linkedInPageFacade.LinkedInLoginPage.EnterPassword<T>(webDriver, request.Password);
             if (result.Succeeded == false)
             {
                 if(result.WebDriverError == true)
@@ -150,7 +149,7 @@ namespace Domain.Providers
                 return result;
             }
 
-            result = _linkedInLoginPage.SignIn<T>(webDriver);
+            result = _linkedInPageFacade.LinkedInLoginPage.SignIn<T>(webDriver);
             if (result.Succeeded == false)
             {
                 if(result.WebDriverError == true)
@@ -188,9 +187,9 @@ namespace Domain.Providers
                 Succeeded = false
             };
 
-            if (_linkedInLoginPage.ConfirmAccountDisplayed(webDriver))
+            if (_linkedInPageFacade.LinkedInLoginPage.ConfirmAccountDisplayed(webDriver))
             {
-                result = _linkedInLoginPage.ConfirmAccountInfo<T>(webDriver);
+                result = _linkedInPageFacade.LinkedInLoginPage.ConfirmAccountInfo<T>(webDriver);
                 if (result.Succeeded == false)
                 {
                     HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);                    
@@ -214,9 +213,9 @@ namespace Domain.Providers
                 }
             }
             
-            if (_linkedInLoginPage.SomethingUnexpectedHappenedToastDisplayed(webDriver) == true)
+            if (_linkedInPageFacade.LinkedInLoginPage.SomethingUnexpectedHappenedToastDisplayed(webDriver) == true)
             {
-                string linkedInErrorMessage = _linkedInLoginPage.SomethingUnexpectedHappenedToast(webDriver).GetAttribute("message");
+                string linkedInErrorMessage = _linkedInPageFacade.LinkedInLoginPage.SomethingUnexpectedHappenedToast(webDriver).GetAttribute("message");
 
                 HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);                
                 IConnectAccountResponse resp = new ConnectAccountResponse
@@ -245,7 +244,7 @@ namespace Domain.Providers
                 return result;
             }
 
-            if (_linkedInLoginPage.CheckIfUnexpectedViewRendered(webDriver))
+            if (_linkedInPageFacade.LinkedInLoginPage.CheckIfUnexpectedViewRendered(webDriver))
             {
                 HalOperationResult<T> closeBrowserResult = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);                
                 IConnectAccountResponse resp = new ConnectAccountResponse
@@ -273,7 +272,7 @@ namespace Domain.Providers
                 return result;                
             }
 
-            if (_linkedInLoginPage.IsTwoFactorAuthRequired(webDriver))
+            if (_linkedInPageFacade.LinkedInLoginPage.IsTwoFactorAuthRequired(webDriver))
             {
                 result = DetermineTwoFactorAuthenticationType<T>(webDriver);
                 
@@ -365,7 +364,7 @@ namespace Domain.Providers
                 Succeeded = false
             };
 
-            if (Enum.GetName(_linkedInLoginPage.TwoFactorAuthenticationType(webDriver)) == Enum.GetName(TwoFactorAuthType.AuthenticatorApp))
+            if (Enum.GetName(_linkedInPageFacade.LinkedInLoginPage.TwoFactorAuthenticationType(webDriver)) == Enum.GetName(TwoFactorAuthType.AuthenticatorApp))
             {
                 IConnectAccountResponse response = new ConnectAccountResponse()
                 {
@@ -373,7 +372,7 @@ namespace Domain.Providers
                 };
                 result.Value = (T)response;
             }
-            else if (Enum.GetName(_linkedInLoginPage.TwoFactorAuthenticationType(webDriver)) == Enum.GetName(TwoFactorAuthType.SMS))
+            else if (Enum.GetName(_linkedInPageFacade.LinkedInLoginPage.TwoFactorAuthenticationType(webDriver)) == Enum.GetName(TwoFactorAuthType.SMS))
             {
                 IConnectAccountResponse response = new ConnectAccountResponse()
                 {
@@ -413,7 +412,7 @@ namespace Domain.Providers
 
             if (webDriver.Url.Contains(pageUrl) == false)
             {
-                result = _linkedInPage.GoToPage<T>(webDriver, pageUrl);
+                result = _linkedInPageFacade.LinkedInPage.GoToPage<T>(webDriver, pageUrl);
             }
             else
             {
@@ -453,7 +452,7 @@ namespace Domain.Providers
             HalOperationResult<T> result = new();
 
             _logger.LogInformation("Entering user's two factor authentication code");
-            result = _linkedInLoginPage.EnterTwoFactorAuthCode<T>(webDriver, request.Code);
+            result = _linkedInPageFacade.LinkedInLoginPage.EnterTwoFactorAuthCode<T>(webDriver, request.Code);
             if (result.Succeeded == false)
             {
                 if (result.WebDriverError == true)
@@ -479,7 +478,7 @@ namespace Domain.Providers
                 return result;
             }
 
-            result = _linkedInLoginPage.SubmitTwoFactorAuthCode<T>(webDriver);
+            result = _linkedInPageFacade.LinkedInLoginPage.SubmitTwoFactorAuthCode<T>(webDriver);
             if (result.Succeeded == false)
             {
                 if (result.WebDriverError == true)
@@ -504,12 +503,12 @@ namespace Domain.Providers
                 return result;
             }
 
-            if (_linkedInLoginPage.SMSVerificationCodeErrorDisplayed(webDriver))
+            if (_linkedInPageFacade.LinkedInLoginPage.SMSVerificationCodeErrorDisplayed(webDriver))
             {
                 return HandleSMSVerificationCodeErrorDisplayed<T>(webDriver.CurrentWindowHandle);
             }
 
-            if (_linkedInLoginPage.CheckIfUnexpectedViewRendered(webDriver))
+            if (_linkedInPageFacade.LinkedInLoginPage.CheckIfUnexpectedViewRendered(webDriver))
             {
                 result = HandleUnexpectedViewDisplayed<T>(request);
                 if (result.Succeeded == false)

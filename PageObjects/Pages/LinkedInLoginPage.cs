@@ -9,11 +9,11 @@ using System.Threading;
 
 namespace PageObjects.Pages
 {
-    public class LinkedInLoginPage : ILinkedInLoginPage
+    public class LinkedInLoginPage : LeadslyBase, ILinkedInLoginPage
     {
         private const string BaseUrl = "https://www.linkedin.com";
 
-        public LinkedInLoginPage(ILogger<LinkedInLoginPage> logger)
+        public LinkedInLoginPage(ILogger<LinkedInLoginPage> logger) : base(logger)
         {
             this._logger = logger;
         }

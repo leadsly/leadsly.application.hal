@@ -1,4 +1,5 @@
-﻿using Domain.POMs;
+﻿using Domain.Facades.Interfaces;
+using Domain.POMs;
 using Domain.POMs.Pages;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
@@ -25,46 +26,26 @@ namespace Domain.Providers.Campaigns
 {
     public class MonitorForNewProspectsProvider : IMonitorForNewProspectsProvider
     {
-        public MonitorForNewProspectsProvider(
-            ILinkedInHomePage linkedInHomePage,
-            ILinkedInMyNetworkPage linkedInMyNetworkPage,
+        public MonitorForNewProspectsProvider(                        
             ILogger<MonitorForNewProspectsProvider> logger, 
-            IWebDriverProvider webDriverProvider,
-            IHalIdentity halIdentity,
-            ICampaignSerializer serializer,
+            IWebDriverProvider webDriverProvider,            
             ITimestampService timestampService,
-            ILinkedInNavBar linkedInNavBar,
-            ILinkedInNotificationsPage linkedInNotificationsPage,
-            ICampaignPhaseProcessingService campaignProcessingPhase,
-            ILinkedInHtmlParser linkedInHtmlParser,
-            IHalOperationConfigurationProvider halConfigurationProvider)
+            ICampaignPhaseProcessingService campaignProcessingPhase,            
+            ILinkedInPageFacade linkedInPageFacade
+            )
         {
             _logger = logger;
-            _timestampService = timestampService;
-            _linkedInMyNetworkPage = linkedInMyNetworkPage;
+            _linkedInPageFacade = linkedInPageFacade;
+            _timestampService = timestampService;            
             _campaignProcessingPhase = campaignProcessingPhase;
-            _webDriverProvider = webDriverProvider;
-            _linkedInNavBar = linkedInNavBar;
-            _serializer = serializer;
-            _linkedInHomePage = linkedInHomePage;
-            _linkedInHtmlParser = linkedInHtmlParser;
-            _halConfigurationProvider = halConfigurationProvider;
-            _linkedInNotificationsPage = linkedInNotificationsPage;
-            _halIdentity = halIdentity;
+            _webDriverProvider = webDriverProvider;            
         }
 
+        private readonly ILinkedInPageFacade _linkedInPageFacade;
         private readonly ITimestampService _timestampService;
-        private readonly IWebDriverProvider _webDriverProvider;
-        private readonly ILinkedInNavBar _linkedInNavBar;
-        private readonly ILogger<MonitorForNewProspectsProvider> _logger;
-        private readonly ILinkedInHomePage _linkedInHomePage;
-        private readonly ILinkedInHtmlParser _linkedInHtmlParser;
-        private readonly ILinkedInNotificationsPage _linkedInNotificationsPage;
-        private readonly ILinkedInMyNetworkPage _linkedInMyNetworkPage;
-        private readonly ICampaignSerializer _serializer;
-        private readonly ICampaignPhaseProcessingService _campaignProcessingPhase;
-        private readonly IHalOperationConfigurationProvider _halConfigurationProvider;
-        private readonly IHalIdentity _halIdentity;
+        private readonly IWebDriverProvider _webDriverProvider;        
+        private readonly ILogger<MonitorForNewProspectsProvider> _logger;                
+        private readonly ICampaignPhaseProcessingService _campaignProcessingPhase;        
 
         public async Task<HalOperationResult<T>> ExecutePhase<T>(MonitorForNewAcceptedConnectionsBody message) where T : IOperationResponse
         {
@@ -122,7 +103,7 @@ namespace Domain.Providers.Campaigns
 
         private async Task CheckForNewConnectionsOnPageLoad(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
         {
-            IList<NewProspectConnectionRequest> newProspects = _linkedInNotificationsPage.GatherAllNewProspectInfo(webDriver, message.TimeZoneId);
+            IList<NewProspectConnectionRequest> newProspects = _linkedInPageFacade.LinkedInNotificationsPage.GatherAllNewProspectInfo(webDriver, message.TimeZoneId);
             if(newProspects.Count > 0)
             {
                 // fire off request to initiate follow up message phase
@@ -143,7 +124,7 @@ namespace Domain.Providers.Campaigns
         {
             // first grab any new notifications displayed in the view 
 
-            bool areNewNotification = _linkedInNavBar.AreNewNotifications(webDriver);            
+            bool areNewNotification = _linkedInPageFacade.LinkedInNavBar.AreNewNotifications(webDriver);            
 
             if (areNewNotification == true)
             {
@@ -177,19 +158,19 @@ namespace Domain.Providers.Campaigns
         {
             IList<NewProspectConnectionRequest> newProspectInfoRequests = new List<NewProspectConnectionRequest>();
 
-            HalOperationResult<IOperationResponse> result = _linkedInNotificationsPage.ClickNewNotificationsButton<IOperationResponse>(webDriver);
+            HalOperationResult<IOperationResponse> result = _linkedInPageFacade.LinkedInNotificationsPage.ClickNewNotificationsButton<IOperationResponse>(webDriver);
             // if the button was not clicked successfully, or it wasn't found
             if(result.Succeeded == false)
             {
                 // if web driver failed to locate or click new notifications button, click Notifications tab directly
-                result = _linkedInNavBar.ClickNotificationsTab<IOperationResponse>(webDriver);
+                result = _linkedInPageFacade.LinkedInNavBar.ClickNotificationsTab<IOperationResponse>(webDriver);
                 if (result.Succeeded == false)
                 {
                     return newProspectInfoRequests;
                 }
             }
 
-            newProspectInfoRequests = _linkedInNotificationsPage.GatherAllNewProspectInfo(webDriver, message.TimeZoneId);
+            newProspectInfoRequests = _linkedInPageFacade.LinkedInNotificationsPage.GatherAllNewProspectInfo(webDriver, message.TimeZoneId);
             return newProspectInfoRequests;
         }
 
@@ -201,7 +182,7 @@ namespace Domain.Providers.Campaigns
             if (webDriver.Url.Contains(pageUrl) == false)
             {
                 // first navigate to messages
-                result = _linkedInHomePage.GoToPage<T>(webDriver, pageUrl);
+                result = _linkedInPageFacade.LinkedInHomePage.GoToPage<T>(webDriver, pageUrl);
             }
             else
             {

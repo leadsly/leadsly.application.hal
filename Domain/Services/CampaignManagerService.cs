@@ -581,7 +581,7 @@ namespace Domain.Services
                 scanProspectsForRepliesBody = serializer.DeserializeScanProspectsForRepliesBody(message);
             }
 
-            if (networkType == RabbitMQConstants.ScanProspectsForReplies.ExecuteOnce)
+            if (networkType == RabbitMQConstants.ScanProspectsForReplies.ExecuteDeepScan)
             {
                 try
                 {
@@ -610,9 +610,9 @@ namespace Domain.Services
                 {
                     ICampaignPhaseFacade campaignPhaseFacade = scope.ServiceProvider.GetRequiredService<ICampaignPhaseFacade>();
                     HalOperationResult<IOperationResponse> operationResult = new();
-                    if (executionType == RabbitMQConstants.ScanProspectsForReplies.ExecuteOnce)
+                    if (executionType == RabbitMQConstants.ScanProspectsForReplies.ExecuteDeepScan)
                     {
-                        operationResult = await campaignPhaseFacade.ExecutePhaseOnceAsync<IOperationResponse>(scanProspectsForRepliesBody);
+                        operationResult = await campaignPhaseFacade.ExecuteDeepScanPhaseAsync<IOperationResponse>(scanProspectsForRepliesBody);
                     }
                     else
                     {

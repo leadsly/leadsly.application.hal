@@ -11,7 +11,7 @@ namespace Domain.POMs.Pages
 {
     public interface ILinkedInHomePage
     {
-        HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)
+        public HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)
             where T : IOperationResponse;
 
     }
