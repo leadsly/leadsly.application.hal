@@ -76,7 +76,7 @@ namespace Domain.Services
             return result;
         }
 
-        public HalOperationResult<T> Create<T>(BrowserPurpose browserPurpose, WebDriverOptions webDriverOptions) where T : IOperationResponse
+        public HalOperationResult<T> Create<T>(BrowserPurpose browserPurpose, WebDriverOptions webDriverOptions, string chromeProfileName) where T : IOperationResponse
         {
             string browser = Enum.GetName(browserPurpose);
             _logger.LogInformation("Creating a new WebDriver instance for browser purpose {browser}", browser);
@@ -90,7 +90,7 @@ namespace Domain.Services
             }
             else
             {
-                string newChromeProfileName = webDriverOptions.ChromeProfileConfigOptions.ChromeProfileName + webDriverOptions.ChromeProfileConfigOptions.Suffix;
+                string newChromeProfileName = chromeProfileName + webDriverOptions.ChromeProfileConfigOptions.Suffix;
 
                 result = _fileManager.CloneDefaultChromeProfile<T>(newChromeProfileName, webDriverOptions);                
 

@@ -311,24 +311,15 @@ namespace Domain.Services
                     if (operationResult.Succeeded == true)
                     {
                         _logger.LogInformation("ExecuteFollowUpMessagesPhase executed successfully. Acknowledging message");
-                        //ackOperation = () => channel.BasicAck(eventArgs.DeliveryTag, false);
                     }
                     else
                     {
                         _logger.LogWarning("Executing Follow Up Messages Phase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
-                        //ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Exception occured while executing Follow Up Messages Phase. Negatively acknowledging the message and re-queuing it");
-                    //ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
-                }
-                finally
-                {
-                    //MessageDetails_ConstantPhases.TryRemove(messageId, out _);
-                    //NextPhase();
-                    //ackOperation();
                 }
             }
         }

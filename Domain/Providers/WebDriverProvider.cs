@@ -60,8 +60,8 @@ namespace Domain.Providers
         private HalOperationResult<T> CreateWebDriver<T>(BrowserPurpose browserPurpose, string chromeProfileName)
             where T : IOperationResponse
         {
-            WebDriverOptions webDriverOptions = GetWebDriverOptions(chromeProfileName);         
-            return _webDriverService.Create<T>(browserPurpose, webDriverOptions);
+            WebDriverOptions webDriverOptions = GetWebDriverOptions();         
+            return _webDriverService.Create<T>(browserPurpose, webDriverOptions, chromeProfileName);
         }
         
         private HalOperationResult<T> WebDriverDoesNotExist<T>(WebDriverOperationData operationData) where T : IOperationResponse
@@ -265,16 +265,15 @@ namespace Domain.Providers
             return result;
         }        
 
-        private WebDriverOptions GetWebDriverOptions(string chromeProfileName)
+        private WebDriverOptions GetWebDriverOptions()
         {
-            _logger.LogInformation("Retrieving WebDriver options. ChromeProfileName that will be used is: {chromeProfileName}", chromeProfileName);
+            _logger.LogInformation("Retrieving WebDriver options");
 
             WebDriverOptions webDriverOptions = default;
             if (_memoryCache.TryGetValue(CacheKeys.WebDriverOptions, out webDriverOptions) == false)
             {
                 _logger.LogDebug("WebDriver options has not been yet loaded. Retrieving configuration options and saving them in memory.");
                 webDriverOptions = _webDriverRepository.GetWebDriverOptions();
-                webDriverOptions.ChromeProfileConfigOptions.ChromeProfileName = chromeProfileName ?? string.Empty;
                 _memoryCache.Set(CacheKeys.WebDriverOptions, webDriverOptions, TimeSpan.FromHours(16));
             }
             return webDriverOptions;

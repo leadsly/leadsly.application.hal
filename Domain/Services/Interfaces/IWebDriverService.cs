@@ -17,7 +17,7 @@ namespace Domain.Services.Interfaces
         HalOperationResult<T> SwitchTo<T>(IWebDriver webDriver, WebDriverOperationData operationData, out string currentWindowHandle)
             where T : IOperationResponse;
 
-        HalOperationResult<T> Create<T>(BrowserPurpose browserPurpose, WebDriverOptions webDriverOptions) where T : IOperationResponse;
+        HalOperationResult<T> Create<T>(BrowserPurpose browserPurpose, WebDriverOptions webDriverOptions, string chromeProfileName) where T : IOperationResponse;
 
         HalOperationResult<T> CloseTab<T>(IWebDriver driver, string windowHandleId)
             where T : IOperationResponse;
