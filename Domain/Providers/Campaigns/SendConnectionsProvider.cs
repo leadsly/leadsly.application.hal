@@ -29,9 +29,11 @@ namespace Domain.Providers.Campaigns
     {
         public SendConnectionsProvider(
             ILogger<SendConnectionsProvider> logger,
+            IWebDriverProvider webDriverProvider,
             ILinkedInPageFacade linkedInPageFacade
             )
         {
+            _webDriverProvider = webDriverProvider;
             _linkedInPageFacade = linkedInPageFacade;
             _logger = logger;            
         }
@@ -76,7 +78,7 @@ namespace Domain.Providers.Campaigns
             }
 
             // only open up a new tab if we aren't trying to re-use a window handle from before
-            if (sentConnectionsUrlStatus.WindowHandleId != null)
+            if (sentConnectionsUrlStatus.WindowHandleId != string.Empty)
             {
                 result = _webDriverProvider.SwitchTo<T>(webDriver, sentConnectionsUrlStatus.WindowHandleId);
                 if(result.Succeeded == false)

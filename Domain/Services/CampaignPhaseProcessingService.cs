@@ -166,6 +166,7 @@ namespace Domain.Services
                     Content = JsonContent.Create(new
                     {
                         HalId = request.HalId,
+                        ApplicationUserId = request.ApplicationUserId,
                         NewAcceptedProspectsConnections = request.NewAcceptedProspectsConnections
                     })
                 };

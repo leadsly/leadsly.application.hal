@@ -209,7 +209,7 @@ namespace Domain.Services
 
         private void ScanProspectsForRepliesQueue(RabbitMQOptions options, string exchangeName, string exchangeType)
         {
-            const string queueName = "scan.prospects.for.replies";
+            const string queueName = RabbitMQConstants.ScanProspectsForReplies.QueueName;
 
             string clientProviderName = options.ConnectionFactoryOptions.ClientProvidedName.Replace("{halId}", this._halIdentity.Id);
             clientProviderName = clientProviderName.Replace("{queue}", queueName);
@@ -230,7 +230,7 @@ namespace Domain.Services
                                  arguments: null);
 
                 string routingKey = options.RoutingKey.Replace("{halId}", this._halIdentity.Id);
-                routingKey = routingKey.Replace("{purpose}", "scan-for-replies");
+                routingKey = routingKey.Replace("{purpose}", RabbitMQConstants.ScanProspectsForReplies.RoutingKey);
                 channel.QueueBind(name, exchangeName, routingKey, null);
 
                 AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(channel);

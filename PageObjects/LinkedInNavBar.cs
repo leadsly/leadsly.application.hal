@@ -86,7 +86,7 @@ namespace PageObjects
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to locate NewConnectionBanner");
+                _logger.LogWarning(ex, "Failed to locate NewConnectionBanner");
             }
             return newNotificationBanner;
         }

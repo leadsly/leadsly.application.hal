@@ -96,7 +96,7 @@ namespace PageObjects.Pages
                 IWebElement multipleNotification = default;
                 try
                 {
-                    multipleNotification = n.FindElement(By.XPath(".//a//span[contains(text(), 'other accepted your invitations to connect')]")) ?? n.FindElement(By.XPath("//a//span[contains(text(), 'others accepted your invitations to connect')]"));
+                    multipleNotification = n.FindElement(By.XPath(".//a//span[contains(text(), 'others accepted your invitations to connect')]")) ?? n.FindElement(By.XPath("//a//span[contains(text(), 'others accepted your invitations to connect')]"));
                 }
                 catch (Exception ex)
                 {
@@ -161,22 +161,28 @@ namespace PageObjects.Pages
                 return null;
             }
 
-            RandomWait(2, 4);
+            RandomWait(1, 1);
 
-            string mainWindowHandle = webDriver.CurrentWindowHandle;
-            HalOperationResult<IOperationResponse> result = _webDriverProvider.NewTab<IOperationResponse>(webDriver);
-            if (result.Succeeded == false)
-            {
-                return null;
-            }
+            // string mainWindowHandle = webDriver.CurrentWindowHandle;
+            //HalOperationResult<IOperationResponse> result = _webDriverProvider.NewTab<IOperationResponse>(webDriver);
+            //if (result.Succeeded == false)
+            //{
+            //    return null;
+            //}
 
-            webDriver.Navigate().GoToUrl(notificationAnchorHref);
+            notificationAnchor.Click();
+
+            RandomWait(3, 4);
+
+            // webDriver.Navigate().GoToUrl(notificationAnchorHref);
 
             // now gather prospects names
             prospectsInfo = _acceptedInvitiationsView.GetAllProspectsInfo(webDriver, timeZoneId);
 
-            _webDriverProvider.CloseTab<IOperationResponse>(BrowserPurpose.MonitorForNewAcceptedConnections, webDriver.CurrentWindowHandle);
-            _webDriverProvider.SwitchTo<IOperationResponse>(webDriver, mainWindowHandle);
+            webDriver.Navigate().Back();
+
+            // _webDriverProvider.CloseTab<IOperationResponse>(BrowserPurpose.MonitorForNewAcceptedConnections, webDriver.CurrentWindowHandle);
+            // _webDriverProvider.SwitchTo<IOperationResponse>(webDriver, mainWindowHandle);
 
             return prospectsInfo;
             

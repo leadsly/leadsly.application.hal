@@ -107,8 +107,8 @@ namespace Domain.Providers.Campaigns
                 int totalResults = ((IGetTotalNumberOfResults)result.Value).NumberOfResults;
                 _logger.LogDebug("Total results in the hitlist {totalResults}", totalResults);
 
-                _webDriverProvider.CloseTab<T>(BrowserPurpose.ProspectList, webDriver.CurrentWindowHandle);
-                _webDriverProvider.SwitchTo<T>(webDriver, defaultWindowHandle);
+                //_webDriverProvider.CloseTab<T>(BrowserPurpose.ProspectList, webDriver.CurrentWindowHandle);
+                //_webDriverProvider.SwitchTo<T>(webDriver, defaultWindowHandle);
 
                 IList<PrimaryProspectRequest> primaryProspects = CollectProspects(webDriver, searchUrl, totalResults, message.PrimaryProspectListId);
 
@@ -122,6 +122,13 @@ namespace Domain.Providers.Campaigns
             {
                 Prospects = prospects
             };
+
+            result = _webDriverProvider.CloseTab<T>(BrowserPurpose.ProspectList, webDriver.CurrentWindowHandle);
+            if(result.Succeeded == false)
+            {
+                _logger.LogError("Failed to close ProspectList tab");
+                return result;
+            }
 
             result = _webDriverProvider.SwitchTo<T>(webDriver, defaultWindowHandle);
             if(result.Succeeded == false)
@@ -149,24 +156,24 @@ namespace Domain.Providers.Campaigns
             {
                 for (int i = 0; i < totalResults; i++)
                 {
-                    if(i == 0)
-                    {
-                        _logger.LogDebug("This is the first iteration over the search results list. Creating a new tab.");
-                        HalOperationResult<INewTabOperation> newTabOperation = _webDriverProvider.NewTab<INewTabOperation>(webDriver);
-                        if (newTabOperation.Succeeded == false)
-                        {
-                            break;
-                        }
+                    //if(i == 0)
+                    //{
+                    //    //_logger.LogDebug("This is the first iteration over the search results list. Creating a new tab.");
+                    //    //HalOperationResult<INewTabOperation> newTabOperation = _webDriverProvider.NewTab<INewTabOperation>(webDriver);
+                    //    //if (newTabOperation.Succeeded == false)
+                    //    //{
+                    //    //    break;
+                    //    //}
 
-                        windowHandles.Add(newTabOperation.Value.WindowHandleId);
+                    //    //windowHandles.Add(newTabOperation.Value.WindowHandleId);
 
-                        _logger.LogDebug("This is the first iteration over the search results list. Navigating to url: {searchUrl}.", searchUrl);
-                        HalOperationResult<IOperationResponse> goToPageResult = GoToPage<IOperationResponse>(webDriver, searchUrl);
-                        if (goToPageResult.Succeeded == false)
-                        {
-                            break;
-                        }
-                    }
+                    //    //_logger.LogDebug("This is the first iteration over the search results list. Navigating to url: {searchUrl}.", searchUrl);
+                    //    //HalOperationResult<IOperationResponse> goToPageResult = GoToPage<IOperationResponse>(webDriver, searchUrl);
+                    //    //if (goToPageResult.Succeeded == false)
+                    //    //{
+                    //    //    break;
+                    //    //}
+                    //}
 
                     bool isNoSearchResultsContainerDisplayed = _linkedInPageFacade.LinkedInSearchPage.IsNoSearchResultsContainerDisplayed(webDriver);
                     if(isNoSearchResultsContainerDisplayed == true)
