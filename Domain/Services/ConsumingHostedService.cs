@@ -19,11 +19,9 @@ namespace Domain.Services
         }
 
         private readonly IConsumingService _consumingService;
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _consumingService.StartConsuming();
-
-            return Task.CompletedTask;
+            await _consumingService.StartConsumingAsync();
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

@@ -126,6 +126,25 @@ namespace PageObjects.Pages
             return prospectName;
         }
 
+        /// <summary>
+        /// TODO this is not implemented
+        /// </summary>
+        /// <param name="conversationListItem"></param>
+        /// <returns></returns>
+        public string GetProspectProfileUrlFromConversationItem(IWebElement conversationListItem)
+        {
+            string prospectProfileUrl = string.Empty;
+            try
+            {
+                
+            }
+            catch (Exception ex)
+            {
+            }
+
+            return prospectProfileUrl;
+        }
+
         public bool IsConversationListItemActive(IWebElement conversationListItem)
         {
             IWebElement activeElement = default;
@@ -317,6 +336,22 @@ namespace PageObjects.Pages
 
             result.Succeeded = true;
             return result;
+        }
+
+        public bool HasNotification(IWebElement listItem)
+        {
+            bool hasNotification = false;
+            try
+            {
+                IWebElement span = listItem.FindElement(By.ClassName("notification-badge--show"));
+                hasNotification = span != null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation(ex, "Converstaion list item does not contain notifications. This list item does not have any unread messages");
+            }
+
+            return hasNotification;
         }
     }
 }

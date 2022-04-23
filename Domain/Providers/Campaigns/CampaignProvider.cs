@@ -20,124 +20,19 @@ namespace Domain.Providers.Campaigns
 {
     public class CampaignProvider : ICampaignProvider
     {
-        public CampaignProvider(ICampaignPhaseProcessingService campaignPhaseProcessingService, ICampaignService campaignService, ILogger<CampaignProvider> logger, ICampaignSerializer campaignSerializer)
+        public CampaignProvider(            
+            ICampaignService campaignService,            
+            ILogger<CampaignProvider> logger, 
+            ICampaignSerializer campaignSerializer)
         {
-            _campaignPhaseProcessingService = campaignPhaseProcessingService;
+            _logger = logger;
             _campaignService = campaignService;
             _campaignSerializer = campaignSerializer;
         }
 
-        private ICampaignPhaseProcessingService _campaignPhaseProcessingService;
-        private ILogger<CampaignProvider> _logger;
-        private ICampaignService _campaignService;
-        private ICampaignSerializer _campaignSerializer;
-
-        public async Task<HalOperationResult<T>> PersistProspectListAsync<T>(IOperationResponse resultValue, ProspectListBody message, CancellationToken ct = default) where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-
-            // cast resultValue to ProspectList
-            IPrimaryProspectListPayload primaryProspectList = resultValue as IPrimaryProspectListPayload;
-            if(primaryProspectList == null)
-            {
-                _logger.LogError("Failed to cast resultValue into IPrimaryProspectList");
-                return result;
-            }
-
-            ProspectListPhaseCompleteRequest request = new()
-            {
-                HalId = message.HalId,
-                UserId = message.UserId,
-                CampaignId = message.CampaignId,
-                PrimaryProspectListId = message.PrimaryProspectListId,
-                Prospects = primaryProspectList.Prospects,
-                RequestUrl = "api/prospect-list",
-                NamespaceName = message.NamespaceName,
-                ServiceDiscoveryName = message.ServiceDiscoveryName,
-            };
-
-            HttpResponseMessage responseMessage = await _campaignPhaseProcessingService.ProcessProspectListAsync(request, ct);
-            if(responseMessage == null)
-            {
-                _logger.LogError("Response from application server was null. The request was responsible for saving primary prospects to the database");
-                return result;
-            }
-
-            if(responseMessage.IsSuccessStatusCode == false)
-            {
-                _logger.LogError("Response from application server was not a successfull status code. The request was responsible for saving primary prospects to the database");
-                return result;
-            }
-
-            result.Succeeded = true;
-            return result;
-        }
-
-        public async Task<HalOperationResult<T>> ProcessConnectionRequestSentForCampaignProspectsAsync<T>(IList<CampaignProspectRequest> campaignProspects, SendConnectionsBody message, CancellationToken ct = default) where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-
-            // cast resultValue to ProspectList
-            //ISendConnectionsPayload payload = resultValue as ISendConnectionsPayload;
-            //if (payload == null)
-            //{
-            //    _logger.LogError("Failed to cast resultValue into ICampaignProspectListPayload");
-            //    return result;
-            //}
-
-            CampaignProspectListRequest request = new()
-            {
-                HalId = message.HalId,
-                UserId = message.UserId,
-                CampaignId = message.CampaignId,
-                CampaignProspects = campaignProspects,
-                RequestUrl = $"api/campaigns/{message.CampaignId}/prospects",
-                NamespaceName = message.NamespaceName,
-                ServiceDiscoveryName = message.ServiceDiscoveryName,
-            };
-
-            HttpResponseMessage responseMessage = await _campaignPhaseProcessingService.UpdateContactedCampaignProspectListAsync(request, ct);
-            if (responseMessage == null)
-            {
-                _logger.LogError("Response from application server was null. The request was responsible for saving primary prospects to the database");
-                return result;
-            }
-
-            if (responseMessage.IsSuccessStatusCode == false)
-            {
-                _logger.LogError("Response from application server was not a successfull status code. The request was responsible for saving primary prospects to the database");
-                return result;
-            }
-
-            result.Succeeded = true;
-            return result;
-        }
-
-        public async Task<HalOperationResult<T>> TriggerSendConnectionsPhaseAsync<T>(ProspectListBody message, CancellationToken ct = default) where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-
-            TriggerSendConnectionsRequest request = new()
-            {
-                CampaignId = message.CampaignId,
-                UserId = message.UserId,
-                HalId = message.HalId,
-                RequestUrl = "api/campaignphases/trigger-send-connection-requests",
-                NamespaceName = message.NamespaceName,
-                ServiceDiscoveryName = message.ServiceDiscoveryName,
-            };
-
-            HttpResponseMessage responseMessage = await _campaignPhaseProcessingService.TriggerCampaignProspectListAsync(request, ct);
-
-            if (responseMessage.IsSuccessStatusCode == false)
-            {
-                _logger.LogError("Response from application server was not a successfull status code. The request was responsible for saving primary prospects to the database");
-                return result;
-            }
-
-            result.Succeeded = true;
-            return result;
-        }
+        private readonly ILogger<CampaignProvider> _logger;
+        private readonly ICampaignService _campaignService;
+        private readonly ICampaignSerializer _campaignSerializer;
 
         public async Task<HalOperationResult<T>> GetLatestSendConnectionsUrlStatusesAsync<T>(SendConnectionsBody message, CancellationToken ct = default) where T : IOperationResponse
         {
@@ -213,83 +108,6 @@ namespace Domain.Providers.Campaigns
             if(responseMessage.IsSuccessStatusCode == false)
             {
                 _logger.LogError("Response from application server was not a successful status code. The request was responsible for updating campaign");
-                return result;
-            }
-
-            result.Succeeded = true;
-            return result;
-        }
-
-        public async Task<HalOperationResult<T>> UpdateCampaignProspectsRepliedAsync<T>(IList<ProspectRepliedRequest> prospectsReplied, ScanProspectsForRepliesBody message, CancellationToken ct = default) where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-
-            ProspectsRepliedRequest request = new()
-            {
-                HalId = message.HalId,
-                NamespaceName = message.NamespaceName,
-                ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/prospect-list/prospects-replied",                
-                ProspectsReplied = prospectsReplied
-            };
-
-            HttpResponseMessage responseMessage = await _campaignService.UpdateProspectsRepliedAsync(request, ct);
-
-            if (responseMessage.IsSuccessStatusCode == false)
-            {
-                _logger.LogError("Response from application server was not a successful status code. The request was responsible for updating campaign prospects who have responded to our messages and recording their response");
-                return result;
-            }
-
-            result.Succeeded = true;
-            return result;
-        }
-
-        public async Task<HalOperationResult<T>> TriggerScanProspectsForRepliesPhaseAsync<T>(ScanProspectsForRepliesBody message, CancellationToken ct = default) where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-
-            TriggerScanProspectsForRepliesRequest request = new()
-            {
-                HalId = message.HalId,
-                NamespaceName = message.NamespaceName,
-                ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/campaignphases/trigger-scan-prospects-for-replies",
-                UserId = message.UserId                
-            };
-
-            HttpResponseMessage responseMessage = await _campaignPhaseProcessingService.TriggerScanProspectsForRepliesAsync(request, ct);
-
-            if (responseMessage.IsSuccessStatusCode == false)
-            {
-                string halId = message.HalId;
-                _logger.LogError("Response from application server was not a successful status code. The request was responsible for triggering ScanProspectsForRepliesPhase for hal id {halId}", halId);
-                return result;
-            }
-
-            result.Succeeded = true;
-            return result;
-        }
-
-        public async Task<HalOperationResult<T>> TriggerFollowUpMessagesPhaseAsync<T>(ScanProspectsForRepliesBody message, CancellationToken ct = default) where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-
-            TriggerFollowUpMessageRequest request = new()
-            {
-                HalId = message.HalId,
-                NamespaceName = message.NamespaceName,
-                ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/campaignphases/trigger-follow-up-messages",
-                UserId = message.UserId
-            };
-
-            HttpResponseMessage responseMessage = await _campaignPhaseProcessingService.TriggerFollowUpMessageAsync(request, ct);
-
-            if (responseMessage.IsSuccessStatusCode == false)
-            {
-                string halId = message.HalId;
-                _logger.LogError("Response from application server was not a successful status code. The request was responsible for triggering FollowUpMessagePhase for hal id {halId}", halId);
                 return result;
             }
 

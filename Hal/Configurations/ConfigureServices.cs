@@ -1,42 +1,52 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Formatters;
-using Newtonsoft.Json;
-using Microsoft.AspNetCore.Cors.Infrastructure;
-using Domain.Supervisor;
-using Newtonsoft.Json.Converters;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
-using Domain;
-using System.Linq;
-using Serilog;
-using Hal.OptionsJsonModels;
-using Domain.OptionsJsonModels;
-using Infrastructure.Repositories;
-using Domain.Repositories;
-using PageObjects.Pages;
-using Domain.Providers;
-using Leadsly.Application.Model;
-using Domain.Services;
+﻿using Domain;
 using Domain.Facades;
 using Domain.Facades.Interfaces;
-using Domain.Providers.Interfaces;
-using Domain.Services.Interfaces;
-using Domain.Providers.Campaigns.Interfaces;
+using Domain.OptionsJsonModels;
+using Domain.PhaseConsumers;
+using Domain.PhaseConsumers.FollowUpMessageHandlers;
+using Domain.PhaseConsumers.MonitorForNewConnectionsHandlers;
+using Domain.PhaseConsumers.NetworkingConnectionsHandlers;
+using Domain.PhaseConsumers.ScanProspectsForRepliesHandlers;
+using Domain.PhaseHandlers.FollowUpMessageHandlers;
+using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
+using Domain.PhaseHandlers.NetworkingConnectionsHandler;
+using Domain.PhaseHandlers.ScanProspectsForRepliesHandler;
+using Domain.PhaseHandlers.SendConnectionsHandler;
+using Domain.POMs;
+using Domain.POMs.Pages;
+using Domain.Providers;
 using Domain.Providers.Campaigns;
+using Domain.Providers.Campaigns.Interfaces;
+using Domain.Providers.Interfaces;
+using Domain.Repositories;
+using Domain.Serializers;
+using Domain.Serializers.Interfaces;
+using Domain.Services;
+using Domain.Services.Interfaces;
+using Domain.Supervisor;
+using Hal.OptionsJsonModels;
 using Hangfire;
 using Hangfire.PostgreSql;
-using Domain.Serializers.Interfaces;
-using Domain.Serializers;
-using Domain.POMs.Pages;
-using Domain.POMs;
+using Infrastructure.Repositories;
+using Leadsly.Application.Model;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
+using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using PageObjects;
+using PageObjects.Pages;
+using Serilog;
+using System;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Hal.Configurations
 {
@@ -61,21 +71,44 @@ namespace Hal.Configurations
             return services;
         }
 
+        public static IServiceCollection AddCommandHandlers(this IServiceCollection services)
+        {
+            Log.Information("Registering command handlers.");
+
+            // Commands fired to start consuming
+            services.AddScoped<HalWorkCommandHandlerDecorator<FollowUpMessageConsumerCommand>>();
+            services.AddScoped<HalWorkCommandHandlerDecorator<MonitorForNewConnectionsConsumerCommand>>();
+            services.AddScoped<HalWorkCommandHandlerDecorator<NetworkingConnectionsConsumerCommand>>();
+            services.AddScoped<HalWorkCommandHandlerDecorator<ScanProspectsForRepliesConsumerCommand>>();
+
+            // Commands fired to start processing the given phase
+            services.AddScoped<HalWorkCommandHandlerDecorator<FollowUpMessageCommand>>();
+            services.AddScoped<HalWorkCommandHandlerDecorator<MonitorForNewConnectionsCommand>>();
+            services.AddScoped<HalWorkCommandHandlerDecorator<ProspectListCommand>>();
+            services.AddScoped<HalWorkCommandHandlerDecorator<DeepScanProspectsForRepliesCommand>>();
+            services.AddScoped<HalWorkCommandHandlerDecorator<ScanProspectsForRepliesCommand>>();
+            services.AddScoped<HalWorkCommandHandlerDecorator<SendConnectionsCommand>>();
+
+            // Handlers for starting consumption
+            services.AddScoped<ICommandHandler<FollowUpMessageConsumerCommand>, FollowUpMessageConsumerCommandHandler>();
+            services.AddScoped<ICommandHandler<MonitorForNewConnectionsConsumerCommand>, MonitorForNewConnectionsConsumerCommandHandler>();
+            services.AddScoped<ICommandHandler<NetworkingConnectionsConsumerCommand>, NetworkingConnectionsConsumerCommandHandler>();
+            services.AddScoped<ICommandHandler<ScanProspectsForRepliesConsumerCommand>, ScanProspectsForRepliesConsumerCommandHandler>();
+
+            // Handlers for processing the given phase
+            services.AddScoped<ICommandHandler<FollowUpMessageCommand>, FollowUpMessageCommandHandler>();
+            services.AddScoped<ICommandHandler<MonitorForNewConnectionsCommand>, MonitorForNewConnectionsCommandHandler>();
+            services.AddScoped<ICommandHandler<ProspectListCommand>, ProspectListCommandHandler>();
+            services.AddScoped<ICommandHandler<DeepScanProspectsForRepliesCommand>, DeepScanProspectsForRepliesCommandHandler>();
+            services.AddScoped<ICommandHandler<ScanProspectsForRepliesCommand>, ScanProspectsForRepliesCommandHandler>();
+            services.AddScoped<ICommandHandler<SendConnectionsCommand>, SendConnectionsCommandHandler>();
+
+            return services;
+        }
+
         public static IServiceCollection AddSeleniumServicesConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
             Log.Information("Registering selenium services configuration.");
-
-            services.AddHttpClient<ICampaignPhaseProcessingService, CampaignPhaseProcessingService>(opt =>
-            {
-                opt.BaseAddress = new Uri("http://localhost:5000/api", UriKind.Absolute);
-            });
-
-            services.AddHttpClient<ICampaignService, CampaignService>(opt =>
-            {
-                opt.BaseAddress = new Uri("http://localhost:5000/api", UriKind.Absolute);
-            });
-
-            services.AddScoped<ILinkedInHtmlParser, LinkedInHtmlParser>();
 
             services.Configure<WebDriverConfigOptions>(options => configuration.GetSection(nameof(WebDriverConfigOptions)).Bind(options));
             WebDriverConfigOptions webDriverConfigOptions = new();
@@ -158,6 +191,9 @@ namespace Hal.Configurations
             services.AddScoped<ICampaignProvider, CampaignProvider>();
             services.AddScoped<ISendConnectionsProvider, SendConnectionsProvider>();
             services.AddScoped<IScanProspectsForRepliesProvider, ScanProspectsForRepliesProvider>();
+            services.AddScoped<IDeepScanProspectsForRepliesProvider, DeepScanProspectsForRepliesProvider>();
+            services.AddScoped<IPhaseDataProcessingProvider, PhaseDataProcessingProvider>();
+            services.AddScoped<ITriggerPhaseProvider, TriggerPhaseProvider>();
 
             return services;
         }
@@ -166,11 +202,30 @@ namespace Hal.Configurations
         {
             Log.Information("Registering services configuration.");
 
+            services.AddHttpClient<IPhaseDataProcessingService, PhaseDataProcessingService>(opt =>
+            {
+                opt.BaseAddress = new Uri("http://localhost:5000/api", UriKind.Absolute);
+            });
+
+            services.AddHttpClient<ICampaignService, CampaignService>(opt =>
+            {
+                opt.BaseAddress = new Uri("http://localhost:5000/api", UriKind.Absolute);
+            });
+
+            services.AddHttpClient<ITriggerPhaseService, TriggerPhaseService>(opt =>
+            {
+                opt.BaseAddress = new Uri("http://localhost:5000/api", UriKind.Absolute);
+            });
+
             services.AddScoped<IWebDriverService, WebDriverService>();
             services.AddScoped<ITimestampService, TimestampService>();
+            services.AddScoped<IPhaseEventHandlerService, PhaseEventHandlerService>();
+            services.AddScoped<IHumanBehaviorService, HumanBehaviorService>();
+            services.AddScoped<IPhaseDataProcessingService, PhaseDataProcessingService>();            
+            services.AddScoped<ITriggerPhaseService, TriggerPhaseService>();
+            services.AddScoped<IRabbitMQManager, RabbitMQManager>();
 
-            services.AddSingleton<IConsumingService, ConsumingService>();
-            services.AddSingleton<ICampaignManagerService, CampaignManagerService>();
+            services.AddSingleton<IConsumingService, ConsumingService>();            
 
             return services;
         }

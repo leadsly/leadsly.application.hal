@@ -28,21 +28,27 @@ namespace Domain.Providers.Campaigns
     {
         public ScanProspectsForRepliesProvider(
             ILogger<ScanProspectsForRepliesProvider> logger,
+            IPhaseDataProcessingProvider phaseDataProcessingProvider,
             IWebDriverProvider webDriverProvider,
             ILinkedInPageFacade linkedInPageFacade,
+            IHumanBehaviorService humanService,
             ITimestampService timestampService)
         {
             _logger = logger;
+            _humanService = humanService;
             _linkedInPageFacade = linkedInPageFacade;
             _webDriverProvider = webDriverProvider;
-            _timestampService = timestampService;            
+            _timestampService = timestampService;
+            _phaseDataProcessingProvider = phaseDataProcessingProvider;
         }
 
+        private readonly IPhaseDataProcessingProvider _phaseDataProcessingProvider;
+        private readonly IHumanBehaviorService _humanService;
         private readonly ILogger<ScanProspectsForRepliesProvider> _logger;
         private readonly ILinkedInPageFacade _linkedInPageFacade;
         private readonly IWebDriverProvider _webDriverProvider;        
         private readonly ITimestampService _timestampService;
-        private readonly ICampaignPhaseProcessingService _campaignProcessingPhase;
+
 
         public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
         {
@@ -55,19 +61,6 @@ namespace Domain.Providers.Campaigns
             IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)result.Value).WebDriver;
 
             return await ExecutePhaseUntilEndOfWorkDayAsync<T>(webDriver, message);
-        }
-
-        public HalOperationResult<T> ExecutePhaseOnce<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
-        {
-            HalOperationResult<T> result = SetUpForScanning<T>(message);
-            if (result.Succeeded == false)
-            {
-                return result;
-            }
-
-            IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)result.Value).WebDriver;
-
-            return ExecuteScanProspectsForRepliesPhaseOnce<T>(webDriver, message);
         }
 
         private HalOperationResult<T> SetUpForScanning<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
@@ -107,160 +100,20 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        private HalOperationResult<T> ExecuteScanProspectsForRepliesPhaseOnce<T>(IWebDriver webDriver, ScanProspectsForRepliesBody message) where T : IOperationResponse
-        {
-            return DeepScanSpecificProspects<T>(webDriver, message);
-        }
-
         public async Task<HalOperationResult<T>> ExecutePhaseUntilEndOfWorkDayAsync<T>(IWebDriver webDriver, ScanProspectsForRepliesBody message) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
-            DateTimeOffset endOfWorkDayInZone = DateTimeOffset.FromUnixTimeSeconds(message.EndWorkTime);
+            DateTimeOffset endOfWorkDayInZone = _timestampService.GetDateTimeWithZone(message.TimeZoneId, message.EndWorkTime);
             while (_timestampService.GetDateTimeNowWithZone(message.TimeZoneId) < endOfWorkDayInZone)
             {
+                _humanService.RandomWait(30, 45);
+
                 await ScanProspectsAsync<T>(webDriver, message);
             }
 
             result.Succeeded = true;
             return result;
-        }
-
-        private HalOperationResult<T> DeepScanSpecificProspects<T>(IWebDriver webDriver, ScanProspectsForRepliesBody message)
-            where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-
-            IList<ProspectRepliedRequest> prospectsReplied = new List<ProspectRepliedRequest>();
-            foreach (CampaignProspect campaignProspect in message.ContactedCampaignProspects)
-            {
-                result = _linkedInPageFacade.LinkedInMessagingPage.ClearMessagingSearchCriteria<T>(webDriver);
-                if (result.Succeeded == false)
-                {
-                    return result;
-                }
-
-                // search for each campaign prospect in the messages search field
-                result = _linkedInPageFacade.LinkedInMessagingPage.EnterSearchMessagesCriteria<T>(webDriver, campaignProspect.Name);
-                if(result.Succeeded == false)
-                {
-                    continue;
-                }
-
-                // attempst to wait for the prospect to be surfaced to the top of the list
-                bool expectedProspectOnTopOfList = false;
-                Stopwatch sw = new Stopwatch();
-                sw.Start();
-                IWebElement targetProspect = default;
-                while (expectedProspectOnTopOfList == false || sw.Elapsed.TotalSeconds < 30)
-                {
-                    result = _linkedInPageFacade.LinkedInMessagingPage.GetVisibleConversationListItems<T>(webDriver);
-                    IScrapedHtmlElements elements = result.Value as IScrapedHtmlElements;
-                    List<IWebElement> conversationListItems = elements.HtmlElements.ToList();
-                    targetProspect = conversationListItems.FirstOrDefault();
-                    if(targetProspect != null)
-                    {
-                        expectedProspectOnTopOfList = _linkedInPageFacade.LinkedInMessagingPage.GetProspectNameFromConversationItem(targetProspect) == campaignProspect.Name;
-                    }
-                }
-
-                 _linkedInPageFacade.LinkedInMessagingPage.ClickConverstaionListItem(targetProspect);
-                WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(30));
-                bool isActive = wait.Until(drv => _linkedInPageFacade.LinkedInMessagingPage.IsConversationListItemActive(targetProspect));
-                if(isActive == false)
-                {
-                    continue;
-                }
-
-                // we need to now grab the contents of the conversation history
-                result = _linkedInPageFacade.LinkedInMessagingPage.GetMessagesContent<T>(webDriver);
-                if(result.Succeeded == false)
-                {
-                    continue;
-                }
-
-                IScrapedHtmlElements messageElements = result.Value as IScrapedHtmlElements;
-                List<IWebElement> messages = messageElements.HtmlElements.ToList();
-                string targetMessage = campaignProspect.FollowUpMessage.Content;
-
-                IWebElement targetMessageElement = messages.Where(m => _linkedInPageFacade.LinkedInMessagingPage.GetMessageContent(m).Contains(targetMessage)).FirstOrDefault();
-                if(targetMessageElement == null)
-                {
-                    continue;
-                }
-
-                int targetMessageIndex = messages.IndexOf(targetMessageElement);
-                int nextMessageIndex = targetMessageIndex + 1;
-
-                // check if any messages after the target message were prospect's
-                for (int i = nextMessageIndex; i < messages.Count; i++)
-                {
-                    IWebElement nextMessage = messages.ElementAt(i);
-                    if (_linkedInPageFacade.LinkedInMessagingPage.GetProspectNameFromMessageDetailDiv(nextMessage) == campaignProspect.Name)
-                    {
-                        // we have a resonse from the prospect add it to payload going out to the server
-                        string response = _linkedInPageFacade.LinkedInMessagingPage.GetMessageContent(nextMessage);
-                        ProspectRepliedRequest request = CreateProspectRepliedRequest(campaignProspect, response);
-                        prospectsReplied.Add(request);
-                    }
-                }
-            }
-
-            result = _linkedInPageFacade.LinkedInMessagingPage.ClearMessagingSearchCriteria<T>(webDriver);
-            if (result.Succeeded == false)
-            {
-                return result;
-            }
-
-            // grab the first batch of 20 conversations
-            //result = _linkedInPageFacade.LinkedInMessagingPage.GetVisibleConversationListItems<T>(webDriver);
-            //if (result.Succeeded == false)
-            //{
-            //    return result;
-            //}
-
-            //IScrapedHtmlElements elements = result.Value as IScrapedHtmlElements;            
-            //List<IWebElement> conversationListItems = elements.HtmlElements.ToList();
-
-            //// this is the list of the prospects as IWebElement whom we've contacted in the last 24 hours
-            //List<IWebElement> contactedProspects = new List<IWebElement>();
-            //foreach (CampaignProspect contacted in message.ContactedCampaignProspects)
-            //{
-            //    IWebElement contactedProspect = conversationListItems.Where(c => _linkedInPageFacade.LinkedInMessagingPage.GetProspectNameFromConversationItem(c) == contacted.Name).Single();
-            //    contactedProspects.Add(contactedProspect);
-            //}
-
-            //// the list is now filtered down to the prospects that we've sent a connection to in the last 24 hours
-            //// we have to go through all of those prospects messages regardless if they have a notification badge or not
-            //// [Jordan Sprague: 4/15/2022]: What if the leadsly user manually responds before we check for prospect responses? Then it wouldn't be seen as a new incoming message
-            //foreach (IWebElement contactedProspect in contactedProspects)
-            //{
-            //    //click on the prospect first to make it active and bring the conversation history in the right panel
-            //    _linkedInPageFacade.LinkedInMessagingPage.ClickConverstaionListItem(contactedProspect);
-            //    if(_linkedInPageFacade.LinkedInMessagingPage.IsConversationListItemActive(contactedProspect) == false)
-            //    {
-            //        string prospectName = _linkedInPageFacade.LinkedInMessagingPage.GetProspectNameFromConversationItem(contactedProspect);
-            //        _logger.LogInformation("ConversationListItem is not active. It does not have active class. Skipping prospect {prospectName}", prospectName);
-            //    }
-            //}
-
-            IProspectsRepliedPayload payload = new ProspectsRepliedPayload
-            {
-                ProspectsReplied = prospectsReplied
-            };
-
-            result.Value = (T)payload;
-            result.Succeeded = true;
-            return result;
-        }
-
-        private ProspectRepliedRequest CreateProspectRepliedRequest(CampaignProspect campaignProspect, string responseMessage) 
-        {
-            return new()
-            {
-                CampaignProspectId = campaignProspect.CampaignProspectId,
-                ResponseMessage = responseMessage
-            };
         }
 
         private async Task<HalOperationResult<T>> ScanProspectsAsync<T>(IWebDriver webDriver, ScanProspectsForRepliesBody message)
@@ -275,8 +128,63 @@ namespace Domain.Providers.Campaigns
                 return result;
             }
 
+            // check if any of the list items contain the new message notification
+            IScrapedHtmlElements elements = result.Value as IScrapedHtmlElements;
+
+            IList<ProspectRepliedRequest> prospectsReplied = new List<ProspectRepliedRequest>();
+            IList<IWebElement> newMessagesListItems = GrabNewMessagesListItems(elements.HtmlElements);
+            if(newMessagesListItems.Count > 0)
+            {
+                // extract those users names and send back to the api server for processing
+                foreach (IWebElement prospectMessage in newMessagesListItems)
+                {
+                    string prospectName = _linkedInPageFacade.LinkedInMessagingPage.GetProspectNameFromConversationItem(prospectMessage);
+                    // blank for now because it is hard to get profile url, will add later
+                    // string prospectProfileUrl = _linkedInPageFacade.LinkedInMessagingPage.GetProspectProfileUrlFromConversationItem(prospectMessage);                    
+                    _linkedInPageFacade.LinkedInMessagingPage.ClickConverstaionListItem(prospectMessage);
+                    WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(30));
+                    bool isActive = wait.Until(drv => _linkedInPageFacade.LinkedInMessagingPage.IsConversationListItemActive(prospectMessage));
+                    if (isActive == false)
+                    {
+                        continue;
+                    }
+
+                    // we need to now grab the contents of the conversation history
+                    result = _linkedInPageFacade.LinkedInMessagingPage.GetMessagesContent<T>(webDriver);
+                    if (result.Succeeded == false)
+                    {
+                        continue;
+                    }
+
+                    IScrapedHtmlElements messageElements = result.Value as IScrapedHtmlElements;
+                    List<IWebElement> messages = messageElements.HtmlElements.ToList();
+                    // prospectsReplied.Add(prospectReplyRequest);
+                }
+            }
+
+            if(prospectsReplied.Count > 0)
+            {
+                // fire off request to the application server for processing of prospects that have replied to us (may not be prospects from our campaigns so we will ignore those)\
+                await _phaseDataProcessingProvider.ProcessProspectsRepliedAsync<T>(prospectsReplied, message);
+            }
+
+
             result.Succeeded = true;
             return result;
+        }
+
+        private IList<IWebElement> GrabNewMessagesListItems(IReadOnlyCollection<IWebElement> listItems)
+        {
+            IList<IWebElement> newConversationListItem = new List<IWebElement>();
+            foreach (IWebElement listItem in listItems)
+            {
+                if(_linkedInPageFacade.LinkedInMessagingPage.HasNotification(listItem) == true)
+                {
+                    newConversationListItem.Add(listItem);
+                }
+            }
+
+            return newConversationListItem;
         }
 
         private HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)

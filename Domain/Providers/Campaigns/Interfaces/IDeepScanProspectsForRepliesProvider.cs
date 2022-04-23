@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace Domain.Providers.Campaigns.Interfaces
 {
-    public interface IScanProspectsForRepliesProvider
+    public interface IDeepScanProspectsForRepliesProvider
     {
-        Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ScanProspectsForRepliesBody message)
+        HalOperationResult<T> ExecutePhase<T>(ScanProspectsForRepliesBody message)
             where T : IOperationResponse;
     }
 }

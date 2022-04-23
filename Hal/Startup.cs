@@ -46,6 +46,7 @@ namespace Hal
                     .AddApiBehaviorOptionsConfiguration()
                     .AddSupervisorConfiguration()
                     .AddSeleniumServicesConfiguration(Configuration)
+                    .AddCommandHandlers()
                     .AddHttpContextAccessor()
                     .AddRepositoryConfiguration()
                     .AddRemoveNull204FormatterConfigration()

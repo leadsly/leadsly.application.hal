@@ -30,7 +30,7 @@ namespace Domain.Providers.Campaigns
             ILogger<MonitorForNewProspectsProvider> logger, 
             IWebDriverProvider webDriverProvider,            
             ITimestampService timestampService,
-            ICampaignPhaseProcessingService campaignProcessingPhase,            
+            IPhaseDataProcessingService campaignProcessingPhase,            
             ILinkedInPageFacade linkedInPageFacade
             )
         {
@@ -45,7 +45,7 @@ namespace Domain.Providers.Campaigns
         private readonly ITimestampService _timestampService;
         private readonly IWebDriverProvider _webDriverProvider;        
         private readonly ILogger<MonitorForNewProspectsProvider> _logger;                
-        private readonly ICampaignPhaseProcessingService _campaignProcessingPhase;        
+        private readonly IPhaseDataProcessingService _campaignProcessingPhase;        
 
         public async Task<HalOperationResult<T>> ExecutePhase<T>(MonitorForNewAcceptedConnectionsBody message) where T : IOperationResponse
         {

@@ -20,23 +20,32 @@ namespace Domain.Facades
     public class CampaignPhaseFacade : ICampaignPhaseFacade
     {
         public CampaignPhaseFacade(ILogger<CampaignPhaseFacade> logger,
-            ICampaignProvider campaignProvider,            
+            ICampaignProvider campaignProvider,
+            IPhaseDataProcessingProvider phaseDataProcessingProvider,
+            ITriggerPhaseProvider triggerPhaseProvider,
             IFollowUpMessagesProvider followUpMessagesProvider, 
             IProspectListProvider prospectListProvider,
             IScanProspectsForRepliesProvider scanProspectsForRepliesProvider,
+            IDeepScanProspectsForRepliesProvider deepScanProspectsForRepliesProvider,
             ISendConnectionsProvider sendConnectionsProvider,
             IMonitorForNewProspectsProvider monitorForNewProspectsProvider)
         {
+            _phaseDataProcessingProvider = phaseDataProcessingProvider;
             _campaignProvider = campaignProvider;
             _scanProspectsForRepliesProvider = scanProspectsForRepliesProvider;
-            _followUpMessagesProvider = followUpMessagesProvider;            
+            _followUpMessagesProvider = followUpMessagesProvider;
+            _deepScanProspectsForRepliesProvider = deepScanProspectsForRepliesProvider;
             _monitorForNewProspectsProvider = monitorForNewProspectsProvider;
             _prospectListProvider = prospectListProvider;
             _sendConnectionsProvider = sendConnectionsProvider;
+            _triggerPhaseProvider = triggerPhaseProvider;
             _logger = logger;
         }
 
+        private readonly IPhaseDataProcessingProvider _phaseDataProcessingProvider;
+        private readonly ITriggerPhaseProvider _triggerPhaseProvider;
         private readonly IScanProspectsForRepliesProvider _scanProspectsForRepliesProvider;
+        private readonly IDeepScanProspectsForRepliesProvider _deepScanProspectsForRepliesProvider;
         private readonly IMonitorForNewProspectsProvider _monitorForNewProspectsProvider;
         private readonly ICampaignProvider _campaignProvider;
         private readonly IFollowUpMessagesProvider _followUpMessagesProvider;
@@ -68,7 +77,7 @@ namespace Domain.Facades
         {
             HalOperationResult<T> result = new();
 
-            result = _scanProspectsForRepliesProvider.ExecutePhaseOnce<T>(message);
+            result = _deepScanProspectsForRepliesProvider.ExecutePhase<T>(message);
             if (result.Succeeded == false)
             {
                 return result;
@@ -81,20 +90,20 @@ namespace Domain.Facades
                 return result;
             }
 
-            result = await _campaignProvider.UpdateCampaignProspectsRepliedAsync<T>(prospectsReplied.ProspectsReplied, message);
+            result = await _phaseDataProcessingProvider.ProcessCampaignProspectsRepliedAsync<T>(prospectsReplied.ProspectsReplied, message);
             if(result.Succeeded == false)
             {
                 return result;
             }
 
             // trigger ScanProspectsForRepliesPhase and FollowUpMessagePhase
-            result = await _campaignProvider.TriggerScanProspectsForRepliesPhaseAsync<T>(message);
+            result = await _triggerPhaseProvider.TriggerScanProspectsForRepliesPhaseAsync<T>(message);
             if(result.Succeeded == false)
             {
                 return result;
             }
 
-            result = await _campaignProvider.TriggerFollowUpMessagesPhaseAsync<T>(message);
+            result = await _triggerPhaseProvider.TriggerFollowUpMessagesPhaseAsync<T>(message);
             if(result.Succeeded == false)
             {
                 return result;
@@ -117,13 +126,13 @@ namespace Domain.Facades
                 return result;                
             }
 
-            result = await _campaignProvider.PersistProspectListAsync<T>(result.Value, message);
+            result = await _phaseDataProcessingProvider.ProcessProspectListAsync<T>(result.Value, message);
             if(result.Succeeded == false)
             {
                 return result;
             }
 
-            return await _campaignProvider.TriggerSendConnectionsPhaseAsync<T>(message);
+            return await _triggerPhaseProvider.TriggerSendConnectionsPhaseAsync<T>(message);
         }
 
         public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(SendConnectionsBody message) where T : IOperationResponse
@@ -174,7 +183,7 @@ namespace Domain.Facades
                 return result;
             }
 
-            return await _campaignProvider.ProcessConnectionRequestSentForCampaignProspectsAsync<T>(sendConnectionspayload.CampaignProspects, message);                        
+            return await _phaseDataProcessingProvider.ProcessConnectionRequestSentForCampaignProspectsAsync<T>(sendConnectionspayload.CampaignProspects, message);                        
         }
 
         public HalOperationResult<T> ExecutePhase<T>(ConnectionWithdrawBody message) where T : IOperationResponse

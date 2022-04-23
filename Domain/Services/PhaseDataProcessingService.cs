@@ -15,16 +15,16 @@ using System.Threading.Tasks;
 
 namespace Domain.Services
 {
-    public class CampaignPhaseProcessingService : ICampaignPhaseProcessingService
+    public class PhaseDataProcessingService : IPhaseDataProcessingService
     {
-        public CampaignPhaseProcessingService(HttpClient httpClient, ILogger<CampaignPhaseProcessingService> logger)
+        public PhaseDataProcessingService(HttpClient httpClient, ILogger<PhaseDataProcessingService> logger)
         {
             _httpClient = httpClient;
             _logger = logger;
         }
 
         private readonly HttpClient _httpClient;
-        private readonly ILogger<CampaignPhaseProcessingService> _logger;
+        private readonly ILogger<PhaseDataProcessingService> _logger;
         private const string HttpPrefix = "http://";
 
         public async Task<HttpResponseMessage> ProcessNewConnectionsAsync(NewProspectConnectionRequest request, CancellationToken ct = default)
@@ -91,7 +91,7 @@ namespace Domain.Services
             return response;
         }
 
-        public async Task<HttpResponseMessage> UpdateContactedCampaignProspectListAsync(CampaignProspectListRequest request, CancellationToken ct = default)
+        public async Task<HttpResponseMessage> ProcessContactedCampaignProspectListAsync(CampaignProspectListRequest request, CancellationToken ct = default)
         {
             string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
 
@@ -121,37 +121,6 @@ namespace Domain.Services
 
             return response;
         }
-
-        public async Task<HttpResponseMessage> TriggerCampaignProspectListAsync(TriggerSendConnectionsRequest request, CancellationToken ct = default)
-        {
-            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
-
-            HttpResponseMessage response = default;
-            try
-            {
-                HttpRequestMessage req = new()
-                {
-                    Method = HttpMethod.Post,
-                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
-                    Content = JsonContent.Create(new
-                    {
-                        CampaignId = request.CampaignId,
-                        UserId = request.UserId,
-                        HalId = request.HalId
-                    })
-                };
-
-                _logger.LogInformation("Sending request to process my new network connections.");
-                response = await _httpClient.SendAsync(req, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send reequest to process my new network connections.");
-            }
-
-            return response;
-        }
-
         public async Task<HttpResponseMessage> ProcessNewlyAcceptedProspectsAsync(NewProspectsConnectionsAcceptedRequest request, CancellationToken ct = default)
         {
             string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
@@ -183,11 +152,12 @@ namespace Domain.Services
             return response;
         }
 
-        public async Task<HttpResponseMessage> TriggerScanProspectsForRepliesAsync(TriggerScanProspectsForRepliesRequest request, CancellationToken ct = default)
+        public async Task<HttpResponseMessage> ProcessProspectsRepliedAsync(ProspectsRepliedRequest request, CancellationToken ct = default)
         {
-            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; //$"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
 
             HttpResponseMessage response = default;
+
             try
             {
                 HttpRequestMessage req = new()
@@ -197,47 +167,16 @@ namespace Domain.Services
                     Content = JsonContent.Create(new
                     {
                         HalId = request.HalId,
-                        UserId = request.UserId
+                        ProspectsReplied = request.ProspectsReplied
                     })
                 };
 
-                _logger.LogInformation("Sending request to trigger ScanProspectsForReplies phase");
+                _logger.LogInformation("Sending request to campaign prospects for replied and response message");
                 response = await _httpClient.SendAsync(req, ct);
-                _logger.LogInformation("Successfully sent request to trigger ScanProspectsForReplies phase");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send request to trigger ScanProspectsForReplies phase");
-            }
-
-            return response;
-        }
-
-        public async Task<HttpResponseMessage> TriggerFollowUpMessageAsync(TriggerFollowUpMessageRequest request, CancellationToken ct = default)
-        {
-            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
-
-            HttpResponseMessage response = default;
-            try
-            {
-                HttpRequestMessage req = new()
-                {
-                    Method = HttpMethod.Post,
-                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
-                    Content = JsonContent.Create(new
-                    {
-                        HalId = request.HalId,
-                        UserId = request.UserId
-                    })
-                };
-
-                _logger.LogInformation("Sending request to trigger FollowUpMessagePhase");
-                response = await _httpClient.SendAsync(req, ct);
-                _logger.LogInformation("Successfully sent request to trigger FollowUpMessagePhase");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send request to trigger FollowUpMessagePhase");
+                _logger.LogError(ex, "Failed to send request to update campaign prospects replied property and record their response message");
             }
 
             return response;

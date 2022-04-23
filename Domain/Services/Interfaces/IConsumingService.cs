@@ -11,6 +11,6 @@ namespace Domain.Services.Interfaces
         /// <summary>
         /// Start consuming (getting messages).
         /// </summary>
-        void StartConsuming();
+        Task StartConsumingAsync();
     }
 }

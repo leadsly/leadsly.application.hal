@@ -30,5 +30,16 @@ namespace Domain.Services
 
             return new DateTimeOffset(localDateTime);
         }
+
+        public DateTimeOffset GetDateTimeWithZone(string zoneId, long timestamp)
+        {
+            TimeZoneInfo timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(zoneId);
+
+            DateTimeOffset nowOffset = DateTimeOffset.FromUnixTimeSeconds(timestamp);
+
+            DateTime localDateTime = new DateTimeWithZone(nowOffset.DateTime, timeZoneInfo).LocalTime;
+
+            return new DateTimeOffset(localDateTime);
+        }
     }
 }

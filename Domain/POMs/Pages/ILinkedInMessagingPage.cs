@@ -29,6 +29,7 @@ namespace Domain.POMs.Pages
         bool ConversationItemContainsNotificationBadge(IWebElement conversationListItem);
 
         string GetProspectNameFromConversationItem(IWebElement conversationListItem);
+        string GetProspectProfileUrlFromConversationItem(IWebElement conversationListItem);
 
         bool IsConversationListItemActive(IWebElement conversationListItem);
 
@@ -42,9 +43,11 @@ namespace Domain.POMs.Pages
 
         string GetMessageContent(IWebElement message);
 
-        string GetProspectNameFromMessageDetailDiv(IWebElement messageDiv);
+        string GetProspectNameFromMessageDetailDiv(IWebElement messageDiv);                
 
         HalOperationResult<T> ClearMessagingSearchCriteria<T>(IWebDriver webDriver)
             where T : IOperationResponse;
+
+        bool HasNotification(IWebElement listItem);
     }
 }

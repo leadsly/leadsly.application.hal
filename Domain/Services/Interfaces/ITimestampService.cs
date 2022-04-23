@@ -10,5 +10,7 @@ namespace Domain.Services.Interfaces
     public interface ITimestampService
     {
         DateTimeOffset GetDateTimeNowWithZone(string zoneId);
+
+        DateTimeOffset GetDateTimeWithZone(string zoneId, long timestamp);
     }
 }

@@ -12,14 +12,19 @@ using System.Threading.Tasks;
 
 namespace Domain.Services.Interfaces
 {
-    public interface ICampaignPhaseProcessingService
+    public interface IPhaseDataProcessingService
     {
         Task<HttpResponseMessage> ProcessNewConnectionsAsync(NewProspectConnectionRequest request, CancellationToken ct = default);
         Task<HttpResponseMessage> ProcessProspectListAsync(ProspectListPhaseCompleteRequest request, CancellationToken ct = default);
-        Task<HttpResponseMessage> UpdateContactedCampaignProspectListAsync(CampaignProspectListRequest request, CancellationToken ct = default);
-        Task<HttpResponseMessage> TriggerCampaignProspectListAsync(TriggerSendConnectionsRequest request, CancellationToken ct = default);
-        Task<HttpResponseMessage> TriggerScanProspectsForRepliesAsync(TriggerScanProspectsForRepliesRequest request, CancellationToken ct = default);
-        Task<HttpResponseMessage> TriggerFollowUpMessageAsync(TriggerFollowUpMessageRequest request, CancellationToken ct = default);
+        Task<HttpResponseMessage> ProcessContactedCampaignProspectListAsync(CampaignProspectListRequest request, CancellationToken ct = default);        
         Task<HttpResponseMessage> ProcessNewlyAcceptedProspectsAsync(NewProspectsConnectionsAcceptedRequest request, CancellationToken ct = default);
+
+        /// <summary>
+        /// Executed by ScanProspectsForRepliesPhase and DeepScanProspectsForRepliesPhase.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        Task<HttpResponseMessage> ProcessProspectsRepliedAsync(ProspectsRepliedRequest request, CancellationToken ct = default);
     }
 }
