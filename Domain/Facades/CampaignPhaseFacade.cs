@@ -90,24 +90,14 @@ namespace Domain.Facades
                 return result;
             }
 
-            result = await _phaseDataProcessingProvider.ProcessCampaignProspectsRepliedAsync<T>(prospectsReplied.ProspectsReplied, message);
-            if(result.Succeeded == false)
+            if(prospectsReplied.ProspectsReplied.Count != 0)
             {
-                return result;
+                await _phaseDataProcessingProvider.ProcessCampaignProspectsRepliedAsync<T>(prospectsReplied.ProspectsReplied, message);                
             }
 
             // trigger ScanProspectsForRepliesPhase and FollowUpMessagePhase
-            result = await _triggerPhaseProvider.TriggerScanProspectsForRepliesPhaseAsync<T>(message);
-            if(result.Succeeded == false)
-            {
-                return result;
-            }
-
-            result = await _triggerPhaseProvider.TriggerFollowUpMessagesPhaseAsync<T>(message);
-            if(result.Succeeded == false)
-            {
-                return result;
-            }
+            await _triggerPhaseProvider.TriggerScanProspectsForRepliesPhaseAsync<T>(message);            
+            await _triggerPhaseProvider.TriggerFollowUpMessagesPhaseAsync<T>(message);            
 
             result.Succeeded = true;
             return result;

@@ -54,7 +54,7 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
         }
 
         [AutomaticRetry(Attempts = 5)]
-        private async Task StartScanningProspectsForRepliesAsync(ScanProspectsForRepliesBody scanProspectsForRepliesBody)
+        public async Task StartScanningProspectsForRepliesAsync(ScanProspectsForRepliesBody scanProspectsForRepliesBody)
         {
             try
             {

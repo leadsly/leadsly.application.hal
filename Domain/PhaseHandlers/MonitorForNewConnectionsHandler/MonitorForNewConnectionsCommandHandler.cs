@@ -47,7 +47,7 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
         }
 
         [AutomaticRetry(Attempts = 5)]
-        private async Task StartMonitorForNewConnections(MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections)
+        public async Task StartMonitorForNewConnections(MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections)
         {
             try
             {

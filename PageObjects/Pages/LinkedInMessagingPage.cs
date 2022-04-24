@@ -1,4 +1,5 @@
 ﻿using Domain.POMs.Pages;
+using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.LinkedInPages;
 using Leadsly.Application.Model.LinkedInPages.Interface;
@@ -6,6 +7,7 @@ using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.Responses.Hal;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
+using OpenQA.Selenium.Support.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,11 +18,13 @@ namespace PageObjects.Pages
 {
     public class LinkedInMessagingPage : LeadslyBase, ILinkedInMessagingPage
     {
-        public LinkedInMessagingPage(ILogger<LinkedInMessagingPage> logger) : base(logger)
+        public LinkedInMessagingPage(ILogger<LinkedInMessagingPage> logger, IHumanBehaviorService humanBehaviorService) : base(logger)
         {
             _logger = logger;
+            _humanBehaviorService = humanBehaviorService;
         }
 
+        private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly ILogger<LinkedInMessagingPage> _logger;
 
 
@@ -50,7 +54,13 @@ namespace PageObjects.Pages
             IWebElement conversationsListItemContainer = default;
             try
             {
-                conversationsListItemContainer = webDriver.FindElement(By.CssSelector(".msg-conversations-container__conversations-list"));
+                WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(15));
+                wait.Until((drv) =>
+                {
+                    conversationsListItemContainer = drv.FindElement(By.CssSelector(".msg-conversations-container__conversations-list"));
+                    return conversationsListItemContainer != null;
+                });
+                
             }
             catch (Exception ex)
             {
@@ -76,8 +86,6 @@ namespace PageObjects.Pages
         public HalOperationResult<T> GetVisibleConversationListItems<T>(IWebDriver webDriver) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
-
-            RandomWait(1, 1);
 
             IReadOnlyCollection<IWebElement> conversationListItems = GetConversationListItems(webDriver);
             if(conversationListItems == null)
@@ -124,6 +132,33 @@ namespace PageObjects.Pages
                 _logger.LogError(ex, "Failed to extract prospects name from conversation list item");
             }
             return prospectName;
+        }
+
+        private IWebElement NoMessagesPTag(IWebDriver webDriver)
+        {
+            IWebElement pTag = default;
+            try
+            {
+                pTag = ConversationsListItemContainer(webDriver).FindElement(By.XPath("//p[text()[contains(., 'No messages')]]"));
+            }
+            catch(Exception ex)
+            {
+                _logger.LogInformation("Couldn't find 'No messages' p tag element. This is probably OK, we could've been just checking if it was there or not.");
+            }
+            return pTag;
+        }
+
+        /// <summary>
+        /// Checks whether the 'No Messages' text is displayed under the search messages input field. This means the provided
+        /// search term was not found in our messages history.
+        /// </summary>
+        /// <param name="webDriver"></param>
+        /// <returns></returns>
+        public bool IsNoMessagesDisplayed(IWebDriver webDriver)
+        {
+            IWebElement conversationsContainer = NoMessagesPTag(webDriver);
+
+            return conversationsContainer != null;
         }
 
         /// <summary>
@@ -181,7 +216,17 @@ namespace PageObjects.Pages
             IWebElement searchMessagesInput = default;
             try
             {
-                searchMessagesInput = webDriver.FindElement(By.CssSelector("input[name='searchTerm']"));
+                WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(10));                
+                bool searchTermVisible = wait.Until((drv) => 
+                {
+                    searchMessagesInput = drv.FindElement(By.CssSelector("input[name='searchTerm']"));
+                    return searchMessagesInput != null;
+                });               
+
+                if(searchTermVisible == false)
+                {
+                    _logger.LogError("Unable to locate 'search messages' input field after the given wait time");
+                }
             }
             catch (Exception ex)
             {
@@ -192,6 +237,7 @@ namespace PageObjects.Pages
 
         public HalOperationResult<T> EnterSearchMessagesCriteria<T>(IWebDriver webDriver, string searchCriteria) where T : IOperationResponse
         {
+            _logger.LogInformation("Entering search term into the input field");
             HalOperationResult<T> result = new();
 
             IWebElement searchMessagesInputField = SearchMessagesInputField(webDriver);
@@ -202,14 +248,7 @@ namespace PageObjects.Pages
 
             try
             {
-                RandomClickElement(searchMessagesInputField);
-                RandomWait(1, 2);
-
-                foreach (char letter in searchCriteria)
-                {
-                    searchMessagesInputField.SendKeys(letter.ToString());
-                    RandomWait(0, 1);
-                }
+                _humanBehaviorService.EnterValues(searchMessagesInputField, searchCriteria, 200, 300);
 
                 // verify that the entered string matches the search criteria
                 string enteredValue = searchMessagesInputField.GetAttribute("value");
@@ -249,12 +288,12 @@ namespace PageObjects.Pages
             return messagesDetailSection;
         }
 
-        private IReadOnlyCollection<IWebElement> MessagesDivs(IWebDriver webDriver)
+        private IReadOnlyCollection<IWebElement> MessagesPs(IWebDriver webDriver)
         {
             IReadOnlyCollection<IWebElement> messagesDivs = default;
             try
             {
-                messagesDivs = MessagesDetailSection(webDriver).FindElements(By.CssSelector(".msg-s-event-listitem"));
+                messagesDivs = MessagesDetailSection(webDriver).FindElements(By.CssSelector(".msg-s-event__content > p"));
             }
             catch (Exception ex)
             {
@@ -267,7 +306,7 @@ namespace PageObjects.Pages
         {
             HalOperationResult<T> result = new();
 
-            IReadOnlyCollection<IWebElement> messagesDivs = MessagesDivs(webDriver);
+            IReadOnlyCollection<IWebElement> messagesDivs = MessagesPs(webDriver);
             if(messagesDivs == null)
             {
                 return result;
@@ -316,6 +355,7 @@ namespace PageObjects.Pages
 
         public HalOperationResult<T> ClearMessagingSearchCriteria<T>(IWebDriver webDriver) where T : IOperationResponse
         {
+            _logger.LogInformation("Clearing 'search term' input field");
             HalOperationResult<T> result = new();
             try
             {

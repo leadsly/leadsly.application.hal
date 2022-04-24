@@ -12,5 +12,7 @@ namespace Domain.Services.Interfaces
         void RandomWait(int minWaitTime, int maxWaitTime);
 
         void RandomClickElement(IWebElement webElement);
+
+        void EnterValues(IWebElement element, string value, int minMiliseconds, int maxMiliseconds);
     }
 }

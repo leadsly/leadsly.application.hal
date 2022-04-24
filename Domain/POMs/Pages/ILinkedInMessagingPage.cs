@@ -29,6 +29,8 @@ namespace Domain.POMs.Pages
         bool ConversationItemContainsNotificationBadge(IWebElement conversationListItem);
 
         string GetProspectNameFromConversationItem(IWebElement conversationListItem);
+
+        bool IsNoMessagesDisplayed(IWebDriver webDriver);
         string GetProspectProfileUrlFromConversationItem(IWebElement conversationListItem);
 
         bool IsConversationListItemActive(IWebElement conversationListItem);

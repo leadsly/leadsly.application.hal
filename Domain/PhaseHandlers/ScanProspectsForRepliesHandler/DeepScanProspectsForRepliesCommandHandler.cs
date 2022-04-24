@@ -23,6 +23,7 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
         {
             _campaignPhaseFacade = campaignPhaseFacade;
             _serializer = serializer;
+            _logger = logger;
         }
 
         private readonly ILogger<DeepScanProspectsForRepliesCommandHandler> _logger;
@@ -42,6 +43,7 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
             {
                 await StartDeepScanningProspectsForRepliesAsync(scanProspectsForRepliesBody);
                 channel.BasicAck(eventArgs.DeliveryTag, false);
+                _logger.LogInformation("Successfully acknowledged DeepScanProspectsForReplies phase");
             }
             catch (Exception ex)
             {

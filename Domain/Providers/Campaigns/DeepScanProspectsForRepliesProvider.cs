@@ -16,6 +16,7 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -121,10 +122,103 @@ namespace Domain.Providers.Campaigns
         {
             return DeepScanSpecificProspects<T>(webDriver, message);
         }
+
+        private int GetVisibleConversationCount(IWebDriver webDriver)
+        {
+            // stash conversation list items before we hit search
+            HalOperationResult<IOperationResponse> visibleItemsResults = _linkedInPageFacade.LinkedInMessagingPage.GetVisibleConversationListItems<IOperationResponse>(webDriver);
+            IScrapedHtmlElements elements = visibleItemsResults.Value as IScrapedHtmlElements;
+            int conversationListItemCount = elements.HtmlElements.Count;
+
+            return conversationListItemCount;
+        }
+
+        private bool WaitForSearchResults(IWebDriver webDriver, int beforeSearchMessagesCount)
+        {
+            bool searchResultsDiffer = false;
+            try
+            {
+                WebDriverWait waiter = new WebDriverWait(webDriver, TimeSpan.FromSeconds(10));
+                waiter.Until((drv) =>
+                {
+                    HalOperationResult<IOperationResponse> result = _linkedInPageFacade.LinkedInMessagingPage.GetVisibleConversationListItems<IOperationResponse>(webDriver);
+                    IScrapedHtmlElements elementsAfterSearch = result.Value as IScrapedHtmlElements;
+                    searchResultsDiffer = beforeSearchMessagesCount != elementsAfterSearch.HtmlElements.ToList().Count;
+                    return searchResultsDiffer;
+                });
+            }
+            catch (WebDriverTimeoutException ex)
+            {
+                _logger.LogWarning(ex, "Search results from before hal entered in search term and AFTER hal entered search term are the same! Most cases they should be different");                
+            }
+
+            return searchResultsDiffer;
+        }
+
+        private IWebElement GetProspectsMessageItem(IWebDriver webDriver, string prospectName, int beforeSearchMessagesCount)
+        {
+            IWebElement targetProspect = default;
+
+            // attempst to wait for the prospect to be surfaced to the top of the list                
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            while (sw.Elapsed.TotalSeconds < 15)
+            {
+                bool searchResultsDiffer = WaitForSearchResults(webDriver, beforeSearchMessagesCount);
+                if(searchResultsDiffer == false)
+                {
+                    break;
+                }
+
+                HalOperationResult<IOperationResponse> result = _linkedInPageFacade.LinkedInMessagingPage.GetVisibleConversationListItems<IOperationResponse>(webDriver);
+                IScrapedHtmlElements elementsAfterSearch = result.Value as IScrapedHtmlElements;
+                List<IWebElement> conversationListItemsAfterSearch = elementsAfterSearch.HtmlElements.ToList();
+
+                targetProspect = conversationListItemsAfterSearch.FirstOrDefault();
+                if (targetProspect != null)
+                {
+                    if (_linkedInPageFacade.LinkedInMessagingPage.GetProspectNameFromConversationItem(targetProspect) == prospectName)
+                        break;
+                }
+
+                // check if no messages is displayed if it is break out of the loop
+                if (_linkedInPageFacade.LinkedInMessagingPage.IsNoMessagesDisplayed(webDriver) == true)
+                {
+                    // this prospect isn't found in our messages
+                    _logger.LogInformation("{prospectName} is not found in the messages history. This shouldn't happen.", prospectName);
+                    break;
+                }
+            }
+
+            return targetProspect;
+        }
+
+        private bool IsConversationListItemActive(IWebDriver webDriver, IWebElement targetProspect)
+        {
+            bool isActive = false;
+            try
+            {
+                WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(15));
+                wait.Until(drv => 
+                {
+                    isActive = _linkedInPageFacade.LinkedInMessagingPage.IsConversationListItemActive(targetProspect);
+                    return isActive;
+                });
+            }
+            catch (WebDriverTimeoutException ex)
+            {
+                _logger.LogWarning(ex, "Expected message list item to be active, but it is not.");
+            }
+
+            return isActive;
+        }
+
         private HalOperationResult<T> DeepScanSpecificProspects<T>(IWebDriver webDriver, ScanProspectsForRepliesBody message)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
+
+            int conversationsBeforeSearch = GetVisibleConversationCount(webDriver);
 
             IList<ProspectRepliedRequest> prospectsReplied = new List<ProspectRepliedRequest>();
             foreach (CampaignProspect campaignProspect in message.ContactedCampaignProspects)
@@ -142,27 +236,16 @@ namespace Domain.Providers.Campaigns
                     continue;
                 }
 
-                // attempst to wait for the prospect to be surfaced to the top of the list
-                bool expectedProspectOnTopOfList = false;
-                Stopwatch sw = new Stopwatch();
-                sw.Start();
-                IWebElement targetProspect = default;
-                while (expectedProspectOnTopOfList == false || sw.Elapsed.TotalSeconds < 30)
+                IWebElement targetProspect = GetProspectsMessageItem(webDriver, campaignProspect.Name, conversationsBeforeSearch);                
+
+                if(targetProspect == null)
                 {
-                    result = _linkedInPageFacade.LinkedInMessagingPage.GetVisibleConversationListItems<T>(webDriver);
-                    IScrapedHtmlElements elements = result.Value as IScrapedHtmlElements;
-                    List<IWebElement> conversationListItems = elements.HtmlElements.ToList();
-                    targetProspect = conversationListItems.FirstOrDefault();
-                    if (targetProspect != null)
-                    {
-                        expectedProspectOnTopOfList = _linkedInPageFacade.LinkedInMessagingPage.GetProspectNameFromConversationItem(targetProspect) == campaignProspect.Name;
-                    }
+                    continue;
                 }
 
                 _linkedInPageFacade.LinkedInMessagingPage.ClickConverstaionListItem(targetProspect);
-                WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(30));
-                bool isActive = wait.Until(drv => _linkedInPageFacade.LinkedInMessagingPage.IsConversationListItemActive(targetProspect));
-                if (isActive == false)
+                bool isActive = IsConversationListItemActive(webDriver, targetProspect);
+                if(isActive == false)
                 {
                     continue;
                 }
@@ -206,38 +289,6 @@ namespace Domain.Providers.Campaigns
             {
                 return result;
             }
-
-            // grab the first batch of 20 conversations
-            //result = _linkedInPageFacade.LinkedInMessagingPage.GetVisibleConversationListItems<T>(webDriver);
-            //if (result.Succeeded == false)
-            //{
-            //    return result;
-            //}
-
-            //IScrapedHtmlElements elements = result.Value as IScrapedHtmlElements;            
-            //List<IWebElement> conversationListItems = elements.HtmlElements.ToList();
-
-            //// this is the list of the prospects as IWebElement whom we've contacted in the last 24 hours
-            //List<IWebElement> contactedProspects = new List<IWebElement>();
-            //foreach (CampaignProspect contacted in message.ContactedCampaignProspects)
-            //{
-            //    IWebElement contactedProspect = conversationListItems.Where(c => _linkedInPageFacade.LinkedInMessagingPage.GetProspectNameFromConversationItem(c) == contacted.Name).Single();
-            //    contactedProspects.Add(contactedProspect);
-            //}
-
-            //// the list is now filtered down to the prospects that we've sent a connection to in the last 24 hours
-            //// we have to go through all of those prospects messages regardless if they have a notification badge or not
-            //// [Jordan Sprague: 4/15/2022]: What if the leadsly user manually responds before we check for prospect responses? Then it wouldn't be seen as a new incoming message
-            //foreach (IWebElement contactedProspect in contactedProspects)
-            //{
-            //    //click on the prospect first to make it active and bring the conversation history in the right panel
-            //    _linkedInPageFacade.LinkedInMessagingPage.ClickConverstaionListItem(contactedProspect);
-            //    if(_linkedInPageFacade.LinkedInMessagingPage.IsConversationListItemActive(contactedProspect) == false)
-            //    {
-            //        string prospectName = _linkedInPageFacade.LinkedInMessagingPage.GetProspectNameFromConversationItem(contactedProspect);
-            //        _logger.LogInformation("ConversationListItem is not active. It does not have active class. Skipping prospect {prospectName}", prospectName);
-            //    }
-            //}
 
             IProspectsRepliedPayload payload = new ProspectsRepliedPayload
             {

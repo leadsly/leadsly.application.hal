@@ -217,12 +217,15 @@ namespace Hal.Configurations
                 opt.BaseAddress = new Uri("http://localhost:5000/api", UriKind.Absolute);
             });
 
+            services.AddHttpClient<IPhaseDataProcessingService, PhaseDataProcessingService>(opt =>
+            {
+                opt.BaseAddress = new Uri("http://localhost:5000/api", UriKind.Absolute);
+            });
+
             services.AddScoped<IWebDriverService, WebDriverService>();
             services.AddScoped<ITimestampService, TimestampService>();
             services.AddScoped<IPhaseEventHandlerService, PhaseEventHandlerService>();
-            services.AddScoped<IHumanBehaviorService, HumanBehaviorService>();
-            services.AddScoped<IPhaseDataProcessingService, PhaseDataProcessingService>();            
-            services.AddScoped<ITriggerPhaseService, TriggerPhaseService>();
+            services.AddScoped<IHumanBehaviorService, HumanBehaviorService>();            
             services.AddScoped<IRabbitMQManager, RabbitMQManager>();
 
             services.AddSingleton<IConsumingService, ConsumingService>();            
@@ -341,16 +344,14 @@ namespace Hal.Configurations
 
             GlobalConfiguration.Configuration.UseSerilogLogProvider();
 
-            //JsonSerializerSettings settings = new()
-            //{
-            //    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-            //};
-
-            //GlobalConfiguration.Configuration.UseSerializerSettings(settings);
+            PostgreSqlStorageOptions options = new PostgreSqlStorageOptions
+            {
+                InvisibilityTimeout = TimeSpan.FromMinutes(5)
+            };
 
             services.AddHangfire(config =>
             {
-                config.UsePostgreSqlStorage(defaultConnection);
+                config.UsePostgreSqlStorage(defaultConnection, options);
                 config.UseRecommendedSerializerSettings();
             }).AddHangfireServer();
 

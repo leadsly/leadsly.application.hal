@@ -22,8 +22,8 @@ namespace Domain.PhaseConsumers.ScanProspectsForRepliesHandlers
 
         public Task HandleAsync(ScanProspectsForRepliesConsumerCommand command)
         {
-            string queueNameIn = RabbitMQConstants.MonitorNewAcceptedConnections.QueueName;
-            string routingKeyIn = RabbitMQConstants.MonitorNewAcceptedConnections.RoutingKey;
+            string queueNameIn = RabbitMQConstants.ScanProspectsForReplies.QueueName;
+            string routingKeyIn = RabbitMQConstants.ScanProspectsForReplies.RoutingKey;
             string halId = command.HalId;
 
             AsyncEventHandler<BasicDeliverEventArgs> onEventFiredHandlerAsync = _campaignManagerService.OnScanProspectsForRepliesEventReceivedAsync;

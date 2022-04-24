@@ -41,6 +41,29 @@ namespace Domain.Services
             }
         }
 
+        public void EnterValues(IWebElement element, string value, int minMiliseconds, int maxMiliseconds)
+        {
+            Stopwatch sw = new Stopwatch(); 
+            try
+            {
+                foreach (char character in value)
+                {
+                    int randomWait = _rnd.Next(minMiliseconds, maxMiliseconds);
+                    sw.Start();
+                    element.SendKeys(character.ToString());
+                    while (sw.Elapsed.TotalMilliseconds < randomWait)
+                    {
+                        continue;
+                    }
+                    sw.Restart();
+                }
+            }
+            catch(Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to successfully enter in provided value into the field. Value: {value}", value);
+            }
+        }
+
         public void RandomWait(int minWaitTime, int maxWaitTime)
         {
             int number = _rnd.Next(minWaitTime, maxWaitTime);

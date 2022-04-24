@@ -158,7 +158,21 @@ namespace Domain.Providers.Campaigns
 
                     IScrapedHtmlElements messageElements = result.Value as IScrapedHtmlElements;
                     List<IWebElement> messages = messageElements.HtmlElements.ToList();
-                    // prospectsReplied.Add(prospectReplyRequest);
+                    IWebElement lastMessage = messages.LastOrDefault();
+                    string responseMessage = string.Empty;
+                    if(lastMessage != null)
+                    {
+                        responseMessage = lastMessage.Text;
+                    }
+
+                    ProspectRepliedRequest potentialProspectResponse = new ProspectRepliedRequest()
+                    {
+                        ProspectName = prospectName,
+                        ResponseMessage = responseMessage,
+                        CampaignProspectId = "",
+                        ProspectProfileUrl = ""
+                    };
+                    prospectsReplied.Add(potentialProspectResponse);
                 }
             }
 
@@ -167,7 +181,6 @@ namespace Domain.Providers.Campaigns
                 // fire off request to the application server for processing of prospects that have replied to us (may not be prospects from our campaigns so we will ignore those)\
                 await _phaseDataProcessingProvider.ProcessProspectsRepliedAsync<T>(prospectsReplied, message);
             }
-
 
             result.Succeeded = true;
             return result;

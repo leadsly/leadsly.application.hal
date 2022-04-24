@@ -159,7 +159,7 @@ namespace Domain.Services
         public async Task OnMonitorForNewAcceptedConnectionsEventReceivedAsync(object sender, BasicDeliverEventArgs eventArgs)
         {
 
-            IModel channel = ((EventingBasicConsumer)sender).Model;
+            IModel channel = ((AsyncEventingBasicConsumer)sender).Model;
             // channel.BasicAck(eventArgs.DeliveryTag, false);
             MonitorForNewConnectionsCommand monitorCommand = new MonitorForNewConnectionsCommand(channel, eventArgs);
             await _monitorHandler.HandleAsync(monitorCommand);
