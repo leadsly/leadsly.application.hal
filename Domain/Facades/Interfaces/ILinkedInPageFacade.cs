@@ -16,6 +16,7 @@ namespace Domain.Facades.Interfaces
         public ILinkedInMyNetworkPage LinkedInMyNetworkPage { get; }
         public ILinkedInNotificationsPage LinkedInNotificationsPage { get; }
         public ILinkedInPage LinkedInPage { get; }
+        public IConnectionsView ConnectionsView { get; }
         public ILinkedInSearchPage LinkedInSearchPage { get; }
         public IAcceptedInvitiationsView AccepatedInvitationsView { get; }
         public ILinkedInNavBar LinkedInNavBar { get;  }

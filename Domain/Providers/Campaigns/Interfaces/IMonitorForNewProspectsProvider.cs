@@ -13,5 +13,9 @@ namespace Domain.Providers.Campaigns.Interfaces
     {
         Task<HalOperationResult<T>> ExecutePhase<T>(MonitorForNewAcceptedConnectionsBody message)
             where T : IOperationResponse;
+
+        Task<HalOperationResult<T>> ExecutePhaseOffHoursScanPhaseAsync<T>(MonitorForNewAcceptedConnectionsBody message)
+            where T : IOperationResponse;
+
     }
 }

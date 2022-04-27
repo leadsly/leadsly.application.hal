@@ -23,6 +23,7 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
             IRabbitMQSerializer serializer)
         {
             _campaignPhaseFacade = campaignPhaseFacade;
+            _logger = logger;
             _serializer = serializer;
         }
 
@@ -30,24 +31,21 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
         private readonly ICampaignPhaseFacade _campaignPhaseFacade;
         private readonly IRabbitMQSerializer _serializer;
 
-        public Task HandleAsync(MonitorForNewConnectionsCommand command)
+        public async Task HandleAsync(MonitorForNewConnectionsCommand command)
         {
             IModel channel = command.Channel;
             BasicDeliverEventArgs eventArgs = command.EventArgs;
-            // channel.BasicAck(eventArgs.DeliveryTag, false);
+            channel.BasicAck(eventArgs.DeliveryTag, false);
 
             byte[] body = eventArgs.Body.ToArray();
             string message = Encoding.UTF8.GetString(body);
             MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections = _serializer.DeserializeMonitorForNewAcceptedConnectionsBody(message);
 
-            // let hangfire handle failures and re runs of this method
-            BackgroundJob.Enqueue(() => StartMonitorForNewConnections(monitorForNewAcceptedConnections));
-
-            return Task.CompletedTask;
+            // let hangfire handle failures and re runs of this method            
+            await StartMonitorForNewConnectionsAsync(monitorForNewAcceptedConnections);
         }
 
-        [AutomaticRetry(Attempts = 5)]
-        public async Task StartMonitorForNewConnections(MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections)
+        public async Task StartMonitorForNewConnectionsAsync(MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections)
         {
             try
             {

@@ -36,7 +36,7 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
             BasicDeliverEventArgs eventArgs = command.EventArgs;
 
             // acknowledge the message right away. Let hangfire handle retryies
-            // channel.BasicAck(eventArgs.DeliveryTag, false);
+            channel.BasicAck(eventArgs.DeliveryTag, false);
 
             byte[] body = eventArgs.Body.ToArray();
             string message = Encoding.UTF8.GetString(body);
@@ -44,7 +44,7 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
 
             try
             {
-                BackgroundJob.Enqueue(() => StartScanningProspectsForRepliesAsync(scanProspectsForRepliesBody));                
+                await StartScanningProspectsForRepliesAsync(scanProspectsForRepliesBody);
             }
             catch (Exception ex)
             {
@@ -53,7 +53,6 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
             }
         }
 
-        [AutomaticRetry(Attempts = 5)]
         public async Task StartScanningProspectsForRepliesAsync(ScanProspectsForRepliesBody scanProspectsForRepliesBody)
         {
             try

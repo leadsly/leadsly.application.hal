@@ -9,7 +9,11 @@ namespace Domain.Services.Interfaces
 {
     public interface IHumanBehaviorService
     {
-        void RandomWait(int minWaitTime, int maxWaitTime);
+        void RandomWaitMilliSeconds(int minWaitTimeMiliseconds, int maxWaitTimeMiliseconds);
+
+        void RandomWaitSeconds(int minWaitTime, int maxWaitTime);
+
+        void RandomWaitMinutes(int minWaitTime, int maxWaitTime);
 
         void RandomClickElement(IWebElement webElement);
 

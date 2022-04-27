@@ -159,5 +159,26 @@ namespace Domain.Providers.Campaigns
             result.Succeeded = true;
             return result;
         }
+
+        public async Task<HalOperationResult<T>> ProcessSentFollowUpMessageAsync<T>(FollowUpMessageSentRequest sentFollowUpMessageRequest, FollowUpMessageBody message, CancellationToken ct = default)
+            where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            sentFollowUpMessageRequest.NamespaceName = message.NamespaceName;
+            sentFollowUpMessageRequest.ServiceDiscoveryName = message.ServiceDiscoveryName;
+            sentFollowUpMessageRequest.RequestUrl = $"api/campaignprospects/{sentFollowUpMessageRequest.CampaignProspectId}/follow-up";
+
+            HttpResponseMessage responseMessage = await _phaseDataProcessingService.ProcessFollowUpMessageSentAsync(sentFollowUpMessageRequest, ct);
+
+            if (responseMessage.IsSuccessStatusCode == false)
+            {
+                _logger.LogError("Response from application server was not a successful status code. The request was responsible for updating campaign prospects who were delivered a follow up message");
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
     }
 }

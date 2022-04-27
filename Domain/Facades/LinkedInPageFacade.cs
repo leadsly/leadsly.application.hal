@@ -20,6 +20,7 @@ namespace Domain.Facades
             ILinkedInPage linkedInPage,
             ILinkedInSearchPage linkedInSearchPage,
             IAcceptedInvitiationsView acceptedInvitiationsView,
+            IConnectionsView connectionsView,
             ILinkedInNavBar linkedInNavBar
             )
         {
@@ -30,6 +31,7 @@ namespace Domain.Facades
             LinkedInNotificationsPage = linkedInNotificationsPage;
             LinkedInSearchPage = linkedInSearchPage;
             LinkedInPage = linkedInPage;
+            ConnectionsView = connectionsView;
             AccepatedInvitationsView = acceptedInvitiationsView;
             LinkedInNavBar = linkedInNavBar;
         }
@@ -51,5 +53,7 @@ namespace Domain.Facades
         public IAcceptedInvitiationsView AccepatedInvitationsView { get; }
 
         public ILinkedInNavBar LinkedInNavBar { get; }
+
+        public IConnectionsView ConnectionsView { get; }
     }
 }

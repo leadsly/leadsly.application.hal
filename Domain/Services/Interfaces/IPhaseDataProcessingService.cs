@@ -26,5 +26,7 @@ namespace Domain.Services.Interfaces
         /// <param name="ct"></param>
         /// <returns></returns>
         Task<HttpResponseMessage> ProcessProspectsRepliedAsync(ProspectsRepliedRequest request, CancellationToken ct = default);
+
+        Task<HttpResponseMessage> ProcessFollowUpMessageSentAsync(FollowUpMessageSentRequest request, CancellationToken ct = default);
     }
 }

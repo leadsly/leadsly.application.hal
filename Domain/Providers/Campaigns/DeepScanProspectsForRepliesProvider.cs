@@ -16,11 +16,8 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Providers.Campaigns
 {
@@ -29,25 +26,19 @@ namespace Domain.Providers.Campaigns
         public DeepScanProspectsForRepliesProvider(
             ILogger<DeepScanProspectsForRepliesProvider> logger,
             IWebDriverProvider webDriverProvider,
-            ILinkedInPageFacade linkedInPageFacade,
-            ICampaignProvider campaignProvider,
-            ITimestampService timestampService)
+            ITimestampService timestampService,
+            ILinkedInPageFacade linkedInPageFacade)
         {
             _logger = logger;
+            _timestampService = timestampService;
             _linkedInPageFacade = linkedInPageFacade;
             _webDriverProvider = webDriverProvider;
-            _timestampService = timestampService;
-            _campaignProvider = campaignProvider;
-            _rnd = new Random();
         }
 
-        private readonly Random _rnd;
-        private readonly ICampaignProvider _campaignProvider;
+        private readonly ITimestampService _timestampService;
         private readonly ILogger<DeepScanProspectsForRepliesProvider> _logger;
         private readonly ILinkedInPageFacade _linkedInPageFacade;
         private readonly IWebDriverProvider _webDriverProvider;
-        private readonly ITimestampService _timestampService;
-        private readonly IPhaseDataProcessingService _campaignProcessingPhase;
 
 
         public HalOperationResult<T> ExecutePhase<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
@@ -274,11 +265,12 @@ namespace Domain.Providers.Campaigns
                 for (int i = nextMessageIndex; i < messages.Count; i++)
                 {
                     IWebElement nextMessage = messages.ElementAt(i);
-                    if (_linkedInPageFacade.LinkedInMessagingPage.GetProspectNameFromMessageDetailDiv(nextMessage) == campaignProspect.Name)
+                    string prospectName = _linkedInPageFacade.LinkedInMessagingPage.GetProspectNameFromMessageContentPTag(nextMessage);
+                    if (prospectName == campaignProspect.Name)
                     {
                         // we have a resonse from the prospect add it to payload going out to the server
-                        string response = _linkedInPageFacade.LinkedInMessagingPage.GetMessageContent(nextMessage);
-                        ProspectRepliedRequest request = CreateProspectRepliedRequest(campaignProspect, response);
+                        string response = _linkedInPageFacade.LinkedInMessagingPage.GetMessageContent(nextMessage);                        
+                        ProspectRepliedRequest request = CreateProspectRepliedRequest(campaignProspect, response, prospectName, message.TimeZoneId);
                         prospectsReplied.Add(request);
                     }
                 }
@@ -300,12 +292,15 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        private ProspectRepliedRequest CreateProspectRepliedRequest(CampaignProspect campaignProspect, string responseMessage)
+        private ProspectRepliedRequest CreateProspectRepliedRequest(CampaignProspect campaignProspect, string responseMessage, string prospectName, string timeZoneId)
         {
             return new()
             {
+                ResponseMessageTimestamp = _timestampService.TimestampNowWithZone(timeZoneId),
                 CampaignProspectId = campaignProspect.CampaignProspectId,
-                ResponseMessage = responseMessage
+                ResponseMessage = responseMessage,
+                ProspectName = prospectName,
+                ProspectProfileUrl = string.Empty
             };
         }
     }

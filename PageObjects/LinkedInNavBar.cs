@@ -67,8 +67,6 @@ namespace PageObjects
         /// <returns></returns>
         public bool AreNewNotifications(IWebDriver webDriver)
         {
-            RandomWait(30, 40);
-
             return NewNotificationsBanner(webDriver) != null;
         }
 
@@ -86,7 +84,7 @@ namespace PageObjects
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to locate NewConnectionBanner");
+                _logger.LogInformation(ex, "Failed to locate NewConnectionBanner");
             }
             return newNotificationBanner;
         }

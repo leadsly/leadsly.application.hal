@@ -8,6 +8,7 @@ using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Campaigns.Interfaces;
+using Leadsly.Application.Model.Campaigns.MonitorForNewProspects;
 using Leadsly.Application.Model.Entities;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
@@ -18,6 +19,7 @@ using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,24 +32,97 @@ namespace Domain.Providers.Campaigns
             ILogger<MonitorForNewProspectsProvider> logger, 
             IWebDriverProvider webDriverProvider,            
             ITimestampService timestampService,
+            IHumanBehaviorService humanBehaviorService,            
             IPhaseDataProcessingService campaignProcessingPhase,            
             ILinkedInPageFacade linkedInPageFacade
             )
         {
             _logger = logger;
+            _humanBehaviorService = humanBehaviorService;
             _linkedInPageFacade = linkedInPageFacade;
             _timestampService = timestampService;            
             _campaignProcessingPhase = campaignProcessingPhase;
             _webDriverProvider = webDriverProvider;            
         }
 
+        private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly ILinkedInPageFacade _linkedInPageFacade;
         private readonly ITimestampService _timestampService;
         private readonly IWebDriverProvider _webDriverProvider;        
         private readonly ILogger<MonitorForNewProspectsProvider> _logger;                
-        private readonly IPhaseDataProcessingService _campaignProcessingPhase;        
+        private readonly IPhaseDataProcessingService _campaignProcessingPhase;
+
+        private int PreviousConnectionsCount = 0;
+        private IList<RecentlyAddedProspect> PreviousRecentlyAdded = new List<RecentlyAddedProspect>();
+
+        public async Task<HalOperationResult<T>> ExecutePhaseOffHoursScanPhaseAsync<T>(MonitorForNewAcceptedConnectionsBody message) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = SetUpPhaseAsync<T>(message);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)result.Value).WebDriver;
+
+            try
+            {
+                result = await ScanForAnyNewOffHoursConnectionsAsync<T>(webDriver, message);
+                if(result.Succeeded == false)
+                {
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occured while monitoring for new connections");
+                throw;
+            }
+            finally
+            {
+                // whenever any exception occurs try to close out the web driver if not possible just remove it from the list
+                _logger.LogInformation("Attempting to close down the web driver and remove it from the list of web drivers");
+                _webDriverProvider.CloseBrowser<T>(BrowserPurpose.MonitorForNewAcceptedConnections);
+            }
+                        
+            return result;
+        }
 
         public async Task<HalOperationResult<T>> ExecutePhase<T>(MonitorForNewAcceptedConnectionsBody message) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = SetUpPhaseAsync<T>(message);
+            if (result.Succeeded == false)
+            {
+                return result;
+            }
+
+            IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)result.Value).WebDriver;
+
+            try
+            {
+                // grab the new notifications on initial page load
+                // await CheckForNewConnectionsOnPageLoad(webDriver, message);
+
+                await MonitorForNewConnections(webDriver, message);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error occured while monitoring for new connections");
+                throw;
+            }
+            finally
+            {
+                // whenever any exception occurs try to close out the web driver if not possible just remove it from the list
+                _logger.LogInformation("Attempting to close down the web driver and remove it from the list of web drivers");
+                _webDriverProvider.CloseBrowser<T>(BrowserPurpose.MonitorForNewAcceptedConnections);
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        private HalOperationResult<T> SetUpPhaseAsync<T>(MonitorForNewAcceptedConnectionsBody message)
+            where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
@@ -78,48 +153,116 @@ namespace Domain.Providers.Campaigns
                 return result;
             }
 
-            try
-            {
-                // grab the new notifications on initial page load
-                await CheckForNewConnectionsOnPageLoad(webDriver, message);
+            result.Value = driverOperationResult.Value;
+            result.Succeeded = true;
+            return result;
+        }
+        
+        private async Task<HalOperationResult<T>> ScanForAnyNewOffHoursConnectionsAsync<T>(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
+            where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+            // just grab all of the prospects from the given range of hours and send them to the server for processing
+            IList<RecentlyAddedProspect> recentlyAddedProspects = _linkedInPageFacade.ConnectionsView.GetRecentlyAdded(webDriver, message.NumOfHoursAgo);
 
-                await MonitorForNewConnections(webDriver, message);
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError(ex, "Error occured while monitoring for new connections");
-                throw;
-            }
-            finally
-            {
-                // whenever any exception occurs try to close out the web driver if not possible just remove it from the list
-                _logger.LogInformation("Attempting to close down the web driver and remove it from the list of web drivers");
-                _webDriverProvider.CloseBrowser<T>(BrowserPurpose.MonitorForNewAcceptedConnections);
-            }
+            await ProcessNewConnectionsAsync(recentlyAddedProspects, message);
 
             result.Succeeded = true;
             return result;
         }
 
+        private async Task MonitorForNewConnections(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
+        {
+            DateTimeOffset endOfWorkDayInZone = DateTimeOffset.FromUnixTimeSeconds(message.EndWorkTime).AddHours(2);            
+            while (_timestampService.GetDateTimeNowWithZone(message.TimeZoneId) < endOfWorkDayInZone)
+            {
+                PreviousConnectionsCount = _linkedInPageFacade.ConnectionsView.GetConnectionsCount(webDriver);
+                PreviousRecentlyAdded = _linkedInPageFacade.ConnectionsView.GetAllRecentlyAdded(webDriver);
+
+                _humanBehaviorService.RandomWaitMinutes(1, 3);
+
+                HalOperationResult<IOperationResponse> result = _webDriverProvider.Refresh<IOperationResponse>(webDriver);
+                if(result.Succeeded == false)
+                {
+                    break;
+                }
+
+                int connectionCount = _linkedInPageFacade.ConnectionsView.GetConnectionsCount(webDriver);
+                if(connectionCount > PreviousConnectionsCount)
+                {
+                    IList<RecentlyAddedProspect> currentProspects = _linkedInPageFacade.ConnectionsView.GetAllRecentlyAdded(webDriver);
+                    IList<RecentlyAddedProspect> newProspects = currentProspects.Where(p => PreviousRecentlyAdded.Any(prev => prev.Name == p.Name) == false).ToList();
+                    await ProcessNewConnectionsAsync(newProspects, message);
+                }
+            }            
+
+            _logger.LogInformation("Stopping to look for new connections. MonitorForNewAcceptedConnections finished running because it is end of the work day");
+        }
+
+        #region MonitorForNewConnections on MyNetwork Connections page
+
+        private async Task ProcessNewConnectionsAsync(IList<RecentlyAddedProspect> prospects, MonitorForNewAcceptedConnectionsBody message)
+        {
+            IList<NewProspectConnectionRequest> newProspects = new List<NewProspectConnectionRequest>();
+            foreach (RecentlyAddedProspect prospect in prospects)
+            {
+                NewProspectConnectionRequest newProspect = new()
+                {
+                    ProspectName = prospect.Name,
+                    AcceptedTimestamp = _timestampService.TimestampNowWithZone(message.TimeZoneId),
+                    ProfileUrl = prospect.ProfileUrl
+                };
+
+                newProspects.Add(newProspect);
+            }
+
+            await ProcessNewlyAcceptedProspects(newProspects, message);
+        }
+
+        private async Task ProcessNewConnectionsAsync(IList<string> newProspectNames, MonitorForNewAcceptedConnectionsBody message)
+        {
+            IList<NewProspectConnectionRequest> newProspects = new List<NewProspectConnectionRequest>();
+            foreach (string prospectName in newProspectNames)
+            {
+                NewProspectConnectionRequest newProspect = new()
+                {
+                    ProspectName = prospectName,
+                    AcceptedTimestamp = _timestampService.TimestampNowWithZone(message.TimeZoneId),
+                    ProfileUrl = ""
+                };
+
+                newProspects.Add(newProspect);
+            }
+
+            await ProcessNewlyAcceptedProspects(newProspects, message);
+        }
+
+        #endregion
+
+        #region MonitorForNewConnections on Notifications Page
+
+        /// <summary>
+        /// This method is meant to be executed once on initial page load to check for new user's notifications
+        /// </summary>
+        /// <param name="webDriver"></param>
+        /// <param name="message"></param>
+        /// <returns></returns>
         private async Task CheckForNewConnectionsOnPageLoad(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
         {
             IList<NewProspectConnectionRequest> newProspects = _linkedInPageFacade.LinkedInNotificationsPage.GatherAllNewProspectInfo(webDriver, message.TimeZoneId);
-            if(newProspects.Count > 0)
+            if (newProspects.Count > 0)
             {
                 // fire off request to initiate follow up message phase
                 await ProcessNewlyAcceptedProspects(newProspects, message);
             }
         }
 
-        private async Task MonitorForNewConnections(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
-        {
-            DateTimeOffset endOfWorkDayInZone = DateTimeOffset.FromUnixTimeSeconds(message.EndWorkTime);
-            while (_timestampService.GetDateTimeNowWithZone(message.TimeZoneId) < endOfWorkDayInZone)
-            {
-                await LookForNewConnections(webDriver, message);
-            }
-        }
-
+        /// <summary>
+        /// Main method for checking for new notifications on the Notifications page
+        /// </summary>
+        /// <param name="webDriver"></param>
+        /// <param name="message"></param>
+        /// <returns></returns>
         private async Task LookForNewConnections(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
         {
             // first grab any new notifications displayed in the view 
@@ -191,5 +334,7 @@ namespace Domain.Providers.Campaigns
 
             return result;
         }
+
+        #endregion
     }
 }

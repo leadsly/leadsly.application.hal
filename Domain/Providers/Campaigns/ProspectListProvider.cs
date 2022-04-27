@@ -202,7 +202,7 @@ namespace Domain.Providers.Campaigns
                         break;
                     }
 
-                   if (i == 60)
+                   if (i == 3)
                         break;
                 }
             }

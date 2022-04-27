@@ -181,6 +181,39 @@ namespace Domain.Services
 
             return response;
         }
+
+        public async Task<HttpResponseMessage> ProcessFollowUpMessageSentAsync(FollowUpMessageSentRequest request, CancellationToken ct = default)
+        {
+            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; //$"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+
+            HttpResponseMessage response = default;
+
+            try
+            {
+                HttpRequestMessage req = new()
+                {
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    Content = JsonContent.Create(new
+                    {
+                        HalId = request.HalId,
+                        CampaignProspectId = request.CampaignProspectId,
+                        ProspectName = request.ProspectName,
+                        MessageOrderNum = request.MessageOrderNum,
+                        MessageSentTimeStamp = request.MessageSentTimestamp
+                    })
+                };
+
+                _logger.LogInformation("Sending request to campaign prospects for replied and response message");
+                response = await _httpClient.SendAsync(req, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send request to update campaign prospects replied property and record their response message");
+            }
+
+            return response;
+        }
     }
     
 }

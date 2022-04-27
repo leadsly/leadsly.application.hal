@@ -67,76 +67,59 @@ namespace PageObjects.Pages
 
         private Func<IWebDriver, IWebElement> SearchResultContainerQuery = (webDriver) => webDriver.FindElement(By.CssSelector("#main .search-results-container"));
 
-        private IWebElement SearchResultsContainer(IWebDriver webDriver)
+        private IWebElement SearchResultsUlContainer(IWebDriver webDriver)
         {
-            IWebElement searchResultContainer = default;
+            IWebElement searchResultUlContainer = default;
             try
             {
-                _logger.LogInformation("Temporarily changing web driver's implicit wait time to {Timeout}", Timeout);
-                TimeSpan defaultTimeSpan = webDriver.Manage().Timeouts().ImplicitWait;
-                webDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(Timeout);
-
-                // searchResultContainer = webDriver.FindElement(By.CssSelector("#main .search-results-container"));
-                searchResultContainer = SearchResultContainerQuery(webDriver);
-
-                double defaultTimeout = defaultTimeSpan.TotalSeconds;
-                _logger.LogInformation("Reverting web drivers timeout back to it's default value {defaultTimeout}", defaultTimeout);
-                webDriver.Manage().Timeouts().ImplicitWait = defaultTimeSpan;
-
+                searchResultUlContainer = webDriver.FindElement(By.ClassName("reusable-search__entity-result-list"));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to locate search results container");
             }
 
-            return searchResultContainer;
+            return searchResultUlContainer;
         }
 
-        private IWebElement HitList(IWebDriver webDriver)
-        {
-            IWebElement hitList = default;
-            try
-            {
-                _logger.LogInformation("Temporarily changing web driver's implicit wait time to {Timeout}", Timeout);
-                TimeSpan defaultTimeSpan = webDriver.Manage().Timeouts().ImplicitWait;
-                webDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(Timeout);
+        //private IWebElement HitList(IWebDriver webDriver)
+        //{
+        //    IWebElement hitList = default;
+        //    try
+        //    {
+        //        _logger.LogInformation("Temporarily changing web driver's implicit wait time to {Timeout}", Timeout);
+        //        TimeSpan defaultTimeSpan = webDriver.Manage().Timeouts().ImplicitWait;
+        //        webDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(Timeout);
 
-                hitList = SearchResultsContainer(webDriver).FindElement(By.CssSelector("div"));
+        //        hitList = SearchResultsContainer(webDriver).FindElement(By.CssSelector("div"));
 
-                double defaultTimeout = defaultTimeSpan.TotalSeconds;
-                _logger.LogInformation("Reverting web drivers timeout back to it's default value {defaultTimeout}", defaultTimeout);
-                webDriver.Manage().Timeouts().ImplicitWait = defaultTimeSpan;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to locate search hitlist");
-            }
+        //        double defaultTimeout = defaultTimeSpan.TotalSeconds;
+        //        _logger.LogInformation("Reverting web drivers timeout back to it's default value {defaultTimeout}", defaultTimeout);
+        //        webDriver.Manage().Timeouts().ImplicitWait = defaultTimeSpan;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Failed to locate search hitlist");
+        //    }
 
-            return hitList;
-        }
+        //    return hitList;
+        //}
 
-        private IWebElement ProspectList(IWebDriver webDriver)
-        {
-            IWebElement propsectListUlNode = default;
-            try
-            {
-                _logger.LogInformation("[ProspectList] Temporarily changing web driver's implicit wait time to {Timeout}", Timeout);
-                TimeSpan defaultTimeSpan = webDriver.Manage().Timeouts().ImplicitWait;
-                webDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(Timeout);
+        //private IWebElement ProspectList(IWebDriver webDriver)
+        //{
+        //    IWebElement propsectListUlNode = default;
+        //    try
+        //    {
 
-                propsectListUlNode = HitList(webDriver).FindElement(By.TagName("ul"));
+        //        propsectListUlNode = HitList(webDriver).FindElement(By.TagName("ul"));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "[ProspectList] Failed to locate the propsect list 'ul' node");
+        //    }
 
-                double defaultTimeout = defaultTimeSpan.TotalSeconds;
-                _logger.LogInformation("[ProspectList] Reverting web drivers timeout back to it's default value {defaultTimeout}", defaultTimeout);
-                webDriver.Manage().Timeouts().ImplicitWait = defaultTimeSpan;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[ProspectList] Failed to locate the propsect list 'ul' node");
-            }
-
-            return propsectListUlNode;
-        }
+        //    return propsectListUlNode;
+        //}
 
         private List<IWebElement> ProspectsAsWebElements(IWebDriver webDriver)
         {
@@ -147,7 +130,7 @@ namespace PageObjects.Pages
                 TimeSpan defaultTimeSpan = webDriver.Manage().Timeouts().ImplicitWait;
                 webDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(Timeout);
 
-                prospects = ProspectList(webDriver).FindElements(By.TagName("li")).ToList();
+                prospects = SearchResultsUlContainer(webDriver).FindElements(By.TagName("li")).ToList();
 
                 double defaultTimeout = defaultTimeSpan.TotalSeconds;
                 _logger.LogTrace("[ProspectsAsWebElements] Reverting web drivers timeout back to it's default value {defaultTimeout}", defaultTimeout);

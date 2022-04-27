@@ -107,7 +107,7 @@ namespace Domain.Providers.Campaigns
             DateTimeOffset endOfWorkDayInZone = _timestampService.GetDateTimeWithZone(message.TimeZoneId, message.EndWorkTime);
             while (_timestampService.GetDateTimeNowWithZone(message.TimeZoneId) < endOfWorkDayInZone)
             {
-                _humanService.RandomWait(30, 45);
+                _humanService.RandomWaitSeconds(30, 45);
 
                 await ScanProspectsAsync<T>(webDriver, message);
             }
@@ -139,8 +139,8 @@ namespace Domain.Providers.Campaigns
                 foreach (IWebElement prospectMessage in newMessagesListItems)
                 {
                     string prospectName = _linkedInPageFacade.LinkedInMessagingPage.GetProspectNameFromConversationItem(prospectMessage);
-                    // blank for now because it is hard to get profile url, will add later
-                    // string prospectProfileUrl = _linkedInPageFacade.LinkedInMessagingPage.GetProspectProfileUrlFromConversationItem(prospectMessage);                    
+
+                    // blank for now because it is hard to get profile url, will add later                
                     _linkedInPageFacade.LinkedInMessagingPage.ClickConverstaionListItem(prospectMessage);
                     WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(30));
                     bool isActive = wait.Until(drv => _linkedInPageFacade.LinkedInMessagingPage.IsConversationListItemActive(prospectMessage));
@@ -169,6 +169,7 @@ namespace Domain.Providers.Campaigns
                     {
                         ProspectName = prospectName,
                         ResponseMessage = responseMessage,
+                        ResponseMessageTimestamp = _timestampService.TimestampNowWithZone(message.TimeZoneId),
                         CampaignProspectId = "",
                         ProspectProfileUrl = ""
                     };

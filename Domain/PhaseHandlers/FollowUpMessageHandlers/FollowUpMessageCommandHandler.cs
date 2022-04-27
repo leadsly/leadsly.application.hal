@@ -5,6 +5,8 @@ using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,22 +33,26 @@ namespace Domain.PhaseHandlers.FollowUpMessageHandlers
 
         public async Task HandleAsync(FollowUpMessageCommand command)
         {
+            IModel channel = command.Channel;
+            BasicDeliverEventArgs args = command.EventArgs;
+
             byte[] body = command.EventArgs.Body.ToArray();
             string message = Encoding.UTF8.GetString(body);
             FollowUpMessageBody followUpMessages = _serializer.DeserializeFollowUpMessagesBody(message);
             try
             {
                 await StartFollowUpMessagesAsync(followUpMessages);
+                channel.BasicAck(args.DeliveryTag, false);
             }
             catch(Exception ex)
             {
-
+                channel.BasicNack(args.DeliveryTag, false, true);
             }                        
         }
 
         private async Task StartFollowUpMessagesAsync(FollowUpMessageBody followUpMessages)
         {
-            HalOperationResult<IOperationResponse> operationResult = _campaignPhaseFacade.ExecutePhase<IOperationResponse>(followUpMessages);
+            HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecutePhaseAsync<IOperationResponse>(followUpMessages);
 
             if (operationResult.Succeeded == true)
             {

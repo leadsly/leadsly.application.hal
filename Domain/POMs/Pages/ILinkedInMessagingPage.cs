@@ -17,6 +17,12 @@ namespace Domain.POMs.Pages
         HalOperationResult<T> EnterProspectsName<T>(IWebDriver webDriver, string name)
             where T : IOperationResponse;
 
+        HalOperationResult<T> ConfirmProspectName<T>(IWebDriver webDriver)
+            where T : IOperationResponse;
+
+        HalOperationResult<T> ClickWriteAMessageBox<T>(IWebDriver webDriver)
+            where T : IOperationResponse;        
+
         HalOperationResult<T> EnterMessageContent<T>(IWebDriver webDriver, string messageContent)
             where T : IOperationResponse;
 
@@ -45,7 +51,8 @@ namespace Domain.POMs.Pages
 
         string GetMessageContent(IWebElement message);
 
-        string GetProspectNameFromMessageDetailDiv(IWebElement messageDiv);                
+        string GetProspectNameFromMessageDetailDiv(IWebElement messageDiv);
+        string GetProspectNameFromMessageContentPTag(IWebElement messageDiv);
 
         HalOperationResult<T> ClearMessagingSearchCriteria<T>(IWebDriver webDriver)
             where T : IOperationResponse;

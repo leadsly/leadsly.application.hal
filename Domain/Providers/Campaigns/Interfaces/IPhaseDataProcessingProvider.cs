@@ -40,5 +40,8 @@ namespace Domain.Providers.Campaigns.Interfaces
         /// <returns></returns>
         Task<HalOperationResult<T>> ProcessProspectsRepliedAsync<T>(IList<ProspectRepliedRequest> prospectsReplied, ScanProspectsForRepliesBody message, CancellationToken ct = default)
             where T : IOperationResponse;
+
+        Task<HalOperationResult<T>> ProcessSentFollowUpMessageAsync<T>(FollowUpMessageSentRequest sentFollowUpMessageRequest, FollowUpMessageBody message, CancellationToken ct = default)
+            where T : IOperationResponse;
     }
 }

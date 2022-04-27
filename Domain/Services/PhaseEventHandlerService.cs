@@ -33,6 +33,7 @@ namespace Domain.Services
             HalWorkCommandHandlerDecorator<ProspectListCommand> prospectListHandler,
             HalWorkCommandHandlerDecorator<MonitorForNewConnectionsCommand> monitorHandler,
             HalWorkCommandHandlerDecorator<ScanProspectsForRepliesCommand> scanHandler,
+            HalWorkCommandHandlerDecorator<CheckOffHoursNewConnectionsCommand> offHoursHandler,
             HalWorkCommandHandlerDecorator<DeepScanProspectsForRepliesCommand> deepScanHandler
             )
         {
@@ -42,9 +43,11 @@ namespace Domain.Services
             _monitorHandler = monitorHandler;
             _prospectListHandler = prospectListHandler;
             _scanHandler = scanHandler;
+            _offHoursHandler = offHoursHandler;
             _deepScanHandler = deepScanHandler;
         }
 
+        private readonly HalWorkCommandHandlerDecorator<CheckOffHoursNewConnectionsCommand> _offHoursHandler;
         private readonly HalWorkCommandHandlerDecorator<DeepScanProspectsForRepliesCommand> _deepScanHandler;
         private readonly HalWorkCommandHandlerDecorator<ScanProspectsForRepliesCommand> _scanHandler;
         private readonly HalWorkCommandHandlerDecorator<MonitorForNewConnectionsCommand> _monitorHandler;
@@ -93,7 +96,7 @@ namespace Domain.Services
 
         public async Task OnFollowUpMessageEventReceivedAsync(object sender, BasicDeliverEventArgs eventArgs)
         {
-            IModel channel = ((EventingBasicConsumer)sender).Model;
+            IModel channel = ((AsyncEventingBasicConsumer)sender).Model;
             FollowUpMessageCommand followUpMessageCommand = new FollowUpMessageCommand(channel, eventArgs);
             await _followUpHandler.HandleAsync(followUpMessageCommand);
         }        
@@ -104,7 +107,7 @@ namespace Domain.Services
 
         public Task OnConnectionWithdrawEventReceivedAsync(object sender, BasicDeliverEventArgs eventArgs)
         {
-            IModel channel = ((EventingBasicConsumer)sender).Model;
+            IModel channel = ((AsyncEventingBasicConsumer)sender).Model;
             string messageId = eventArgs.BasicProperties.MessageId;
 
             return Task.CompletedTask;
@@ -160,9 +163,28 @@ namespace Domain.Services
         {
 
             IModel channel = ((AsyncEventingBasicConsumer)sender).Model;
-            // channel.BasicAck(eventArgs.DeliveryTag, false);
-            MonitorForNewConnectionsCommand monitorCommand = new MonitorForNewConnectionsCommand(channel, eventArgs);
-            await _monitorHandler.HandleAsync(monitorCommand);
+
+            var headers = eventArgs.BasicProperties.Headers;
+            headers.TryGetValue(RabbitMQConstants.MonitorNewAcceptedConnections.ExecuteType, out object executionTypeObj);
+
+            byte[] networkTypeArr = executionTypeObj as byte[];
+
+            string executionType = Encoding.UTF8.GetString(networkTypeArr);
+            if (executionType == null)
+            {
+                throw new ArgumentException("A header value must be provided!");
+            }
+
+            if(executionType == RabbitMQConstants.MonitorNewAcceptedConnections.ExecuteOffHoursScan)
+            {
+                CheckOffHoursNewConnectionsCommand offHoursCommand = new CheckOffHoursNewConnectionsCommand(channel, eventArgs);
+                await _offHoursHandler.HandleAsync(offHoursCommand);
+            }
+            else if(executionType == RabbitMQConstants.MonitorNewAcceptedConnections.ExecutePhase)
+            {
+                MonitorForNewConnectionsCommand monitorCommand = new MonitorForNewConnectionsCommand(channel, eventArgs);
+                await _monitorHandler.HandleAsync(monitorCommand);
+            }
         }
 
         #endregion

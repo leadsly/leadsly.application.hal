@@ -33,5 +33,8 @@ namespace Domain.Providers.Interfaces
 
         HalOperationResult<T> NewTab<T>(IWebDriver webDriver)
             where T : IOperationResponse;
+
+        HalOperationResult<T> Refresh<T>(IWebDriver webDriver)
+            where T : IOperationResponse;
     }
 }

@@ -12,10 +12,10 @@ namespace Domain.Services
 {
     public class HumanBehaviorService : IHumanBehaviorService
     {
-        public HumanBehaviorService(ILogger<HumanBehaviorService> logger)
+        public HumanBehaviorService(ILogger<HumanBehaviorService> logger, Random random)
         {
             _logger = logger;
-            _rnd = new Random();
+            _rnd = random;
         }
 
         private readonly Random _rnd;
@@ -64,18 +64,52 @@ namespace Domain.Services
             }
         }
 
-        public void RandomWait(int minWaitTime, int maxWaitTime)
+        private void RandomWaitTime(int number)
         {
-            int number = _rnd.Next(minWaitTime, maxWaitTime);
             Stopwatch sw = new Stopwatch();
-            sw.Start();
-            _logger.LogInformation("Entering random wait time. Waiting for {number}", number);
-            while (sw.Elapsed.TotalSeconds < number)
+            sw.Start();            
+            while (sw.Elapsed.TotalMilliseconds < number)
             {
                 continue;
             }
             sw.Stop();
             _logger.LogInformation("Finished waiting moving on.");
+        }
+
+        public void RandomWaitSeconds(int minWaitTime, int maxWaitTime)
+        {
+            int minWaitMili = minWaitTime * 1000;
+            int maxWaitMili = maxWaitTime * 1000;
+
+            int number = _rnd.Next(minWaitMili, maxWaitMili);
+
+            int numInSeconds = number / 1000;
+            _logger.LogInformation("Entering random wait time. Waiting for {numInSeconds} seconds", numInSeconds);
+
+            RandomWaitTime(number);
+        }
+
+        public void RandomWaitMilliSeconds(int minWaitTimeMiliseconds, int maxWaitTimeMiliseconds)
+        {
+            int number = _rnd.Next(minWaitTimeMiliseconds, maxWaitTimeMiliseconds);
+
+            int numInSeconds = number / 1000;
+            _logger.LogInformation("Entering random wait time. Waiting for {numInSeconds} seconds", numInSeconds);
+
+            RandomWaitTime(number);
+        }
+
+        public void RandomWaitMinutes(int minWaitTime, int maxWaitTime)
+        {
+            int minWaitMili = (int)TimeSpan.FromMinutes(minWaitTime).TotalMilliseconds;
+            int maxWaitMili = (int)TimeSpan.FromMinutes(maxWaitTime).TotalMilliseconds;
+
+            int number = _rnd.Next(minWaitMili, maxWaitMili);
+
+            int numInSeconds = number / 1000;
+            _logger.LogInformation("Entering random wait time. Waiting for {numInSeconds} seconds", numInSeconds);
+
+            RandomWaitTime(number);
         }
     }
 }

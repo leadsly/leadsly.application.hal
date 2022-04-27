@@ -450,5 +450,25 @@ namespace Domain.Providers
             result.Succeeded = true;
             return result;
         }
+
+        public HalOperationResult<T> Refresh<T>(IWebDriver webDriver) where T : IOperationResponse
+        {
+            _logger.LogInformation("Attempting to refresh.");
+            HalOperationResult<T> result = new();
+
+            try
+            {
+                webDriver.Navigate().Refresh();
+                _logger.LogInformation("Successfully refresh web driver");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to successfully refresh the page");
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
     }
 }

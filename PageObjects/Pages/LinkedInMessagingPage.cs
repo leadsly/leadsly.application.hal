@@ -27,27 +27,295 @@ namespace PageObjects.Pages
         private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly ILogger<LinkedInMessagingPage> _logger;
 
+        private IWebElement ComposeNewMessageAnchorTag(IWebDriver webDriver)
+        {
+            IWebElement composeNewMsgAnchor = default;
+            try
+            {
+                composeNewMsgAnchor = webDriver.FindElement(By.ClassName("msg-conversations-container__compose-btn"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to locate new message compose button by class name 'msg-conversations-container__compose-btn'");
+            }
+            return composeNewMsgAnchor;
+        }
+           
 
         public HalOperationResult<T> ClickCreateNewMessage<T>(IWebDriver webDriver) where T : IOperationResponse
         {
-            throw new NotImplementedException();
+            HalOperationResult<T> result = new();
+
+            IWebElement composeMsg = default;
+            WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(10));
+            wait.Until((drv) =>
+            {
+                composeMsg = ComposeNewMessageAnchorTag(drv);
+                return composeMsg != null;
+            });            
+
+            if(composeMsg == null)
+            {
+                _logger.LogInformation("Compose new message button is null");
+                return result;
+            }
+
+            _logger.LogInformation("Clicking compose new message button");
+            composeMsg.Click();
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        private IWebElement SendNewMessageButton(IWebDriver webDriver)
+        {
+            IWebElement btn = default;
+            try
+            {
+                btn = webDriver.FindElement(By.ClassName("msg-form__send-button"));                
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to locate the 'Send' button by class name 'msg-form__send-button'");
+            }
+
+            return btn;
+        }
+
+        private void WaitUntilSendButtonIsEnabled(IWebDriver webDriver)
+        {
+            try
+            {
+                WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(10));
+                wait.Until((drv) =>
+                {
+                    IWebElement sendButton = SendNewMessageButton(drv);
+                    return sendButton != null && sendButton.Enabled == true;
+                });
+            }
+            catch (Exception ex)
+            {
+
+            }
         }
 
         public HalOperationResult<T> ClickSend<T>(IWebDriver webDriver) where T : IOperationResponse
         {
-            throw new NotImplementedException();
+            HalOperationResult<T> result = new();
+
+            WaitUntilSendButtonIsEnabled(webDriver);
+            IWebElement sendButton = SendNewMessageButton(webDriver);
+            if(sendButton == null)
+            {
+                return result;
+            }
+
+            sendButton.Click();
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        private IWebElement ContentEditableDiv(IWebDriver webDriver)
+        {
+            IWebElement contentEditableDiv = default;
+            try
+            {
+                contentEditableDiv = webDriver.FindElement(By.ClassName("msg-form__contenteditable"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Could not locate div that houses p tag with placeholder text 'Write a message'");
+            }
+            return contentEditableDiv;
+        }
+
+        private IWebElement GetWriteAMessagePTag(IWebDriver webDriver)
+        {
+            IWebElement pTag = default;
+            try
+            {
+                pTag = ContentEditableDiv(webDriver).FindElement(By.TagName("p"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unable to find p tag with 'Write a message' text");
+            }
+            return pTag;
         }
 
         public HalOperationResult<T> EnterMessageContent<T>(IWebDriver webDriver, string messageContent) where T : IOperationResponse
         {
-            throw new NotImplementedException();
+            HalOperationResult<T> result = new();
+
+            IWebElement pTagInsideContent = GetWriteAMessagePTag(webDriver);
+            if (pTagInsideContent == null)
+            {
+                return result;
+            }
+
+            _humanBehaviorService.EnterValues(pTagInsideContent, messageContent, 100, 150);
+
+            string enteredValue = pTagInsideContent.Text;
+            if(enteredValue != messageContent)
+            {
+                _logger.LogError("The messaged entered into the p tag did not match exactly." +
+                    "\r\nThe expected message {messageContent}" +
+                    "\r\nEntered value {enteredValue}", messageContent, enteredValue);
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        private IWebElement NewMessageNameInput(IWebDriver webDriver)
+        {
+            IWebElement inputField = default;
+            try
+            {
+                inputField = webDriver.FindElement(By.ClassName("msg-connections-typeahead__search-field--no-recipients"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to locate new message input field");
+            }
+
+            return inputField;
         }
 
         public HalOperationResult<T> EnterProspectsName<T>(IWebDriver webDriver, string name) where T : IOperationResponse
         {
-            throw new NotImplementedException();
+            HalOperationResult<T> result = new();
+            try
+            {
+                IWebElement inputField = NewMessageNameInput(webDriver);
+                if(inputField == null)
+                {
+                    return result;
+                }
+
+                _humanBehaviorService.EnterValues(inputField, name, 250, 400);
+
+                // verify that the name was entered in correctly 
+                string enteredValue = inputField.GetAttribute("value");
+                if(enteredValue != name)
+                {
+                    _logger.LogError("Comparison between what value was entered into the new message input field and prospect's name was not exactly the same." +
+                        "\r\nThis means some or all values were not correctly entered into the input field");
+
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send keys after clicking compose new message button");
+            }
+
+            result.Succeeded = true;
+            return result;
         }
 
+        private IWebElement TypeAheadSearchResultsExpandedContainer(IWebDriver webDriver)
+        {
+            IWebElement container = default;
+            try
+            {
+                container = webDriver.FindElement(By.ClassName("msg-connections-typeahead__search-results--expanded"));                
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to locate type ahead prospect container by class name 'msg-connections-typeahead__search-results--expanded'");
+            }
+
+            return container;
+        }
+
+        private IWebElement WaitUntilTypeAheadResultsIsVisible(IWebDriver webDriver)
+        {
+            IWebElement visibleTypeAhead = default;
+            WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(10));
+            try
+            {
+                wait.Until(drv => 
+                {
+                    visibleTypeAhead = TypeAheadSearchResultsExpandedContainer(drv);
+                    return visibleTypeAhead != null && visibleTypeAhead.Displayed;
+                });
+            }
+            catch (Exception ex)
+            {
+                
+            }
+
+            return visibleTypeAhead;
+        }
+
+        private IWebElement ResultsTypeAheadLoader(IWebDriver webDriver)
+        {
+            IWebElement loader = default;
+            try
+            {
+                loader = webDriver.FindElement(By.CssSelector(".msg-connections-typeahead__margin-transition-in .artdeco-loader--small"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("Type ahead results loader not found. This is ok since the loader only appears when some data is fetched");
+            }
+            return loader;
+        }
+
+        public HalOperationResult<T> ConfirmProspectName<T>(IWebDriver webDriver)
+            where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            IWebElement inputField = NewMessageNameInput(webDriver);
+            inputField.Click();
+
+            // grab the expanded type ahead container
+            IWebElement visibleTypeAheadResultsContainer = WaitUntilTypeAheadResultsIsVisible(webDriver);
+
+            if(visibleTypeAheadResultsContainer == null)
+            {
+                return result;
+            }
+
+            // wait until the container is not loading
+            WebDriverWait wait = new(webDriver, TimeSpan.FromSeconds(30));
+            try
+            {
+                wait.Until(drv =>
+                {
+                    return ResultsTypeAheadLoader(drv) == null;
+                });
+            }
+            catch (Exception ex)
+            {
+                return result;
+            }
+
+            inputField.SendKeys(Keys.Enter);
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        public HalOperationResult<T> ClickWriteAMessageBox<T>(IWebDriver webDriver) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            IWebElement pTagInsideContent = GetWriteAMessagePTag(webDriver);
+            if (pTagInsideContent == null)
+            {
+                return result;
+            }
+
+            pTagInsideContent.Click();
+            _logger.LogInformation("Clicked 'Write a message...' p tag");
+
+            result.Succeeded = true;
+            return result;
+        }
 
         private IWebElement ConversationsListItemContainer(IWebDriver webDriver)
         {
@@ -327,8 +595,7 @@ namespace PageObjects.Pages
             string content = string.Empty;
             try
             {
-                IWebElement messagePTag = message.FindElement(By.CssSelector(".msg-s-event-listitem__body"));
-                content = messagePTag.Text;
+                content = message.Text;
             }
             catch (Exception ex)
             {
@@ -352,6 +619,22 @@ namespace PageObjects.Pages
             }
             return prospectName;
         }
+
+        public string GetProspectNameFromMessageContentPTag(IWebElement messagePTag)
+        {
+            string prospectName = string.Empty;
+            try
+            {
+                IWebElement messageDetail = messagePTag.FindElement(By.XPath("./ancestor::div[contains(@class, 'msg-s-event-listitem')]"));
+                IWebElement span = messageDetail.FindElement(By.CssSelector(".msg-s-message-group__name"));
+                prospectName = span.Text;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to extract prospect name from the message div by class name '.msg-s-message-group__name'");
+            }
+            return prospectName;
+        }        
 
         public HalOperationResult<T> ClearMessagingSearchCriteria<T>(IWebDriver webDriver) where T : IOperationResponse
         {

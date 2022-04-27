@@ -108,6 +108,11 @@ namespace Domain.Facades
             return await _monitorForNewProspectsProvider.ExecutePhase<T>(message);
         }
 
+        public async Task<HalOperationResult<T>> ExecuteOffHoursScanPhaseAsync<T>(MonitorForNewAcceptedConnectionsBody message) where T : IOperationResponse
+        {
+            return await _monitorForNewProspectsProvider.ExecutePhaseOffHoursScanPhaseAsync<T>(message);            
+        }
+
         public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ProspectListBody message) where T : IOperationResponse
         {
             HalOperationResult<T> result = _prospectListProvider.ExecutePhase<T>(message);
@@ -181,9 +186,29 @@ namespace Domain.Facades
             throw new NotImplementedException();
         }
 
-        public HalOperationResult<T> ExecutePhase<T>(FollowUpMessageBody message) where T : IOperationResponse
+        public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(FollowUpMessageBody message) where T : IOperationResponse
         {
-            throw new NotImplementedException();
+            HalOperationResult<T> result = _followUpMessagesProvider.ExecutePhase<T>(message);
+
+            if(result.Succeeded == false) 
+            {
+                return result;
+            }
+
+            IFollowUpMessagePayload payload = ((IFollowUpMessagePayload)result.Value);
+            if(payload == null)
+            {
+                return result;
+            }
+
+            result = await _phaseDataProcessingProvider.ProcessSentFollowUpMessageAsync<T>(payload.FollowUpMessageSentRequest, message);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
         }
     }
 }

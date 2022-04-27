@@ -88,12 +88,14 @@ namespace Hal.Configurations
             services.AddScoped<HalWorkCommandHandlerDecorator<DeepScanProspectsForRepliesCommand>>();
             services.AddScoped<HalWorkCommandHandlerDecorator<ScanProspectsForRepliesCommand>>();
             services.AddScoped<HalWorkCommandHandlerDecorator<SendConnectionsCommand>>();
+            services.AddScoped<HalWorkCommandHandlerDecorator<CheckOffHoursNewConnectionsCommand>>();
 
             // Handlers for starting consumption
             services.AddScoped<ICommandHandler<FollowUpMessageConsumerCommand>, FollowUpMessageConsumerCommandHandler>();
             services.AddScoped<ICommandHandler<MonitorForNewConnectionsConsumerCommand>, MonitorForNewConnectionsConsumerCommandHandler>();
             services.AddScoped<ICommandHandler<NetworkingConnectionsConsumerCommand>, NetworkingConnectionsConsumerCommandHandler>();
             services.AddScoped<ICommandHandler<ScanProspectsForRepliesConsumerCommand>, ScanProspectsForRepliesConsumerCommandHandler>();
+            services.AddScoped<ICommandHandler<CheckOffHoursNewConnectionsCommand>, CheckOffHoursNewConnectionsCommandHandler>();
 
             // Handlers for processing the given phase
             services.AddScoped<ICommandHandler<FollowUpMessageCommand>, FollowUpMessageCommandHandler>();
@@ -173,6 +175,7 @@ namespace Hal.Configurations
             services.AddScoped<ILinkedInNotificationsPage, LinkedInNotificationsPage>();
 
             services.AddScoped<IAcceptedInvitiationsView, AcceptedInvitationsView>();
+            services.AddScoped<IConnectionsView, ConnectionsView>();
 
             return services;
         }
@@ -224,11 +227,11 @@ namespace Hal.Configurations
 
             services.AddScoped<IWebDriverService, WebDriverService>();
             services.AddScoped<ITimestampService, TimestampService>();
-            services.AddScoped<IPhaseEventHandlerService, PhaseEventHandlerService>();
-            services.AddScoped<IHumanBehaviorService, HumanBehaviorService>();            
+            services.AddScoped<IPhaseEventHandlerService, PhaseEventHandlerService>();                        
             services.AddScoped<IRabbitMQManager, RabbitMQManager>();
-
-            services.AddSingleton<IConsumingService, ConsumingService>();            
+            services.AddScoped<IHumanBehaviorService, HumanBehaviorService>();
+            services.AddSingleton<IConsumingService, ConsumingService>();
+            services.AddSingleton<Random>();
 
             return services;
         }
@@ -346,7 +349,8 @@ namespace Hal.Configurations
 
             PostgreSqlStorageOptions options = new PostgreSqlStorageOptions
             {
-                InvisibilityTimeout = TimeSpan.FromMinutes(5)
+                InvisibilityTimeout = TimeSpan.FromMinutes(5),
+                // JobExpirationCheckInterval = TimeSpan.FromHours(24)
             };
 
             services.AddHangfire(config =>
