@@ -35,9 +35,9 @@ namespace Domain.Services
         {
             TimeZoneInfo timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(zoneId);
 
-            DateTimeOffset nowOffset = DateTimeOffset.FromUnixTimeSeconds(timestamp);
+            DateTimeOffset timestampOffSet = DateTimeOffset.FromUnixTimeSeconds(timestamp);
 
-            DateTime localDateTime = new DateTimeWithZone(nowOffset.DateTime, timeZoneInfo).LocalTime;
+            DateTime localDateTime = new DateTimeWithZone(timestampOffSet.LocalDateTime, timeZoneInfo).LocalTime;
 
             return new DateTimeOffset(localDateTime);
         }

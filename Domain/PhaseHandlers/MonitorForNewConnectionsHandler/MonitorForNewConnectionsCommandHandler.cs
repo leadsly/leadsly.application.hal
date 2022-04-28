@@ -40,8 +40,7 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
             byte[] body = eventArgs.Body.ToArray();
             string message = Encoding.UTF8.GetString(body);
             MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections = _serializer.DeserializeMonitorForNewAcceptedConnectionsBody(message);
-
-            // let hangfire handle failures and re runs of this method            
+  
             await StartMonitorForNewConnectionsAsync(monitorForNewAcceptedConnections);
         }
 

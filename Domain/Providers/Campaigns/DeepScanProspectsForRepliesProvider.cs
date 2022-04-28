@@ -38,7 +38,7 @@ namespace Domain.Providers.Campaigns
         private readonly ITimestampService _timestampService;
         private readonly ILogger<DeepScanProspectsForRepliesProvider> _logger;
         private readonly ILinkedInPageFacade _linkedInPageFacade;
-        private readonly IWebDriverProvider _webDriverProvider;
+        private readonly IWebDriverProvider _webDriverProvider;        
 
 
         public HalOperationResult<T> ExecutePhase<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
@@ -111,7 +111,9 @@ namespace Domain.Providers.Campaigns
 
         private HalOperationResult<T> ExecuteScanProspectsForRepliesPhaseOnce<T>(IWebDriver webDriver, ScanProspectsForRepliesBody message) where T : IOperationResponse
         {
-            return DeepScanSpecificProspects<T>(webDriver, message);
+            HalOperationResult<T> result = DeepScanSpecificProspects<T>(webDriver, message);
+
+            return result;
         }
 
         private int GetVisibleConversationCount(IWebDriver webDriver)

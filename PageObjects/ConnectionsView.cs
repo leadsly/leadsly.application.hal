@@ -20,6 +20,23 @@ namespace PageObjects
 
         private readonly ILogger<ConnectionsView> _logger;
 
+
+        private void WaitUntilUlTagIsVisible(IWebDriver webDriver)
+        {
+            WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(30));
+            try
+            {
+                wait.Until(drv =>
+                {
+                    IWebElement recentlyAddedUlTag = RecentlyAddedUlTag(drv);
+                    return recentlyAddedUlTag != null;
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to locate list of recently added prospects in 30 seconds");
+            }
+        }
         private IWebElement RecentlyAddedUlTag(IWebDriver webDriver)
         {
             IWebElement recentlyAdded = default;
@@ -40,6 +57,7 @@ namespace PageObjects
             IReadOnlyCollection<IWebElement> recentlyAddedProspects = default;
             try
             {
+                WaitUntilUlTagIsVisible(webDriver);
                 recentlyAddedProspects = RecentlyAddedUlTag(webDriver).FindElements(By.TagName("li"));
             }
             catch (Exception ex)
@@ -138,7 +156,47 @@ namespace PageObjects
                 return false;
             }
 
-            return true;
+            if (timeTagText.Contains("minute"))
+            {
+                return true;
+            }
+
+            if (timeTagText.Contains("day"))
+            {
+                return false;
+            }
+
+            if (timeTagText.Contains("week"))
+            {
+                return false;
+            }
+
+            if (timeTagText.Contains("month"))
+            {
+                return false;
+            }
+
+            string resultAsString = string.Empty;
+            int result = 0;
+            for (int i = 0; i < timeTagText.Length; i++)
+            {
+                if (Char.IsDigit(timeTagText[i]))
+                    resultAsString += timeTagText[i];
+            }
+
+            if (resultAsString.Length > 0)
+            {
+                result = int.Parse(resultAsString);
+            }
+
+            if(result <= fromMaxHoursAgo)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         private IWebElement TimeTag(IWebElement webElement)

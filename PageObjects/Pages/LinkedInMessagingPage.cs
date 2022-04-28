@@ -650,6 +650,7 @@ namespace PageObjects.Pages
 
                 RandomWait(1, 2);
                 searchResultCriteria.Clear();
+                searchResultCriteria.SendKeys(Keys.Enter);
             }
             catch (Exception ex)
             {

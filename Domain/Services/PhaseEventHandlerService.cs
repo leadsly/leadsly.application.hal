@@ -161,7 +161,6 @@ namespace Domain.Services
 
         public async Task OnMonitorForNewAcceptedConnectionsEventReceivedAsync(object sender, BasicDeliverEventArgs eventArgs)
         {
-
             IModel channel = ((AsyncEventingBasicConsumer)sender).Model;
 
             var headers = eventArgs.BasicProperties.Headers;

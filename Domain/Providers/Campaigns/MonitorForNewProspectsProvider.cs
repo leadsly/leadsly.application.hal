@@ -81,8 +81,8 @@ namespace Domain.Providers.Campaigns
             finally
             {
                 // whenever any exception occurs try to close out the web driver if not possible just remove it from the list
-                _logger.LogInformation("Attempting to close down the web driver and remove it from the list of web drivers");
-                _webDriverProvider.CloseBrowser<T>(BrowserPurpose.MonitorForNewAcceptedConnections);
+                //_logger.LogInformation("Attempting to close down the web driver and remove it from the list of web drivers");
+                //_webDriverProvider.CloseBrowser<T>(BrowserPurpose.MonitorForNewAcceptedConnections);
             }
                         
             return result;
@@ -173,7 +173,7 @@ namespace Domain.Providers.Campaigns
 
         private async Task MonitorForNewConnections(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
         {
-            DateTimeOffset endOfWorkDayInZone = DateTimeOffset.FromUnixTimeSeconds(message.EndWorkTime).AddHours(2);            
+            DateTimeOffset endOfWorkDayInZone = _timestampService.GetDateTimeWithZone(message.TimeZoneId, message.EndWorkTime);            
             while (_timestampService.GetDateTimeNowWithZone(message.TimeZoneId) < endOfWorkDayInZone)
             {
                 PreviousConnectionsCount = _linkedInPageFacade.ConnectionsView.GetConnectionsCount(webDriver);
