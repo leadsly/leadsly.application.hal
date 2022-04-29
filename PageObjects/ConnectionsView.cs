@@ -91,10 +91,10 @@ namespace PageObjects
             string prospectProfileUrl = string.Empty;
             try
             {
-                IWebElement prospectProfileUrlSpan = liTag.FindElement(By.ClassName("mn-connection-card__link"));
-                if (prospectProfileUrlSpan != null)
+                IWebElement prospectProfileUrlATag = liTag.FindElement(By.ClassName("mn-connection-card__link"));
+                if (prospectProfileUrlATag != null)
                 {
-                    prospectProfileUrl = prospectProfileUrlSpan.Text;
+                    prospectProfileUrl = prospectProfileUrlATag.GetAttribute("href");
                 }
             }
             catch (Exception ex)

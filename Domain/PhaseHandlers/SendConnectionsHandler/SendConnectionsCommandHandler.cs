@@ -22,6 +22,7 @@ namespace Domain.PhaseHandlers.SendConnectionsHandler
             IRabbitMQSerializer serializer)
         {
             _campaignPhaseFacade = campaignPhaseFacade;
+            _logger = logger;
             _serializer = serializer;
         }
 

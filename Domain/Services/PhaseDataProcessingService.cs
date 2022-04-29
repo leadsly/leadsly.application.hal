@@ -72,6 +72,7 @@ namespace Domain.Services
                     Content = JsonContent.Create(new
                     {
                         PrimaryProspectListId = request.PrimaryProspectListId,
+                        CampaignProspectListId = request.CampaignProspectListId,
                         UserId = request.UserId,
                         HalId = request.HalId,
                         CampaignId = request.CampaignId,

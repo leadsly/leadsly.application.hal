@@ -124,6 +124,7 @@ namespace Domain.Facades
             result = await _phaseDataProcessingProvider.ProcessProspectListAsync<T>(result.Value, message);
             if(result.Succeeded == false)
             {
+                _logger.LogError("Failed to process porpsect list. SendConnectionsPhase was not triggered");
                 return result;
             }
 

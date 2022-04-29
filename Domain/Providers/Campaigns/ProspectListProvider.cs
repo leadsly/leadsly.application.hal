@@ -195,15 +195,15 @@ namespace Domain.Providers.Campaigns
                     _logger.LogTrace("Creating PrimaryProspects from IWebElements");
                     prospects = prospects.Concat(CreatePrimaryProspects(propsAsWebElements, primaryProspectListId)).ToList();
 
+                    if (i == 1)
+                        break;
+
                     HalOperationResult<IOperationResponse> clickNextResult = _linkedInPageFacade.LinkedInSearchPage.ClickNext<IOperationResponse>(webDriver);
                     if(clickNextResult.Succeeded == false)
                     {
                         _logger.LogError("Failed to navigate to the next page");
                         break;
                     }
-
-                   if (i == 1)
-                        break;
                 }
             }
             finally

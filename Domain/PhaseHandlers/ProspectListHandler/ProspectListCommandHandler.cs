@@ -23,6 +23,7 @@ namespace Domain.PhaseHandlers.NetworkingConnectionsHandler
         {
             _campaignPhaseFacade = campaignPhaseFacade;
             _serializer = serializer;
+            _logger = logger;
         }
 
         private readonly ILogger<ProspectListCommandHandler> _logger;

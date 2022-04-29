@@ -36,5 +36,7 @@ namespace Domain.Providers.Interfaces
 
         HalOperationResult<T> Refresh<T>(IWebDriver webDriver)
             where T : IOperationResponse;
+
+        bool WebDriverExists(BrowserPurpose browserPurpose);
     }
 }

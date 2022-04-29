@@ -470,5 +470,30 @@ namespace Domain.Providers
             result.Succeeded = true;
             return result;
         }
+
+        public bool WebDriverExists(BrowserPurpose browserPurpose)
+        {
+            try
+            {
+                HalOperationResult<IOperationResponse> result = GetWebDriver<IOperationResponse>(browserPurpose);
+                if (result.Succeeded == false)
+                {
+                    return false;
+                }
+
+                result = CheckWebDriverConnection<IOperationResponse>(browserPurpose);
+                if (result.Succeeded == false)
+                {
+                    _logger.LogWarning("WebDriver exists but cannot connect to it.");
+                    return false;
+                }
+            }
+            catch(Exception ex)
+            {
+                return false;
+            }            
+
+            return true;
+        }
     }
 }

@@ -47,6 +47,7 @@ namespace Domain.Providers.Campaigns
                 UserId = message.UserId,
                 CampaignId = message.CampaignId,
                 PrimaryProspectListId = message.PrimaryProspectListId,
+                CampaignProspectListId = message.CampaignProspectListId,
                 Prospects = primaryProspectList.Prospects,
                 RequestUrl = "api/prospect-list",
                 NamespaceName = message.NamespaceName,

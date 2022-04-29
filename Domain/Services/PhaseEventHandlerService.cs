@@ -5,6 +5,7 @@ using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
 using Domain.PhaseHandlers.NetworkingConnectionsHandler;
 using Domain.PhaseHandlers.ScanProspectsForRepliesHandler;
 using Domain.PhaseHandlers.SendConnectionsHandler;
+using Domain.Providers.Interfaces;
 using Domain.Serializers.Interfaces;
 using Domain.Services.Interfaces;
 using Hangfire;
@@ -12,6 +13,7 @@ using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.RabbitMQ;
 using Leadsly.Application.Model.Responses;
+using Leadsly.Application.Model.WebDriver;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
@@ -34,10 +36,12 @@ namespace Domain.Services
             HalWorkCommandHandlerDecorator<MonitorForNewConnectionsCommand> monitorHandler,
             HalWorkCommandHandlerDecorator<ScanProspectsForRepliesCommand> scanHandler,
             HalWorkCommandHandlerDecorator<CheckOffHoursNewConnectionsCommand> offHoursHandler,
-            HalWorkCommandHandlerDecorator<DeepScanProspectsForRepliesCommand> deepScanHandler
+            HalWorkCommandHandlerDecorator<DeepScanProspectsForRepliesCommand> deepScanHandler,
+            IWebDriverProvider webDriverProvider
             )
         {
-            _logger = logger;            
+            _logger = logger;
+            _webDriverProvider = webDriverProvider;
             _followUpHandler = followUpHandler;
             _sendConnectionsHandler = sendConnectionsHandler;
             _monitorHandler = monitorHandler;
@@ -55,6 +59,7 @@ namespace Domain.Services
         private readonly HalWorkCommandHandlerDecorator<SendConnectionsCommand> _sendConnectionsHandler;
         private readonly HalWorkCommandHandlerDecorator<ProspectListCommand> _prospectListHandler;
         private readonly ILogger<PhaseEventHandlerService> _logger;        
+        private readonly IWebDriverProvider _webDriverProvider;
 
         #region NetworkingConnections
 
@@ -181,8 +186,11 @@ namespace Domain.Services
             }
             else if(executionType == RabbitMQConstants.MonitorNewAcceptedConnections.ExecutePhase)
             {
-                MonitorForNewConnectionsCommand monitorCommand = new MonitorForNewConnectionsCommand(channel, eventArgs);
-                await _monitorHandler.HandleAsync(monitorCommand);
+                if (_webDriverProvider.WebDriverExists(BrowserPurpose.MonitorForNewAcceptedConnections) == false)
+                {
+                    MonitorForNewConnectionsCommand monitorCommand = new MonitorForNewConnectionsCommand(channel, eventArgs);
+                    await _monitorHandler.HandleAsync(monitorCommand);
+                }
             }
         }
 
@@ -213,8 +221,12 @@ namespace Domain.Services
             }
             else if (networkType == RabbitMQConstants.ScanProspectsForReplies.ExecutePhase)
             {
-                ScanProspectsForRepliesCommand scanProspectsCommand = new ScanProspectsForRepliesCommand(channel, eventArgs);
-                await _scanHandler.HandleAsync(scanProspectsCommand);
+                if (_webDriverProvider.WebDriverExists(BrowserPurpose.ScanForReplies) == false)
+                {
+                    ScanProspectsForRepliesCommand scanProspectsCommand = new ScanProspectsForRepliesCommand(channel, eventArgs);
+                    await _scanHandler.HandleAsync(scanProspectsCommand);
+                }
+                
             }
         }
 
