@@ -5,6 +5,7 @@ using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
 using Domain.PhaseHandlers.NetworkingConnectionsHandler;
 using Domain.PhaseHandlers.ScanProspectsForRepliesHandler;
 using Domain.PhaseHandlers.SendConnectionsHandler;
+using Domain.Providers.Campaigns;
 using Domain.Providers.Interfaces;
 using Domain.Serializers.Interfaces;
 using Domain.Services.Interfaces;
@@ -186,11 +187,8 @@ namespace Domain.Services
             }
             else if(executionType == RabbitMQConstants.MonitorNewAcceptedConnections.ExecutePhase)
             {
-                if (_webDriverProvider.WebDriverExists(BrowserPurpose.MonitorForNewAcceptedConnections) == false)
-                {
-                    MonitorForNewConnectionsCommand monitorCommand = new MonitorForNewConnectionsCommand(channel, eventArgs);
-                    await _monitorHandler.HandleAsync(monitorCommand);
-                }
+                MonitorForNewConnectionsCommand monitorCommand = new MonitorForNewConnectionsCommand(channel, eventArgs);
+                await _monitorHandler.HandleAsync(monitorCommand);
             }
         }
 
@@ -221,12 +219,8 @@ namespace Domain.Services
             }
             else if (networkType == RabbitMQConstants.ScanProspectsForReplies.ExecutePhase)
             {
-                if (_webDriverProvider.WebDriverExists(BrowserPurpose.ScanForReplies) == false)
-                {
-                    ScanProspectsForRepliesCommand scanProspectsCommand = new ScanProspectsForRepliesCommand(channel, eventArgs);
-                    await _scanHandler.HandleAsync(scanProspectsCommand);
-                }
-                
+                ScanProspectsForRepliesCommand scanProspectsCommand = new ScanProspectsForRepliesCommand(channel, eventArgs);
+                await _scanHandler.HandleAsync(scanProspectsCommand);
             }
         }
 

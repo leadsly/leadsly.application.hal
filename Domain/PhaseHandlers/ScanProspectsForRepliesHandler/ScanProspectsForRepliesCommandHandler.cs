@@ -1,4 +1,5 @@
 ﻿using Domain.Facades.Interfaces;
+using Domain.Providers.Campaigns;
 using Domain.Serializers.Interfaces;
 using Hangfire;
 using Leadsly.Application.Model;
@@ -44,11 +45,14 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
 
             try
             {
-                await StartScanningProspectsForRepliesAsync(scanProspectsForRepliesBody);
+                if(ScanProspectsForRepliesProvider.IsRunning == false)
+                {
+                    await StartScanningProspectsForRepliesAsync(scanProspectsForRepliesBody);
+                }                
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error occured execution ScanProspectsForReplies 'ExecuteOnce' phase. Requeing message");
+                _logger.LogError(ex, "Error occured execution ScanProspectsForReplies 'ExecuteOnce' phase. Requeing message");
                 channel.BasicNack(eventArgs.DeliveryTag, false, true);
             }
         }

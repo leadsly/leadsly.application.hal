@@ -38,8 +38,7 @@ namespace Domain.Providers.Campaigns
         private readonly ITimestampService _timestampService;
         private readonly ILogger<DeepScanProspectsForRepliesProvider> _logger;
         private readonly ILinkedInPageFacade _linkedInPageFacade;
-        private readonly IWebDriverProvider _webDriverProvider;        
-
+        private readonly IWebDriverProvider _webDriverProvider;                
 
         public HalOperationResult<T> ExecutePhase<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
         {

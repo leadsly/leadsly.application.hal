@@ -168,7 +168,7 @@ namespace Domain.Services
                 _logger.LogDebug("New WebDriver argument: {addArgument}", addArgument);
                 options.AddArgument(addArgument);
             }
-            options.AddArgument(@$"--user-data-dir={userDataDir}\{profileName}");            
+            options.AddArgument(@$"user-data-dir={userDataDir}\{profileName}");            
 
             return options;
         }

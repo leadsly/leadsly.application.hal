@@ -54,6 +54,7 @@ namespace Domain.Providers.Campaigns
 
         private int PreviousConnectionsCount = 0;
         private IList<RecentlyAddedProspect> PreviousRecentlyAdded = new List<RecentlyAddedProspect>();
+        public static bool IsRunning { get; private set; }
 
         public async Task<HalOperationResult<T>> ExecutePhaseOffHoursScanPhaseAsync<T>(MonitorForNewAcceptedConnectionsBody message) where T : IOperationResponse
         {
@@ -67,6 +68,7 @@ namespace Domain.Providers.Campaigns
 
             try
             {
+                IsRunning = true;
                 result = await ScanForAnyNewOffHoursConnectionsAsync<T>(webDriver, message);
                 if(result.Succeeded == false)
                 {
@@ -80,9 +82,8 @@ namespace Domain.Providers.Campaigns
             }
             finally
             {
-                // whenever any exception occurs try to close out the web driver if not possible just remove it from the list
-                //_logger.LogInformation("Attempting to close down the web driver and remove it from the list of web drivers");
-                //_webDriverProvider.CloseBrowser<T>(BrowserPurpose.MonitorForNewAcceptedConnections);
+                _logger.LogInformation("Finished running MonitorForNewAcceptedConnections phase from off hours");
+                IsRunning = false;
             }
                         
             return result;
@@ -101,8 +102,7 @@ namespace Domain.Providers.Campaigns
             try
             {
                 // grab the new notifications on initial page load
-                // await CheckForNewConnectionsOnPageLoad(webDriver, message);
-
+                // await CheckForNewConnectionsOnPageLoad(webDriver, message);                
                 await MonitorForNewConnections(webDriver, message);
             }
             catch(Exception ex)
@@ -173,6 +173,7 @@ namespace Domain.Providers.Campaigns
 
         private async Task MonitorForNewConnections(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
         {
+            IsRunning = true;
             DateTimeOffset endOfWorkDayInZone = _timestampService.GetDateTimeWithZone(message.TimeZoneId, message.EndWorkTime);            
             while (_timestampService.GetDateTimeNowWithZone(message.TimeZoneId) < endOfWorkDayInZone)
             {

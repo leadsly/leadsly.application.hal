@@ -1,4 +1,5 @@
 ﻿using Domain.Facades.Interfaces;
+using Domain.Providers.Campaigns;
 using Domain.Serializers.Interfaces;
 using Hangfire;
 using Leadsly.Application.Model;
@@ -40,8 +41,11 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
             byte[] body = eventArgs.Body.ToArray();
             string message = Encoding.UTF8.GetString(body);
             MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections = _serializer.DeserializeMonitorForNewAcceptedConnectionsBody(message);
-  
-            await StartMonitorForNewConnectionsAsync(monitorForNewAcceptedConnections);
+
+            if (MonitorForNewProspectsProvider.IsRunning == false)
+            {
+                await StartMonitorForNewConnectionsAsync(monitorForNewAcceptedConnections);
+            }            
         }
 
         public async Task StartMonitorForNewConnectionsAsync(MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections)

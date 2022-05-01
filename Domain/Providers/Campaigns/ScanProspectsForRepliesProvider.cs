@@ -47,8 +47,8 @@ namespace Domain.Providers.Campaigns
         private readonly ILogger<ScanProspectsForRepliesProvider> _logger;
         private readonly ILinkedInPageFacade _linkedInPageFacade;
         private readonly IWebDriverProvider _webDriverProvider;        
-        private readonly ITimestampService _timestampService;
-
+        private readonly ITimestampService _timestampService;        
+        public static bool IsRunning { get; private set; }
 
         public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
         {
@@ -103,7 +103,7 @@ namespace Domain.Providers.Campaigns
         public async Task<HalOperationResult<T>> ExecutePhaseUntilEndOfWorkDayAsync<T>(IWebDriver webDriver, ScanProspectsForRepliesBody message) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
-
+            IsRunning = true;
             DateTimeOffset endOfWorkDayInZone = _timestampService.GetDateTimeWithZone(message.TimeZoneId, message.EndWorkTime);
             while (_timestampService.GetDateTimeNowWithZone(message.TimeZoneId) < endOfWorkDayInZone)
             {
@@ -111,6 +111,11 @@ namespace Domain.Providers.Campaigns
 
                 await ScanProspectsAsync<T>(webDriver, message);
             }
+
+            _logger.LogInformation("Stopping to scan for prospect replies. ScanProspectsForReplies finished running because it is end of the work day.");
+            _webDriverProvider.CloseBrowser<T>(BrowserPurpose.ScanForReplies);
+
+            IsRunning = false;
 
             result.Succeeded = true;
             return result;
