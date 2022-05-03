@@ -68,7 +68,6 @@ namespace Domain.Providers.Campaigns
 
             try
             {
-                IsRunning = true;
                 result = await ScanForAnyNewOffHoursConnectionsAsync<T>(webDriver, message);
                 if(result.Succeeded == false)
                 {
@@ -83,7 +82,6 @@ namespace Domain.Providers.Campaigns
             finally
             {
                 _logger.LogInformation("Finished running MonitorForNewAcceptedConnections phase from off hours");
-                IsRunning = false;
             }
                         
             return result;
@@ -195,7 +193,8 @@ namespace Domain.Providers.Campaigns
                     IList<RecentlyAddedProspect> newProspects = currentProspects.Where(p => PreviousRecentlyAdded.Any(prev => prev.Name == p.Name) == false).ToList();
                     await ProcessNewConnectionsAsync(newProspects, message);
                 }
-            }            
+            }
+            IsRunning = false;
 
             _logger.LogInformation("Stopping to look for new connections. MonitorForNewAcceptedConnections finished running because it is end of the work day");
         }
