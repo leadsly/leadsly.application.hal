@@ -1,4 +1,5 @@
-﻿using Domain.POMs.Pages;
+﻿using Domain;
+using Domain.POMs.Pages;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage.Interfaces;
@@ -19,13 +20,14 @@ namespace PageObjects.Pages
 {
     public class LinkedInSearchPage : LeadslyBase, ILinkedInSearchPage
     {
-        public LinkedInSearchPage(ILogger<LinkedInSearchPage> logger) : base(logger)
+        public LinkedInSearchPage(ILogger<LinkedInSearchPage> logger, IWebDriverUtilities webDriverUtilities) : base(logger)
         {
             _logger = logger;
+            _webDriverUtilities = webDriverUtilities;
         }
 
         private readonly ILogger<LinkedInSearchPage> _logger;
-        private const int Timeout = 30;
+        private readonly IWebDriverUtilities _webDriverUtilities;        
 
         private IWebElement SearchResultFooter(IWebDriver webDriver)
         {
@@ -82,59 +84,12 @@ namespace PageObjects.Pages
             return searchResultUlContainer;
         }
 
-        //private IWebElement HitList(IWebDriver webDriver)
-        //{
-        //    IWebElement hitList = default;
-        //    try
-        //    {
-        //        _logger.LogInformation("Temporarily changing web driver's implicit wait time to {Timeout}", Timeout);
-        //        TimeSpan defaultTimeSpan = webDriver.Manage().Timeouts().ImplicitWait;
-        //        webDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(Timeout);
-
-        //        hitList = SearchResultsContainer(webDriver).FindElement(By.CssSelector("div"));
-
-        //        double defaultTimeout = defaultTimeSpan.TotalSeconds;
-        //        _logger.LogInformation("Reverting web drivers timeout back to it's default value {defaultTimeout}", defaultTimeout);
-        //        webDriver.Manage().Timeouts().ImplicitWait = defaultTimeSpan;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Failed to locate search hitlist");
-        //    }
-
-        //    return hitList;
-        //}
-
-        //private IWebElement ProspectList(IWebDriver webDriver)
-        //{
-        //    IWebElement propsectListUlNode = default;
-        //    try
-        //    {
-
-        //        propsectListUlNode = HitList(webDriver).FindElement(By.TagName("ul"));
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "[ProspectList] Failed to locate the propsect list 'ul' node");
-        //    }
-
-        //    return propsectListUlNode;
-        //}
-
         private List<IWebElement> ProspectsAsWebElements(IWebDriver webDriver)
         {
             List<IWebElement> prospects = default;
             try
             {
-                _logger.LogTrace("[ProspectsAsWebElements] Temporarily changing web driver's implicit wait time to {Timeout}", Timeout);
-                TimeSpan defaultTimeSpan = webDriver.Manage().Timeouts().ImplicitWait;
-                webDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(Timeout);
-
                 prospects = SearchResultsUlContainer(webDriver).FindElements(By.TagName("li")).ToList();
-
-                double defaultTimeout = defaultTimeSpan.TotalSeconds;
-                _logger.LogTrace("[ProspectsAsWebElements] Reverting web drivers timeout back to it's default value {defaultTimeout}", defaultTimeout);
-                webDriver.Manage().Timeouts().ImplicitWait = defaultTimeSpan;
             }
             catch (Exception ex)
             {
@@ -146,16 +101,29 @@ namespace PageObjects.Pages
         public HalOperationResult<T> GatherProspects<T>(IWebDriver driver) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
+            IList<IWebElement>  prospAsElements = _webDriverUtilities.WaitUntilNotNull(ProspectsAsWebElements, driver, 15);
+            //WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));
+            //try
+            //{
+            //    wait.Until(drv =>
+            //    {
+            //        prospAsElements = ProspectsAsWebElements(driver);
+            //        return prospAsElements != null;
+            //    });
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.LogError(ex, "WebDriver wait timed out");
+            //}
 
-            List<IWebElement> prospAsElements = ProspectsAsWebElements(driver);
-            if(prospAsElements == null)
+            if (prospAsElements == null)
             {
                 return result;
             }
 
             IGatherProspects prospects = new GatherProspects
             {
-                ProspectElements = prospAsElements
+                ProspectElements = prospAsElements.ToList()
             };
 
             result.Value = (T)prospects;
@@ -195,34 +163,49 @@ namespace PageObjects.Pages
             return result;
         }
 
+        private IWebElement Footer(IWebDriver webDriver)
+        {
+            IWebElement footer = default;
+
+            try
+            {
+                footer = webDriver.FindElement(By.CssSelector(".global-footer.global-footer--static"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to locate the footer");
+            }
+
+            return footer;
+        }
+
+        public HalOperationResult<T> ScrollFooterIntoView<T>(IWebDriver webDriver) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            IWebElement footer = Footer(webDriver);
+            if (footer == null)
+            {
+                _logger.LogTrace("Footer could not be located");
+                return result;
+            }
+            else
+            {
+                _logger.LogTrace("Executing javascript 'scrollIntoView' to scroll footer into view");
+                IJavaScriptExecutor js = (IJavaScriptExecutor)webDriver;
+                js.ExecuteScript("arguments[0].scrollIntoView();", footer);
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
+
         private IWebElement NextButton(IWebDriver webDriver)
         {
             IWebElement nextBtn = default;
             try
-            {
-                _logger.LogTrace("[NextButton] Temporarily changing web driver's implicit wait time to {Timeout}", Timeout);
-                TimeSpan defaultTimeSpan = webDriver.Manage().Timeouts().ImplicitWait;
-                webDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(Timeout);
-
-                IWebElement footer = webDriver.FindElement(By.CssSelector(".global-footer.global-footer--static"));
-
-                if (footer == null)
-                {
-                    _logger.LogTrace("[NextButton] Footer could not be located. Returning null");
-                    return null;
-                }
-                else
-                {
-                    _logger.LogTrace("[NextButton] Executing javascript 'scrollIntoView' to scroll footer into view");
-                    IJavaScriptExecutor js = (IJavaScriptExecutor)webDriver;
-                    js.ExecuteScript("arguments[0].scrollIntoView();", footer);                    
-                }
-                
+            {   
                 nextBtn = webDriver.FindElement(By.CssSelector("button[aria-label='Next']"));
-
-                double defaultTimeout = defaultTimeSpan.TotalSeconds;
-                _logger.LogTrace("[NextButton] Reverting web drivers timeout back to it's default value {defaultTimeout}", defaultTimeout);
-                webDriver.Manage().Timeouts().ImplicitWait = defaultTimeSpan;
             }
             catch (Exception ex)
             {
@@ -236,58 +219,32 @@ namespace PageObjects.Pages
         {
             HalOperationResult<T> result = new();
 
-            IWebElement nextButton = NextButton(driver);
+            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));           
 
-            if(nextButton == null)
+            IWebElement nextBtn = default;
+            try
+            {
+                wait.Until(drv =>
+                {
+                    nextBtn = NextButton(drv);
+                    return nextBtn != null;
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "WebDriver wait timed out");
+            }            
+
+            if(nextBtn == null)
             {
                 _logger.LogWarning("[ClickNext]: Next button could not be located");
                 return result;
             }
 
-            Stopwatch stopwatch = new();
             try
             {
-                RandomWait(1, 4);
-
                 _logger.LogTrace("Clicking next button");
-                nextButton.Click();
-
-                Stopwatch sw = Stopwatch.StartNew();
-                sw.Start();
-
-                IWebElement searchResultsContainer = default;
-                IWebElement noSearchResultsContainer = default;
-                _logger.LogTrace("Entering in while loop to ensure we either view the NoSearchResultsContainer or the next page's search results");
-                while ((sw.Elapsed.TotalSeconds <= Timeout))
-                {
-                    try
-                    {
-                        searchResultsContainer = SearchResultContainerQuery(driver);
-                    }
-                    catch(Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to locate either search results container or no search results container in the allotted time");
-                    }
-
-                    if (searchResultsContainer == null)
-                    {
-                        // check if error search results page displayed
-                        noSearchResultsContainer = NoSearchResultsContainer(driver);
-                        if (noSearchResultsContainer != null)
-                            break;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-
-                if(noSearchResultsContainer != null)
-                {
-                    _logger.LogWarning("[ClickNext]: Clicking next displayed search results error page. Attempting to click retry search.");
-                    ClickRetrySearch<T>(driver);
-                }
-
+                nextBtn.Click();
             }
             catch(Exception ex)
             {
@@ -408,8 +365,6 @@ namespace PageObjects.Pages
             {
                 if (actionButton.Text == "Connect")
                 {
-                    RandomWait(1, 7);
-
                     actionButton.Click();
                 }
                 else
@@ -455,6 +410,13 @@ namespace PageObjects.Pages
             return modal;
         }
 
+        public IWebElement GetCustomizeThisInvitationModalElement(IWebDriver webDriver)
+        {
+            IWebElement modal = _webDriverUtilities.WaitUntilNotNull(CustomizeThisInvitationModal, webDriver, 10);
+
+            return modal;
+        }
+
         private IWebElement SendNowButton(IWebDriver webDriver)
         {
             IWebElement button = default;
@@ -479,8 +441,6 @@ namespace PageObjects.Pages
                 return result;
             }
 
-            RandomWait(1, 8);
-
             button.Click();
 
             result.Succeeded = true;
@@ -499,6 +459,62 @@ namespace PageObjects.Pages
             string disabledAttribute = nextButton.GetAttribute("disabled");
             bool.TryParse(disabledAttribute, out bool result);
             return result;
+        }
+
+        private IWebElement ResultsHeaderH2(IWebDriver webDriver)
+        {
+            IWebElement resultsHeader = default;
+            try
+            {
+                resultsHeader = webDriver.FindElement(By.CssSelector(".search-results-container h2"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Unable to results header");
+            }
+            return resultsHeader;
+        }
+
+        public IWebElement ResultsHeader(IWebDriver webDriver)
+        {
+            IWebElement resultsHeader = _webDriverUtilities.WaitUntilNotNull(ResultsHeaderH2, webDriver, 15);
+            //WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(15));
+
+            //try
+            //{
+            //    wait.Until(drv =>
+            //    {
+            //        resultsHeader = ResultsHeaderH2(drv);
+            //        return resultsHeader != null;
+            //    });
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.LogError(ex, "WebDriver wait timedout");
+            //}            
+
+            return resultsHeader;
+        }
+
+        private IWebElement AreTheseResultsHelpfulPTag(IWebDriver webDriver)
+        {
+            IWebElement areResultsHelpfulPTag = default;
+            try
+            {
+                areResultsHelpfulPTag = webDriver.FindElement(By.XPath("//div[contains(@class, 'search-explicit-feedback-in-content-detail')]/descendant::p[contains(text(), 'Are these results helpful?')]"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to locate are these results helpful P tag");
+            }
+            return areResultsHelpfulPTag;
+        }
+
+        public IWebElement AreResultsHelpfulPTag(IWebDriver webDriver)
+        {
+            IWebElement resultsHelpfulPTag = _webDriverUtilities.WaitUntilNotNull(AreTheseResultsHelpfulPTag, webDriver, 10);
+
+            return resultsHelpfulPTag;
         }
     }
 }

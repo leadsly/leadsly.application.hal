@@ -206,10 +206,14 @@ namespace Domain.Providers.Campaigns
             IList<NewProspectConnectionRequest> newProspects = new List<NewProspectConnectionRequest>();
             foreach (RecentlyAddedProspect prospect in prospects)
             {
+                // create timestamp with minues num of hours
+                DateTimeOffset dateTimeOffset = _timestampService.GetDateTimeNowWithZone(message.TimeZoneId);
+                DateTimeOffset connectionAcceptedTime = dateTimeOffset.AddHours(-prospect.NumberOfHoursAgo);
+
                 NewProspectConnectionRequest newProspect = new()
                 {
                     ProspectName = prospect.Name,
-                    AcceptedTimestamp = _timestampService.TimestampNowWithZone(message.TimeZoneId),
+                    AcceptedTimestamp = _timestampService.TimestampFromDateTimeOffset(connectionAcceptedTime),
                     ProfileUrl = prospect.ProfileUrl
                 };
 

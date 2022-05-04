@@ -30,14 +30,17 @@ namespace Domain.Providers.Campaigns
         public SendConnectionsProvider(
             ILogger<SendConnectionsProvider> logger,
             IWebDriverProvider webDriverProvider,
+            IHumanBehaviorService humanBehaviorService,
             ILinkedInPageFacade linkedInPageFacade
             )
         {
+            _humanBehaviorService = humanBehaviorService;
             _webDriverProvider = webDriverProvider;
             _linkedInPageFacade = linkedInPageFacade;
             _logger = logger;            
         }
-        
+
+        private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly ILogger<SendConnectionsProvider> _logger;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILinkedInPageFacade _linkedInPageFacade;
@@ -168,12 +171,17 @@ namespace Domain.Providers.Campaigns
                     }
 
                     _logger.LogInformation("[SendConnectionRequests]: Sending connection request to the given prospect");
+                    _humanBehaviorService.RandomWaitMilliSeconds(700, 3000);
                     result = _linkedInPageFacade.LinkedInSearchPage.SendConnectionRequest<T>(prospect);
                     if (result.Succeeded == false)
                     {
                         continue;
                     }
 
+                    IWebElement customizeThisInvitationModal = _linkedInPageFacade.LinkedInSearchPage.GetCustomizeThisInvitationModalElement(webDriver);
+                    _humanBehaviorService.RandomClickElement(customizeThisInvitationModal);
+
+                    _humanBehaviorService.RandomWaitMilliSeconds(700, 1400);
                     result = _linkedInPageFacade.LinkedInSearchPage.ClickSendInModal<T>(webDriver);
                     if(result.Succeeded == false)
                     {

@@ -30,14 +30,17 @@ namespace Domain.Providers.Campaigns
         public ProspectListProvider(                       
             ILogger<ProspectListProvider> logger,
             IWebDriverProvider webDriverProvider,
-            ILinkedInPageFacade linkedInPageFacade
+            ILinkedInPageFacade linkedInPageFacade,
+            IHumanBehaviorService humanBehaviorService            
             )
         {
             _logger = logger;            
+            _humanBehaviorService = humanBehaviorService;
             _webDriverProvider = webDriverProvider;
             _linkedInPageFacade = linkedInPageFacade;
         }
 
+        private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly IWebDriverProvider _webDriverProvider;        
         private readonly ILogger<ProspectListProvider> _logger;
         private readonly ILinkedInPageFacade _linkedInPageFacade;    
@@ -107,9 +110,6 @@ namespace Domain.Providers.Campaigns
                 int totalResults = ((IGetTotalNumberOfResults)result.Value).NumberOfResults;
                 _logger.LogDebug("Total results in the hitlist {totalResults}", totalResults);
 
-                //_webDriverProvider.CloseTab<T>(BrowserPurpose.ProspectList, webDriver.CurrentWindowHandle);
-                //_webDriverProvider.SwitchTo<T>(webDriver, defaultWindowHandle);
-
                 IList<PrimaryProspectRequest> primaryProspects = CollectProspects(webDriver, searchUrl, totalResults, message.PrimaryProspectListId);
 
                 if (primaryProspects != null)
@@ -154,27 +154,10 @@ namespace Domain.Providers.Campaigns
 
             try
             {
+                int currentSearchReultsPage = 0;
                 for (int i = 0; i < totalResults; i++)
                 {
-                    //if(i == 0)
-                    //{
-                    //    //_logger.LogDebug("This is the first iteration over the search results list. Creating a new tab.");
-                    //    //HalOperationResult<INewTabOperation> newTabOperation = _webDriverProvider.NewTab<INewTabOperation>(webDriver);
-                    //    //if (newTabOperation.Succeeded == false)
-                    //    //{
-                    //    //    break;
-                    //    //}
-
-                    //    //windowHandles.Add(newTabOperation.Value.WindowHandleId);
-
-                    //    //_logger.LogDebug("This is the first iteration over the search results list. Navigating to url: {searchUrl}.", searchUrl);
-                    //    //HalOperationResult<IOperationResponse> goToPageResult = GoToPage<IOperationResponse>(webDriver, searchUrl);
-                    //    //if (goToPageResult.Succeeded == false)
-                    //    //{
-                    //    //    break;
-                    //    //}
-                    //}
-
+                    currentSearchReultsPage = i + 1;
                     bool isNoSearchResultsContainerDisplayed = _linkedInPageFacade.LinkedInSearchPage.IsNoSearchResultsContainerDisplayed(webDriver);
                     if(isNoSearchResultsContainerDisplayed == true)
                     {
@@ -184,6 +167,9 @@ namespace Domain.Providers.Campaigns
                             break;
                         }
                     }
+
+                    IWebElement resultsDiv = _linkedInPageFacade.LinkedInSearchPage.ResultsHeader(webDriver);
+                    _humanBehaviorService.RandomClickElement(resultsDiv);
 
                     HalOperationResult<IGatherProspects> result = _linkedInPageFacade.LinkedInSearchPage.GatherProspects<IGatherProspects>(webDriver);
                     if (result.Succeeded == false)
@@ -198,11 +184,33 @@ namespace Domain.Providers.Campaigns
                     if (i == 20)
                         break;
 
+                    IWebElement areResultsHelpfulText = _linkedInPageFacade.LinkedInSearchPage.AreResultsHelpfulPTag(webDriver);
+                    _humanBehaviorService.RandomClickElement(areResultsHelpfulText);
+
+                    HalOperationResult<IOperationResponse> scrollFooterIntoViewResult = _linkedInPageFacade.LinkedInSearchPage.ScrollFooterIntoView<IOperationResponse>(webDriver);
+                    if(scrollFooterIntoViewResult.Succeeded == false)
+                    {
+                        _logger.LogError("Failed to scroll footer into view");
+                        break;
+                    }
+
                     HalOperationResult<IOperationResponse> clickNextResult = _linkedInPageFacade.LinkedInSearchPage.ClickNext<IOperationResponse>(webDriver);
                     if(clickNextResult.Succeeded == false)
                     {
                         _logger.LogError("Failed to navigate to the next page");
                         break;
+                    }
+
+                    _humanBehaviorService.RandomWaitMilliSeconds(700, 3000);
+
+                    isNoSearchResultsContainerDisplayed = _linkedInPageFacade.LinkedInSearchPage.IsNoSearchResultsContainerDisplayed(webDriver);
+                    if (isNoSearchResultsContainerDisplayed == true)
+                    {
+                        HalOperationResult<IOperationResponse> retrySearchResult = _linkedInPageFacade.LinkedInSearchPage.ClickRetrySearch<IOperationResponse>(webDriver);
+                        if (retrySearchResult.Succeeded == false)
+                        {
+                            break;
+                        }
                     }
                 }
             }

@@ -14,5 +14,7 @@ namespace Domain.Services.Interfaces
         DateTimeOffset GetDateTimeWithZone(string zoneId, long timestamp);
 
         long TimestampNowWithZone(string zoneId);
+
+        long TimestampFromDateTimeOffset(DateTimeOffset dateTimeOffset);
     }
 }

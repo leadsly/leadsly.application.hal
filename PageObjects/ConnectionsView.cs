@@ -113,6 +113,18 @@ namespace PageObjects
             return prospects;
         }
 
+        private RecentlyAddedProspect CreateRecentlyAddedFromElement(IWebElement recentlyAdded, int addedNumberOfHoursAgo)
+        {
+            string prospectName = GetNameFromLiTag(recentlyAdded);
+            string prospectProfileUrl = GetProfileUrlFromLiTag(recentlyAdded);
+            return new RecentlyAddedProspect
+            {
+                Name = prospectName,
+                NumberOfHoursAgo = addedNumberOfHoursAgo,
+                ProfileUrl = prospectProfileUrl
+            };
+        }
+
         private IList<RecentlyAddedProspect> CreateRecentlyAddedFromElements(IList<IWebElement> recentlyAdded)
         {
             IList<RecentlyAddedProspect> prospects = new List<RecentlyAddedProspect>();
@@ -134,18 +146,26 @@ namespace PageObjects
 
         public IList<RecentlyAddedProspect> GetRecentlyAdded(IWebDriver webDriver, int fromMaxHoursAgo)
         {
+            IList<RecentlyAddedProspect> prospects = new List<RecentlyAddedProspect>();
             IList<IWebElement> recentlyAdded = RecentlyAddedLis(webDriver).ToList();
-            IList<IWebElement> added = recentlyAdded.Where(p => AddedBeforeDesiredHoursAgo(p, fromMaxHoursAgo) == true).ToList();
-
-            IList<RecentlyAddedProspect> prospects = CreateRecentlyAddedFromElements(added);
+            foreach (IWebElement newProspect in recentlyAdded)
+            {
+                if(AddedBeforeDesiredHoursAgo(newProspect, fromMaxHoursAgo, out int addedNumOfHoursAgo) == true)
+                {
+                    RecentlyAddedProspect recentlyAddedProspect = CreateRecentlyAddedFromElement(newProspect, addedNumOfHoursAgo);
+                    prospects.Add(recentlyAddedProspect);
+                }
+            }
 
             return prospects;
         }
 
-        private bool AddedBeforeDesiredHoursAgo(IWebElement recentlyAdded, int fromMaxHoursAgo)
+        private bool AddedBeforeDesiredHoursAgo(IWebElement recentlyAdded, int fromMaxHoursAgo, out int numOfHoursAgo)
         {
             IWebElement timeElement = TimeTag(recentlyAdded);
-            if(timeElement == null) 
+            numOfHoursAgo = 0;
+
+            if (timeElement == null) 
             {
                 return false;
             }
@@ -191,6 +211,7 @@ namespace PageObjects
 
             if(result <= fromMaxHoursAgo)
             {
+                numOfHoursAgo = result;
                 return true;
             }
             else

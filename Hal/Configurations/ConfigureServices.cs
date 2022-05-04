@@ -227,6 +227,7 @@ namespace Hal.Configurations
             services.AddScoped<ITimestampService, TimestampService>();
             services.AddScoped<IPhaseEventHandlerService, PhaseEventHandlerService>();                        
             services.AddScoped<IRabbitMQManager, RabbitMQManager>();
+            services.AddScoped<IWebDriverUtilities, WebDriverUtilities>();
             services.AddScoped<IHumanBehaviorService, HumanBehaviorService>();
             services.AddSingleton<IConsumingService, ConsumingService>();
             services.AddSingleton<Random>();

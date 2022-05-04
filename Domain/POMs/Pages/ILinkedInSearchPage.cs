@@ -31,7 +31,17 @@ namespace Domain.POMs.Pages
         HalOperationResult<T> ClickSendInModal<T>(IWebDriver webDriver)
             where T : IOperationResponse;
 
+        HalOperationResult<T> ScrollFooterIntoView<T>(IWebDriver webDriver)
+            where T : IOperationResponse;
+
+        IWebElement GetCustomizeThisInvitationModalElement(IWebDriver webDriver);
+
         bool IsNextButtonDisabled(IWebDriver webDriver);
-        
+
+        IWebElement ResultsHeader(IWebDriver webDriver);
+
+        IWebElement AreResultsHelpfulPTag(IWebDriver webDriver);
+
+
     }
 }

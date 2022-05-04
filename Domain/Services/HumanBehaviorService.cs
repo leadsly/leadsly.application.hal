@@ -29,11 +29,14 @@ namespace Domain.Services
 
             try
             {
-                if (number == 3)
+                if(webElement != null)
                 {
-                    webElement.Click();
-                    _logger.LogInformation("Executing random click. Number is equal to 3. This means we're clicking the passed in element");
-                }
+                    if (number == 3)
+                    {
+                        webElement.Click();
+                        _logger.LogInformation("Executing random click. Number is equal to 3. This means we're clicking the passed in element");
+                    }
+                }                
             }
             catch (Exception ex)
             {

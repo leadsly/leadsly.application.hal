@@ -52,5 +52,10 @@ namespace Domain.Services
 
             return now.ToUnixTimeSeconds();
         }
+
+        public long TimestampFromDateTimeOffset(DateTimeOffset dateTimeOffset)
+        {
+            return dateTimeOffset.ToUnixTimeSeconds();
+        }
     }
 }
