@@ -213,7 +213,7 @@ namespace Domain.Providers.Campaigns
             int conversationsBeforeSearch = GetVisibleConversationCount(webDriver);
 
             IList<ProspectRepliedRequest> prospectsReplied = new List<ProspectRepliedRequest>();
-            foreach (CampaignProspect campaignProspect in message.ContactedCampaignProspects)
+            foreach (ContactedCampaignProspect contactedCampaignProspect in message.ContactedCampaignProspects)
             {
                 result = _linkedInPageFacade.LinkedInMessagingPage.ClearMessagingSearchCriteria<T>(webDriver);
                 if (result.Succeeded == false)
@@ -222,13 +222,13 @@ namespace Domain.Providers.Campaigns
                 }
 
                 // search for each campaign prospect in the messages search field
-                result = _linkedInPageFacade.LinkedInMessagingPage.EnterSearchMessagesCriteria<T>(webDriver, campaignProspect.Name);
+                result = _linkedInPageFacade.LinkedInMessagingPage.EnterSearchMessagesCriteria<T>(webDriver, contactedCampaignProspect.Name);
                 if (result.Succeeded == false)
                 {
                     continue;
                 }
 
-                IWebElement targetProspect = GetProspectsMessageItem(webDriver, campaignProspect.Name, conversationsBeforeSearch);                
+                IWebElement targetProspect = GetProspectsMessageItem(webDriver, contactedCampaignProspect.Name, conversationsBeforeSearch);                
 
                 if(targetProspect == null)
                 {
@@ -251,7 +251,7 @@ namespace Domain.Providers.Campaigns
 
                 IScrapedHtmlElements messageElements = result.Value as IScrapedHtmlElements;
                 List<IWebElement> messages = messageElements.HtmlElements.ToList();
-                string targetMessage = campaignProspect.FollowUpMessage.Content;
+                string targetMessage = contactedCampaignProspect.LastFollowUpMessageContent;
 
                 IWebElement targetMessageElement = messages.Where(m => _linkedInPageFacade.LinkedInMessagingPage.GetMessageContent(m).Contains(targetMessage)).FirstOrDefault();
                 if (targetMessageElement == null)
@@ -267,11 +267,11 @@ namespace Domain.Providers.Campaigns
                 {
                     IWebElement nextMessage = messages.ElementAt(i);
                     string prospectName = _linkedInPageFacade.LinkedInMessagingPage.GetProspectNameFromMessageContentPTag(nextMessage);
-                    if (prospectName == campaignProspect.Name)
+                    if (prospectName == contactedCampaignProspect.Name)
                     {
                         // we have a resonse from the prospect add it to payload going out to the server
                         string response = _linkedInPageFacade.LinkedInMessagingPage.GetMessageContent(nextMessage);                        
-                        ProspectRepliedRequest request = CreateProspectRepliedRequest(campaignProspect, response, prospectName, message.TimeZoneId);
+                        ProspectRepliedRequest request = CreateProspectRepliedRequest(contactedCampaignProspect, response, prospectName, message.TimeZoneId);
                         prospectsReplied.Add(request);
                     }
                 }
@@ -293,7 +293,7 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        private ProspectRepliedRequest CreateProspectRepliedRequest(CampaignProspect campaignProspect, string responseMessage, string prospectName, string timeZoneId)
+        private ProspectRepliedRequest CreateProspectRepliedRequest(ContactedCampaignProspect campaignProspect, string responseMessage, string prospectName, string timeZoneId)
         {
             return new()
             {

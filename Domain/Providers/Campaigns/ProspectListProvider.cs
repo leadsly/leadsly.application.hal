@@ -195,7 +195,7 @@ namespace Domain.Providers.Campaigns
                     _logger.LogTrace("Creating PrimaryProspects from IWebElements");
                     prospects = prospects.Concat(CreatePrimaryProspects(propsAsWebElements, primaryProspectListId)).ToList();
 
-                    if (i == 1)
+                    if (i == 20)
                         break;
 
                     HalOperationResult<IOperationResponse> clickNextResult = _linkedInPageFacade.LinkedInSearchPage.ClickNext<IOperationResponse>(webDriver);
