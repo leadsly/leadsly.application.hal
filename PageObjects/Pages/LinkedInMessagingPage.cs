@@ -18,12 +18,18 @@ namespace PageObjects.Pages
 {
     public class LinkedInMessagingPage : LeadslyBase, ILinkedInMessagingPage
     {
-        public LinkedInMessagingPage(ILogger<LinkedInMessagingPage> logger, IHumanBehaviorService humanBehaviorService) : base(logger)
+        public LinkedInMessagingPage(
+            ILogger<LinkedInMessagingPage> logger, 
+            IHumanBehaviorService humanBehaviorService,
+            IWebDriverUtilities webDriverUtilities
+            ) : base(logger)
         {
             _logger = logger;
             _humanBehaviorService = humanBehaviorService;
+            _webDriverUtilities = webDriverUtilities;
         }
 
+        private readonly IWebDriverUtilities _webDriverUtilities;
         private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly ILogger<LinkedInMessagingPage> _logger;
 
@@ -676,6 +682,27 @@ namespace PageObjects.Pages
             }
 
             return hasNotification;
+        }
+
+
+        private IWebElement MessagingH1Element(IWebDriver webDriver)
+        {
+            IWebElement header = default;
+            try
+            {
+                header = webDriver.FindElement(By.CssSelector(".msg-conversations-container__title-row h1"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to locate messaging header. Attempted to locate it by '.msg-conversations-container__title-row h1' css selector");
+            }
+            return header;
+        }
+
+        public IWebElement MessagingHeader(IWebDriver webDriver)
+        {
+            IWebElement header = _webDriverUtilities.WaitUntilNull(MessagingH1Element, webDriver, 5);
+            return header;
         }
     }
 }

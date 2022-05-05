@@ -18,27 +18,24 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
     {
         public CheckOffHoursNewConnectionsCommandHandler(
             ILogger<CheckOffHoursNewConnectionsCommandHandler> logger,
-            ICampaignPhaseFacade campaignPhaseFacade,
-            IRabbitMQSerializer serializer)
+            ICampaignPhaseFacade campaignPhaseFacade
+            )
         {
             _campaignPhaseFacade = campaignPhaseFacade;
-            _serializer = serializer;
+            _logger = logger;
         }
 
         private readonly ILogger<CheckOffHoursNewConnectionsCommandHandler> _logger;
-        private readonly ICampaignPhaseFacade _campaignPhaseFacade;
-        private readonly IRabbitMQSerializer _serializer;
+        private readonly ICampaignPhaseFacade _campaignPhaseFacade;        
 
         public async Task HandleAsync(CheckOffHoursNewConnectionsCommand command)
         {
             IModel channel = command.Channel;
             BasicDeliverEventArgs eventArgs = command.EventArgs;
 
-            byte[] body = eventArgs.Body.ToArray();
-            string message = Encoding.UTF8.GetString(body);
-            MonitorForNewAcceptedConnectionsBody monitorForNewConnectionsBody = _serializer.DeserializeMonitorForNewAcceptedConnectionsBody(message);
+            MonitorForNewAcceptedConnectionsBody body = command.MessageBody as MonitorForNewAcceptedConnectionsBody;
 
-            HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecuteOffHoursScanPhaseAsync<IOperationResponse>(monitorForNewConnectionsBody);
+            HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecuteOffHoursScanPhaseAsync<IOperationResponse>(body);
             if(operationResult.Succeeded == true)
             {
                 channel.BasicAck(eventArgs.DeliveryTag, false);

@@ -18,30 +18,26 @@ namespace Domain.PhaseHandlers.FollowUpMessageHandlers
     public class FollowUpMessageCommandHandler : ICommandHandler<FollowUpMessageCommand>
     {
         public FollowUpMessageCommandHandler(
-            ICampaignPhaseFacade campaignPhaseFacade, 
-            IRabbitMQSerializer serializer, 
+            ICampaignPhaseFacade campaignPhaseFacade,             
             ILogger<FollowUpMessageCommandHandler> logger)
         {
-            _campaignPhaseFacade = campaignPhaseFacade;
-            _serializer = serializer;
+            _campaignPhaseFacade = campaignPhaseFacade;            
             _logger = logger;
         }
 
         private readonly ILogger<FollowUpMessageCommandHandler> _logger;
-        private readonly ICampaignPhaseFacade _campaignPhaseFacade;
-        private readonly IRabbitMQSerializer _serializer;
+        private readonly ICampaignPhaseFacade _campaignPhaseFacade;        
 
         public async Task HandleAsync(FollowUpMessageCommand command)
         {
             IModel channel = command.Channel;
             BasicDeliverEventArgs args = command.EventArgs;
 
-            byte[] body = command.EventArgs.Body.ToArray();
-            string message = Encoding.UTF8.GetString(body);
-            FollowUpMessageBody followUpMessages = _serializer.DeserializeFollowUpMessagesBody(message);
+            FollowUpMessageBody body = command.MessageBody as FollowUpMessageBody;
+
             try
             {
-                await StartFollowUpMessagesAsync(followUpMessages);
+                await StartFollowUpMessagesAsync(body);
                 channel.BasicAck(args.DeliveryTag, false);
             }
             catch(Exception ex)

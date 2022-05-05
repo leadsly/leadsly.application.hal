@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Domain.PhaseConsumers.FollowUpMessageHandlers
 {
-    public class FollowUpMessageConsumerCommand : ICommand
+    public class FollowUpMessageConsumerCommand : IConsumeCommand
     {
         public FollowUpMessageConsumerCommand(string halId)
         {

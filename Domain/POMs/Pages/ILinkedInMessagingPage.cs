@@ -58,5 +58,7 @@ namespace Domain.POMs.Pages
             where T : IOperationResponse;
 
         bool HasNotification(IWebElement listItem);
+
+        IWebElement MessagingHeader(IWebDriver webDriver);
     }
 }

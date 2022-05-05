@@ -20,17 +20,15 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
     {
         public MonitorForNewConnectionsCommandHandler(
             ILogger<MonitorForNewConnectionsCommandHandler> logger,
-            ICampaignPhaseFacade campaignPhaseFacade,
-            IRabbitMQSerializer serializer)
+            ICampaignPhaseFacade campaignPhaseFacade
+            )
         {
             _campaignPhaseFacade = campaignPhaseFacade;
             _logger = logger;
-            _serializer = serializer;
         }
 
         private readonly ILogger<MonitorForNewConnectionsCommandHandler> _logger;
-        private readonly ICampaignPhaseFacade _campaignPhaseFacade;
-        private readonly IRabbitMQSerializer _serializer;
+        private readonly ICampaignPhaseFacade _campaignPhaseFacade;        
 
         public async Task HandleAsync(MonitorForNewConnectionsCommand command)
         {
@@ -38,13 +36,11 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
             BasicDeliverEventArgs eventArgs = command.EventArgs;
             channel.BasicAck(eventArgs.DeliveryTag, false);
 
-            byte[] body = eventArgs.Body.ToArray();
-            string message = Encoding.UTF8.GetString(body);
-            MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections = _serializer.DeserializeMonitorForNewAcceptedConnectionsBody(message);
+            MonitorForNewAcceptedConnectionsBody body = command.MessageBody as MonitorForNewAcceptedConnectionsBody;
 
             if (MonitorForNewProspectsProvider.IsRunning == false)
             {
-                await StartMonitorForNewConnectionsAsync(monitorForNewAcceptedConnections);
+                await StartMonitorForNewConnectionsAsync(body);
             }            
         }
 

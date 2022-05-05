@@ -39,15 +39,13 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
             // acknowledge the message right away. Let hangfire handle retryies
             channel.BasicAck(eventArgs.DeliveryTag, false);
 
-            byte[] body = eventArgs.Body.ToArray();
-            string message = Encoding.UTF8.GetString(body);
-            ScanProspectsForRepliesBody scanProspectsForRepliesBody = _serializer.DeserializeScanProspectsForRepliesBody(message);
+            ScanProspectsForRepliesBody body = command.MessageBody as ScanProspectsForRepliesBody;
 
             try
             {
                 if(ScanProspectsForRepliesProvider.IsRunning == false)
                 {
-                    await StartScanningProspectsForRepliesAsync(scanProspectsForRepliesBody);
+                    await StartScanningProspectsForRepliesAsync(body);
                 }                
             }
             catch (Exception ex)

@@ -27,9 +27,11 @@ namespace Domain.Providers.Campaigns
             ILogger<DeepScanProspectsForRepliesProvider> logger,
             IWebDriverProvider webDriverProvider,
             ITimestampService timestampService,
+            IHumanBehaviorService humanBehaviorService,
             ILinkedInPageFacade linkedInPageFacade)
         {
             _logger = logger;
+            _humanBehaviorService = humanBehaviorService;
             _timestampService = timestampService;
             _linkedInPageFacade = linkedInPageFacade;
             _webDriverProvider = webDriverProvider;
@@ -37,6 +39,7 @@ namespace Domain.Providers.Campaigns
 
         private readonly ITimestampService _timestampService;
         private readonly ILogger<DeepScanProspectsForRepliesProvider> _logger;
+        private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly ILinkedInPageFacade _linkedInPageFacade;
         private readonly IWebDriverProvider _webDriverProvider;                
 
@@ -215,11 +218,17 @@ namespace Domain.Providers.Campaigns
             IList<ProspectRepliedRequest> prospectsReplied = new List<ProspectRepliedRequest>();
             foreach (ContactedCampaignProspect contactedCampaignProspect in message.ContactedCampaignProspects)
             {
+                IWebElement messagingHeader = _linkedInPageFacade.LinkedInMessagingPage.MessagingHeader(webDriver);
+                _humanBehaviorService.RandomClickElement(messagingHeader);
+                _humanBehaviorService.RandomWaitMilliSeconds(700, 1250);
+
                 result = _linkedInPageFacade.LinkedInMessagingPage.ClearMessagingSearchCriteria<T>(webDriver);
                 if (result.Succeeded == false)
                 {
                     return result;
                 }
+
+                _humanBehaviorService.RandomWaitMilliSeconds(700, 1100);
 
                 // search for each campaign prospect in the messages search field
                 result = _linkedInPageFacade.LinkedInMessagingPage.EnterSearchMessagesCriteria<T>(webDriver, contactedCampaignProspect.Name);

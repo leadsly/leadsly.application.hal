@@ -18,30 +18,26 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
     {
         public DeepScanProspectsForRepliesCommandHandler(
             ILogger<DeepScanProspectsForRepliesCommandHandler> logger,
-            ICampaignPhaseFacade campaignPhaseFacade,
-            IRabbitMQSerializer serializer)
+            ICampaignPhaseFacade campaignPhaseFacade
+            )
         {
-            _campaignPhaseFacade = campaignPhaseFacade;
-            _serializer = serializer;
+            _campaignPhaseFacade = campaignPhaseFacade;            
             _logger = logger;
         }
 
         private readonly ILogger<DeepScanProspectsForRepliesCommandHandler> _logger;
-        private readonly ICampaignPhaseFacade _campaignPhaseFacade;
-        private readonly IRabbitMQSerializer _serializer;
+        private readonly ICampaignPhaseFacade _campaignPhaseFacade;        
 
         public async Task HandleAsync(DeepScanProspectsForRepliesCommand command)
         {
             IModel channel = command.Channel;
             BasicDeliverEventArgs eventArgs = command.EventArgs;
 
-            byte[] body = eventArgs.Body.ToArray();
-            string message = Encoding.UTF8.GetString(body);
-            ScanProspectsForRepliesBody scanProspectsForRepliesBody = _serializer.DeserializeScanProspectsForRepliesBody(message);
+            ScanProspectsForRepliesBody body = command.MessageBody as ScanProspectsForRepliesBody;
 
             try
             {
-                await StartDeepScanningProspectsForRepliesAsync(scanProspectsForRepliesBody);
+                await StartDeepScanningProspectsForRepliesAsync(body);
                 channel.BasicAck(eventArgs.DeliveryTag, false);
                 _logger.LogInformation("Successfully acknowledged DeepScanProspectsForReplies phase");
             }

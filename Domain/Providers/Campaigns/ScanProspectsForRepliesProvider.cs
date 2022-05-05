@@ -147,12 +147,16 @@ namespace Domain.Providers.Campaigns
 
                     // blank for now because it is hard to get profile url, will add later                
                     _linkedInPageFacade.LinkedInMessagingPage.ClickConverstaionListItem(prospectMessage);
-                    WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(30));
-                    bool isActive = wait.Until(drv => _linkedInPageFacade.LinkedInMessagingPage.IsConversationListItemActive(prospectMessage));
-                    if (isActive == false)
+
+                    bool isActive = WaitUntilConversationListItemIsActive(webDriver, prospectMessage);
+                    if(isActive == false)
                     {
                         continue;
                     }
+
+                    _humanService.RandomWaitMilliSeconds(500, 1100);
+                    IWebElement messagingHeader = _linkedInPageFacade.LinkedInMessagingPage.MessagingHeader(webDriver);
+                    _humanService.RandomClickElement(messagingHeader);
 
                     // we need to now grab the contents of the conversation history
                     result = _linkedInPageFacade.LinkedInMessagingPage.GetMessagesContent<T>(webDriver);
@@ -170,15 +174,23 @@ namespace Domain.Providers.Campaigns
                         responseMessage = lastMessage.Text;
                     }
 
-                    ProspectRepliedRequest potentialProspectResponse = new ProspectRepliedRequest()
+                    if(responseMessage != string.Empty)
                     {
-                        ProspectName = prospectName,
-                        ResponseMessage = responseMessage,
-                        ResponseMessageTimestamp = _timestampService.TimestampNowWithZone(message.TimeZoneId),
-                        CampaignProspectId = "",
-                        ProspectProfileUrl = ""
-                    };
-                    prospectsReplied.Add(potentialProspectResponse);
+                        ProspectRepliedRequest potentialProspectResponse = new ProspectRepliedRequest()
+                        {
+                            ProspectName = prospectName,
+                            ResponseMessage = responseMessage,
+                            ResponseMessageTimestamp = _timestampService.TimestampNowWithZone(message.TimeZoneId),
+                            CampaignProspectId = "",
+                            ProspectProfileUrl = ""
+                        };
+                        prospectsReplied.Add(potentialProspectResponse);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Failed to retrieve last message from the prospect");
+                    }
+                    
                 }
             }
 
@@ -190,6 +202,23 @@ namespace Domain.Providers.Campaigns
 
             result.Succeeded = true;
             return result;
+        }
+
+        private bool WaitUntilConversationListItemIsActive(IWebDriver webDriver, IWebElement prospectMessage)
+        {
+            bool active = false;
+            try
+            {
+                WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(5));
+                wait.Until(drv => _linkedInPageFacade.LinkedInMessagingPage.IsConversationListItemActive(prospectMessage));
+                active = true;
+            }
+            catch (Exception ex)
+            {
+                int timeout = 5;
+                _logger.LogError(ex, "Waited for conversation list item to become active but it never did. Waited for {timeout}", timeout);
+            }
+            return active;
         }
 
         private IList<IWebElement> GrabNewMessagesListItems(IReadOnlyCollection<IWebElement> listItems)

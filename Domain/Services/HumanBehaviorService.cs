@@ -31,7 +31,7 @@ namespace Domain.Services
             {
                 if(webElement != null)
                 {
-                    if (number == 3)
+                    if (number == 3 || number == 5)
                     {
                         webElement.Click();
                         _logger.LogInformation("Executing random click. Number is equal to 3. This means we're clicking the passed in element");

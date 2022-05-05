@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Domain.PhaseConsumers.FollowUpMessageHandlers
 {
-    public class FollowUpMessageConsumerCommandHandler : ICommandHandler<FollowUpMessageConsumerCommand>
+    public class FollowUpMessageConsumerCommandHandler : IConsumeCommandHandler<FollowUpMessageConsumerCommand>
     {
         public FollowUpMessageConsumerCommandHandler(IRabbitMQManager rabbitMQManager, IPhaseEventHandlerService campaignManagerService)
         {
@@ -19,7 +19,7 @@ namespace Domain.PhaseConsumers.FollowUpMessageHandlers
 
         private readonly IPhaseEventHandlerService _campaignManagerService;
         private readonly IRabbitMQManager _rabbitMQManager;
-        public Task HandleAsync(FollowUpMessageConsumerCommand command)
+        public Task ConsumeAsync(FollowUpMessageConsumerCommand command)
         {
             string queueNameIn = RabbitMQConstants.FollowUpMessage.QueueName;
             string routingKeyIn = RabbitMQConstants.FollowUpMessage.RoutingKey;

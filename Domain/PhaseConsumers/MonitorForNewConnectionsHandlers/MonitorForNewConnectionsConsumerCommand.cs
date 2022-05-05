@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Domain.PhaseConsumers.MonitorForNewConnectionsHandlers
 {
-    public class MonitorForNewConnectionsConsumerCommand : ICommand
+    public class MonitorForNewConnectionsConsumerCommand : IConsumeCommand
     {
         public MonitorForNewConnectionsConsumerCommand(string halId)
         {

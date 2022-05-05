@@ -18,32 +18,27 @@ namespace Domain.PhaseHandlers.SendConnectionsHandler
     {
         public SendConnectionsCommandHandler(
             ILogger<SendConnectionsCommandHandler> logger,
-            ICampaignPhaseFacade campaignPhaseFacade,
-            IRabbitMQSerializer serializer)
+            ICampaignPhaseFacade campaignPhaseFacade
+            )
         {
             _campaignPhaseFacade = campaignPhaseFacade;
-            _logger = logger;
-            _serializer = serializer;
+            _logger = logger;            
         }
 
         private readonly ILogger<SendConnectionsCommandHandler> _logger;
-        private readonly ICampaignPhaseFacade _campaignPhaseFacade;
-        private readonly IRabbitMQSerializer _serializer;
+        private readonly ICampaignPhaseFacade _campaignPhaseFacade;        
 
         public async Task HandleAsync(SendConnectionsCommand command)
         {
             IModel channel = command.Channel;
             BasicDeliverEventArgs eventArgs = command.EventArgs;
 
-            //try and deserialize the response            
-            byte[] body = eventArgs.Body.ToArray();
-            string message = Encoding.UTF8.GetString(body);
-            SendConnectionsBody sendConnectionsBody = _serializer.DeserializeSendConnectionRequestsBody(message);
+            SendConnectionsBody body = command.MessageBody as SendConnectionsBody;
 
             Action ackOperation = default;
             try
             {
-                HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecutePhaseAsync<IOperationResponse>(sendConnectionsBody);
+                HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecutePhaseAsync<IOperationResponse>(body);
 
                 if (operationResult.Succeeded == true)
                 {

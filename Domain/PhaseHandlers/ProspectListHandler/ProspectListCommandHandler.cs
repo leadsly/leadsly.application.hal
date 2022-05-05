@@ -18,30 +18,27 @@ namespace Domain.PhaseHandlers.NetworkingConnectionsHandler
     {
         public ProspectListCommandHandler(
             ILogger<ProspectListCommandHandler> logger,
-            ICampaignPhaseFacade campaignPhaseFacade, 
-            IRabbitMQSerializer serializer)
+            ICampaignPhaseFacade campaignPhaseFacade
+            )
         {
-            _campaignPhaseFacade = campaignPhaseFacade;
-            _serializer = serializer;
+            _campaignPhaseFacade = campaignPhaseFacade;            
             _logger = logger;
         }
 
         private readonly ILogger<ProspectListCommandHandler> _logger;
-        private readonly ICampaignPhaseFacade _campaignPhaseFacade;
-        private readonly IRabbitMQSerializer _serializer;
+        private readonly ICampaignPhaseFacade _campaignPhaseFacade;        
 
         public async Task HandleAsync(ProspectListCommand command)
         {
             IModel channel = command.Channel;
             BasicDeliverEventArgs eventArgs = command.EventArgs;
 
-            byte[] body = eventArgs.Body.ToArray();
-            string message = Encoding.UTF8.GetString(body);
-            ProspectListBody prospectListBody = _serializer.DeserializeProspectListBody(message);
+            ProspectListBody body = command.MessageBody as ProspectListBody;            
+
             Action ackOperation = default;
             try
             {
-                HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecutePhaseAsync<IOperationResponse>(prospectListBody);
+                HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecutePhaseAsync<IOperationResponse>(body);
 
                 if (operationResult.Succeeded == true)
                 {

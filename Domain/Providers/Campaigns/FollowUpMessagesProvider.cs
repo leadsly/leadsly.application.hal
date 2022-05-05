@@ -76,12 +76,17 @@ namespace Domain.Providers.Campaigns
         {
             HalOperationResult<T> result = new();
 
+            IWebElement messagingHeader = _linkedInPageFacade.LinkedInMessagingPage.MessagingHeader(webDriver);
+            _humanBehaviorService.RandomClickElement(messagingHeader);
+
             result = _linkedInPageFacade.LinkedInMessagingPage.ClickCreateNewMessage<T>(webDriver);
             if(result.Succeeded == false)
             {
                 _logger.LogWarning("Failed to click create new message button");
                 return result;
             }
+
+            _humanBehaviorService.RandomWaitMilliSeconds(600, 1200);
 
             result = _linkedInPageFacade.LinkedInMessagingPage.EnterProspectsName<T>(webDriver, message.ProspectName);
             if(result.Succeeded == false)

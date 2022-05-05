@@ -102,19 +102,6 @@ namespace PageObjects.Pages
         {
             HalOperationResult<T> result = new();
             IList<IWebElement>  prospAsElements = _webDriverUtilities.WaitUntilNotNull(ProspectsAsWebElements, driver, 15);
-            //WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));
-            //try
-            //{
-            //    wait.Until(drv =>
-            //    {
-            //        prospAsElements = ProspectsAsWebElements(driver);
-            //        return prospAsElements != null;
-            //    });
-            //}
-            //catch (Exception ex)
-            //{
-            //    _logger.LogError(ex, "WebDriver wait timed out");
-            //}
 
             if (prospAsElements == null)
             {
@@ -219,21 +206,7 @@ namespace PageObjects.Pages
         {
             HalOperationResult<T> result = new();
 
-            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(15));           
-
-            IWebElement nextBtn = default;
-            try
-            {
-                wait.Until(drv =>
-                {
-                    nextBtn = NextButton(drv);
-                    return nextBtn != null;
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "WebDriver wait timed out");
-            }            
+            IWebElement nextBtn = _webDriverUtilities.WaitUntilNotNull(NextButton, driver, 10);
 
             if(nextBtn == null)
             {
@@ -478,20 +451,6 @@ namespace PageObjects.Pages
         public IWebElement ResultsHeader(IWebDriver webDriver)
         {
             IWebElement resultsHeader = _webDriverUtilities.WaitUntilNotNull(ResultsHeaderH2, webDriver, 15);
-            //WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(15));
-
-            //try
-            //{
-            //    wait.Until(drv =>
-            //    {
-            //        resultsHeader = ResultsHeaderH2(drv);
-            //        return resultsHeader != null;
-            //    });
-            //}
-            //catch (Exception ex)
-            //{
-            //    _logger.LogError(ex, "WebDriver wait timedout");
-            //}            
 
             return resultsHeader;
         }
@@ -501,7 +460,7 @@ namespace PageObjects.Pages
             IWebElement areResultsHelpfulPTag = default;
             try
             {
-                areResultsHelpfulPTag = webDriver.FindElement(By.XPath("//div[contains(@class, 'search-explicit-feedback-in-content-detail')]/descendant::p[contains(text(), 'Are these results helpful?')]"));
+                areResultsHelpfulPTag = webDriver.FindElement(By.XPath("//div[contains(@class, 'search-explicit-feedback-in-content-detail')]/descendant::p[contains(., 'Are these results helpful?')]"));
             }
             catch (Exception ex)
             {
@@ -512,9 +471,74 @@ namespace PageObjects.Pages
 
         public IWebElement AreResultsHelpfulPTag(IWebDriver webDriver)
         {
-            IWebElement resultsHelpfulPTag = _webDriverUtilities.WaitUntilNotNull(AreTheseResultsHelpfulPTag, webDriver, 10);
+            IWebElement resultsHelpfulPTag = _webDriverUtilities.WaitUntilNotNull(AreTheseResultsHelpfulPTag, webDriver, 2);
 
             return resultsHelpfulPTag;
+        }
+
+        public HalOperationResult<T> WaitForResultsHeader<T>(IWebDriver webDriver) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            IWebElement resultsHeader = ResultsHeader(webDriver);
+
+            if(resultsHeader == null)
+            {
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        private IWebElement SearchResultLoader(IWebDriver webDriver)
+        {
+            IWebElement searchResultsLoader = default;
+            try
+            {
+                searchResultsLoader = webDriver.FindElement(By.CssSelector(".core-rail .search-result-loader__container"));
+            }
+            catch (Exception)
+            {
+                _logger.LogInformation("Search results container was not found");
+            }
+            return searchResultsLoader;
+        }
+
+        public HalOperationResult<T> WaitUntilSearchResultsFinishedLoading<T>(IWebDriver webDriver)
+            where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            IWebElement searchResultLoader = _webDriverUtilities.WaitUntilNull(SearchResultLoader, webDriver, 30);
+
+            if(searchResultLoader != null)
+            {
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        private IWebElement LinkedInLogoFooter(IWebDriver webDriver)
+        {
+            IWebElement logo = default;
+            try
+            {
+                logo = webDriver.FindElement(By.CssSelector("footer li-icon[aria-label='LinkedIn']"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to locate LinkedIn logo in the footer");
+            }
+            return logo;
+        }
+        public IWebElement LinkInFooterLogoIcon(IWebDriver webDriver)
+        {
+            IWebElement logo = _webDriverUtilities.WaitUntilNotNull(LinkedInLogoFooter, webDriver, 2);
+
+            return logo;
         }
     }
 }

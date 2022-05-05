@@ -38,7 +38,8 @@ namespace Domain.Services
             HalWorkCommandHandlerDecorator<ScanProspectsForRepliesCommand> scanHandler,
             HalWorkCommandHandlerDecorator<CheckOffHoursNewConnectionsCommand> offHoursHandler,
             HalWorkCommandHandlerDecorator<DeepScanProspectsForRepliesCommand> deepScanHandler,
-            IWebDriverProvider webDriverProvider
+            IWebDriverProvider webDriverProvider,
+            IRabbitMQSerializer serializer
             )
         {
             _logger = logger;
@@ -50,10 +51,11 @@ namespace Domain.Services
             _scanHandler = scanHandler;
             _offHoursHandler = offHoursHandler;
             _deepScanHandler = deepScanHandler;
+            _serializer = serializer;
         }
 
         private readonly HalWorkCommandHandlerDecorator<CheckOffHoursNewConnectionsCommand> _offHoursHandler;
-        private readonly HalWorkCommandHandlerDecorator<DeepScanProspectsForRepliesCommand> _deepScanHandler;
+        private readonly HalWorkCommandHandlerDecorator<DeepScanProspectsForRepliesCommand> _deepScanHandler;        
         private readonly HalWorkCommandHandlerDecorator<ScanProspectsForRepliesCommand> _scanHandler;
         private readonly HalWorkCommandHandlerDecorator<MonitorForNewConnectionsCommand> _monitorHandler;
         private readonly HalWorkCommandHandlerDecorator<FollowUpMessageCommand> _followUpHandler;
@@ -61,6 +63,7 @@ namespace Domain.Services
         private readonly HalWorkCommandHandlerDecorator<ProspectListCommand> _prospectListHandler;
         private readonly ILogger<PhaseEventHandlerService> _logger;        
         private readonly IWebDriverProvider _webDriverProvider;
+        private readonly IRabbitMQSerializer _serializer;
 
         #region NetworkingConnections
 
@@ -81,12 +84,20 @@ namespace Domain.Services
             string networkType = Encoding.UTF8.GetString(networkTypeArr);
             if ((networkType as string) == RabbitMQConstants.NetworkingConnections.ProspectList)
             {
-                ProspectListCommand prospectListCommand = new ProspectListCommand(channel, eventArgs);
+                byte[] body = eventArgs.Body.ToArray();
+                string message = Encoding.UTF8.GetString(body);
+                ProspectListBody prospectListBody = _serializer.DeserializeProspectListBody(message);
+
+                ProspectListCommand prospectListCommand = new ProspectListCommand(channel, eventArgs, prospectListBody, prospectListBody.StartOfWorkday, prospectListBody.EndOfWorkday, prospectListBody.TimeZoneId);
                 await _prospectListHandler.HandleAsync(prospectListCommand);
             }
             else if((networkType as string) == RabbitMQConstants.NetworkingConnections.SendConnectionRequests)
             {
-                SendConnectionsCommand sendConnCommand = new SendConnectionsCommand(channel, eventArgs);
+                byte[] body = eventArgs.Body.ToArray();
+                string message = Encoding.UTF8.GetString(body);
+                SendConnectionsBody sendConnectionsBody = _serializer.DeserializeSendConnectionRequestsBody(message);
+
+                SendConnectionsCommand sendConnCommand = new SendConnectionsCommand(channel, eventArgs, sendConnectionsBody, sendConnectionsBody.StartOfWorkday, sendConnectionsBody.EndOfWorkday, sendConnectionsBody.TimeZoneId);
                 await _sendConnectionsHandler.HandleAsync(sendConnCommand);
             }
             else
@@ -103,7 +114,12 @@ namespace Domain.Services
         public async Task OnFollowUpMessageEventReceivedAsync(object sender, BasicDeliverEventArgs eventArgs)
         {
             IModel channel = ((AsyncEventingBasicConsumer)sender).Model;
-            FollowUpMessageCommand followUpMessageCommand = new FollowUpMessageCommand(channel, eventArgs);
+
+            byte[] body = eventArgs.Body.ToArray();
+            string message = Encoding.UTF8.GetString(body);
+            FollowUpMessageBody followUpMessages = _serializer.DeserializeFollowUpMessagesBody(message);
+
+            FollowUpMessageCommand followUpMessageCommand = new FollowUpMessageCommand(channel, eventArgs, followUpMessages, followUpMessages.StartOfWorkday, followUpMessages.EndOfWorkday, followUpMessages.TimeZoneId);
             await _followUpHandler.HandleAsync(followUpMessageCommand);
         }        
 
@@ -180,14 +196,18 @@ namespace Domain.Services
                 throw new ArgumentException("A header value must be provided!");
             }
 
-            if(executionType == RabbitMQConstants.MonitorNewAcceptedConnections.ExecuteOffHoursScan)
-            {
-                CheckOffHoursNewConnectionsCommand offHoursCommand = new CheckOffHoursNewConnectionsCommand(channel, eventArgs);
+            byte[] body = eventArgs.Body.ToArray();
+            string message = Encoding.UTF8.GetString(body);
+            MonitorForNewAcceptedConnectionsBody messageBody = _serializer.DeserializeMonitorForNewAcceptedConnectionsBody(message);
+
+            if (executionType == RabbitMQConstants.MonitorNewAcceptedConnections.ExecuteOffHoursScan)
+            {                
+                CheckOffHoursNewConnectionsCommand offHoursCommand = new CheckOffHoursNewConnectionsCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);
                 await _offHoursHandler.HandleAsync(offHoursCommand);
             }
             else if(executionType == RabbitMQConstants.MonitorNewAcceptedConnections.ExecutePhase)
             {
-                MonitorForNewConnectionsCommand monitorCommand = new MonitorForNewConnectionsCommand(channel, eventArgs);
+                MonitorForNewConnectionsCommand monitorCommand = new MonitorForNewConnectionsCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);
                 await _monitorHandler.HandleAsync(monitorCommand);
             }
         }
@@ -212,14 +232,18 @@ namespace Domain.Services
                 throw new ArgumentException("A header value must be provided!");
             }
 
+            byte[] body = eventArgs.Body.ToArray();
+            string message = Encoding.UTF8.GetString(body);
+            ScanProspectsForRepliesBody messageBody = _serializer.DeserializeScanProspectsForRepliesBody(message);
+
             if (networkType == RabbitMQConstants.ScanProspectsForReplies.ExecuteDeepScan)
             {
-                DeepScanProspectsForRepliesCommand deepScanProspectsCommand = new DeepScanProspectsForRepliesCommand(channel, eventArgs);
+                DeepScanProspectsForRepliesCommand deepScanProspectsCommand = new DeepScanProspectsForRepliesCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);
                 await _deepScanHandler.HandleAsync(deepScanProspectsCommand);
             }
             else if (networkType == RabbitMQConstants.ScanProspectsForReplies.ExecutePhase)
             {
-                ScanProspectsForRepliesCommand scanProspectsCommand = new ScanProspectsForRepliesCommand(channel, eventArgs);
+                ScanProspectsForRepliesCommand scanProspectsCommand = new ScanProspectsForRepliesCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);
                 await _scanHandler.HandleAsync(scanProspectsCommand);
             }
         }

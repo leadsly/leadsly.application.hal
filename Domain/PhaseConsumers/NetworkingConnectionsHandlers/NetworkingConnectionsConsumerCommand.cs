@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Domain.PhaseConsumers.NetworkingConnectionsHandlers
 {
-    public class NetworkingConnectionsConsumerCommand : ICommand
+    public class NetworkingConnectionsConsumerCommand : IConsumeCommand
     {
         public NetworkingConnectionsConsumerCommand(string halId)
         {

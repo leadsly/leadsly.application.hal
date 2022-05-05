@@ -40,8 +40,14 @@ namespace Domain.POMs.Pages
 
         IWebElement ResultsHeader(IWebDriver webDriver);
 
+        HalOperationResult<T> WaitForResultsHeader<T>(IWebDriver webDriver)
+            where T : IOperationResponse;
+
         IWebElement AreResultsHelpfulPTag(IWebDriver webDriver);
 
+        IWebElement LinkInFooterLogoIcon(IWebDriver webDriver);
 
+        HalOperationResult<T> WaitUntilSearchResultsFinishedLoading<T>(IWebDriver webDriver)
+            where T : IOperationResponse;
     }
 }

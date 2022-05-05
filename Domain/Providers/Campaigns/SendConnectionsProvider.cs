@@ -136,6 +136,12 @@ namespace Domain.Providers.Campaigns
             List<CampaignProspectRequest> connectedProspects = new();
             while (stageConnectionsLimit != 0)
             {
+                HalOperationResult<IOperationResponse> waitForSearchResultsToFinishLoading = _linkedInPageFacade.LinkedInSearchPage.WaitUntilSearchResultsFinishedLoading<IOperationResponse>(webDriver);
+                if (waitForSearchResultsToFinishLoading.Succeeded == false)
+                {
+                    return result;
+                }
+
                 bool isNoSearchResultsContainerDisplayed = _linkedInPageFacade.LinkedInSearchPage.IsNoSearchResultsContainerDisplayed(webDriver);
                 if (isNoSearchResultsContainerDisplayed == true)
                 {
@@ -155,7 +161,6 @@ namespace Domain.Providers.Campaigns
                     return result;
                 }
 
-                // find prospects that have an action button // .entity-result__actions
                 foreach (IWebElement prospect in gatherProspectsResult.Value.ProspectElements)
                 {
                     if(stageConnectionsLimit == 0)
@@ -171,6 +176,10 @@ namespace Domain.Providers.Campaigns
                     }
 
                     _logger.LogInformation("[SendConnectionRequests]: Sending connection request to the given prospect");
+
+                    IWebElement searchResultsHeader = _linkedInPageFacade.LinkedInSearchPage.ResultsHeader(webDriver);
+                    _humanBehaviorService.RandomClickElement(searchResultsHeader);
+
                     _humanBehaviorService.RandomWaitMilliSeconds(700, 3000);
                     result = _linkedInPageFacade.LinkedInSearchPage.SendConnectionRequest<T>(prospect);
                     if (result.Succeeded == false)

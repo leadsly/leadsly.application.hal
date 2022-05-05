@@ -76,10 +76,10 @@ namespace Hal.Configurations
             Log.Information("Registering command handlers.");
 
             // Commands fired to start consuming
-            services.AddScoped<HalWorkCommandHandlerDecorator<FollowUpMessageConsumerCommand>>();
-            services.AddScoped<HalWorkCommandHandlerDecorator<MonitorForNewConnectionsConsumerCommand>>();
-            services.AddScoped<HalWorkCommandHandlerDecorator<NetworkingConnectionsConsumerCommand>>();
-            services.AddScoped<HalWorkCommandHandlerDecorator<ScanProspectsForRepliesConsumerCommand>>();
+            services.AddScoped<HalConsumingCommandHandlerDecorator<FollowUpMessageConsumerCommand>>();
+            services.AddScoped<HalConsumingCommandHandlerDecorator<MonitorForNewConnectionsConsumerCommand>>();
+            services.AddScoped<HalConsumingCommandHandlerDecorator<NetworkingConnectionsConsumerCommand>>();
+            services.AddScoped<HalConsumingCommandHandlerDecorator<ScanProspectsForRepliesConsumerCommand>>();
 
             // Commands fired to start processing the given phase
             services.AddScoped<HalWorkCommandHandlerDecorator<FollowUpMessageCommand>>();
@@ -91,11 +91,10 @@ namespace Hal.Configurations
             services.AddScoped<HalWorkCommandHandlerDecorator<CheckOffHoursNewConnectionsCommand>>();
 
             // Handlers for starting consumption
-            services.AddScoped<ICommandHandler<FollowUpMessageConsumerCommand>, FollowUpMessageConsumerCommandHandler>();
-            services.AddScoped<ICommandHandler<MonitorForNewConnectionsConsumerCommand>, MonitorForNewConnectionsConsumerCommandHandler>();
-            services.AddScoped<ICommandHandler<NetworkingConnectionsConsumerCommand>, NetworkingConnectionsConsumerCommandHandler>();
-            services.AddScoped<ICommandHandler<ScanProspectsForRepliesConsumerCommand>, ScanProspectsForRepliesConsumerCommandHandler>();
-            services.AddScoped<ICommandHandler<CheckOffHoursNewConnectionsCommand>, CheckOffHoursNewConnectionsCommandHandler>();
+            services.AddScoped<IConsumeCommandHandler<FollowUpMessageConsumerCommand>, FollowUpMessageConsumerCommandHandler>();
+            services.AddScoped<IConsumeCommandHandler<MonitorForNewConnectionsConsumerCommand>, MonitorForNewConnectionsConsumerCommandHandler>();
+            services.AddScoped<IConsumeCommandHandler<NetworkingConnectionsConsumerCommand>, NetworkingConnectionsConsumerCommandHandler>();
+            services.AddScoped<IConsumeCommandHandler<ScanProspectsForRepliesConsumerCommand>, ScanProspectsForRepliesConsumerCommandHandler>();            
 
             // Handlers for processing the given phase
             services.AddScoped<ICommandHandler<FollowUpMessageCommand>, FollowUpMessageCommandHandler>();
@@ -104,6 +103,7 @@ namespace Hal.Configurations
             services.AddScoped<ICommandHandler<DeepScanProspectsForRepliesCommand>, DeepScanProspectsForRepliesCommandHandler>();
             services.AddScoped<ICommandHandler<ScanProspectsForRepliesCommand>, ScanProspectsForRepliesCommandHandler>();
             services.AddScoped<ICommandHandler<SendConnectionsCommand>, SendConnectionsCommandHandler>();
+            services.AddScoped<ICommandHandler<CheckOffHoursNewConnectionsCommand>, CheckOffHoursNewConnectionsCommandHandler>();
 
             return services;
         }
@@ -173,7 +173,6 @@ namespace Hal.Configurations
             services.AddScoped<ILinkedInNavBar, LinkedInNavBar>();
             services.AddScoped<ILinkedInSearchPage, LinkedInSearchPage>();
             services.AddScoped<ILinkedInNotificationsPage, LinkedInNotificationsPage>();
-
             services.AddScoped<IAcceptedInvitiationsView, AcceptedInvitationsView>();
             services.AddScoped<IConnectionsView, ConnectionsView>();
 

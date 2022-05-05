@@ -39,31 +39,31 @@ namespace Domain.Services
                 ////////////////////////////////////////////////////////////////////////////////////
                 /// Consume MonitorForNewConnections messages
                 ////////////////////////////////////////////////////////////////////////////////////
-                HalWorkCommandHandlerDecorator<MonitorForNewConnectionsConsumerCommand> monitorHandler = scope.ServiceProvider.GetRequiredService<HalWorkCommandHandlerDecorator<MonitorForNewConnectionsConsumerCommand>>();
+                HalConsumingCommandHandlerDecorator<MonitorForNewConnectionsConsumerCommand> monitorHandler = scope.ServiceProvider.GetRequiredService<HalConsumingCommandHandlerDecorator<MonitorForNewConnectionsConsumerCommand>>();
                 MonitorForNewConnectionsConsumerCommand monitorCommand = new MonitorForNewConnectionsConsumerCommand(halIdentity.Id);
-                await monitorHandler.HandleAsync(monitorCommand);
+                await monitorHandler.ConsumeAsync(monitorCommand);
 
                 ////////////////////////////////////////////////////////////////////////////////////
                 /// Consume ScanProspectsForReplies messages
                 ////////////////////////////////////////////////////////////////////////////////////
-                HalWorkCommandHandlerDecorator<ScanProspectsForRepliesConsumerCommand> scanProspectsHandler = scope.ServiceProvider.GetRequiredService<HalWorkCommandHandlerDecorator<ScanProspectsForRepliesConsumerCommand>>();
+                HalConsumingCommandHandlerDecorator<ScanProspectsForRepliesConsumerCommand> scanProspectsHandler = scope.ServiceProvider.GetRequiredService<HalConsumingCommandHandlerDecorator<ScanProspectsForRepliesConsumerCommand>>();
                 ScanProspectsForRepliesConsumerCommand scanCommand = new ScanProspectsForRepliesConsumerCommand(halIdentity.Id);
-                await scanProspectsHandler.HandleAsync(scanCommand);
+                await scanProspectsHandler.ConsumeAsync(scanCommand);
 
                 ////////////////////////////////////////////////////////////////////////////////////
                 /// Consume FollowUpMessages messages
                 ////////////////////////////////////////////////////////////////////////////////////
-                HalWorkCommandHandlerDecorator<FollowUpMessageConsumerCommand> followUpHandler = scope.ServiceProvider.GetRequiredService<HalWorkCommandHandlerDecorator<FollowUpMessageConsumerCommand>>();
+                HalConsumingCommandHandlerDecorator<FollowUpMessageConsumerCommand> followUpHandler = scope.ServiceProvider.GetRequiredService<HalConsumingCommandHandlerDecorator<FollowUpMessageConsumerCommand>>();
                 FollowUpMessageConsumerCommand followUpCommand = new FollowUpMessageConsumerCommand(halIdentity.Id);
-                await followUpHandler.HandleAsync(followUpCommand);
+                await followUpHandler.ConsumeAsync(followUpCommand);
 
 
                 ////////////////////////////////////////////////////////////////////////////////////
                 /// Consume NetworkingConnections [ ProspectListPhase OR SendConnectionsPhase ] messages
                 ////////////////////////////////////////////////////////////////////////////////////
-                HalWorkCommandHandlerDecorator<NetworkingConnectionsConsumerCommand> networkingHandler = scope.ServiceProvider.GetRequiredService<HalWorkCommandHandlerDecorator<NetworkingConnectionsConsumerCommand>>();
+                HalConsumingCommandHandlerDecorator<NetworkingConnectionsConsumerCommand> networkingHandler = scope.ServiceProvider.GetRequiredService<HalConsumingCommandHandlerDecorator<NetworkingConnectionsConsumerCommand>>();
                 NetworkingConnectionsConsumerCommand networkingCommand = new NetworkingConnectionsConsumerCommand(halIdentity.Id);
-                await networkingHandler.HandleAsync(networkingCommand);
+                await networkingHandler.ConsumeAsync(networkingCommand);
             }
         }
     }

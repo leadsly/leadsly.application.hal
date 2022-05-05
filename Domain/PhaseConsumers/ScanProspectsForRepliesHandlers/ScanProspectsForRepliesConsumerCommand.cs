@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Domain.PhaseConsumers.ScanProspectsForRepliesHandlers
 {
-    public class ScanProspectsForRepliesConsumerCommand : ICommand
+    public class ScanProspectsForRepliesConsumerCommand : IConsumeCommand
     {
         public ScanProspectsForRepliesConsumerCommand(string halId)
         {

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Domain.PhaseConsumers.NetworkingConnectionsHandlers
 {
-    public class NetworkingConnectionsConsumerCommandHandler : ICommandHandler<NetworkingConnectionsConsumerCommand>
+    public class NetworkingConnectionsConsumerCommandHandler : IConsumeCommandHandler<NetworkingConnectionsConsumerCommand>
     {
         public NetworkingConnectionsConsumerCommandHandler(IRabbitMQManager rabbitMQManager, IPhaseEventHandlerService campaignManagerService)
         {
@@ -20,7 +20,7 @@ namespace Domain.PhaseConsumers.NetworkingConnectionsHandlers
         private readonly IPhaseEventHandlerService _campaignManagerService;
         private readonly IRabbitMQManager _rabbitMQManager;
 
-        public Task HandleAsync(NetworkingConnectionsConsumerCommand command)
+        public Task ConsumeAsync(NetworkingConnectionsConsumerCommand command)
         {
             string queueNameIn = RabbitMQConstants.NetworkingConnections.QueueName;
             string routingKeyIn = RabbitMQConstants.NetworkingConnections.RoutingKey;

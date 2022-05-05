@@ -168,8 +168,10 @@ namespace Domain.Providers.Campaigns
                         }
                     }
 
+                    _humanBehaviorService.RandomWaitMilliSeconds(700, 1500);
                     IWebElement resultsDiv = _linkedInPageFacade.LinkedInSearchPage.ResultsHeader(webDriver);
                     _humanBehaviorService.RandomClickElement(resultsDiv);
+                    _humanBehaviorService.RandomWaitMilliSeconds(700, 1500);
 
                     HalOperationResult<IGatherProspects> result = _linkedInPageFacade.LinkedInSearchPage.GatherProspects<IGatherProspects>(webDriver);
                     if (result.Succeeded == false)
@@ -194,6 +196,10 @@ namespace Domain.Providers.Campaigns
                         break;
                     }
 
+                    IWebElement linkedInFooterLogo = _linkedInPageFacade.LinkedInSearchPage.LinkInFooterLogoIcon(webDriver);
+                    _humanBehaviorService.RandomClickElement(linkedInFooterLogo);
+                    _humanBehaviorService.RandomWaitMilliSeconds(1200, 1550);
+
                     HalOperationResult<IOperationResponse> clickNextResult = _linkedInPageFacade.LinkedInSearchPage.ClickNext<IOperationResponse>(webDriver);
                     if(clickNextResult.Succeeded == false)
                     {
@@ -203,14 +209,11 @@ namespace Domain.Providers.Campaigns
 
                     _humanBehaviorService.RandomWaitMilliSeconds(700, 3000);
 
-                    isNoSearchResultsContainerDisplayed = _linkedInPageFacade.LinkedInSearchPage.IsNoSearchResultsContainerDisplayed(webDriver);
-                    if (isNoSearchResultsContainerDisplayed == true)
+                    HalOperationResult<IOperationResponse> waitForResultsOperation = _linkedInPageFacade.LinkedInSearchPage.WaitUntilSearchResultsFinishedLoading<IOperationResponse>(webDriver);
+                    if(waitForResultsOperation.Succeeded == false)
                     {
-                        HalOperationResult<IOperationResponse> retrySearchResult = _linkedInPageFacade.LinkedInSearchPage.ClickRetrySearch<IOperationResponse>(webDriver);
-                        if (retrySearchResult.Succeeded == false)
-                        {
-                            break;
-                        }
+                        _logger.LogError("Search results never finished loading.");
+                        break;
                     }
                 }
             }

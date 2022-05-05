@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Services.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,14 +14,24 @@ namespace Domain
         {
             _decorated = decorated;
         }
-
+        
         private readonly ICommandHandler<TCommand> _decorated;
 
         public async Task HandleAsync(TCommand command)
         {
             // check to see if right now is during hal's work day
+            TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById(command.TimeZoneId);                        
+            DateTime startOfWorkDay = DateTime.Parse(command.StartOfWorkDay);
+            DateTime endOfWorkDay = DateTime.Parse(command.EndOfWorkDay);
 
-            await this._decorated.HandleAsync(command);
+            DateTime usersTime = TimeZoneInfo.ConvertTime(DateTime.Now, tz);
+            DateTime startWorkTime = TimeZoneInfo.ConvertTime(startOfWorkDay, tz);
+            DateTime endOfWorkTime = TimeZoneInfo.ConvertTime(endOfWorkDay, tz);
+
+            if ((usersTime > startWorkTime) && (usersTime < endOfWorkTime))
+            {
+                await this._decorated.HandleAsync(command);
+            }            
         }
     }
 }
