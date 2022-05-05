@@ -118,24 +118,26 @@ namespace Domain.Providers.Campaigns
                 }
             }
 
+            _webDriverProvider.CloseBrowser<IOperationResponse>(BrowserPurpose.ProspectList);
+
             IPrimaryProspectListPayload primaryProspectsPayload = new PrimaryProspectListPayload
             {
                 Prospects = prospects
             };
 
-            result = _webDriverProvider.CloseTab<T>(BrowserPurpose.ProspectList, webDriver.CurrentWindowHandle);
-            if(result.Succeeded == false)
-            {
-                _logger.LogError("Failed to close ProspectList tab");
-                return result;
-            }
+            //result = _webDriverProvider.CloseTab<T>(BrowserPurpose.ProspectList, webDriver.CurrentWindowHandle);
+            //if(result.Succeeded == false)
+            //{
+            //    _logger.LogError("Failed to close ProspectList tab");
+            //    return result;
+            //}
 
-            result = _webDriverProvider.SwitchTo<T>(webDriver, defaultWindowHandle);
-            if(result.Succeeded == false)
-            {
-                _logger.LogError("Failed to switch back to default tab in ProspectList browser");
-                return result;
-            };
+            //result = _webDriverProvider.SwitchTo<T>(webDriver, defaultWindowHandle);
+            //if(result.Succeeded == false)
+            //{
+            //    _logger.LogError("Failed to switch back to default tab in ProspectList browser");
+            //    return result;
+            //};
 
             result.Value = (T)primaryProspectsPayload;
             return result;
@@ -152,8 +154,8 @@ namespace Domain.Providers.Campaigns
             List<string> windowHandles = new();
             IList<PrimaryProspectRequest> prospects = new List<PrimaryProspectRequest>();
 
-            try
-            {
+            
+            
                 int currentSearchReultsPage = 0;
                 for (int i = 0; i < totalResults; i++)
                 {
@@ -183,7 +185,7 @@ namespace Domain.Providers.Campaigns
                     _logger.LogTrace("Creating PrimaryProspects from IWebElements");
                     prospects = prospects.Concat(CreatePrimaryProspects(propsAsWebElements, primaryProspectListId)).ToList();
 
-                    if (i == 20)
+                    if (i == 1)
                         break;
 
                     IWebElement areResultsHelpfulText = _linkedInPageFacade.LinkedInSearchPage.AreResultsHelpfulPTag(webDriver);
@@ -198,7 +200,7 @@ namespace Domain.Providers.Campaigns
 
                     IWebElement linkedInFooterLogo = _linkedInPageFacade.LinkedInSearchPage.LinkInFooterLogoIcon(webDriver);
                     _humanBehaviorService.RandomClickElement(linkedInFooterLogo);
-                    _humanBehaviorService.RandomWaitMilliSeconds(1200, 1550);
+                    _humanBehaviorService.RandomWaitMilliSeconds(2000, 5000);
 
                     HalOperationResult<IOperationResponse> clickNextResult = _linkedInPageFacade.LinkedInSearchPage.ClickNext<IOperationResponse>(webDriver);
                     if(clickNextResult.Succeeded == false)
@@ -207,8 +209,6 @@ namespace Domain.Providers.Campaigns
                         break;
                     }
 
-                    _humanBehaviorService.RandomWaitMilliSeconds(700, 3000);
-
                     HalOperationResult<IOperationResponse> waitForResultsOperation = _linkedInPageFacade.LinkedInSearchPage.WaitUntilSearchResultsFinishedLoading<IOperationResponse>(webDriver);
                     if(waitForResultsOperation.Succeeded == false)
                     {
@@ -216,12 +216,7 @@ namespace Domain.Providers.Campaigns
                         break;
                     }
                 }
-            }
-            finally
-            {
-                // close all opened tabs                
-                windowHandles.ForEach(windowHandle => _webDriverProvider.CloseTab<IOperationResponse>(BrowserPurpose.ProspectList, windowHandle));
-            }
+            
 
             return prospects;
         }

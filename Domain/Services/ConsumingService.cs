@@ -64,6 +64,7 @@ namespace Domain.Services
                 HalConsumingCommandHandlerDecorator<NetworkingConnectionsConsumerCommand> networkingHandler = scope.ServiceProvider.GetRequiredService<HalConsumingCommandHandlerDecorator<NetworkingConnectionsConsumerCommand>>();
                 NetworkingConnectionsConsumerCommand networkingCommand = new NetworkingConnectionsConsumerCommand(halIdentity.Id);
                 await networkingHandler.ConsumeAsync(networkingCommand);
+
             }
         }
     }
