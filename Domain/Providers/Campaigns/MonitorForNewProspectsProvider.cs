@@ -292,7 +292,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = "api/campaignphases/process-newly-accepted-prospects",
+                RequestUrl = $"api/MonitorForNewProspects/{message.HalId}/new-prospects",
                 NewAcceptedProspectsConnections = newProspects,
                 ApplicationUserId = message.UserId
             };

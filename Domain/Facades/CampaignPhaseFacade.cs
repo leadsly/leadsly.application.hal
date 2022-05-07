@@ -61,16 +61,7 @@ namespace Domain.Facades
 
         public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
         {
-            HalOperationResult<T> result = new();
-
-            result = await _scanProspectsForRepliesProvider.ExecutePhaseAsync<T>(message);
-            if(result.Succeeded == false)
-            {
-                return result;
-            }
-
-            result.Succeeded = true;
-            return result;
+            return await _scanProspectsForRepliesProvider.ExecutePhaseAsync<T>(message);            
         }
 
         public async Task<HalOperationResult<T>> ExecuteDeepScanPhaseAsync<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
@@ -92,7 +83,7 @@ namespace Domain.Facades
 
             if(prospectsReplied.ProspectsReplied.Count != 0)
             {
-                await _phaseDataProcessingProvider.ProcessCampaignProspectsRepliedAsync<T>(prospectsReplied.ProspectsReplied, message);                
+                await _phaseDataProcessingProvider.ProcessProspectsThatRepliedAsync<T>(prospectsReplied.ProspectsReplied, message);                
             }
 
             // trigger ScanProspectsForRepliesPhase and FollowUpMessagePhase

@@ -36,6 +36,8 @@ namespace Domain.POMs.Pages
 
         IWebElement GetCustomizeThisInvitationModalElement(IWebDriver webDriver);
 
+        IWebElement GetCustomizeThisInvitationModalContent(IWebDriver webDriver);
+
         bool IsNextButtonDisabled(IWebDriver webDriver);
 
         IWebElement ResultsHeader(IWebDriver webDriver);

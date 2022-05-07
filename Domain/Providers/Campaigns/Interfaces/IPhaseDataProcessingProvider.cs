@@ -27,7 +27,7 @@ namespace Domain.Providers.Campaigns.Interfaces
         /// <param name="message"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        Task<HalOperationResult<T>> ProcessCampaignProspectsRepliedAsync<T>(IList<ProspectRepliedRequest> prospectsReplied, ScanProspectsForRepliesBody message, CancellationToken ct = default)
+        Task<HalOperationResult<T>> ProcessProspectsThatRepliedAsync<T>(IList<ProspectRepliedRequest> prospectsReplied, ScanProspectsForRepliesBody message, CancellationToken ct = default)
             where T : IOperationResponse;
 
         /// <summary>

@@ -35,7 +35,7 @@ namespace Domain.Providers.Campaigns
                 CampaignId = message.CampaignId,
                 UserId = message.UserId,
                 HalId = message.HalId,
-                RequestUrl = "api/campaignphases/trigger-send-connection-requests",
+                RequestUrl = $"api/SendConnections/{message.HalId}",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
             };
@@ -61,7 +61,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/campaignphases/trigger-scan-prospects-for-replies",
+                RequestUrl = $"api/ScanProspectsForReplies/{message.HalId}",
                 UserId = message.UserId
             };
 
@@ -87,7 +87,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/campaignphases/trigger-follow-up-messages",
+                RequestUrl = $"api/FollowUpMessage/{message.HalId}",
                 UserId = message.UserId
             };
 

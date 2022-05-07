@@ -43,7 +43,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/campaigns/{message.CampaignId}/sent-connections-url-statuses"
+                RequestUrl = $"api/SendConnections/{message.CampaignId}/url"
             };
 
             HttpResponseMessage responseMessage = await _campaignService.GetLatestSentConnectionsUrlStatusesAsync(request, ct);
@@ -75,7 +75,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/campaigns/{message.CampaignId}/sent-connections-url-statuses",
+                RequestUrl = $"api/SendConnections/{message.CampaignId}/url",
                 SentConnectionsUrlStatuses = updatedSearchUrlsStatuses
             };
 

@@ -378,9 +378,23 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to locate modal");
+                _logger.LogWarning(ex, "Failed to locate modal by css selector '#artdeco-modal-outlet .artdeco-modal'");
             }
             return modal;
+        }
+
+        private IWebElement CustomizeModalContent(IWebDriver webDriver)
+        {
+            IWebElement modalContent = default;
+            try
+            {
+                modalContent = CustomizeThisInvitationModal(webDriver)?.FindElement(By.ClassName("artdeco-modal__content"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to locate customize modal content. ");
+            }
+            return modalContent;
         }
 
         public IWebElement GetCustomizeThisInvitationModalElement(IWebDriver webDriver)
@@ -388,6 +402,12 @@ namespace PageObjects.Pages
             IWebElement modal = _webDriverUtilities.WaitUntilNotNull(CustomizeThisInvitationModal, webDriver, 10);
 
             return modal;
+        }
+
+        public IWebElement GetCustomizeThisInvitationModalContent(IWebDriver webDriver)
+        {
+            IWebElement modalContent = _webDriverUtilities.WaitUntilNotNull(CustomizeModalContent, webDriver, 5);
+            return modalContent;
         }
 
         private IWebElement SendNowButton(IWebDriver webDriver)

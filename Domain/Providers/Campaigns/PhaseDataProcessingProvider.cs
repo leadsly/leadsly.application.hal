@@ -49,7 +49,7 @@ namespace Domain.Providers.Campaigns
                 PrimaryProspectListId = message.PrimaryProspectListId,
                 CampaignProspectListId = message.CampaignProspectListId,
                 Prospects = primaryProspectList.Prospects,
-                RequestUrl = "api/prospect-list",
+                RequestUrl = $"api/ProspectList/{message.HalId}",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
             };
@@ -75,21 +75,13 @@ namespace Domain.Providers.Campaigns
         {
             HalOperationResult<T> result = new();
 
-            // cast resultValue to ProspectList
-            //ISendConnectionsPayload payload = resultValue as ISendConnectionsPayload;
-            //if (payload == null)
-            //{
-            //    _logger.LogError("Failed to cast resultValue into ICampaignProspectListPayload");
-            //    return result;
-            //}
-
             CampaignProspectListRequest request = new()
             {
                 HalId = message.HalId,
                 UserId = message.UserId,
                 CampaignId = message.CampaignId,
                 CampaignProspects = campaignProspects,
-                RequestUrl = $"api/campaigns/{message.CampaignId}/prospects",
+                RequestUrl = $"api/SendConnections/{message.CampaignId}/prospects",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
             };
@@ -111,7 +103,15 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        public async Task<HalOperationResult<T>> ProcessCampaignProspectsRepliedAsync<T>(IList<ProspectRepliedRequest> prospectsReplied, ScanProspectsForRepliesBody message, CancellationToken ct = default) where T : IOperationResponse
+        /// <summary>
+        /// Processes those prospects that have replied to our message after running DeepScanProspectsForReplies phase.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="prospectsReplied"></param>
+        /// <param name="message"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        public async Task<HalOperationResult<T>> ProcessProspectsThatRepliedAsync<T>(IList<ProspectRepliedRequest> prospectsReplied, ScanProspectsForRepliesBody message, CancellationToken ct = default) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
@@ -120,7 +120,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/prospect-list/deep-scan/prospects-replied",
+                RequestUrl = $"api/DeepScanProspectsForReplies/{message.HalId}",
                 ProspectsReplied = prospectsReplied
             };
 
@@ -145,7 +145,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/prospect-list/prospects-replied",
+                RequestUrl = $"api/ScanProspectsForReplies/{message.HalId}/prospects-replies",
                 ProspectsReplied = prospectsReplied
             };
 
@@ -168,7 +168,7 @@ namespace Domain.Providers.Campaigns
 
             sentFollowUpMessageRequest.NamespaceName = message.NamespaceName;
             sentFollowUpMessageRequest.ServiceDiscoveryName = message.ServiceDiscoveryName;
-            sentFollowUpMessageRequest.RequestUrl = $"api/campaignprospects/{sentFollowUpMessageRequest.CampaignProspectId}/follow-up";
+            sentFollowUpMessageRequest.RequestUrl = $"api/FollowUpMessage/{sentFollowUpMessageRequest.CampaignProspectId}/follow-up";
 
             HttpResponseMessage responseMessage = await _phaseDataProcessingService.ProcessFollowUpMessageSentAsync(sentFollowUpMessageRequest, ct);
 

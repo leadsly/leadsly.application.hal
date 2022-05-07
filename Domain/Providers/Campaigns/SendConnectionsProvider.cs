@@ -65,7 +65,17 @@ namespace Domain.Providers.Campaigns
 
             IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)driverOperationResult.Value).WebDriver;
 
-            return SendConnections<T>(webDriver, message, sentConnectionsUrlStatusPayload);
+            result = SendConnections<T>(webDriver, message, sentConnectionsUrlStatusPayload);
+
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            _webDriverProvider.CloseBrowser<T>(BrowserPurpose.Connect);
+
+            result.Succeeded = true;
+            return result;
         }
 
         private HalOperationResult<T> SendConnections<T>(IWebDriver webDriver, SendConnectionsBody message, IList<SentConnectionsUrlStatusRequest> sentConnectionsUrlStatusPayload)
@@ -187,8 +197,8 @@ namespace Domain.Providers.Campaigns
                         continue;
                     }
 
-                    IWebElement customizeThisInvitationModal = _linkedInPageFacade.LinkedInSearchPage.GetCustomizeThisInvitationModalElement(webDriver);
-                    _humanBehaviorService.RandomClickElement(customizeThisInvitationModal);
+                    IWebElement modalContent = _linkedInPageFacade.LinkedInSearchPage.GetCustomizeThisInvitationModalContent(webDriver);
+                    _humanBehaviorService.RandomClickElement(modalContent);
 
                     _humanBehaviorService.RandomWaitMilliSeconds(700, 1400);
                     result = _linkedInPageFacade.LinkedInSearchPage.ClickSendInModal<T>(webDriver);
@@ -199,7 +209,13 @@ namespace Domain.Providers.Campaigns
                     connectedProspects.Add(CreateCampaignProspects(prospect, campaignId));
 
                     stageConnectionsLimit -= 1;
-                }         
+                }
+
+                result = _linkedInPageFacade.LinkedInSearchPage.ScrollFooterIntoView<T>(webDriver);
+                if(result.Succeeded == false)
+                {
+                    return result;
+                }
 
                 bool nextDisabled = _linkedInPageFacade.LinkedInSearchPage.IsNextButtonDisabled(webDriver);
                 if (nextDisabled)
@@ -234,6 +250,14 @@ namespace Domain.Providers.Campaigns
                     _logger.LogError("[SendConnectionRequests]: Failed to navigate to the next page");
                     return result;
                 }
+
+                HalOperationResult<IOperationResponse> waitForResultsOperation = _linkedInPageFacade.LinkedInSearchPage.WaitUntilSearchResultsFinishedLoading<IOperationResponse>(webDriver);
+                if (waitForResultsOperation.Succeeded == false)
+                {
+                    _logger.LogError("Search results never finished loading.");
+                    break;
+                }
+
             }
 
             ISendConnectionsPayload campaignProspectsPayload = default;
