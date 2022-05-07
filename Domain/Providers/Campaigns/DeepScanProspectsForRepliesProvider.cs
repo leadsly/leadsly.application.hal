@@ -152,6 +152,8 @@ namespace Domain.Providers.Campaigns
 
         private IWebElement GetProspectsMessageItem(IWebDriver webDriver, string prospectName, int beforeSearchMessagesCount)
         {
+            _logger.LogDebug("Locating prospects message container.");
+
             IWebElement targetProspect = default;
 
             // attempst to wait for the prospect to be surfaced to the top of the list                
@@ -231,6 +233,7 @@ namespace Domain.Providers.Campaigns
                 _humanBehaviorService.RandomWaitMilliSeconds(700, 1100);
 
                 // search for each campaign prospect in the messages search field
+                _logger.LogDebug("");
                 result = _linkedInPageFacade.LinkedInMessagingPage.EnterSearchMessagesCriteria<T>(webDriver, contactedCampaignProspect.Name);
                 if (result.Succeeded == false)
                 {

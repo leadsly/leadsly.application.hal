@@ -42,7 +42,7 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogError("Failed to locate new message compose button by class name 'msg-conversations-container__compose-btn'");
+                _logger.LogError(ex, "Failed to locate new message compose button by class name 'msg-conversations-container__compose-btn'");
             }
             return composeNewMsgAnchor;
         }
@@ -101,7 +101,7 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-
+                _logger.LogWarning(ex, "Failed to locate send new message button");
             }
         }
 
