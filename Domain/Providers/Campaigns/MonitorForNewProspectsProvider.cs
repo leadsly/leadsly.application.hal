@@ -173,7 +173,7 @@ namespace Domain.Providers.Campaigns
         {
             IsRunning = true;
             DateTimeOffset endOfWorkDayInZone = _timestampService.GetDateTimeWithZone(message.TimeZoneId, message.EndWorkTime);            
-            while (_timestampService.GetDateTimeNowWithZone(message.TimeZoneId) < endOfWorkDayInZone)
+            while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayInZone)
             {
                 PreviousConnectionsCount = _linkedInPageFacade.ConnectionsView.GetConnectionsCount(webDriver);
                 PreviousRecentlyAdded = _linkedInPageFacade.ConnectionsView.GetAllRecentlyAdded(webDriver);
@@ -207,7 +207,7 @@ namespace Domain.Providers.Campaigns
             foreach (RecentlyAddedProspect prospect in prospects)
             {
                 // create timestamp with minues num of hours
-                DateTimeOffset dateTimeOffset = _timestampService.GetDateTimeNowWithZone(message.TimeZoneId);
+                DateTimeOffset dateTimeOffset = _timestampService.GetNowLocalized(message.TimeZoneId);
                 DateTimeOffset connectionAcceptedTime = dateTimeOffset.AddHours(-prospect.NumberOfHoursAgo);
 
                 NewProspectConnectionRequest newProspect = new()
@@ -231,7 +231,7 @@ namespace Domain.Providers.Campaigns
                 NewProspectConnectionRequest newProspect = new()
                 {
                     ProspectName = prospectName,
-                    AcceptedTimestamp = _timestampService.TimestampNowWithZone(message.TimeZoneId),
+                    AcceptedTimestamp = _timestampService.TimestampNow(),
                     ProfileUrl = ""
                 };
 

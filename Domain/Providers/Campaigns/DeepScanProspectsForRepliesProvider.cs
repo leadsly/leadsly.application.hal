@@ -309,7 +309,7 @@ namespace Domain.Providers.Campaigns
         {
             return new()
             {
-                ResponseMessageTimestamp = _timestampService.TimestampNowWithZone(timeZoneId),
+                ResponseMessageTimestamp = _timestampService.TimestampNow(),
                 CampaignProspectId = campaignProspect.CampaignProspectId,
                 ResponseMessage = responseMessage,
                 ProspectName = prospectName,

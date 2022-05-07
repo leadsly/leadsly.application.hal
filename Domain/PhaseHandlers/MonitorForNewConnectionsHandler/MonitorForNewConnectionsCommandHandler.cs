@@ -34,7 +34,7 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
         {
             IModel channel = command.Channel;
             BasicDeliverEventArgs eventArgs = command.EventArgs;
-            channel.BasicAck(eventArgs.DeliveryTag, false);
+            // channel.BasicAck(eventArgs.DeliveryTag, false);
 
             MonitorForNewAcceptedConnectionsBody body = command.MessageBody as MonitorForNewAcceptedConnectionsBody;
 

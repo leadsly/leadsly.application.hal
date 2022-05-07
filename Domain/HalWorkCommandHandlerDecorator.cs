@@ -25,10 +25,8 @@ namespace Domain
             DateTime endOfWorkDay = DateTime.Parse(command.EndOfWorkDay);
 
             DateTime usersTime = TimeZoneInfo.ConvertTime(DateTime.Now, tz);
-            DateTime startWorkTime = TimeZoneInfo.ConvertTime(startOfWorkDay, tz);
-            DateTime endOfWorkTime = TimeZoneInfo.ConvertTime(endOfWorkDay, tz);
 
-            if ((usersTime > startWorkTime) && (usersTime < endOfWorkTime))
+            if ((usersTime > startOfWorkDay) && (usersTime < endOfWorkDay))
             {
                 await this._decorated.HandleAsync(command);
             }            

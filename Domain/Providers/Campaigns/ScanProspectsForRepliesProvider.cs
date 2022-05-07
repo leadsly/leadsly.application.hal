@@ -105,7 +105,7 @@ namespace Domain.Providers.Campaigns
             HalOperationResult<T> result = new();
             IsRunning = true;
             DateTimeOffset endOfWorkDayInZone = _timestampService.GetDateTimeWithZone(message.TimeZoneId, message.EndWorkTime);
-            while (_timestampService.GetDateTimeNowWithZone(message.TimeZoneId) < endOfWorkDayInZone)
+            while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayInZone)
             {
                 _humanService.RandomWaitSeconds(30, 45);
 
@@ -180,7 +180,7 @@ namespace Domain.Providers.Campaigns
                         {
                             ProspectName = prospectName,
                             ResponseMessage = responseMessage,
-                            ResponseMessageTimestamp = _timestampService.TimestampNowWithZone(message.TimeZoneId),
+                            ResponseMessageTimestamp = _timestampService.TimestampNow(),
                             CampaignProspectId = "",
                             ProspectProfileUrl = ""
                         };

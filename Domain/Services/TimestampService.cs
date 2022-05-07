@@ -1,60 +1,46 @@
 ﻿using Domain.Services.Interfaces;
-using Leadsly.Application.Model.Entities;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Domain.Services
 {
     public class TimestampService : ITimestampService
     {
-        public TimestampService(ILogger<TimestampService> logger, IMemoryCache memCache)
+        public TimestampService(ILogger<TimestampService> logger)
         {
             _logger = logger;
-            _memoryCache = memCache;
         }
 
         private readonly ILogger<TimestampService> _logger;
-        private readonly IMemoryCache _memoryCache;
 
-        public DateTimeOffset GetDateTimeNowWithZone(string zoneId)
+        public DateTime GetNowLocalized(string zoneId)
         {
-            TimeZoneInfo timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(zoneId);
-
-            DateTime localDateTime = new DateTimeWithZone(DateTime.Now, timeZoneInfo).LocalTime;
-
-            return new DateTimeOffset(localDateTime);
+            _logger.LogInformation("Executing GetDateTimeNowWithZone for zone {zoneId}", zoneId);
+            DateTime nowLocal = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, zoneId);
+            _logger.LogInformation($"Now in local zone {zoneId} is {nowLocal.Date}");
+            return nowLocal;
         }
 
-        public DateTimeOffset GetDateTimeWithZone(string zoneId, long timestamp)
+        public DateTime GetDateTimeWithZone(string zoneId, long timestamp)
         {
+            _logger.LogInformation("Executing GetDateTimeWithZone for zone {zoneId} and timestamp {timestamp}", zoneId, timestamp);
             TimeZoneInfo timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(zoneId);
-
             DateTimeOffset timestampOffSet = DateTimeOffset.FromUnixTimeSeconds(timestamp);
+            DateTime localDateTime = new DateTimeWithZone(timestampOffSet.DateTime, timeZoneInfo).LocalTime;
+            _logger.LogInformation($"Local date time in zone {zoneId} is {localDateTime.Date}");
 
-            DateTime localDateTime = new DateTimeWithZone(timestampOffSet.LocalDateTime, timeZoneInfo).LocalTime;
-
-            return new DateTimeOffset(localDateTime);
+            return localDateTime;
         }
 
-        public long TimestampNowWithZone(string zoneId)
+        public long TimestampNow()
         {
-            TimeZoneInfo timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(zoneId);
-
-            DateTime localNow = new DateTimeWithZone(DateTime.Now, timeZoneInfo).LocalTime;
-
-            DateTimeOffset now = localNow;
-
-            return now.ToUnixTimeSeconds();
+            _logger.LogInformation("Executing timestamp now");
+            return DateTimeOffset.Now.ToUnixTimeSeconds();
         }
 
         public long TimestampFromDateTimeOffset(DateTimeOffset dateTimeOffset)
         {
+            _logger.LogInformation("Executing timestamp from datetimeoffset");
             return dateTimeOffset.ToUnixTimeSeconds();
         }
     }

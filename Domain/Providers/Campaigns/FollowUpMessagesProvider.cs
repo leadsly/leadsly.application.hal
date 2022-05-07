@@ -134,7 +134,7 @@ namespace Domain.Providers.Campaigns
                 {
                     HalId = message.HalId,
                     CampaignProspectId = message.CampaignProspectId,
-                    MessageSentTimestamp = _timestampService.TimestampNowWithZone(message.TimeZoneId),
+                    MessageSentTimestamp = _timestampService.TimestampNow(),
                     ProspectName = message.ProspectName,
                     MessageOrderNum = message.OrderNum
                 }
