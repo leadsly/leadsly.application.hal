@@ -68,7 +68,11 @@ namespace Domain.Providers.Campaigns
                 return result;
             }
 
-            return SendFollowUpMessage<T>(webDriver, message);
+            result = SendFollowUpMessage<T>(webDriver, message);
+
+            _webDriverProvider.CloseBrowser<T>(BrowserPurpose.FollowUpMessages);
+
+            return result;
         }
 
         private HalOperationResult<T> SendFollowUpMessage<T>(IWebDriver webDriver, FollowUpMessageBody message)

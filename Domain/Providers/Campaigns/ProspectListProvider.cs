@@ -1,6 +1,4 @@
 ﻿using Domain.Facades.Interfaces;
-using Domain.POMs;
-using Domain.POMs.Pages;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
@@ -8,8 +6,6 @@ using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Campaigns.interfaces;
 using Leadsly.Application.Model.Campaigns.ProspectList;
-using Leadsly.Application.Model.Entities.Campaigns;
-using Leadsly.Application.Model.LinkedInPages.SearchResultPage;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage.Interfaces;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
@@ -20,8 +16,6 @@ using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Providers.Campaigns
 {
@@ -72,7 +66,11 @@ namespace Domain.Providers.Campaigns
 
             IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)driverOperationResult.Value).WebDriver;
 
-            return ProspectList<T>(webDriver, message);
+            result = ProspectList<T>(webDriver, message);
+
+            _webDriverProvider.CloseBrowser<IOperationResponse>(BrowserPurpose.ProspectList);
+
+            return result;
         }
         private HalOperationResult<T> ProspectList<T>(IWebDriver webDriver, ProspectListBody message)
             where T : IOperationResponse
@@ -116,9 +114,7 @@ namespace Domain.Providers.Campaigns
                 {
                     prospects = prospects.Concat(primaryProspects).ToList();
                 }
-            }
-
-            _webDriverProvider.CloseBrowser<IOperationResponse>(BrowserPurpose.ProspectList);
+            }            
 
             IPrimaryProspectListPayload primaryProspectsPayload = new PrimaryProspectListPayload
             {
