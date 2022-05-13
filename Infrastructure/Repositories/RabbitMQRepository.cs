@@ -35,6 +35,7 @@ namespace Infrastructure.Repositories
                     Password = _rabbitMQConfigOptions.ConnectionFactoryConfigOptions.Password,
                     Port = _rabbitMQConfigOptions.ConnectionFactoryConfigOptions.Port,
                     UserName = _rabbitMQConfigOptions.ConnectionFactoryConfigOptions.UserName,
+                    VirtualHost = _rabbitMQConfigOptions.ConnectionFactoryConfigOptions.VirtualHost
                 },
                 ExchangeOptions = new()
                 {

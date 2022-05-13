@@ -119,8 +119,8 @@ namespace Hal.Configurations
             services.AddSingleton<IFileManager, FileManager>();
             services.AddSingleton<IHalIdentity, HalIdentity>(opt =>
             {
-                string halId = Environment.GetEnvironmentVariable("HAL_ID", EnvironmentVariableTarget.User) ?? "HAL_ID_NOT_FOUND";
-                if (halId == "HAL_ID_NOT_FOUND")
+                string halId = Environment.GetEnvironmentVariable("HAL_ID");
+                if (halId == string.Empty || halId == null)
                 {
                     Log.Warning("HAL_ID enviornment variable was not found or its value was not set");
                     throw new ArgumentNullException("HAL_ID env variable was null but is expected to be set");
@@ -241,7 +241,7 @@ namespace Hal.Configurations
             IConfigurationSection jwtAppSettingOptions = configuration.GetSection(nameof(JwtIssuerOptions));
 
             // retrieve private key from user secrets or azure vault
-            string privateKey = "test"; //configuration[ApiConstants.VaultKeys.JwtSecret];
+            string privateKey = configuration[ApiConstants.VaultKeys.JwtSecret];
             SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(privateKey));
 
             services.Configure<JwtIssuerOptions>(options =>

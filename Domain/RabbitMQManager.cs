@@ -1,22 +1,26 @@
 ﻿using Domain.Repositories;
 using Leadsly.Application.Model.RabbitMQ;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Domain
 {
     public class RabbitMQManager : IRabbitMQManager
     {
-        public RabbitMQManager(IRabbitMQRepository rabbitMQRepository)
+        public RabbitMQManager(ILogger<RabbitMQManager> logger, IRabbitMQRepository rabbitMQRepository)
         {
             _rabbitMQRepository = rabbitMQRepository;
+            _logger = logger;
         }
 
+        private readonly ILogger<RabbitMQManager> _logger;
         private readonly IRabbitMQRepository _rabbitMQRepository;
         private static readonly List<IModel> Channels = new();
         private static readonly List<IConnection> Connections = new();
@@ -30,7 +34,7 @@ namespace Domain
             string clientProviderName = options.ConnectionFactoryOptions.ClientProvidedName.Replace("{halId}", halId);
             clientProviderName = clientProviderName.Replace("{queue}", queueNameIn);
             var factory = ConfigureConnectionFactory(options, clientProviderName, true);
-
+            
             var connection = factory.CreateConnection();
             Connections.Add(connection);
             var channel = connection.CreateModel();
@@ -64,6 +68,14 @@ namespace Domain
 
         private ConnectionFactory ConfigureConnectionFactory(RabbitMQOptions options, string clientProviderName, bool dispatchConsumersAsync = false)
         {
+            string username = options.ConnectionFactoryOptions.UserName;
+            string hostname = options.ConnectionFactoryOptions.HostName;
+            int port = options.ConnectionFactoryOptions.Port;
+            
+            _logger.LogDebug("Configuring RabbitMQ connection with username {username}", username);            
+            _logger.LogDebug("Configuring RabbitMQ connection with hostname {hostname}", hostname);
+            _logger.LogDebug("Configuring RabbitMQ connection with port {port}", port);
+
             return new ConnectionFactory()
             {
                 UserName = options.ConnectionFactoryOptions.UserName,

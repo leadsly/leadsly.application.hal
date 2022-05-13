@@ -177,8 +177,8 @@ namespace Domain.Providers.Campaigns
                 _logger.LogTrace("Creating PrimaryProspects from IWebElements");
                 prospects = prospects.Concat(CreatePrimaryProspects(propsAsWebElements, primaryProspectListId)).ToList();
 
-                if (i == 5)
-                    break;
+                //if (i == 5)
+                //    break;
 
                 IWebElement areResultsHelpfulText = _linkedInPageFacade.LinkedInSearchPage.AreResultsHelpfulPTag(webDriver);
                 _humanBehaviorService.RandomClickElement(areResultsHelpfulText);

@@ -20,6 +20,7 @@ namespace Domain.OptionsJsonModels
         public string Password { get; set; }
         public string HostName { get; set; }
         public int Port { get; set; }
+        public string VirtualHost { get; set; }
         public string ClientProvidedName { get; set; }
     }
 

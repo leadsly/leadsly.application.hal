@@ -32,10 +32,10 @@ namespace Hal
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            PostgresOptions postgresOptions = new();
-            Configuration.GetSection(nameof(PostgresOptions)).Bind(postgresOptions);
-            string authToken = RDSAuthTokenGenerator.GenerateAuthToken(postgresOptions.Host, postgresOptions.Port, postgresOptions.UserId);
-            string defaultConnection = $"Host={postgresOptions.Host};User Id={postgresOptions.UserId};Password={authToken};Database={postgresOptions.Database}";
+            //PostgresOptions postgresOptions = new();
+            //Configuration.GetSection(nameof(PostgresOptions)).Bind(postgresOptions);
+            //string authToken = RDSAuthTokenGenerator.GenerateAuthToken(postgresOptions.Host, postgresOptions.Port, postgresOptions.UserId);
+            //string defaultConnection = $"Host={postgresOptions.Host};User Id={postgresOptions.UserId};Password={authToken};Database={postgresOptions.Database}";
 
             services.AddControllers()
                     .AddJsonOptionsConfiguration();
@@ -53,7 +53,7 @@ namespace Hal
                     .AddRabbitMQConfiguration(Configuration)
                     .AddPageObjectModelsConfiguration()
                     .AddFacadesConfiguration()
-                    .AddHangfireConfig(defaultConnection)
+                    //.AddHangfireConfig(defaultConnection)
                     .AddProvidersConfiguration()
                     .AddSerializersConfiguration()
                     .AddServicesConfiguration()
@@ -92,7 +92,7 @@ namespace Hal
 
             app.UseAuthorization();
 
-            app.UseHangfireDashboard("/hangfire");
+            // app.UseHangfireDashboard("/hangfire");
 
             app.UseSerilogRequestLogging();
 

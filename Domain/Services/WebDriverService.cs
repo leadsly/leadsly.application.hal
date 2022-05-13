@@ -7,6 +7,7 @@ using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Remote;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -116,6 +117,9 @@ namespace Domain.Services
             {
                 _logger.LogTrace("Creating new WebDriver instance");
                 driver = new ChromeDriver(options);
+                //driver = new RemoteWebDriver(new Uri("http://localhost:4444"), options);
+                
+                
                 _logger.LogTrace("New WebDriver instance successfully created");
 
                 _logger.LogTrace("Maximizing WebDriver's main window.");
