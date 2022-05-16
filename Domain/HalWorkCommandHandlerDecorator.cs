@@ -32,8 +32,10 @@ namespace Domain
 
             if ((nowLocal > startOfWorkDay) && (nowLocal < endOfWorkDay))
             {
+                _logger.LogDebug("Task is within Hal's work day. Executing task...");
                 await this._decorated.HandleAsync(command);
-            }            
+            }
+            _logger.LogDebug("Task is outside of Hal's work day. The task will NOT be executed today");
         }
     }
 }

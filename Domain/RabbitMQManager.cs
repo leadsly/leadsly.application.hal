@@ -36,8 +36,10 @@ namespace Domain
             var factory = ConfigureConnectionFactory(options, clientProviderName, true);
             
             var connection = factory.CreateConnection();
+            _logger.LogInformation("Successfully created connection to RabbitMQ");
             Connections.Add(connection);
             var channel = connection.CreateModel();
+            _logger.LogInformation("Successfully created channel to RabbitMQ");
             Channels.Add(channel);
 
             channel.ExchangeDeclare(exchangeName, exchangeType);

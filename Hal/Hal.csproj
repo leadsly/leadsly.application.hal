@@ -38,7 +38,7 @@
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.10.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 		<PackageReference Include="Google.Apis.Auth" Version="1.49.0" />
-		<PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="99.0.4844.5100" />
+		<PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="101.0.4951.4100" />
 	</ItemGroup>
 
 	<ItemGroup>

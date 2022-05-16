@@ -1,9 +1,7 @@
-FROM selenium/standalone-chrome:99.0.4844.84 as selenium
 FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 
 WORKDIR /app
-EXPOSE 5020
 
 WORKDIR /src
 COPY "./Leadsly.Application.Hal/Leadsly.Application.Hal.sln" ./Leadsly.Application.Hal/
@@ -45,5 +43,12 @@ ENV AWS_ACCESS_KEY_ID=AKIA2KIVUGORHZXNMOVT
 ENV AWS_REGION=us-east-1
 ENV AWS_SECRET_ACCESS_KEY=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
 ENV HAL_ID=62adfec0-ffff-41dd-b532-d51247f21187-id
+
+WORKDIR /leadsly_chrome_profiles
+RUN chmod a+rw /leadsly_chrome_profiles
+COPY "./Leadsly.Application.Hal/leadsly_default_chrome_profile" ./leadsly_default_chrome_profile
+VOLUME /leadsly_chrome_profiles
+
+WORKDIR /app
 
 ENTRYPOINT ["dotnet", "Hal.dll"]

@@ -50,13 +50,14 @@ namespace Domain
                     Detail = $"Failed to locate {defaultProfileDir}"
                 });
                 return result;
-            }
-;
+            };
+
             string newProfileDir = Path.Combine(options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir, newChromeProfile);
 
             _logger.LogInformation("Starting to copy all contents of default chrome profile directory, which is: {defaultProfileDir}", defaultProfileDir);
-            WalkDirectoryTree(new DirectoryInfo(defaultProfileDir), newProfileDir);
-    
+            WalkDirectoryTree(new DirectoryInfo(defaultProfileDir), newProfileDir, _logger);
+            _logger.LogInformation("Completed copying all contents of default chrome profile directory");
+
             result = HandleAnyErrors<T>();
             if(result.Succeeded == false)
             {
@@ -102,7 +103,7 @@ namespace Domain
             return result;
         }
 
-        private static void WalkDirectoryTree(DirectoryInfo source, string target)
+        private static void WalkDirectoryTree(DirectoryInfo source, string target, ILogger<FileManager> logger)
         {
             FileInfo[] files = null;
             DirectoryInfo[] subDirs = null;
@@ -148,7 +149,7 @@ namespace Domain
                 {
                     // Resursive call for each subdirectory.
                     string newTarget = Path.Combine(target, dirInfo.Name);
-                    WalkDirectoryTree(dirInfo, newTarget);
+                    WalkDirectoryTree(dirInfo, newTarget, logger);
                 }
             }
         }
