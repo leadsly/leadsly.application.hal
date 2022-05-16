@@ -116,7 +116,7 @@ namespace Domain.Services
             try
             {
                 _logger.LogTrace("Creating new WebDriver instance");
-                // driver = new ChromeDriver(options);;
+                // driver = new ChromeDriver(options);
                 driver = new RemoteWebDriver(new Uri("http://hal-selenium:4444"), options);
 
                 _logger.LogTrace("New WebDriver instance successfully created");
@@ -161,18 +161,15 @@ namespace Domain.Services
             _logger.LogInformation("Setting chrome options. Chrome profile name: {profileName}. UserDataDir is: {userDataDir}", profileName, userDataDir);
 
             ChromeOptions options = new();
-            //options.AddArgument("--disable-blink-features=AutomationControlled");
-            //options.AddArgument("window-size=1280,800");
-            //options.AddArgument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36");
-            //foreach (string addArgument in webDriverOptions.ChromeProfileConfigOptions.AddArguments)
-            //{
-            //    _logger.LogDebug("New WebDriver argument: {addArgument}", addArgument);
-            //    options.AddArgument(addArgument);
-            //}
+            foreach (string addArgument in webDriverOptions.ChromeProfileConfigOptions.AddArguments)
+            {
+                _logger.LogDebug("New WebDriver argument: {addArgument}", addArgument);
+                options.AddArgument(addArgument);
+            }
 
             _logger.LogDebug($"Setting --user-data-dir to {userDataDir}/{profileName}"); 
-            options.AddArgument(@$"--user-data-dir={userDataDir}");
-            options.AddArgument(@$"--profile-directory={profileName}");
+            options.AddArgument(@$"--user-data-dir={userDataDir}/{profileName}");
+            //options.AddArgument(@$"--profile-directory={profileName");
 
             return options;
         }
