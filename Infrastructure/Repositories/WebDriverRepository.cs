@@ -26,9 +26,13 @@ namespace Infrastructure.Repositories
         {
             return new WebDriverOptions
             {
+                SeleniumGrid = new()
+                {
+                    Url = _webDriverOptions.SeleniumGridConfigOptions.Url,
+                    Port = _webDriverOptions.SeleniumGridConfigOptions.Port
+                },
                 ChromeProfileConfigOptions = new()
                 {
-                    Suffix = _webDriverOptions.ChromeConfigOptions.Suffix,
                     DefaultChromeProfileName = _webDriverOptions.ChromeConfigOptions.DefaultProfile,
                     DefaultChromeUserProfilesDir = _webDriverOptions.ChromeConfigOptions.ChromeUserDirectory,
                     AddArguments = _webDriverOptions.ChromeConfigOptions.AddArguments

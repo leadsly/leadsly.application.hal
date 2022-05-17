@@ -10,11 +10,18 @@ namespace Domain.Models
     {
         public long DefaultImplicitWait { get; set; }
         public ChromeProfileConfigOptions ChromeProfileConfigOptions { get; set; }
+        public SeleniumGrid SeleniumGrid { get; set; }
+
+    }
+
+    public class SeleniumGrid
+    {
+        public string Url { get; set; }
+        public long Port { get; set; }
     }
 
     public class ChromeProfileConfigOptions
     {
-        public string Suffix { get; set; }
         public string DefaultChromeProfileName { get; set; }
         public string DefaultChromeUserProfilesDir { get; set; }
         public string ChromeProfileName { get; set; }

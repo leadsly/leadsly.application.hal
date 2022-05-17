@@ -4,6 +4,8 @@ using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.WebDriver;
 using Leadsly.Application.Model.WebDriver.Interfaces;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -19,15 +21,16 @@ namespace Domain.Services
 {
     public class WebDriverService : IWebDriverService
     {
-        public WebDriverService(ILogger<WebDriverService> logger, IFileManager fileManager)
+        public WebDriverService(ILogger<WebDriverService> logger, IFileManager fileManager, IWebHostEnvironment env)
         {
             _logger = logger;
             _fileManager = fileManager;
+            _env = env;
         }
 
         private readonly ILogger<WebDriverService> _logger;
-        private readonly IFileManager _fileManager;        
-        private const long DefaultImplicitWait = 10;
+        private readonly IFileManager _fileManager;
+        private readonly IWebHostEnvironment _env;
 
         public HalOperationResult<T> CloseTab<T>(IWebDriver driver, string windowHandleId) where T : IOperationResponse
         {
@@ -91,7 +94,7 @@ namespace Domain.Services
             }
             else
             {
-                string newChromeProfileName = chromeProfileName + webDriverOptions.ChromeProfileConfigOptions.Suffix;
+                string newChromeProfileName = chromeProfileName + "_" + browser;
 
                 result = _fileManager.CloneDefaultChromeProfile<T>(newChromeProfileName, webDriverOptions);                
 
@@ -106,25 +109,32 @@ namespace Domain.Services
                 options = SetChromeOptions(webDriverOptions, newChromeProfileName, webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir);                
             }
 
-            return Create<T>(options, webDriverOptions.DefaultImplicitWait, newChromeProfileDir);            
+            return Create<T>(options, webDriverOptions);            
         }
 
-        private HalOperationResult<T> Create<T>(ChromeOptions options, long implicitWait = DefaultImplicitWait, string newChromeProfileDir = null) where T : IOperationResponse
+        private HalOperationResult<T> Create<T>(ChromeOptions options, WebDriverOptions webDriverOptions) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
             IWebDriver driver = null;
             try
             {
                 _logger.LogTrace("Creating new WebDriver instance");
-                // driver = new ChromeDriver(options);
-                driver = new RemoteWebDriver(new Uri("http://hal-selenium:4444"), options);
+                if (_env.IsDevelopment())
+                {
+                    driver = new ChromeDriver(options);
+                }
+                else
+                {
+                    string seleniumGridUrl = $"{webDriverOptions.SeleniumGrid.Url}:{webDriverOptions.SeleniumGrid.Port}";
+                    driver = new RemoteWebDriver(new Uri(seleniumGridUrl), options);
+                }
 
                 _logger.LogTrace("New WebDriver instance successfully created");
 
                 _logger.LogTrace("Maximizing WebDriver's main window.");
                 driver.Manage().Window.Maximize();
                 _logger.LogTrace("WebDriver main window was successfully maximized.");
-
+                long implicitWait = webDriverOptions.DefaultImplicitWait;
                 _logger.LogTrace("Setting WebDriver ImplicitWait to {implicitWait}", implicitWait);
                 driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(implicitWait);
                 _logger.LogTrace("Successfully set WebDriver's ImplicitWait");

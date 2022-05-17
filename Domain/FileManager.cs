@@ -1,6 +1,8 @@
 ﻿using Domain.Models;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -15,18 +17,20 @@ namespace Domain
     public class FileManager : IFileManager
     {
         private static readonly StringCollection _log = new();
-        public FileManager(ILogger<FileManager> logger)
+        public FileManager(ILogger<FileManager> logger, IWebHostEnvironment env)
         {
             _logger = logger;
+            _env = env;
         }
 
+        private readonly IWebHostEnvironment _env;
         private readonly ILogger<FileManager> _logger;
 
         public List<string> LoadExistingChromeProfiles(string browserPurpose, WebDriverOptions options)
         {
             // load existing chrome profiles
             string chromeProfileDir = $"{options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir}";
-            string leadslyProfile = browserPurpose + options.ChromeProfileConfigOptions.Suffix;
+            string leadslyProfile = browserPurpose;
             List<string> leadslyChromeProfileDirectories = Directory.GetDirectories(chromeProfileDir).Where(d => d.EndsWith(leadslyProfile)).ToList();
 
             return leadslyChromeProfileDirectories;
@@ -36,11 +40,20 @@ namespace Domain
         {
             HalOperationResult<T> result = new();
 
-            // if there is no way to ship docker containers with our default chrome profile
-            //string dir = Directory.GetCurrentDirectory();
-            string defaultProfileDir = $"{options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir}/{options.ChromeProfileConfigOptions.DefaultChromeProfileName}";
+            string defaultProfileDir = string.Empty;
+            if (_env.IsDevelopment())
+            {
+                string currentDir = $"{Directory.GetCurrentDirectory()}";
+                string profileDir = Path.GetFullPath(Path.Combine(currentDir, @".."));
+                defaultProfileDir = $"{profileDir}/{options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir}/{options.ChromeProfileConfigOptions.DefaultChromeProfileName}";
+            }
+            else
+            {
+                defaultProfileDir = $"{ options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir }/{ options.ChromeProfileConfigOptions.DefaultChromeProfileName}";
+            }            
             _logger.LogDebug("Default chrome profile directory is: {defaultProfileDir} " +
                 "\r\n This is the chrome profile used to authenticate user. After this point all browser instances will be coping this chrome profile and using the copy to launch browsers", defaultProfileDir);
+
             if (Directory.Exists(defaultProfileDir) == false)
             {
                 _logger.LogError("Could not locate {defaultProfileDir}", defaultProfileDir);
