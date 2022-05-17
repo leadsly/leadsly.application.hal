@@ -14,14 +14,14 @@ namespace Domain.Services
 {
     public class UrlService : IUrlService
     {
-        public UrlService(ILogger<UrlService> logger, IWebHostEnvironment env, IOptions<HalConfigOptions> halConfigOptions)
+        public UrlService(ILogger<UrlService> logger, IWebHostEnvironment env, IOptions<AppServerConfigOptions> appServerConfigOptions)
         {
             _logger = logger;
             _env = env;
-            _halConfigOptions = halConfigOptions.Value;
+            _appServerConfigOptions = appServerConfigOptions.Value;
         }
 
-        private readonly HalConfigOptions _halConfigOptions;
+        private readonly AppServerConfigOptions _appServerConfigOptions;
         private readonly ILogger<UrlService> _logger;
         private readonly IWebHostEnvironment _env;
 
@@ -31,13 +31,13 @@ namespace Domain.Services
             string url = string.Empty;
             if (_env.IsDevelopment())
             {
-                string hostName = _halConfigOptions.HostName;
-                long port = _halConfigOptions.Port;
+                string hostName = _appServerConfigOptions.HostName;
+                long port = _appServerConfigOptions.Port;
                 url = $"http://{hostName}:{port}";
             }
             else if (_env.IsStaging())
             {
-                string hostName = _halConfigOptions.HostName;
+                string hostName = _appServerConfigOptions.HostName;
                 url = $"http://{hostName}";
             }
             else

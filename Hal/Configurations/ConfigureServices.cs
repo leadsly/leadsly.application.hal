@@ -112,6 +112,8 @@ namespace Hal.Configurations
         {
             Log.Information("Registering selenium services configuration.");
 
+            services.Configure<AppServerConfigOptions>(options => configuration.GetSection(nameof(AppServerConfigOptions)).Bind(options));
+
             services.Configure<WebDriverConfigOptions>(options => configuration.GetSection(nameof(WebDriverConfigOptions)).Bind(options));
             WebDriverConfigOptions webDriverConfigOptions = new();
             configuration.GetSection(nameof(WebDriverConfigOptions)).Bind(webDriverConfigOptions);
