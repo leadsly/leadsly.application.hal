@@ -206,19 +206,16 @@ namespace Hal.Configurations
 
             services.AddHttpClient<IPhaseDataProcessingService, PhaseDataProcessingService>(opt =>
             {
-                opt.BaseAddress = new Uri("http://localhost:5000/api", UriKind.Absolute);
                 opt.Timeout = TimeSpan.FromSeconds(5000);
             });
 
             services.AddHttpClient<ICampaignService, CampaignService>(opt =>
             {
-                opt.BaseAddress = new Uri("http://localhost:5000/api", UriKind.Absolute);
                 opt.Timeout = TimeSpan.FromSeconds(5000);
             });
 
             services.AddHttpClient<ITriggerPhaseService, TriggerPhaseService>(opt =>
             {
-                opt.BaseAddress = new Uri("http://localhost:5000/api", UriKind.Absolute);
                 opt.Timeout = TimeSpan.FromSeconds(5000);
             });
 
@@ -230,6 +227,7 @@ namespace Hal.Configurations
             services.AddScoped<IHumanBehaviorService, HumanBehaviorService>();
             services.AddSingleton<IConsumingService, ConsumingService>();
             services.AddSingleton<Random>();
+            services.AddScoped<IUrlService, UrlService>();
 
             return services;
         }

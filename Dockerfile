@@ -42,7 +42,7 @@ COPY --from=publish /app .
 ENV AWS_ACCESS_KEY_ID=AKIA2KIVUGORHZXNMOVT
 ENV AWS_REGION=us-east-1
 ENV AWS_SECRET_ACCESS_KEY=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
-ENV HAL_ID=62adfec0-ffff-41dd-b532-d51247f21187-id
+ENV HAL_ID=62adfec0-ffff-41dd-b532-d51247f21187
 
 WORKDIR /leadsly_chrome_profiles
 RUN chmod a+rw /leadsly_chrome_profiles

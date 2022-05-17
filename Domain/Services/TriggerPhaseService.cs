@@ -14,18 +14,20 @@ namespace Domain.Services
 {
     public class TriggerPhaseService : ITriggerPhaseService
     {
-        public TriggerPhaseService(ILogger<TriggerPhaseService> logger, HttpClient httpClient)
+        public TriggerPhaseService(ILogger<TriggerPhaseService> logger, HttpClient httpClient, IUrlService urlService)
         {
             _logger = logger;
+            _urlService = urlService;
             _httpClient = httpClient;
         }
 
         private readonly ILogger<TriggerPhaseService> _logger;
+        private readonly IUrlService _urlService;
         private readonly HttpClient _httpClient;
 
         public async Task<HttpResponseMessage> TriggerCampaignProspectListAsync(TriggerSendConnectionsRequest request, CancellationToken ct = default)
         {
-            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 
             HttpResponseMessage response = default;
             try
@@ -33,7 +35,7 @@ namespace Domain.Services
                 HttpRequestMessage req = new()
                 {
                     Method = HttpMethod.Post,
-                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
                         CampaignId = request.CampaignId,
@@ -55,7 +57,7 @@ namespace Domain.Services
 
         public async Task<HttpResponseMessage> TriggerScanProspectsForRepliesAsync(TriggerScanProspectsForRepliesRequest request, CancellationToken ct = default)
         {
-            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 
             HttpResponseMessage response = default;
             try
@@ -63,7 +65,7 @@ namespace Domain.Services
                 HttpRequestMessage req = new()
                 {
                     Method = HttpMethod.Post,
-                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
                         HalId = request.HalId,
@@ -85,7 +87,7 @@ namespace Domain.Services
 
         public async Task<HttpResponseMessage> TriggerFollowUpMessageAsync(TriggerFollowUpMessageRequest request, CancellationToken ct = default)
         {
-            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 
             HttpResponseMessage response = default;
             try
@@ -93,7 +95,7 @@ namespace Domain.Services
                 HttpRequestMessage req = new()
                 {
                     Method = HttpMethod.Post,
-                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
                         HalId = request.HalId,

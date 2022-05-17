@@ -178,8 +178,9 @@ namespace Domain.Services
             }
 
             _logger.LogDebug($"Setting --user-data-dir to {userDataDir}/{profileName}"); 
-            options.AddArgument(@$"--user-data-dir={userDataDir}/{profileName}");
-            //options.AddArgument(@$"--profile-directory={profileName");
+            //options.AddArgument(@$"--user-data-dir={userDataDir}/{profileName}");
+            options.AddArgument(@$"--user-data-dir={userDataDir}");
+            options.AddArgument(@$"--profile-directory={profileName}");
 
             return options;
         }

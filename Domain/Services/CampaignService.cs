@@ -18,19 +18,21 @@ namespace Domain.Services
 {
     public class CampaignService : ICampaignService
     {
-        public CampaignService(HttpClient httpClient, ILogger<CampaignService> logger)
+        public CampaignService(HttpClient httpClient, ILogger<CampaignService> logger, IUrlService urlService)
         {
             _httpClient = httpClient;
             _logger = logger;
+            _urlService = urlService;
         }
 
         private readonly HttpClient _httpClient;
         private readonly ILogger<CampaignService> _logger;
+        private readonly IUrlService _urlService;
         private const string HttpPrefix = "http://";
 
         public async Task<HttpResponseMessage> GetLatestSentConnectionsUrlStatusesAsync(SentConnectionsUrlStatusRequest request, CancellationToken ct = default)
         {
-            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; //$"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 
             HttpResponseMessage response = default;
 
@@ -39,7 +41,7 @@ namespace Domain.Services
                 HttpRequestMessage req = new()
                 {
                     Method = HttpMethod.Get,
-                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute)
+                    RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                 };
 
                 _logger.LogInformation("Sending request to get latest sent connections url status");
@@ -55,7 +57,7 @@ namespace Domain.Services
 
         public async Task<HttpResponseMessage> UpdateSendConnectionsUrlStatusesAsync(UpdateSentConnectionsUrlStatusRequest request, CancellationToken ct = default)
         {
-            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; //$"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 
             HttpResponseMessage response = default;
 
@@ -64,7 +66,7 @@ namespace Domain.Services
                 HttpRequestMessage req = new()
                 {
                     Method = HttpMethod.Patch,
-                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
                         HalId = request.HalId,
@@ -85,7 +87,7 @@ namespace Domain.Services
 
         public async Task<HttpResponseMessage> MarkCampaignExhausted(MarkCampaignExhaustedRequest request, CancellationToken ct = default)
         {
-            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; //$"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 
             HttpResponseMessage response = default;
 
@@ -94,7 +96,7 @@ namespace Domain.Services
                 HttpRequestMessage req = new()
                 {
                     Method = HttpMethod.Patch,
-                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new[]
                     {
                         new

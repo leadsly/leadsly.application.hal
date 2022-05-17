@@ -17,15 +17,16 @@ namespace Domain.Services
 {
     public class PhaseDataProcessingService : IPhaseDataProcessingService
     {
-        public PhaseDataProcessingService(HttpClient httpClient, ILogger<PhaseDataProcessingService> logger)
+        public PhaseDataProcessingService(HttpClient httpClient, ILogger<PhaseDataProcessingService> logger, IUrlService urlService)
         {
             _httpClient = httpClient;
             _logger = logger;
+            _urlService = urlService;
         }
 
         private readonly HttpClient _httpClient;
         private readonly ILogger<PhaseDataProcessingService> _logger;
-        private const string HttpPrefix = "http://";
+        private readonly IUrlService _urlService;
 
         public async Task<HttpResponseMessage> ProcessNewConnectionsAsync(NewProspectConnectionRequest request, CancellationToken ct = default)
         {
@@ -60,7 +61,7 @@ namespace Domain.Services
 
         public async Task<HttpResponseMessage> ProcessProspectListAsync(ProspectListPhaseCompleteRequest request, CancellationToken ct = default)
         {
-            string apiServerUrl = "https://localhost:5001/api/prospect-list"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);            
 
             HttpResponseMessage response = default;
             try
@@ -68,7 +69,7 @@ namespace Domain.Services
                 HttpRequestMessage req = new()
                 {
                     Method = HttpMethod.Post,
-                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
                         PrimaryProspectListId = request.PrimaryProspectListId,
@@ -94,7 +95,7 @@ namespace Domain.Services
 
         public async Task<HttpResponseMessage> ProcessContactedCampaignProspectListAsync(CampaignProspectListRequest request, CancellationToken ct = default)
         {
-            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 
             HttpResponseMessage response = default;
             try
@@ -102,7 +103,7 @@ namespace Domain.Services
                 HttpRequestMessage req = new()
                 {
                     Method = HttpMethod.Post,
-                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
                         UserId = request.UserId,
@@ -124,7 +125,7 @@ namespace Domain.Services
         }
         public async Task<HttpResponseMessage> ProcessNewlyAcceptedProspectsAsync(NewProspectsConnectionsAcceptedRequest request, CancellationToken ct = default)
         {
-            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; // $"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 
             HttpResponseMessage response = default;
             try
@@ -132,7 +133,7 @@ namespace Domain.Services
                 HttpRequestMessage req = new()
                 {
                     Method = HttpMethod.Post,
-                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
                         HalId = request.HalId,
@@ -155,7 +156,7 @@ namespace Domain.Services
 
         public async Task<HttpResponseMessage> ProcessProspectsRepliedAsync(ProspectsRepliedRequest request, CancellationToken ct = default)
         {
-            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; //$"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 
             HttpResponseMessage response = default;
 
@@ -164,7 +165,7 @@ namespace Domain.Services
                 HttpRequestMessage req = new()
                 {
                     Method = HttpMethod.Post,
-                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
                         HalId = request.HalId,
@@ -185,7 +186,7 @@ namespace Domain.Services
 
         public async Task<HttpResponseMessage> ProcessFollowUpMessageSentAsync(FollowUpMessageSentRequest request, CancellationToken ct = default)
         {
-            string apiServerUrl = $"https://localhost:5001/{request.RequestUrl}"; //$"{HttpPrefix}{request.ServiceDiscoveryName}.{request.NamespaceName}";
+            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 
             HttpResponseMessage response = default;
 
@@ -194,7 +195,7 @@ namespace Domain.Services
                 HttpRequestMessage req = new()
                 {
                     Method = HttpMethod.Post,
-                    RequestUri = new Uri(apiServerUrl, UriKind.Absolute),
+                    RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
                         HalId = request.HalId,
