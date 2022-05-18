@@ -45,8 +45,8 @@ ENV AWS_SECRET_ACCESS_KEY=jvsp7dTl13UXVGuqsjiLVReeAG+7yh/Iwk+KY5JY
 ENV HAL_ID=62adfec0-ffff-41dd-b532-d51247f21187
 
 WORKDIR /leadsly_chrome_profiles
-RUN chmod a+rw /leadsly_chrome_profiles
 COPY "./Leadsly.Application.Hal/leadsly_default_chrome_profile" ./leadsly_default_chrome_profile
+RUN chmod a+rw /leadsly_chrome_profiles/leadsly_default_chrome_profile
 VOLUME /leadsly_chrome_profiles
 
 WORKDIR /app
