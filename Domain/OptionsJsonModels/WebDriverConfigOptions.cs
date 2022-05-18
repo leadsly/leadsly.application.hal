@@ -8,6 +8,8 @@ namespace Domain.OptionsJsonModels
 {
     public class WebDriverConfigOptions
     {
+        public bool? UseGrid { get; set; }
+        public string ProfilesVolume { get; set; }
         public long DefaultImplicitWait { get; set; }
         public ChromeConfigOptions ChromeConfigOptions { get; set; }
         public SeleniumGridConfigOptions SeleniumGridConfigOptions { get; set; }

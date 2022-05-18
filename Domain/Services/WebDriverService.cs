@@ -13,6 +13,7 @@ using OpenQA.Selenium.Remote;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -89,7 +90,6 @@ namespace Domain.Services
             string newChromeProfileDir = string.Empty;
             if (browserPurpose == BrowserPurpose.Auth)
             {
-                // use default user-data-dir profile to authenticate, this will be the profile used later on to copy
                 options = SetChromeOptions(webDriverOptions, webDriverOptions.ChromeProfileConfigOptions.DefaultChromeProfileName, webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir);
             }
             else
@@ -119,7 +119,7 @@ namespace Domain.Services
             try
             {
                 _logger.LogTrace("Creating new WebDriver instance");
-                if (_env.IsDevelopment())
+                if (webDriverOptions != null && webDriverOptions.UseGrid == false)
                 {
                     driver = new ChromeDriver(options);
                 }
@@ -178,7 +178,7 @@ namespace Domain.Services
             }
 
             _logger.LogDebug($"Setting --user-data-dir to {userDataDir}/{profileName}"); 
-            //options.AddArgument(@$"--user-data-dir={userDataDir}/{profileName}");
+            // options.AddArgument(@$"--user-data-dir={userDataDir}/{profileName}");
             options.AddArgument(@$"--user-data-dir={userDataDir}");
             options.AddArgument(@$"--profile-directory={profileName}");
 

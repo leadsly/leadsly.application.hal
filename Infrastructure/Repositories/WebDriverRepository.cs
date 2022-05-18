@@ -26,6 +26,8 @@ namespace Infrastructure.Repositories
         {
             return new WebDriverOptions
             {
+                ProfilesVolume = _webDriverOptions.ProfilesVolume,
+                UseGrid = _webDriverOptions.UseGrid,
                 SeleniumGrid = new()
                 {
                     Url = _webDriverOptions.SeleniumGridConfigOptions.Url,

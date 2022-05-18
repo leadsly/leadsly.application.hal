@@ -40,35 +40,39 @@ namespace Domain
         {
             HalOperationResult<T> result = new();
 
-            string defaultProfileDir = string.Empty;
-            if (_env.IsDevelopment())
+            string defaultChromeProfilesDir = string.Empty;
+            if (_env.IsDevelopment() == true)
             {
-                string currentDir = $"{Directory.GetCurrentDirectory()}";
-                string profileDir = Path.GetFullPath(Path.Combine(currentDir, @".."));
-                defaultProfileDir = $"{profileDir}/{options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir}/{options.ChromeProfileConfigOptions.DefaultChromeProfileName}";
+                if(options.UseGrid == false)
+                {
+                    string currentDir = $"{Directory.GetCurrentDirectory()}";
+                    defaultChromeProfilesDir = Path.GetFullPath(Path.Combine(currentDir, @".."));                    
+                }
+                else
+                {
+                    defaultChromeProfilesDir = options.ProfilesVolume;
+                }
             }
             else
             {
-                defaultProfileDir = $"{ options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir }/{ options.ChromeProfileConfigOptions.DefaultChromeProfileName}";
-            }            
-            _logger.LogDebug("Default chrome profile directory is: {defaultProfileDir} " +
-                "\r\n This is the chrome profile used to authenticate user. After this point all browser instances will be coping this chrome profile and using the copy to launch browsers", defaultProfileDir);
+                defaultChromeProfilesDir = options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir;
+            }                        
 
-            if (Directory.Exists(defaultProfileDir) == false)
+            if (Directory.Exists(defaultChromeProfilesDir) == false)
             {
-                _logger.LogError("Could not locate {defaultProfileDir}", defaultProfileDir);
+                _logger.LogError("Could not locate {defaultProfileDir}", defaultChromeProfilesDir);
                 result.Failures.Add(new()
                 {
                     Reason = "Failed to locate directory",
-                    Detail = $"Failed to locate {defaultProfileDir}"
+                    Detail = $"Failed to locate {defaultChromeProfilesDir}"
                 });
                 return result;
-            };
+            }
 
-            string newProfileDir = Path.Combine(options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir, newChromeProfile);
-
-            _logger.LogInformation("Starting to copy all contents of default chrome profile directory, which is: {defaultProfileDir}", defaultProfileDir);
-            WalkDirectoryTree(new DirectoryInfo(defaultProfileDir), newProfileDir, _logger);
+            string newProfileDir = Path.Combine(defaultChromeProfilesDir, newChromeProfile);
+            string defaultChromeProfileDir = Path.Combine(defaultChromeProfilesDir, options.ChromeProfileConfigOptions.DefaultChromeProfileName);
+            _logger.LogInformation("Starting to copy all contents of default chrome profile directory, which is: {defaultChromeProfileDir}", defaultChromeProfileDir);
+            WalkDirectoryTree(new DirectoryInfo(defaultChromeProfileDir), newProfileDir, _logger);
             _logger.LogInformation("Completed copying all contents of default chrome profile directory");
 
             result = HandleAnyErrors<T>();
