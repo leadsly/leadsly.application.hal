@@ -87,7 +87,8 @@ namespace Domain
             else
             {
                 _logger.LogInformation("Starting to copy all contents of default chrome profile directory, which is: {defaultChromeProfileDir}", defaultChromeProfileDir);
-                BashScriptExecutor.Exec($"cp -a /leadsly_chrome_profiles/leadsly_default_chrome_profile/. {newProfileDir}");
+                //BashScriptExecutor.Exec($"cp -a /leadsly_chrome_profiles/leadsly_default_chrome_profile/. {newProfileDir}");
+                BashScriptExecutor.Exec($"cp -a {defaultChromeProfileDir}/. {newProfileDir}");
                 _logger.LogInformation("Completed copying all contents of default chrome profile directory");
 
                 _logger.LogInformation($"Changing permissions on the freshly copied directory {newProfileDir}");
