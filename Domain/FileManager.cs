@@ -71,16 +71,30 @@ namespace Domain
             }
 
             string newProfileDir = Path.Combine(defaultChromeProfilesDir, newChromeProfile);
-            string defaultChromeProfileDir = Path.Combine(defaultChromeProfilesDir, options.ChromeProfileConfigOptions.DefaultChromeProfileName);
-            _logger.LogInformation("Starting to copy all contents of default chrome profile directory, which is: {defaultChromeProfileDir}", defaultChromeProfileDir);
-            WalkDirectoryTree(new DirectoryInfo(defaultChromeProfileDir), newProfileDir, _logger);
-            _logger.LogInformation("Completed copying all contents of default chrome profile directory");
-
-            result = HandleAnyErrors<T>();
-            if(result.Succeeded == false)
+            string defaultChromeProfileDir = Path.Combine(defaultChromeProfilesDir, options.ChromeProfileConfigOptions.DefaultChromeProfileName);            
+            if(_env.IsDevelopment() == true)
             {
-                return result;
+                _logger.LogInformation("Starting to copy all contents of default chrome profile directory, which is: {defaultChromeProfileDir}", defaultChromeProfileDir);
+                WalkDirectoryTree(new DirectoryInfo(defaultChromeProfileDir), newProfileDir, _logger);
+                _logger.LogInformation("Completed copying all contents of default chrome profile directory");
+
+                result = HandleAnyErrors<T>();
+                if (result.Succeeded == false)
+                {
+                    return result;
+                }
             }
+            else
+            {
+                _logger.LogInformation("Starting to copy all contents of default chrome profile directory, which is: {defaultChromeProfileDir}", defaultChromeProfileDir);
+                BashScriptExecutor.Exec($"cp -a /leadsly_chrome_profiles/leadsly_default_chrome_profile/. {newProfileDir}");
+                _logger.LogInformation("Completed copying all contents of default chrome profile directory");
+
+                _logger.LogInformation($"Changing permissions on the freshly copied directory {newProfileDir}");
+                // before returning update the permissions on the file                
+                BashScriptExecutor.Exec($"chmod a+rw {newProfileDir}");
+                _logger.LogInformation($"Completed changing permissions");
+            }            
 
             result.Succeeded = true;
             return result;
