@@ -556,7 +556,7 @@ namespace PageObjects.Pages
         }
         public IWebElement LinkInFooterLogoIcon(IWebDriver webDriver)
         {
-            IWebElement logo = _webDriverUtilities.WaitUntilNotNull(LinkedInLogoFooter, webDriver, 2);
+            IWebElement logo = _webDriverUtilities.WaitUntilNotNull(LinkedInLogoFooter, webDriver, 10);
 
             return logo;
         }
