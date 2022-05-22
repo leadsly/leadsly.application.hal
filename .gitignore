@@ -234,7 +234,7 @@ _Pvt_Extensions
 .fake/
 
 # Logs
-Logs/
+Logs
 
 #profiles
 leadsly_chrome_profiles
