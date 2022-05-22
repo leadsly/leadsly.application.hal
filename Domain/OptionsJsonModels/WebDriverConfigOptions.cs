@@ -11,6 +11,7 @@ namespace Domain.OptionsJsonModels
         public bool? UseGrid { get; set; }
         public string ProfilesVolume { get; set; }
         public long DefaultImplicitWait { get; set; }
+        public long PageLoadTimeout { get; set; }
         public ChromeConfigOptions ChromeConfigOptions { get; set; }
         public SeleniumGridConfigOptions SeleniumGridConfigOptions { get; set; }
     }

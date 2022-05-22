@@ -13,7 +13,10 @@ namespace Domain.Providers.Campaigns.Interfaces
 {
     public interface IPhaseDataProcessingProvider
     {
-        Task<HalOperationResult<T>> ProcessProspectListAsync<T>(IOperationResponse resultValue, ProspectListBody message, CancellationToken ct = default)
+        Task<HalOperationResult<T>> ProcessProspectListAsync<T>(IList<PrimaryProspectRequest> collectedProspects, ProspectListBody message, CancellationToken ct = default)
+            where T : IOperationResponse;
+
+        Task<HalOperationResult<T>> MarkProspectListPhaseCompleteAsync<T>(ProspectListBody message, CancellationToken ct = default)
             where T : IOperationResponse;
 
         Task<HalOperationResult<T>> ProcessConnectionRequestSentForCampaignProspectsAsync<T>(IList<CampaignProspectRequest> campaignProspects, SendConnectionsBody message, CancellationToken ct = default)

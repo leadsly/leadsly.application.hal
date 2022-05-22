@@ -178,7 +178,7 @@ namespace Domain.Providers.Campaigns
                 PreviousConnectionsCount = _linkedInPageFacade.ConnectionsView.GetConnectionsCount(webDriver);
                 PreviousRecentlyAdded = _linkedInPageFacade.ConnectionsView.GetAllRecentlyAdded(webDriver);
 
-                _humanBehaviorService.RandomWaitMinutes(1, 3);
+                _humanBehaviorService.RandomWaitMinutes(2, 5);
 
                 HalOperationResult<IOperationResponse> result = _webDriverProvider.Refresh<IOperationResponse>(webDriver);
                 if(result.Succeeded == false)

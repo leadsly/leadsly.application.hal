@@ -16,6 +16,7 @@ using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Domain.Providers.Campaigns
 {
@@ -25,23 +26,26 @@ namespace Domain.Providers.Campaigns
             ILogger<ProspectListProvider> logger,
             IWebDriverProvider webDriverProvider,
             ILinkedInPageFacade linkedInPageFacade,
-            IHumanBehaviorService humanBehaviorService
+            IHumanBehaviorService humanBehaviorService,
+            IPhaseDataProcessingProvider phaseDataProcessingProvider
             )
         {
             _logger = logger;
             _humanBehaviorService = humanBehaviorService;
+            _phaseDataProcessingProvider = phaseDataProcessingProvider;
             _webDriverProvider = webDriverProvider;
             _linkedInPageFacade = linkedInPageFacade;
         }
 
         private readonly IHumanBehaviorService _humanBehaviorService;
+        private readonly IPhaseDataProcessingProvider _phaseDataProcessingProvider;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<ProspectListProvider> _logger;
-        private readonly ILinkedInPageFacade _linkedInPageFacade;
+        private readonly ILinkedInPageFacade _linkedInPageFacade;        
 
         #region Execute ProspectList Phase
 
-        public HalOperationResult<T> ExecutePhase<T>(ProspectListBody message)
+        public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ProspectListBody message)
             where T : IOperationResponse
         {
             string halId = message.HalId;
@@ -66,13 +70,13 @@ namespace Domain.Providers.Campaigns
 
             IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)driverOperationResult.Value).WebDriver;
 
-            result = ProspectList<T>(webDriver, message);
+            result = await ProspectListAsync<T>(webDriver, message);
 
             _webDriverProvider.CloseBrowser<IOperationResponse>(BrowserPurpose.ProspectList);
 
             return result;
         }
-        private HalOperationResult<T> ProspectList<T>(IWebDriver webDriver, ProspectListBody message)
+        private async Task<HalOperationResult<T>> ProspectListAsync<T>(IWebDriver webDriver, ProspectListBody message)
             where T : IOperationResponse
         {
             string defaultWindowHandle = webDriver.CurrentWindowHandle;
@@ -82,12 +86,6 @@ namespace Domain.Providers.Campaigns
             IList<PrimaryProspectRequest> prospects = new List<PrimaryProspectRequest>();
             foreach (string searchUrl in message.SearchUrls)
             {
-                result = _webDriverProvider.NewTab<T>(webDriver);
-                if (result.Succeeded == false)
-                {
-                    return result;
-                }
-
                 result = GoToPage<T>(webDriver, searchUrl);
                 if (result.Succeeded == false)
                 {
@@ -108,109 +106,116 @@ namespace Domain.Providers.Campaigns
                 int totalResults = ((IGetTotalNumberOfResults)result.Value).NumberOfResults;
                 _logger.LogDebug("Total results in the hitlist {totalResults}", totalResults);
 
-                IList<PrimaryProspectRequest> primaryProspects = CollectProspects(webDriver, searchUrl, totalResults, message.PrimaryProspectListId);
+                await CollectProspectsAsync(webDriver, searchUrl, totalResults, message);
 
-                if (primaryProspects != null)
-                {
-                    prospects = prospects.Concat(primaryProspects).ToList();
-                }
-            }            
+            }
 
-            IPrimaryProspectListPayload primaryProspectsPayload = new PrimaryProspectListPayload
-            {
-                Prospects = prospects
-            };
-
-            //result = _webDriverProvider.CloseTab<T>(BrowserPurpose.ProspectList, webDriver.CurrentWindowHandle);
-            //if(result.Succeeded == false)
-            //{
-            //    _logger.LogError("Failed to close ProspectList tab");
-            //    return result;
-            //}
-
-            //result = _webDriverProvider.SwitchTo<T>(webDriver, defaultWindowHandle);
-            //if(result.Succeeded == false)
-            //{
-            //    _logger.LogError("Failed to switch back to default tab in ProspectList browser");
-            //    return result;
-            //};
-
-            result.Value = (T)primaryProspectsPayload;
+            result.Succeeded = true;
             return result;
         }
 
         #endregion
 
-        private IList<PrimaryProspectRequest> CollectProspects(IWebDriver webDriver, string searchUrl, int totalResults, string primaryProspectListId)
+        private async Task CollectProspectsAsync(IWebDriver webDriver, string searchUrl, int totalResults, ProspectListBody message)
         {
             _logger.LogInformation("Starting to collect all of the prospects from search url {searchUrl}." +
                 "\r\n Total results for the search results are: {totalResults} " +
-                "\r\n Primary prospect list id is {primaryProspectListId}", searchUrl, totalResults, primaryProspectListId);
-
-            List<string> windowHandles = new();
-            IList<PrimaryProspectRequest> prospects = new List<PrimaryProspectRequest>();
+                "\r\n Primary prospect list id is {primaryProspectListId}", searchUrl, totalResults, message.PrimaryProspectListId);
 
             for (int i = 0; i < totalResults; i++)
             {
-                bool isNoSearchResultsContainerDisplayed = _linkedInPageFacade.LinkedInSearchPage.IsNoSearchResultsContainerDisplayed(webDriver);
-                if (isNoSearchResultsContainerDisplayed == true)
+                bool crawlResult = CrawlProspects(webDriver, message.PrimaryProspectListId, out IList<PrimaryProspectRequest> collectedProspects);
+                if(crawlResult == false)
                 {
-                    HalOperationResult<IOperationResponse> retrySearchResult = _linkedInPageFacade.LinkedInSearchPage.ClickRetrySearch<IOperationResponse>(webDriver);
-                    if (retrySearchResult.Succeeded == false)
-                    {
-                        break;
-                    }
-                }
-
-                _humanBehaviorService.RandomWaitMilliSeconds(700, 1500);
-                IWebElement resultsDiv = _linkedInPageFacade.LinkedInSearchPage.ResultsHeader(webDriver);
-                _humanBehaviorService.RandomClickElement(resultsDiv);
-                _humanBehaviorService.RandomWaitMilliSeconds(700, 1500);
-
-                HalOperationResult<IGatherProspects> result = _linkedInPageFacade.LinkedInSearchPage.GatherProspects<IGatherProspects>(webDriver);
-                if (result.Succeeded == false)
-                {
-                    continue;
-                }
-
-                List<IWebElement> propsAsWebElements = result.Value.ProspectElements;
-                _logger.LogTrace("Creating PrimaryProspects from IWebElements");
-                prospects = prospects.Concat(CreatePrimaryProspects(propsAsWebElements, primaryProspectListId)).ToList();
-
-                //if (i == 5)
-                //    break;
-
-                IWebElement areResultsHelpfulText = _linkedInPageFacade.LinkedInSearchPage.AreResultsHelpfulPTag(webDriver);
-                _humanBehaviorService.RandomClickElement(areResultsHelpfulText);
-
-                HalOperationResult<IOperationResponse> scrollFooterIntoViewResult = _linkedInPageFacade.LinkedInSearchPage.ScrollFooterIntoView<IOperationResponse>(webDriver);
-                if (scrollFooterIntoViewResult.Succeeded == false)
-                {
-                    _logger.LogError("Failed to scroll footer into view");
                     break;
                 }
 
-                IWebElement linkedInFooterLogo = _linkedInPageFacade.LinkedInSearchPage.LinkInFooterLogoIcon(webDriver);
-                _humanBehaviorService.RandomClickElement(linkedInFooterLogo);
-                _humanBehaviorService.RandomWaitMilliSeconds(2000, 5000);
-
-                HalOperationResult<IOperationResponse> clickNextResult = _linkedInPageFacade.LinkedInSearchPage.ClickNext<IOperationResponse>(webDriver);
-                if (clickNextResult.Succeeded == false)
+                HalOperationResult<IOperationResponse> result = await _phaseDataProcessingProvider.ProcessProspectListAsync<IOperationResponse>(collectedProspects, message);
+                if(result.Succeeded == false)
                 {
-                    _logger.LogError("Failed to navigate to the next page");
-                    break;
+                    _logger.LogError("Failed to process scraped prospect list. This was batch {i} out of {totalResults}", i, totalResults);
                 }
+            }
+        }
 
-                HalOperationResult<IOperationResponse> waitForResultsOperation = _linkedInPageFacade.LinkedInSearchPage.WaitUntilSearchResultsFinishedLoading<IOperationResponse>(webDriver);
-                if (waitForResultsOperation.Succeeded == false)
+        private bool CrawlProspects(IWebDriver webDriver, string primaryProspectListId, out IList<PrimaryProspectRequest> collectedProspects)
+        {
+            bool crawlResult = false;
+            collectedProspects = new List<PrimaryProspectRequest>();
+
+            bool isNoSearchResultsContainerDisplayed = _linkedInPageFacade.LinkedInSearchPage.IsNoSearchResultsContainerDisplayed(webDriver);
+            if (isNoSearchResultsContainerDisplayed == true)
+            {
+                HalOperationResult<IOperationResponse> retrySearchResult = _linkedInPageFacade.LinkedInSearchPage.ClickRetrySearch<IOperationResponse>(webDriver);
+                if (retrySearchResult.Succeeded == false)
                 {
-                    _logger.LogError("Search results never finished loading.");
-                    break;
+                    return crawlResult;
                 }
             }
 
+            _humanBehaviorService.RandomWaitMilliSeconds(2000, 7000);
+            IWebElement resultsDiv = _linkedInPageFacade.LinkedInSearchPage.ResultsHeader(webDriver);
+            _humanBehaviorService.RandomClickElement(resultsDiv);
 
-            return prospects;
+            HalOperationResult<IGatherProspects> result = _linkedInPageFacade.LinkedInSearchPage.GatherProspects<IGatherProspects>(webDriver);
+            // ify on this, perhpas this should just return false
+            if (result.Succeeded == false)
+            {
+                crawlResult = true;
+                return crawlResult;
+            }
+
+            List<IWebElement> propsAsWebElements = result.Value.ProspectElements;
+
+            // we need to perform a random scroll
+            if (propsAsWebElements.Count > 3)
+            {
+                _linkedInPageFacade.LinkedInSearchPage.ScrollIntoView(propsAsWebElements[2], webDriver);
+                _humanBehaviorService.RandomWaitMilliSeconds(3000, 5000);
+            }
+
+            if (propsAsWebElements.Count > 8)
+            {
+                _linkedInPageFacade.LinkedInSearchPage.ScrollIntoView(propsAsWebElements[7], webDriver);
+                _humanBehaviorService.RandomWaitMilliSeconds(3000, 5000);
+            }
+
+            _linkedInPageFacade.LinkedInSearchPage.ScrollIntoView(propsAsWebElements[3], webDriver);
+            _humanBehaviorService.RandomWaitMilliSeconds(2000, 3000);
+
+            _logger.LogTrace("Creating PrimaryProspects from IWebElements");
+            collectedProspects = CreatePrimaryProspects(propsAsWebElements, primaryProspectListId);
+
+            IWebElement areResultsHelpfulText = _linkedInPageFacade.LinkedInSearchPage.AreResultsHelpfulPTag(webDriver);
+            _humanBehaviorService.RandomClickElement(areResultsHelpfulText);
+
+            HalOperationResult<IOperationResponse> scrollFooterIntoViewResult = _linkedInPageFacade.LinkedInSearchPage.ScrollFooterIntoView<IOperationResponse>(webDriver);
+            if (scrollFooterIntoViewResult.Succeeded == false)
+            {
+                _logger.LogError("Failed to scroll footer into view");
+                return crawlResult;
+            }
+
+            IWebElement linkedInFooterLogo = _linkedInPageFacade.LinkedInSearchPage.LinkInFooterLogoIcon(webDriver);
+            _humanBehaviorService.RandomClickElement(linkedInFooterLogo);
+            _humanBehaviorService.RandomWaitMilliSeconds(2000, 5000);
+
+            HalOperationResult<IOperationResponse> clickNextResult = _linkedInPageFacade.LinkedInSearchPage.ClickNext<IOperationResponse>(webDriver);
+            if (clickNextResult.Succeeded == false)
+            {
+                _logger.LogError("Failed to navigate to the next page");
+                return crawlResult;
+            }
+
+            HalOperationResult<IOperationResponse> waitForResultsOperation = _linkedInPageFacade.LinkedInSearchPage.WaitUntilSearchResultsFinishedLoading<IOperationResponse>(webDriver);
+            if (waitForResultsOperation.Succeeded == false)
+            {
+                _logger.LogError("Search results never finished loading.");
+                return crawlResult;                
+            }
+
+            crawlResult = true;
+            return crawlResult;
         }
 
         private IList<PrimaryProspectRequest> CreatePrimaryProspects(List<IWebElement> prospects, string primaryProspectListId)

@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Domain.Facades
@@ -106,17 +107,17 @@ namespace Domain.Facades
 
         public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ProspectListBody message) where T : IOperationResponse
         {
-            HalOperationResult<T> result = _prospectListProvider.ExecutePhase<T>(message);
+            HalOperationResult<T> result = await _prospectListProvider.ExecutePhaseAsync<T>(message);
             if(result.Succeeded == false)
             {
                 return result;                
             }
 
-            result = await _phaseDataProcessingProvider.ProcessProspectListAsync<T>(result.Value, message);
-            if(result.Succeeded == false)
+            // mark prospect list phase as complete
+            result = await _phaseDataProcessingProvider.MarkProspectListPhaseCompleteAsync<T>(message);
+            if (result.Succeeded == false)
             {
-                _logger.LogError("Failed to process porpsect list. SendConnectionsPhase was not triggered");
-                return result;
+                _logger.LogError("Failed to mark ProspectListPhase as complete");                
             }
 
             return await _triggerPhaseProvider.TriggerSendConnectionsPhaseAsync<T>(message);

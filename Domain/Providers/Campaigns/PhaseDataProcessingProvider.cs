@@ -3,6 +3,7 @@ using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Campaigns.interfaces;
+using Leadsly.Application.Model.Requests;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
@@ -29,26 +30,50 @@ namespace Domain.Providers.Campaigns
         private readonly IPhaseDataProcessingService _phaseDataProcessingService;
         private readonly ILogger<PhaseDataProcessingProvider> _logger;
 
-        public async Task<HalOperationResult<T>> ProcessProspectListAsync<T>(IOperationResponse resultValue, ProspectListBody message, CancellationToken ct = default) where T : IOperationResponse
+        public async Task<HalOperationResult<T>> MarkProspectListPhaseCompleteAsync<T>(ProspectListBody message, CancellationToken ct = default) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
-            // cast resultValue to ProspectList
-            IPrimaryProspectListPayload primaryProspectList = resultValue as IPrimaryProspectListPayload;
-            if (primaryProspectList == null)
+            MarkProspectListPhaseCompleteRequest request = new()
             {
-                _logger.LogError("Failed to cast resultValue into IPrimaryProspectList");
+                RequestUrl = $"api/ProspectListPhase/{message.ProspectListPhaseId}",
+                NamespaceName = message.NamespaceName,
+                ServiceDiscoveryName = message.ServiceDiscoveryName,
+                HalId = message.HalId
+            };
+
+            HttpResponseMessage responseMessage = await _phaseDataProcessingService.MarkProspectListCompleteAsync(request, ct);
+
+            string prospectListPhaseId = message.ProspectListPhaseId;
+            if (responseMessage == null)
+            {
+                _logger.LogError("Response from application server was null. The request was responsible for marking prospect list phase {prospectListPhaseId} as complete", prospectListPhaseId);
                 return result;
             }
 
-            ProspectListPhaseCompleteRequest request = new()
+            if (responseMessage.IsSuccessStatusCode == false)
+            {
+                _logger.LogError("Response from application server was not a successfull status code. The request was responsible for marking prospect list phase {prospectListPhaseId} as complete", prospectListPhaseId);
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+
+        }
+
+        public async Task<HalOperationResult<T>> ProcessProspectListAsync<T>(IList<PrimaryProspectRequest> collectedProspects, ProspectListBody message, CancellationToken ct = default) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            CollectedProspectsRequest request = new()
             {
                 HalId = message.HalId,
                 UserId = message.UserId,
                 CampaignId = message.CampaignId,
                 PrimaryProspectListId = message.PrimaryProspectListId,
                 CampaignProspectListId = message.CampaignProspectListId,
-                Prospects = primaryProspectList.Prospects,
+                Prospects = collectedProspects,
                 RequestUrl = $"api/ProspectList/{message.HalId}",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
@@ -180,6 +205,6 @@ namespace Domain.Providers.Campaigns
 
             result.Succeeded = true;
             return result;
-        }
+        }        
     }
 }

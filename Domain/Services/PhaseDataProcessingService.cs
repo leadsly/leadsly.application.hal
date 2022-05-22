@@ -1,5 +1,6 @@
 ﻿using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
+using Leadsly.Application.Model.Requests;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
 using Microsoft.AspNetCore.Http;
@@ -59,7 +60,7 @@ namespace Domain.Services
             return null;
         }
 
-        public async Task<HttpResponseMessage> ProcessProspectListAsync(ProspectListPhaseCompleteRequest request, CancellationToken ct = default)
+        public async Task<HttpResponseMessage> ProcessProspectListAsync(CollectedProspectsRequest request, CancellationToken ct = default)
         {
             string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);            
 
@@ -212,6 +213,40 @@ namespace Domain.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to send request to update campaign prospects replied property and record their response message");
+            }
+
+            return response;
+        }
+
+        public async Task<HttpResponseMessage> MarkProspectListCompleteAsync(MarkProspectListPhaseCompleteRequest request, CancellationToken ct = default)
+        {
+            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
+
+            HttpResponseMessage response = default;
+
+            try
+            {
+                HttpRequestMessage req = new()
+                {
+                    Method = HttpMethod.Patch,
+                    RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
+                    Content = JsonContent.Create(new[]
+                    {
+                        new
+                        {
+                            op = "replace",
+                            path = "/completed",
+                            value = "true"
+                        }
+                    })
+                };
+
+                _logger.LogInformation("Sending request to mark prospect list phase as completed");
+                response = await _httpClient.SendAsync(req, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send request to mark prospect list phase as completed");
             }
 
             return response;

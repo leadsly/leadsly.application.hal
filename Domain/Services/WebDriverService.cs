@@ -137,6 +137,9 @@ namespace Domain.Services
                 long implicitWait = webDriverOptions.DefaultImplicitWait;
                 _logger.LogTrace("Setting WebDriver ImplicitWait to {implicitWait}", implicitWait);
                 driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(implicitWait);
+                long pageLoadTimeout = webDriverOptions.PagLoadTimeout;
+                _logger.LogTrace("Setting webdriver's page load timeout to {pageLoadTimeout}", pageLoadTimeout);
+                driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(pageLoadTimeout);
                 _logger.LogTrace("Successfully set WebDriver's ImplicitWait");
             }
             catch(Exception ex)

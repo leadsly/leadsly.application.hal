@@ -11,6 +11,7 @@ namespace Domain.Models
         public bool? UseGrid { get; set; }
         public string ProfilesVolume { get; set; }
         public long DefaultImplicitWait { get; set; }
+        public long PagLoadTimeout { get; set; }
         public ChromeProfileConfigOptions ChromeProfileConfigOptions { get; set; }
         public SeleniumGrid SeleniumGrid { get; set; }
 

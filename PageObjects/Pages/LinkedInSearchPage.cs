@@ -180,7 +180,7 @@ namespace PageObjects.Pages
             {
                 _logger.LogTrace("Executing javascript 'scrollIntoView' to scroll footer into view");
                 IJavaScriptExecutor js = (IJavaScriptExecutor)webDriver;
-                js.ExecuteScript("arguments[0].scrollIntoView();", footer);
+                js.ExecuteScript("arguments[0].scrollIntoView({ behavior: 'smooth' });", footer);
             }
 
             result.Succeeded = true;
@@ -559,6 +559,23 @@ namespace PageObjects.Pages
             IWebElement logo = _webDriverUtilities.WaitUntilNotNull(LinkedInLogoFooter, webDriver, 10);
 
             return logo;
+        }
+
+        public void ScrollIntoView(IWebElement webElement, IWebDriver webDriver)
+        {
+            try
+            {
+                if(webElement != null)
+                {
+                    _logger.LogTrace("Executing javascript 'scrollIntoView' to scroll element into view");
+                    IJavaScriptExecutor js = (IJavaScriptExecutor)webDriver;
+                    js.ExecuteScript("arguments[0].scrollIntoView({ behavior: 'smooth' });", webElement);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("Could not execute scroll into view method on the given element");
+            }
         }
     }
 }

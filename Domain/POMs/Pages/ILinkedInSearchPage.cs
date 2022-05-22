@@ -17,6 +17,8 @@ namespace Domain.POMs.Pages
         HalOperationResult<T> GatherProspects<T>(IWebDriver driver)
             where T : IOperationResponse;
 
+        void ScrollIntoView(IWebElement webElement, IWebDriver driver);
+
         HalOperationResult<T> ClickNext<T>(IWebDriver driver)
             where T : IOperationResponse;
 

@@ -28,6 +28,7 @@ namespace Infrastructure.Repositories
             {
                 ProfilesVolume = _webDriverOptions.ProfilesVolume,
                 UseGrid = _webDriverOptions.UseGrid,
+                PagLoadTimeout = _webDriverOptions.PageLoadTimeout,
                 SeleniumGrid = new()
                 {
                     Url = _webDriverOptions.SeleniumGridConfigOptions.Url,
