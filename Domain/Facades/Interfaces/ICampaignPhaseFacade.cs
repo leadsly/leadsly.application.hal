@@ -36,5 +36,8 @@ namespace Domain.Facades.Interfaces
         HalOperationResult<T> ExecutePhase<T>(ConnectionWithdrawBody message)
             where T : IOperationResponse;
 
+        Task<HalOperationResult<T>> ExecutePhaseAsync<T>(NetworkingMessageBody message)
+            where T : IOperationResponse;
+
     }
 }

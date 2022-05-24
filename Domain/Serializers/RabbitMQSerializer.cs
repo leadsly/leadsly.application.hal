@@ -42,6 +42,24 @@ namespace Domain.Serializers
             return followUpMessageBody;
         }
 
+        public NetworkingMessageBody DeserializeNetworkingMessageBody(string body)
+        {
+            _logger.LogInformation("Deserializing NetworkingMessageBody");
+            NetworkingMessageBody message = null;
+            try
+            {
+                message = JsonConvert.DeserializeObject<NetworkingMessageBody>(body);
+                _logger.LogDebug("Successfully deserialized NetworkingMessageBody");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to deserialize NetworkingMessageBody. Returning an explicit null");
+                return null;
+            }
+
+            return message;
+        }
+
         public MonitorForNewAcceptedConnectionsBody DeserializeMonitorForNewAcceptedConnectionsBody(string body)
         {
             _logger.LogInformation("Deserializing MonitorForNewAcceptedConnectionsBody");

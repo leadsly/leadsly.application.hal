@@ -64,7 +64,7 @@ namespace PageObjects.Pages
                 _logger.LogError(ex, "Failed to locate last page in the navigational search result");
             }
 
-            return lis.LastOrDefault();
+            return lis?.LastOrDefault();
         }
 
         private Func<IWebDriver, IWebElement> SearchResultContainerQuery = (webDriver) => webDriver.FindElement(By.CssSelector("#main .search-results-container"));
@@ -576,6 +576,26 @@ namespace PageObjects.Pages
             {
                 _logger.LogDebug("Could not execute scroll into view method on the given element");
             }
+        }
+
+        private IWebElement SearchLimitDiv(IWebDriver driver)
+        {
+            IWebElement limitDiv = default;
+            try
+            {
+                limitDiv = driver.FindElement(By.ClassName("search-nec__simple-image"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("Tried looking for monthly search limit div, but couldn't find it using '.search-nec__simple-image'");
+            }
+            return limitDiv;
+        }
+
+        public bool MonthlySearchLimitReached(IWebDriver driver)
+        {
+            IWebElement searchLimitDiv = SearchLimitDiv(driver);
+            return searchLimitDiv != null;
         }
     }
 }

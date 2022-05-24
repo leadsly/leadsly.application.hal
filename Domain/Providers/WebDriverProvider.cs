@@ -495,5 +495,24 @@ namespace Domain.Providers
 
             return true;
         }
+
+        public HalOperationResult<T> SwitchToOrNewTab<T>(IWebDriver webDriver, string windowHandleId) where T : IOperationResponse
+        {
+            // check if window handle exists
+            if(WindowHandleExists(webDriver, windowHandleId) == false)
+            {
+                // create a new tab 
+                return this.NewTab<T>(webDriver);
+            }
+            else
+            {
+                return SwitchTo<T>(webDriver, windowHandleId);
+            }
+        }
+
+        private bool WindowHandleExists(IWebDriver webDriver, string windowHandleId)
+        {
+            return webDriver.WindowHandles.Any(w => w == windowHandleId);
+        }
     }
 }

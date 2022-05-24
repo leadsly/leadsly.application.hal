@@ -14,6 +14,8 @@ namespace Domain.POMs.Pages
         HalOperationResult<T> GetTotalSearchResults<T>(IWebDriver driver)
             where T : IOperationResponse;
 
+        bool MonthlySearchLimitReached(IWebDriver driver);
+
         HalOperationResult<T> GatherProspects<T>(IWebDriver driver)
             where T : IOperationResponse;
 

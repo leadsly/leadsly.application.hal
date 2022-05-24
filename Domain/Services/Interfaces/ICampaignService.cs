@@ -14,9 +14,12 @@ namespace Domain.Services.Interfaces
 {
     public interface ICampaignService
     {
-        Task<HttpResponseMessage> GetLatestSentConnectionsUrlStatusesAsync(SentConnectionsUrlStatusRequest request, CancellationToken ct = default);
+        Task<HttpResponseMessage> GetLatestSentConnectionsUrlStatusesAsync(SearchUrlDetailsRequest request, CancellationToken ct = default);
 
-        Task<HttpResponseMessage> UpdateSendConnectionsUrlStatusesAsync(UpdateSentConnectionsUrlStatusRequest request, CancellationToken ct = default);        
+        Task<HttpResponseMessage> GetSearchUrlProgressAsync(GetSearchUrlProgressRequest request, CancellationToken ct = default);
+
+        Task<HttpResponseMessage> UpdateSendConnectionsUrlStatusesAsync(UpdateSearchUrlDetailsRequest request, CancellationToken ct = default);
+        Task<HttpResponseMessage> UpdateSearchUrlProgressAsync(UpdateSearchUrlProgressRequest request, CancellationToken ct = default);
 
         Task<HttpResponseMessage> MarkCampaignExhausted(MarkCampaignExhaustedRequest request, CancellationToken ct = default);
     }

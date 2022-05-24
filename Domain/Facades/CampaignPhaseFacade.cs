@@ -1,19 +1,11 @@
 ﻿using Domain.Facades.Interfaces;
 using Domain.Providers.Campaigns.Interfaces;
-using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Campaigns.Interfaces;
-using Leadsly.Application.Model.RabbitMQ;
-using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Domain.Facades
@@ -29,6 +21,7 @@ namespace Domain.Facades
             IScanProspectsForRepliesProvider scanProspectsForRepliesProvider,
             IDeepScanProspectsForRepliesProvider deepScanProspectsForRepliesProvider,
             ISendConnectionsProvider sendConnectionsProvider,
+            INetworkingProvider networkingProvider,
             IMonitorForNewProspectsProvider monitorForNewProspectsProvider)
         {
             _phaseDataProcessingProvider = phaseDataProcessingProvider;
@@ -37,12 +30,14 @@ namespace Domain.Facades
             _followUpMessagesProvider = followUpMessagesProvider;
             _deepScanProspectsForRepliesProvider = deepScanProspectsForRepliesProvider;
             _monitorForNewProspectsProvider = monitorForNewProspectsProvider;
+            _networkingProvider = networkingProvider;
             _prospectListProvider = prospectListProvider;
             _sendConnectionsProvider = sendConnectionsProvider;
             _triggerPhaseProvider = triggerPhaseProvider;
             _logger = logger;
         }
 
+        private readonly INetworkingProvider _networkingProvider;
         private readonly IPhaseDataProcessingProvider _phaseDataProcessingProvider;
         private readonly ITriggerPhaseProvider _triggerPhaseProvider;
         private readonly IScanProspectsForRepliesProvider _scanProspectsForRepliesProvider;
@@ -139,7 +134,7 @@ namespace Domain.Facades
                 return result;
             }
 
-            if(getSentConnectionsUrlStatusPayload.SentConnectionsUrlStatuses.Count == 0)
+            if(getSentConnectionsUrlStatusPayload.SearchUrlDetailsRequests.Count == 0)
             {
                 // there are no more urls left to crawl
                 _logger.LogInformation("There aren't any search urls left to crawl");
@@ -152,7 +147,7 @@ namespace Domain.Facades
                 return result;
             }
 
-            result = _sendConnectionsProvider.ExecutePhase<T>(message, getSentConnectionsUrlStatusPayload.SentConnectionsUrlStatuses);
+            result = _sendConnectionsProvider.ExecutePhase<T>(message, getSentConnectionsUrlStatusPayload.SearchUrlDetailsRequests);
             if(result.Succeeded == false)
             {
                 return result;
@@ -165,13 +160,13 @@ namespace Domain.Facades
                 return null;
             }
 
-            result = await _campaignProvider.UpdateSendConnectionsUrlStatusesAsync<T>(sendConnectionspayload.SentConnectionsUrlStatuses, message);
+            result = await _campaignProvider.UpdateSendConnectionsUrlStatusesAsync<T>(sendConnectionspayload.SearchUrlDetailsRequests, message);
             if(result.Succeeded == false)
             {
                 return result;
             }
 
-            return await _phaseDataProcessingProvider.ProcessConnectionRequestSentForCampaignProspectsAsync<T>(sendConnectionspayload.CampaignProspects, message);                        
+            return await _phaseDataProcessingProvider.ProcessConnectionRequestSentForCampaignProspectsAsync<T>(sendConnectionspayload.CampaignProspects, message, message.CampaignId);                        
         }
 
         public HalOperationResult<T> ExecutePhase<T>(ConnectionWithdrawBody message) where T : IOperationResponse
@@ -201,6 +196,40 @@ namespace Domain.Facades
             }
 
             result.Succeeded = true;
+            return result;
+        }
+
+        public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(NetworkingMessageBody message) where T : IOperationResponse
+        {
+            // fetch latest url
+            HalOperationResult<T> result = await _campaignProvider.GetSearchUrlProgressAsync<T>(message);
+
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            ISearchUrlProgressResponse response = ((ISearchUrlProgressResponse)result.Value);
+            if(response == null)
+            {
+                return result;
+            }
+
+            result = await _networkingProvider.ExecuteProspectListAsync<T>(message, response.SearchUrlProgress);
+            if (result.Succeeded == false)
+            {
+                return result;
+            }
+
+            result = await _networkingProvider.ExecuteSendConnectionsAsync<T>(message);
+            if(result.Succeeded == false)
+            {
+                return result;
+            }
+
+            // update search url here
+            
+
             return result;
         }
     }

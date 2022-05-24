@@ -2,6 +2,7 @@
 using Domain.PhaseConsumers.FollowUpMessageHandlers;
 using Domain.PhaseConsumers.MonitorForNewConnectionsHandlers;
 using Domain.PhaseConsumers.NetworkingConnectionsHandlers;
+using Domain.PhaseConsumers.NetworkingHandler;
 using Domain.PhaseConsumers.ScanProspectsForRepliesHandlers;
 using Domain.Repositories;
 using Domain.Services.Interfaces;
@@ -61,8 +62,15 @@ namespace Domain.Services
                 ////////////////////////////////////////////////////////////////////////////////////
                 /// Consume NetworkingConnections [ ProspectListPhase OR SendConnectionsPhase ] messages
                 ////////////////////////////////////////////////////////////////////////////////////
-                HalConsumingCommandHandlerDecorator<NetworkingConnectionsConsumerCommand> networkingHandler = scope.ServiceProvider.GetRequiredService<HalConsumingCommandHandlerDecorator<NetworkingConnectionsConsumerCommand>>();
-                NetworkingConnectionsConsumerCommand networkingCommand = new NetworkingConnectionsConsumerCommand(halIdentity.Id);
+                HalConsumingCommandHandlerDecorator<NetworkingConnectionsConsumerCommand> networkingConnectionsHandler = scope.ServiceProvider.GetRequiredService<HalConsumingCommandHandlerDecorator<NetworkingConnectionsConsumerCommand>>();
+                NetworkingConnectionsConsumerCommand networkingConnectionCommand = new NetworkingConnectionsConsumerCommand(halIdentity.Id);
+                await networkingConnectionsHandler.ConsumeAsync(networkingConnectionCommand);
+
+                ////////////////////////////////////////////////////////////////////////////////////
+                /// Consume Networking [ ProspectListPhase AND SendConnectionsPhase ]
+                ////////////////////////////////////////////////////////////////////////////////////
+                HalConsumingCommandHandlerDecorator<NetworkingConsumerCommand> networkingHandler = scope.ServiceProvider.GetRequiredService<HalConsumingCommandHandlerDecorator<NetworkingConsumerCommand>>();
+                NetworkingConsumerCommand networkingCommand = new NetworkingConsumerCommand(halIdentity.Id);
                 await networkingHandler.ConsumeAsync(networkingCommand);
 
             }

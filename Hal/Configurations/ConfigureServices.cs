@@ -6,6 +6,7 @@ using Domain.PhaseConsumers;
 using Domain.PhaseConsumers.FollowUpMessageHandlers;
 using Domain.PhaseConsumers.MonitorForNewConnectionsHandlers;
 using Domain.PhaseConsumers.NetworkingConnectionsHandlers;
+using Domain.PhaseConsumers.NetworkingHandler;
 using Domain.PhaseConsumers.ScanProspectsForRepliesHandlers;
 using Domain.PhaseHandlers.FollowUpMessageHandlers;
 using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
@@ -79,6 +80,7 @@ namespace Hal.Configurations
             services.AddScoped<HalConsumingCommandHandlerDecorator<FollowUpMessageConsumerCommand>>();
             services.AddScoped<HalConsumingCommandHandlerDecorator<MonitorForNewConnectionsConsumerCommand>>();
             services.AddScoped<HalConsumingCommandHandlerDecorator<NetworkingConnectionsConsumerCommand>>();
+            services.AddScoped<HalConsumingCommandHandlerDecorator<NetworkingConsumerCommand>>();
             services.AddScoped<HalConsumingCommandHandlerDecorator<ScanProspectsForRepliesConsumerCommand>>();
 
             // Commands fired to start processing the given phase
@@ -94,7 +96,8 @@ namespace Hal.Configurations
             services.AddScoped<IConsumeCommandHandler<FollowUpMessageConsumerCommand>, FollowUpMessageConsumerCommandHandler>();
             services.AddScoped<IConsumeCommandHandler<MonitorForNewConnectionsConsumerCommand>, MonitorForNewConnectionsConsumerCommandHandler>();
             services.AddScoped<IConsumeCommandHandler<NetworkingConnectionsConsumerCommand>, NetworkingConnectionsConsumerCommandHandler>();
-            services.AddScoped<IConsumeCommandHandler<ScanProspectsForRepliesConsumerCommand>, ScanProspectsForRepliesConsumerCommandHandler>();            
+            services.AddScoped<IConsumeCommandHandler<ScanProspectsForRepliesConsumerCommand>, ScanProspectsForRepliesConsumerCommandHandler>();
+            services.AddScoped<IConsumeCommandHandler<NetworkingConsumerCommand>, NetworkingConsumerCommandHandler>();
 
             // Handlers for processing the given phase
             services.AddScoped<ICommandHandler<FollowUpMessageCommand>, FollowUpMessageCommandHandler>();
@@ -130,6 +133,9 @@ namespace Hal.Configurations
 
                 return new HalIdentity(halId);
             });
+
+            services.AddScoped<ICrawlProspectsService, CrawlProspectsService>();
+            services.AddScoped<ICampaignProspectsService, CampaignProspectsService>();
             
             return services;
         }
@@ -198,6 +204,7 @@ namespace Hal.Configurations
             services.AddScoped<IDeepScanProspectsForRepliesProvider, DeepScanProspectsForRepliesProvider>();
             services.AddScoped<IPhaseDataProcessingProvider, PhaseDataProcessingProvider>();
             services.AddScoped<ITriggerPhaseProvider, TriggerPhaseProvider>();
+            services.AddScoped<INetworkingProvider, NetworkingProvider>();
 
             return services;
         }

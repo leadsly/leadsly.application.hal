@@ -62,6 +62,47 @@ namespace Domain.Providers.Campaigns
 
         }
 
+        public async Task<HalOperationResult<T>> ProcessProspectListAsync<T>(
+            IList<PrimaryProspectRequest> collectedProspects,
+            PublishMessageBody message,
+            string campaignId,
+            string primaryProspectListId,
+            string campaignProspectListId,
+            CancellationToken ct = default
+            ) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            CollectedProspectsRequest request = new()
+            {
+                HalId = message.HalId,
+                UserId = message.UserId,
+                CampaignId = campaignId,
+                PrimaryProspectListId = primaryProspectListId,
+                CampaignProspectListId = campaignProspectListId,
+                Prospects = collectedProspects,
+                RequestUrl = $"api/ProspectList/{message.HalId}",
+                NamespaceName = message.NamespaceName,
+                ServiceDiscoveryName = message.ServiceDiscoveryName,
+            };
+
+            HttpResponseMessage responseMessage = await _phaseDataProcessingService.ProcessProspectListAsync(request, ct);
+            if (responseMessage == null)
+            {
+                _logger.LogError("Response from application server was null. The request was responsible for saving primary prospects to the database");
+                return result;
+            }
+
+            if (responseMessage.IsSuccessStatusCode == false)
+            {
+                _logger.LogError("Response from application server was not a successfull status code. The request was responsible for saving primary prospects to the database");
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
+
         public async Task<HalOperationResult<T>> ProcessProspectListAsync<T>(IList<PrimaryProspectRequest> collectedProspects, ProspectListBody message, CancellationToken ct = default) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -96,7 +137,12 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        public async Task<HalOperationResult<T>> ProcessConnectionRequestSentForCampaignProspectsAsync<T>(IList<CampaignProspectRequest> campaignProspects, SendConnectionsBody message, CancellationToken ct = default) where T : IOperationResponse
+        public async Task<HalOperationResult<T>> ProcessConnectionRequestSentForCampaignProspectsAsync<T>(
+                IList<CampaignProspectRequest> campaignProspects, 
+                PublishMessageBody message,
+                string campaignId,
+                CancellationToken ct = default
+            ) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
@@ -104,9 +150,9 @@ namespace Domain.Providers.Campaigns
             {
                 HalId = message.HalId,
                 UserId = message.UserId,
-                CampaignId = message.CampaignId,
+                CampaignId = campaignId,
                 CampaignProspects = campaignProspects,
-                RequestUrl = $"api/SendConnections/{message.CampaignId}/prospects",
+                RequestUrl = $"api/SendConnections/{campaignId}/prospects",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
             };
@@ -186,6 +232,30 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
+        public async Task<HalOperationResult<T>> UpdateSocialAccountMonthlySearchLimitAsync<T>(string socialAccountId, PublishMessageBody message, CancellationToken ct = default) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            UpdateSocialAccountRequest request = new()
+            {
+                HalId = message.HalId,
+                NamespaceName = message.NamespaceName,
+                ServiceDiscoveryName = message.ServiceDiscoveryName,
+                RequestUrl = $"api/SocialAccounts/{socialAccountId}"                
+            };
+
+            HttpResponseMessage responseMessage = await _phaseDataProcessingService.UpdateSocialAccountMonthlySearchLimitAsync(request, ct);
+
+            if (responseMessage.IsSuccessStatusCode == false)
+            {
+                _logger.LogError("Response from application server was not a successful status code. The request was responsible for updating social account 'MonthlySearchLimitReached' property");
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
+
         public async Task<HalOperationResult<T>> ProcessSentFollowUpMessageAsync<T>(FollowUpMessageSentRequest sentFollowUpMessageRequest, FollowUpMessageBody message, CancellationToken ct = default)
             where T : IOperationResponse
         {
@@ -205,6 +275,6 @@ namespace Domain.Providers.Campaigns
 
             result.Succeeded = true;
             return result;
-        }        
+        }
     }
 }

@@ -30,22 +30,25 @@ namespace Domain.Providers.Campaigns
         public SendConnectionsProvider(
             ILogger<SendConnectionsProvider> logger,
             IWebDriverProvider webDriverProvider,
+            ICampaignProspectsService campaignProspectService,
             IHumanBehaviorService humanBehaviorService,
             ILinkedInPageFacade linkedInPageFacade
             )
         {
+            _campaignProspectsService = campaignProspectService;
             _humanBehaviorService = humanBehaviorService;
             _webDriverProvider = webDriverProvider;
             _linkedInPageFacade = linkedInPageFacade;
             _logger = logger;            
         }
 
+        private readonly ICampaignProspectsService _campaignProspectsService;
         private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly ILogger<SendConnectionsProvider> _logger;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILinkedInPageFacade _linkedInPageFacade;
 
-        public HalOperationResult<T> ExecutePhase<T>(SendConnectionsBody message, IList<SentConnectionsUrlStatusRequest> sentConnectionsUrlStatusPayload) where T : IOperationResponse
+        public HalOperationResult<T> ExecutePhase<T>(SendConnectionsBody message, IList<SearchUrlDetailsRequest> sentConnectionsUrlStatusPayload) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
@@ -78,12 +81,12 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        private HalOperationResult<T> SendConnections<T>(IWebDriver webDriver, SendConnectionsBody message, IList<SentConnectionsUrlStatusRequest> sentConnectionsUrlStatusPayload)
+        private HalOperationResult<T> SendConnections<T>(IWebDriver webDriver, SendConnectionsBody message, IList<SearchUrlDetailsRequest> sentConnectionsUrlStatusPayload)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
-            SentConnectionsUrlStatusRequest sentConnectionsUrlStatus = sentConnectionsUrlStatusPayload.FirstOrDefault();
+            SearchUrlDetailsRequest sentConnectionsUrlStatus = sentConnectionsUrlStatusPayload.FirstOrDefault();
             if (sentConnectionsUrlStatus == null)
             {
                 _logger.LogWarning("No sent connections url status provided! Web driver does not know where to start sending connections!");
@@ -134,14 +137,14 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        private HalOperationResult<T> SendConnectionRequests<T>(IWebDriver webDriver, int stageConnectionsLimit, string campaignId, string timeZoneId, IList<SentConnectionsUrlStatusRequest> sentConnectionsUrlStatusPayload)
+        private HalOperationResult<T> SendConnectionRequests<T>(IWebDriver webDriver, int stageConnectionsLimit, string campaignId, string timeZoneId, IList<SearchUrlDetailsRequest> sentConnectionsUrlStatusPayload)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
             // we skip one because by the time we are in this method, we have already navigated to the first url
-            Queue<SentConnectionsUrlStatusRequest> allSentConnectionsUrlStatuses = new(sentConnectionsUrlStatusPayload);
-            IList<SentConnectionsUrlStatusRequest> updatedSentConnectionsUrlStatusRequests = new List<SentConnectionsUrlStatusRequest>();
-            SentConnectionsUrlStatusRequest currentSentConnectionsUrlStatus = allSentConnectionsUrlStatuses.Dequeue();
+            Queue<SearchUrlDetailsRequest> allSentConnectionsUrlStatuses = new(sentConnectionsUrlStatusPayload);
+            IList<SearchUrlDetailsRequest> updatedSentConnectionsUrlStatusRequests = new List<SearchUrlDetailsRequest>();
+            SearchUrlDetailsRequest currentSentConnectionsUrlStatus = allSentConnectionsUrlStatuses.Dequeue();
 
             List<CampaignProspectRequest> connectedProspects = new();
             while (stageConnectionsLimit != 0)
@@ -206,7 +209,8 @@ namespace Domain.Providers.Campaigns
                     {
                         continue;
                     }
-                    connectedProspects.Add(CreateCampaignProspects(prospect, campaignId));
+                    CampaignProspectRequest campaignProspectRequest = _campaignProspectsService.CreateCampaignProspects(prospect, campaignId);
+                    connectedProspects.Add(campaignProspectRequest);
 
                     stageConnectionsLimit -= 1;
                 }
@@ -266,92 +270,13 @@ namespace Domain.Providers.Campaigns
                 campaignProspectsPayload = new SendConnectionsPayload
                 {
                     CampaignProspects = connectedProspects,
-                    SentConnectionsUrlStatuses = updatedSentConnectionsUrlStatusRequests
+                    SearchUrlDetailsRequests = updatedSentConnectionsUrlStatusRequests
                 };
             }
 
             result.Value = (T)campaignProspectsPayload;
             result.Succeeded = true;
             return result;
-        }
-
-        private IList<CampaignProspectRequest> CreateCampaignProspects(IList<IWebElement> prospects, string campaignId)
-        {
-            IList<CampaignProspectRequest> campaignProspects = new List<CampaignProspectRequest>();
-
-            foreach (IWebElement webElement in prospects)
-            {
-                campaignProspects.Add(new()
-                {
-                    ConnectionSentTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds(),
-                    Name = GetProspectsName(webElement),
-                    ProfileUrl = GetProspectsProfileUrl(webElement),
-                    CampaignId = campaignId
-                });
-            }
-
-            return campaignProspects;
-        }
-
-        private CampaignProspectRequest CreateCampaignProspects(IWebElement prospect, string campaignId)
-        {
-            return new CampaignProspectRequest()
-            {
-                ConnectionSentTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds(),
-                Name = GetProspectsName(prospect),
-                ProfileUrl = GetProspectsProfileUrl(prospect),
-                CampaignId = campaignId
-            };
-        }
-
-        private string GetProspectsName(IWebElement webElement)
-        {
-            string prospectName = string.Empty;
-            try
-            {
-                IWebElement prospectNameSpan = webElement.FindElement(By.CssSelector(".entity-result__title-text"));
-                try
-                {
-                    IWebElement thirdConnectionProspectName = prospectNameSpan.FindElement(By.CssSelector("span[aria-hidden=true]"));
-                    prospectName = thirdConnectionProspectName.Text;
-                }
-                catch (Exception ex)
-                {
-                    // ignore the error and proceed
-                    prospectName = prospectNameSpan.Text;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Webdriver error occured extracting prospects name");
-            }
-
-            return prospectName;
-        }
-
-        private string GetProspectsProfileUrl(IWebElement webElement)
-        {
-            string[] innerText = webElement.Text.Split("\r\n");
-            string userName = innerText[0] ?? string.Empty;
-            if (userName == "LinkedIn Member")
-            {
-                // this means we don't have access to user's profile
-                return string.Empty;
-            }
-
-            string profileUrl = string.Empty;
-            try
-            {
-                IWebElement anchorTag = webElement.FindElement(By.CssSelector(".app-aware-link"));
-                profileUrl = anchorTag.GetAttribute("href");
-                profileUrl = profileUrl.Split('?').FirstOrDefault();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Webdriver error occured extracting prospects profile url");
-            }
-
-            return profileUrl;
         }
 
         private HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)

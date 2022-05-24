@@ -38,7 +38,7 @@ namespace Domain.Providers.Campaigns
         {
             HalOperationResult<T> result = new();
 
-            SentConnectionsUrlStatusRequest request = new()
+            SearchUrlDetailsRequest request = new()
             {
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
@@ -66,17 +66,17 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        public async Task<HalOperationResult<T>> UpdateSendConnectionsUrlStatusesAsync<T>(IList<SentConnectionsUrlStatusRequest> updatedSearchUrlsStatuses, SendConnectionsBody message, CancellationToken ct = default) where T : IOperationResponse
+        public async Task<HalOperationResult<T>> UpdateSendConnectionsUrlStatusesAsync<T>(IList<SearchUrlDetailsRequest> updatedSearchUrlsStatuses, SendConnectionsBody message, CancellationToken ct = default) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
-            UpdateSentConnectionsUrlStatusRequest request = new()
+            UpdateSearchUrlDetailsRequest request = new()
             {
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
                 RequestUrl = $"api/SendConnections/{message.CampaignId}/url",
-                SentConnectionsUrlStatuses = updatedSearchUrlsStatuses
+                SearchUrlDetailsRequests = updatedSearchUrlsStatuses
             };
 
             HttpResponseMessage responseMessage = await _campaignService.UpdateSendConnectionsUrlStatusesAsync(request, ct);
@@ -108,6 +108,59 @@ namespace Domain.Providers.Campaigns
             if(responseMessage.IsSuccessStatusCode == false)
             {
                 _logger.LogError("Response from application server was not a successful status code. The request was responsible for updating campaign");
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        public async Task<HalOperationResult<T>> GetSearchUrlProgressAsync<T>(NetworkingMessageBody message, CancellationToken ct = default) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            GetSearchUrlProgressRequest request = new()
+            {
+                RequestUrl = $"api/Networking/{message.CampaignId}/url",
+                NamespaceName = message.NamespaceName,
+                ServiceDiscoveryName = message.ServiceDiscoveryName,
+                HalId = message.HalId
+            };
+
+            HttpResponseMessage responseMessage = await _campaignService.GetSearchUrlProgressAsync(request, ct);
+
+            if (responseMessage.IsSuccessStatusCode == false)
+            {
+                _logger.LogError("Response from application server was not a successful status code. The request was responsible for getting search url progress");
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        public async Task<HalOperationResult<T>> UpdateSearchUrlProgressAsync<T>(SearchUrlProgress updatedSearchUrlProgress, NetworkingMessageBody message, CancellationToken ct = default) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            UpdateSearchUrlProgressRequest request = new()
+            {
+                RequestUrl = $"api/Networking/{message.CampaignId}/url",
+                NamespaceName = message.NamespaceName,
+                ServiceDiscoveryName = message.ServiceDiscoveryName,
+                HalId = message.HalId,
+                LastPage = updatedSearchUrlProgress.LastPage,                
+                WindowHandleId = updatedSearchUrlProgress.WindowHandleId,
+                SearchUrl = updatedSearchUrlProgress.SearchUrl,
+                SearchUrlProgressId = updatedSearchUrlProgress.SearchUrlProgressId,
+                LastProcessedProspect = updatedSearchUrlProgress.LastProcessedProspect
+            };
+
+            HttpResponseMessage responseMessage = await _campaignService.UpdateSearchUrlProgressAsync(request, ct);
+
+            if (responseMessage.IsSuccessStatusCode == false)
+            {
+                _logger.LogError("Response from application server was not a successful status code. The request was responsible for updating SearchUrlProgress");
                 return result;
             }
 

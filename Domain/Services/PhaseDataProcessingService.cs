@@ -251,6 +251,40 @@ namespace Domain.Services
 
             return response;
         }
+
+        public async Task<HttpResponseMessage> UpdateSocialAccountMonthlySearchLimitAsync(UpdateSocialAccountRequest request, CancellationToken ct = default)
+        {
+            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
+
+            HttpResponseMessage response = default;
+
+            try
+            {
+                HttpRequestMessage req = new()
+                {
+                    Method = HttpMethod.Patch,
+                    RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
+                    Content = JsonContent.Create(new[]
+                    {
+                        new
+                        {
+                            op = "replace",
+                            path = "/monthlySearchLimitReached",
+                            value = "true"
+                        }
+                    })
+                };
+
+                _logger.LogInformation("Sending request to update social account 'MonthlySearchLimitReached' property");
+                response = await _httpClient.SendAsync(req, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send request to update social account 'MonthlySearchLimitReached' property");
+            }
+
+            return response;
+        }
     }
     
 }

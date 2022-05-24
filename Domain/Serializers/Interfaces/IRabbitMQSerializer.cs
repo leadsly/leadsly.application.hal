@@ -15,6 +15,8 @@ namespace Domain.Serializers.Interfaces
 
         MonitorForNewAcceptedConnectionsBody DeserializeMonitorForNewAcceptedConnectionsBody(string body);
 
+        NetworkingMessageBody DeserializeNetworkingMessageBody(string body);
+
         ProspectListBody DeserializeProspectListBody(string body);
 
         SendConnectionsBody DeserializeSendConnectionRequestsBody(string body);

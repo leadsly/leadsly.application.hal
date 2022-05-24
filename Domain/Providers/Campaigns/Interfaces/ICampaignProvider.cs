@@ -14,13 +14,19 @@ namespace Domain.Providers.Campaigns.Interfaces
 {
     public interface ICampaignProvider
     {
-        Task<HalOperationResult<T>> UpdateSendConnectionsUrlStatusesAsync<T>(IList<SentConnectionsUrlStatusRequest> updatedSearchUrlsStatuses, SendConnectionsBody message, CancellationToken ct = default)
+        Task<HalOperationResult<T>> UpdateSendConnectionsUrlStatusesAsync<T>(IList<SearchUrlDetailsRequest> updatedSearchUrlsStatuses, SendConnectionsBody message, CancellationToken ct = default)
             where T : IOperationResponse;
 
         Task<HalOperationResult<T>> GetLatestSendConnectionsUrlStatusesAsync<T>(SendConnectionsBody message, CancellationToken ct = default)
             where T : IOperationResponse;
 
         Task<HalOperationResult<T>> MarkCampaignExhaustedAsync<T>(SendConnectionsBody message, CancellationToken ct = default)
+            where T : IOperationResponse;
+
+        Task<HalOperationResult<T>> GetSearchUrlProgressAsync<T>(NetworkingMessageBody message, CancellationToken ct = default)
+            where T : IOperationResponse;
+
+        Task<HalOperationResult<T>> UpdateSearchUrlProgressAsync<T>(SearchUrlProgress updatedSearchUrlProgress, NetworkingMessageBody message, CancellationToken ct = default)
             where T : IOperationResponse;
     }
 }

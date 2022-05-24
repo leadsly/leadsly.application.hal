@@ -30,5 +30,7 @@ namespace Domain.Services.Interfaces
         Task<HttpResponseMessage> ProcessProspectsRepliedAsync(ProspectsRepliedRequest request, CancellationToken ct = default);
 
         Task<HttpResponseMessage> ProcessFollowUpMessageSentAsync(FollowUpMessageSentRequest request, CancellationToken ct = default);
+
+        Task<HttpResponseMessage> UpdateSocialAccountMonthlySearchLimitAsync(UpdateSocialAccountRequest request, CancellationToken ct = default);
     }
 }

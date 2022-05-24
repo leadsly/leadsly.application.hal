@@ -3,6 +3,7 @@ using Domain.PhaseConsumers;
 using Domain.PhaseHandlers.FollowUpMessageHandlers;
 using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
 using Domain.PhaseHandlers.NetworkingConnectionsHandler;
+using Domain.PhaseHandlers.NetworkingHandler;
 using Domain.PhaseHandlers.ScanProspectsForRepliesHandler;
 using Domain.PhaseHandlers.SendConnectionsHandler;
 using Domain.Providers.Campaigns;
@@ -38,11 +39,13 @@ namespace Domain.Services
             HalWorkCommandHandlerDecorator<ScanProspectsForRepliesCommand> scanHandler,
             HalWorkCommandHandlerDecorator<CheckOffHoursNewConnectionsCommand> offHoursHandler,
             HalWorkCommandHandlerDecorator<DeepScanProspectsForRepliesCommand> deepScanHandler,
+            HalWorkCommandHandlerDecorator<NetworkingCommand> networkingHandler,
             IWebDriverProvider webDriverProvider,
             IRabbitMQSerializer serializer
             )
         {
             _logger = logger;
+            _networkingHandler = networkingHandler;
             _webDriverProvider = webDriverProvider;
             _followUpHandler = followUpHandler;
             _sendConnectionsHandler = sendConnectionsHandler;
@@ -61,6 +64,7 @@ namespace Domain.Services
         private readonly HalWorkCommandHandlerDecorator<FollowUpMessageCommand> _followUpHandler;
         private readonly HalWorkCommandHandlerDecorator<SendConnectionsCommand> _sendConnectionsHandler;
         private readonly HalWorkCommandHandlerDecorator<ProspectListCommand> _prospectListHandler;
+        private readonly HalWorkCommandHandlerDecorator<NetworkingCommand> _networkingHandler;
         private readonly ILogger<PhaseEventHandlerService> _logger;        
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly IRabbitMQSerializer _serializer;
@@ -175,6 +179,22 @@ namespace Domain.Services
             //{
             //    ackOperation();
             //}
+        }
+
+        #endregion
+
+        #region Networking
+
+        public async Task OnNetworkingEventReceivedAsync(object sender, BasicDeliverEventArgs eventArgs)
+        {
+            IModel channel = ((AsyncEventingBasicConsumer)sender).Model;
+
+            byte[] body = eventArgs.Body.ToArray();
+            string message = Encoding.UTF8.GetString(body);
+            NetworkingMessageBody messageBody = _serializer.DeserializeNetworkingMessageBody(message);
+
+            NetworkingCommand networkingCommand = new NetworkingCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);
+            await _networkingHandler.HandleAsync(networkingCommand);
         }
 
         #endregion

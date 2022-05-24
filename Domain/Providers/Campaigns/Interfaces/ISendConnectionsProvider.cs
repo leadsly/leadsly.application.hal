@@ -11,7 +11,7 @@ namespace Domain.Providers.Campaigns.Interfaces
 {
     public interface ISendConnectionsProvider
     {
-        HalOperationResult<T> ExecutePhase<T>(SendConnectionsBody message, IList<SentConnectionsUrlStatusRequest> sentConnectionsUrlStatusPayload)
+        HalOperationResult<T> ExecutePhase<T>(SendConnectionsBody message, IList<SearchUrlDetailsRequest> searchUrlDetailsRequests)
             where T : IOperationResponse;
     }
 }
