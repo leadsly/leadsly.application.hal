@@ -103,40 +103,6 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        public async Task<HalOperationResult<T>> ProcessProspectListAsync<T>(IList<PrimaryProspectRequest> collectedProspects, ProspectListBody message, CancellationToken ct = default) where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-
-            CollectedProspectsRequest request = new()
-            {
-                HalId = message.HalId,
-                UserId = message.UserId,
-                CampaignId = message.CampaignId,
-                PrimaryProspectListId = message.PrimaryProspectListId,
-                CampaignProspectListId = message.CampaignProspectListId,
-                Prospects = collectedProspects,
-                RequestUrl = $"api/ProspectList/{message.HalId}",
-                NamespaceName = message.NamespaceName,
-                ServiceDiscoveryName = message.ServiceDiscoveryName,
-            };
-
-            HttpResponseMessage responseMessage = await _phaseDataProcessingService.ProcessProspectListAsync(request, ct);
-            if (responseMessage == null)
-            {
-                _logger.LogError("Response from application server was null. The request was responsible for saving primary prospects to the database");
-                return result;
-            }
-
-            if (responseMessage.IsSuccessStatusCode == false)
-            {
-                _logger.LogError("Response from application server was not a successfull status code. The request was responsible for saving primary prospects to the database");
-                return result;
-            }
-
-            result.Succeeded = true;
-            return result;
-        }
-
         public async Task<HalOperationResult<T>> ProcessConnectionRequestSentForCampaignProspectsAsync<T>(
                 IList<CampaignProspectRequest> campaignProspects, 
                 PublishMessageBody message,

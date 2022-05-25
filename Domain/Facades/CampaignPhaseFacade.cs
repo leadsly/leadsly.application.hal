@@ -215,20 +215,11 @@ namespace Domain.Facades
                 return result;
             }
 
-            result = await _networkingProvider.ExecuteProspectListAsync<T>(message, response.SearchUrlProgress);
+            result = await _networkingProvider.ExecuteNetworkingAsync<T>(message, response.SearchUrlsProgress);
             if (result.Succeeded == false)
             {
                 return result;
-            }
-
-            result = await _networkingProvider.ExecuteSendConnectionsAsync<T>(message);
-            if(result.Succeeded == false)
-            {
-                return result;
-            }
-
-            // update search url here
-            
+            }            
 
             return result;
         }

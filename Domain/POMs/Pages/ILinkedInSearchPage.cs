@@ -24,6 +24,9 @@ namespace Domain.POMs.Pages
         HalOperationResult<T> ClickNext<T>(IWebDriver driver)
             where T : IOperationResponse;
 
+        HalOperationResult<T> ClickPrevious<T>(IWebDriver driver)
+            where T : IOperationResponse;
+
         bool IsNoSearchResultsContainerDisplayed(IWebDriver driver);
 
         HalOperationResult<T> ClickRetrySearch<T>(IWebDriver driver)
@@ -55,5 +58,7 @@ namespace Domain.POMs.Pages
 
         HalOperationResult<T> WaitUntilSearchResultsFinishedLoading<T>(IWebDriver webDriver)
             where T : IOperationResponse;
+
+        IWebElement GetProspectsActionButton(IWebElement prospect);
     }
 }

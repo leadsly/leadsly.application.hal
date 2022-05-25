@@ -1,6 +1,4 @@
 ﻿using Domain.Facades.Interfaces;
-using Domain.POMs;
-using Domain.POMs.Pages;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
@@ -11,8 +9,6 @@ using Leadsly.Application.Model.Campaigns.SendConnections;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage.Interfaces;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
-using Leadsly.Application.Model.Responses.Hal;
-using Leadsly.Application.Model.Responses.Hal.Interfaces;
 using Leadsly.Application.Model.WebDriver;
 using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -20,8 +16,6 @@ using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Providers.Campaigns
 {

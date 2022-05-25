@@ -187,6 +187,24 @@ namespace Domain.Services
                             op = "replace",
                             path = "/searchUrl",
                             value = request.SearchUrl
+                        },
+                        new
+                        {
+                            op = "replace",
+                            path = "/startedCrawling",
+                            value = request.StartedCrawling.ToString()
+                        },
+                        new
+                        {
+                            op = "replace",
+                            path = "/exhausted",
+                            value = request.Exhausted.ToString()
+                        },
+                        new
+                        {
+                            op = "replace",
+                            path = "/lastActivityTimestamp",
+                            value = request.LastActivityTimestamp.ToString()
                         }
                     })
                 };

@@ -202,6 +202,21 @@ namespace PageObjects.Pages
             return nextBtn;
         }
 
+        private IWebElement PreviousButton(IWebDriver webDriver)
+        {
+            IWebElement previousBtn = default;
+            try
+            {
+                previousBtn = webDriver.FindElement(By.CssSelector("button[aria-label='Previous']"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("[PreviousButton] Failed to find previous button");
+            }
+
+            return previousBtn;
+        }
+
         public HalOperationResult<T> ClickNext<T>(IWebDriver driver) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -222,6 +237,33 @@ namespace PageObjects.Pages
             catch(Exception ex)
             {
                 _logger.LogWarning(ex, "[ClickNext]: Failed to click next button");
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        public HalOperationResult<T> ClickPrevious<T>(IWebDriver driver) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            IWebElement previousBtn = _webDriverUtilities.WaitUntilNotNull(PreviousButton, driver, 10);
+
+            if (previousBtn == null)
+            {
+                _logger.LogWarning("[ClickPrevious]: Previous button could not be located");
+                return result;
+            }
+
+            try
+            {
+                _logger.LogTrace("Clicking previous button");
+                previousBtn.Click();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[ClickPrevious]: Failed to click previous button");
                 return result;
             }
 
@@ -333,10 +375,10 @@ namespace PageObjects.Pages
         {
             HalOperationResult<T> result = new();
 
-            IWebElement actionButton = GetProspectsActionButton(prospect);
+            IWebElement actionButton = GetProspectsActionBtn(prospect);
             if (actionButton != null)
             {
-                if (actionButton.Text == "Connect")
+                if (actionButton.Text == ApiConstants.PageObjectConstants.Connect)
                 {
                     actionButton.Click();
                 }
@@ -354,7 +396,7 @@ namespace PageObjects.Pages
             return result;
         }
 
-        private IWebElement GetProspectsActionButton(IWebElement prospect)
+        private IWebElement GetProspectsActionBtn(IWebElement prospect)
         {
             IWebElement actionButton = default;
             try
@@ -367,6 +409,11 @@ namespace PageObjects.Pages
                 _logger.LogDebug(ex, "Prospect does not contain action button");
             }
             return actionButton;
+        }
+
+        public IWebElement GetProspectsActionButton(IWebElement prospect)
+        {
+            return GetProspectsActionBtn(prospect);
         }
 
         private IWebElement CustomizeThisInvitationModal(IWebDriver webDriver)
@@ -597,5 +644,7 @@ namespace PageObjects.Pages
             IWebElement searchLimitDiv = SearchLimitDiv(driver);
             return searchLimitDiv != null;
         }
+
+        
     }
 }

@@ -12,10 +12,7 @@ namespace Domain.Providers.Campaigns.Interfaces
 {
     public interface INetworkingProvider
     {
-        Task<HalOperationResult<T>> ExecuteProspectListAsync<T>(NetworkingMessageBody message, SearchUrlProgress searchUrlProgress, CancellationToken ct = default)
-            where T : IOperationResponse;
-
-        Task<HalOperationResult<T>> ExecuteSendConnectionsAsync<T>(NetworkingMessageBody message)
+        Task<HalOperationResult<T>> ExecuteNetworkingAsync<T>(NetworkingMessageBody message, IList<SearchUrlProgress> searchUrlsProgress, CancellationToken ct = default)
             where T : IOperationResponse;
     }
 }

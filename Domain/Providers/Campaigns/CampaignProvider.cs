@@ -153,7 +153,10 @@ namespace Domain.Providers.Campaigns
                 WindowHandleId = updatedSearchUrlProgress.WindowHandleId,
                 SearchUrl = updatedSearchUrlProgress.SearchUrl,
                 SearchUrlProgressId = updatedSearchUrlProgress.SearchUrlProgressId,
-                LastProcessedProspect = updatedSearchUrlProgress.LastProcessedProspect
+                LastProcessedProspect = updatedSearchUrlProgress.LastProcessedProspect,
+                LastActivityTimestamp = updatedSearchUrlProgress.LastActivityTimestamp,
+                StartedCrawling = updatedSearchUrlProgress.StartedCrawling,
+                Exhausted = updatedSearchUrlProgress.Exhausted
             };
 
             HttpResponseMessage responseMessage = await _campaignService.UpdateSearchUrlProgressAsync(request, ct);

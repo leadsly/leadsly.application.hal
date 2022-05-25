@@ -27,10 +27,10 @@ namespace Domain.Services
         private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly ILinkedInPageFacade _linkedInPageFacade;
 
-        public bool CrawlProspects(IWebDriver webDriver, string primaryProspectListId, out IList<PrimaryProspectRequest> collectedProspects)
+        public bool CrawlProspects(IWebDriver webDriver, string primaryProspectListId, out IList<IWebElement> rawCollectedProspects)
         {
             bool crawlResult = false;
-            collectedProspects = new List<PrimaryProspectRequest>();
+            rawCollectedProspects = new List<IWebElement>();
 
             bool isNoSearchResultsContainerDisplayed = _linkedInPageFacade.LinkedInSearchPage.IsNoSearchResultsContainerDisplayed(webDriver);
             if (isNoSearchResultsContainerDisplayed == true)
@@ -54,7 +54,8 @@ namespace Domain.Services
                 return crawlResult;
             }
 
-            List<IWebElement> propsAsWebElements = result.Value.ProspectElements;
+            rawCollectedProspects = result.Value.ProspectElements;
+            List<IWebElement> propsAsWebElements = result.Value.ProspectElements;            
 
             // we need to perform a random scroll
             if (propsAsWebElements.Count > 3)
@@ -73,7 +74,6 @@ namespace Domain.Services
             _humanBehaviorService.RandomWaitMilliSeconds(2000, 3000);
 
             _logger.LogTrace("Creating PrimaryProspects from IWebElements");
-            collectedProspects = CreatePrimaryProspects(propsAsWebElements, primaryProspectListId);
 
             IWebElement areResultsHelpfulText = _linkedInPageFacade.LinkedInSearchPage.AreResultsHelpfulPTag(webDriver);
             _humanBehaviorService.RandomClickElement(areResultsHelpfulText);
@@ -93,7 +93,7 @@ namespace Domain.Services
             return crawlResult;
         }
 
-        private IList<PrimaryProspectRequest> CreatePrimaryProspects(List<IWebElement> prospects, string primaryProspectListId)
+        public IList<PrimaryProspectRequest> CreatePrimaryProspects(IList<IWebElement> prospects, string primaryProspectListId)
         {
             IList<PrimaryProspectRequest> primaryProspects = new List<PrimaryProspectRequest>();
 

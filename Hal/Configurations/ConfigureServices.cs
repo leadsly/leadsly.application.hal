@@ -11,6 +11,7 @@ using Domain.PhaseConsumers.ScanProspectsForRepliesHandlers;
 using Domain.PhaseHandlers.FollowUpMessageHandlers;
 using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
 using Domain.PhaseHandlers.NetworkingConnectionsHandler;
+using Domain.PhaseHandlers.NetworkingHandler;
 using Domain.PhaseHandlers.ScanProspectsForRepliesHandler;
 using Domain.PhaseHandlers.SendConnectionsHandler;
 using Domain.POMs;
@@ -91,6 +92,7 @@ namespace Hal.Configurations
             services.AddScoped<HalWorkCommandHandlerDecorator<ScanProspectsForRepliesCommand>>();
             services.AddScoped<HalWorkCommandHandlerDecorator<SendConnectionsCommand>>();
             services.AddScoped<HalWorkCommandHandlerDecorator<CheckOffHoursNewConnectionsCommand>>();
+            services.AddScoped<HalWorkCommandHandlerDecorator<NetworkingCommand>>();
 
             // Handlers for starting consumption
             services.AddScoped<IConsumeCommandHandler<FollowUpMessageConsumerCommand>, FollowUpMessageConsumerCommandHandler>();
@@ -107,6 +109,7 @@ namespace Hal.Configurations
             services.AddScoped<ICommandHandler<ScanProspectsForRepliesCommand>, ScanProspectsForRepliesCommandHandler>();
             services.AddScoped<ICommandHandler<SendConnectionsCommand>, SendConnectionsCommandHandler>();
             services.AddScoped<ICommandHandler<CheckOffHoursNewConnectionsCommand>, CheckOffHoursNewConnectionsCommandHandler>();
+            services.AddScoped<ICommandHandler<NetworkingCommand>, NetworkingCommandHandler>();
 
             return services;
         }

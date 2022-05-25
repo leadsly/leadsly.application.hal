@@ -98,5 +98,10 @@
             }
 
         }
+
+        public class PageObjectConstants
+        {
+            public const string Connect = "Connect";
+        }
     }
 }

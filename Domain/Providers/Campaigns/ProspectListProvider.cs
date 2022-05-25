@@ -168,7 +168,16 @@ namespace Domain.Providers.Campaigns
 
         private bool CrawlProspects(IWebDriver webDriver, string primaryProspectListId, out IList<PrimaryProspectRequest> collectedProspects)
         {
-            return _crawlProspectsService.CrawlProspects(webDriver, primaryProspectListId, out collectedProspects);            
+            collectedProspects = new List<PrimaryProspectRequest>();
+            if (_crawlProspectsService.CrawlProspects(webDriver, primaryProspectListId, out IList<IWebElement> rawCollectedProspects) == false)
+            {
+                return false;
+            }
+            else
+            {
+                collectedProspects = _crawlProspectsService.CreatePrimaryProspects(rawCollectedProspects, primaryProspectListId);
+                return true;
+            }
         }
 
         private HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)
