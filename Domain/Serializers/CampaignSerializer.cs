@@ -49,5 +49,21 @@ namespace Domain.Serializers
             }
             return payload;
         }
+
+        public SearchUrlProgressResponse DeserializeSearchUrlsProgress(string json)
+        {
+            _logger.LogInformation("Deserializing SearchUrlProgressResponse");
+            SearchUrlProgressResponse payload = default;
+            try
+            {
+                payload = JsonConvert.DeserializeObject<SearchUrlProgressResponse>(json);
+                _logger.LogDebug("Successfully deserialized SearchUrlProgressResponse");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to deserialize SearchUrlProgressResponse");
+            }
+            return payload;
+        }
     }
 }

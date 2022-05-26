@@ -1,4 +1,6 @@
-﻿using Domain.Providers.Campaigns.Interfaces;
+﻿using Domain.Models.Requests;
+using Domain.Models.Responses.Interfaces;
+using Domain.Providers.Campaigns.Interfaces;
 using Domain.Serializers.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
@@ -135,6 +137,15 @@ namespace Domain.Providers.Campaigns
                 return result;
             }
 
+            string json = await responseMessage.Content.ReadAsStringAsync();
+            ISearchUrlProgressResponse sentConnectionStatuses = _campaignSerializer.DeserializeSearchUrlsProgress(json);
+            if (sentConnectionStatuses == null)
+            {
+                return result;
+            }
+
+            result.Value = (T)sentConnectionStatuses;
+
             result.Succeeded = true;
             return result;
         }
@@ -145,13 +156,14 @@ namespace Domain.Providers.Campaigns
 
             UpdateSearchUrlProgressRequest request = new()
             {
-                RequestUrl = $"api/Networking/{message.CampaignId}/url",
+                RequestUrl = $"api/Networking/{updatedSearchUrlProgress.SearchUrlProgressId}/url",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
                 HalId = message.HalId,
-                LastPage = updatedSearchUrlProgress.LastPage,                
+                LastPage = updatedSearchUrlProgress.LastPage,
                 WindowHandleId = updatedSearchUrlProgress.WindowHandleId,
                 SearchUrl = updatedSearchUrlProgress.SearchUrl,
+                TotalSearchResults = updatedSearchUrlProgress.TotalSearchResults,
                 SearchUrlProgressId = updatedSearchUrlProgress.SearchUrlProgressId,
                 LastProcessedProspect = updatedSearchUrlProgress.LastProcessedProspect,
                 LastActivityTimestamp = updatedSearchUrlProgress.LastActivityTimestamp,

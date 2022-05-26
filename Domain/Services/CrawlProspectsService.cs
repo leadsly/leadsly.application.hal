@@ -43,7 +43,7 @@ namespace Domain.Services
             }
 
             _humanBehaviorService.RandomWaitMilliSeconds(2000, 7000);
-            IWebElement resultsDiv = _linkedInPageFacade.LinkedInSearchPage.ResultsHeader(webDriver);
+            IWebElement resultsDiv = _linkedInPageFacade.LinkedInSearchPage.ResultsHeader(webDriver);            
             _humanBehaviorService.RandomClickElement(resultsDiv);
 
             HalOperationResult<IGatherProspects> result = _linkedInPageFacade.LinkedInSearchPage.GatherProspects<IGatherProspects>(webDriver);

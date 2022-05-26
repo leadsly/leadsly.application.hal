@@ -60,5 +60,7 @@ namespace Domain.POMs.Pages
             where T : IOperationResponse;
 
         IWebElement GetProspectsActionButton(IWebElement prospect);
+
+        void ScrollTop(IWebDriver webDriver);
     }
 }

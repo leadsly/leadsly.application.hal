@@ -4,6 +4,7 @@ using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
+using Leadsly.Application.Model.Campaigns.Interfaces;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage.Interfaces;
 using Leadsly.Application.Model.Requests.FromHal;
@@ -77,7 +78,15 @@ namespace Domain.Providers.Campaigns
 
             IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)result.Value).WebDriver;
 
-            result = await ExecuteNetworkingInternalAsync<T>(message, webDriver, searchUrlsProgress, ct);
+            try
+            {
+                result = await ExecuteNetworkingInternalAsync<T>(message, webDriver, searchUrlsProgress, ct);
+            }
+            finally
+            {
+                NumberOfConnectionsSent = 0;
+            }
+            
             return result;
         }
 
@@ -104,17 +113,25 @@ namespace Domain.Providers.Campaigns
                 {
                     return result;
                 }
+
+                if (NumberOfConnectionsSent >= message.ProspectsToCrawl)
+                    break;
             }
 
             result.Succeeded = true;
             return result;
         }
 
-        private async Task<HalOperationResult<T>> NetworkingAsync<T>(IWebDriver webDriver, NetworkingMessageBody message, SearchUrlProgress searchUrlProgress)
+        private HalOperationResult<T> GetTotalResults<T>(IWebDriver webDriver, SearchUrlProgress searchUrlProgress)
             where T : IOperationResponse
         {
+            HalOperationResult<T> result = new();
+            // get total searchresults for this url
+            _linkedInPageFacade.LinkedInSearchPage.ScrollFooterIntoView<T>(webDriver);
+            _humanBehaviorService.RandomWaitSeconds(1, 2);
+
             // get the total number of search results
-            HalOperationResult<T> result = _linkedInPageFacade.LinkedInSearchPage.GetTotalSearchResults<T>(webDriver);
+            result = _linkedInPageFacade.LinkedInSearchPage.GetTotalSearchResults<T>(webDriver);
             if (result.Succeeded == false)
             {
                 result.Failures.Add(new()
@@ -124,7 +141,29 @@ namespace Domain.Providers.Campaigns
                 });
                 return result;
             }
-            int totalResults = ((IGetTotalNumberOfResults)result.Value).NumberOfResults;
+
+            result.Succeeded = true;
+            return result;
+        }
+
+
+        private async Task<HalOperationResult<T>> NetworkingAsync<T>(IWebDriver webDriver, NetworkingMessageBody message, SearchUrlProgress searchUrlProgress)
+            where T : IOperationResponse
+        {
+            int totalResults = 0;
+            if (searchUrlProgress.TotalSearchResults == 0)
+            {
+                HalOperationResult<T> result = GetTotalResults<T>(webDriver, searchUrlProgress);
+                if (result.Succeeded == false)
+                {
+                    return result;
+                }
+                totalResults = ((IGetTotalNumberOfResults)result.Value).NumberOfResults;
+            }
+            else
+            {
+                totalResults = searchUrlProgress.TotalSearchResults;
+            }
 
             return await ConnectWithProspectsAsync<T>(webDriver, message, searchUrlProgress, totalResults);
         }
@@ -134,18 +173,50 @@ namespace Domain.Providers.Campaigns
         {
             HalOperationResult<T> result = new();
 
-            int lastPage = 0;
-            for (int i = searchUrlProgress.LastPage; i < totalResults; i++)
+            int lastPage = searchUrlProgress.LastPage;
+            for (int i = lastPage; i < totalResults; i++)
             {
-                lastPage += 1;
-                // ProspectListPhase
-                result = await ExecuteProspectListInternalAsync<T>(webDriver, message);
-                if(result.Succeeded == false)
+                // get connactable prospects on this page
+                IList<IWebElement> connectableProspects = GetConnectableProspects(webDriver, message.PrimaryProspectListId);
+                if (connectableProspects == null)
                 {
                     return result;
                 }
-                IGatherProspects gatheredProspects = ((IGatherProspects)result.Value);
-                IList<IWebElement> connectableProspects = gatheredProspects.ProspectElements;                
+
+                //if connectable prospects equals 0, go to the next page
+                if(connectableProspects.Count == 0)
+                {
+                    result = _linkedInPageFacade.LinkedInSearchPage.ClickNext<T>(webDriver);
+                    if (result.Succeeded == false)
+                    {
+                        _logger.LogError("Failed to navigate to the next page");
+                        return result;
+                    }
+
+                    result = _linkedInPageFacade.LinkedInSearchPage.WaitUntilSearchResultsFinishedLoading<T>(webDriver);
+                    if (result.Succeeded == false)
+                    {
+                        _logger.LogError("Search results never finished loading.");
+                        return result;
+                    }                    
+
+                    if (i == totalResults)
+                    {
+                        result = await UpdateSearchUrlProgressAsync<T>(webDriver, searchUrlProgress, message, lastPage, true, totalResults);
+                        break;
+                    }
+
+                    lastPage += 1;
+
+                    continue;
+                }
+
+                // ProspectListPhase
+                result = await ExecuteProspectListInternalAsync<T>(webDriver, message, connectableProspects);
+                if(result.Succeeded == false)
+                {
+                    return result;
+                }            
 
                 // SendConnectionsPhase
                 result = await ExecuteSendConnectionsInternalAsync<T>(webDriver, message, connectableProspects);
@@ -155,55 +226,29 @@ namespace Domain.Providers.Campaigns
                 }
 
                 if (NumberOfConnectionsSent >= message.ProspectsToCrawl)
-                    goto updateSearchUrl;
-
-                result = _linkedInPageFacade.LinkedInSearchPage.ClickNext<T>(webDriver);
-                if (result.Succeeded == false)
                 {
-                    _logger.LogError("Failed to navigate to the next page");
-                    return result;
-                }
-
-                result = _linkedInPageFacade.LinkedInSearchPage.WaitUntilSearchResultsFinishedLoading<T>(webDriver);
-                if (result.Succeeded == false)
-                {
-                    _logger.LogError("Search results never finished loading.");
-                    return result;
+                    result = await UpdateSearchUrlProgressAsync<T>(webDriver, searchUrlProgress, message, lastPage, false, totalResults);
+                    break;
                 }
 
                 if (i == totalResults)
-                    goto updateSearchUrlExhausted;
-            }
+                {
+                    result = await UpdateSearchUrlProgressAsync<T>(webDriver, searchUrlProgress, message, lastPage, true, totalResults);
+                    break;
+                }
 
-        updateSearchUrl:
-            {
-                result = await UpdateSearchUrlProgressAsync<T>(webDriver, searchUrlProgress, message, lastPage);
-                if(result.Succeeded == false)
-                {
-                    return result;
-                }
-            }
-        updateSearchUrlExhausted:
-            {
-                result = await UpdateSearchUrlProgressAsync<T>(webDriver, searchUrlProgress, message, lastPage, true);
-                if (result.Succeeded == false)
-                {
-                    return result;
-                }
+                lastPage += 1;
             }
 
             result.Succeeded = true;
             return result;
         }
 
-        private async Task<HalOperationResult<T>> UpdateSearchUrlProgressAsync<T>(IWebDriver webDriver, SearchUrlProgress searchUrlProgress, NetworkingMessageBody message, int currentPage, bool markExhausted = false)
+        private async Task<HalOperationResult<T>> UpdateSearchUrlProgressAsync<T>(IWebDriver webDriver, SearchUrlProgress searchUrlProgress, NetworkingMessageBody message, int currentPage, bool markExhausted, int totalSearchResults)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
-
-            _crawlProspectsService.CrawlProspects(webDriver, message.PrimaryProspectListId, out IList<IWebElement> rawCollectedProspects);
-            int totalProspectsOnThisPage = rawCollectedProspects.Count;
-            int lastConnectedProspect = NumberOfConnectionsSent % totalProspectsOnThisPage;
+ 
             string currentUrl = webDriver.Url;
             string currentWindowHandleId = webDriver.CurrentWindowHandle;
 
@@ -211,8 +256,8 @@ namespace Domain.Providers.Campaigns
             searchUrlProgress.Exhausted = markExhausted;
             searchUrlProgress.LastPage = currentPage;
             searchUrlProgress.SearchUrl = currentUrl;
+            searchUrlProgress.TotalSearchResults = totalSearchResults;
             searchUrlProgress.WindowHandleId = currentWindowHandleId;
-            searchUrlProgress.LastProcessedProspect = lastConnectedProspect;
             searchUrlProgress.LastActivityTimestamp = _timestampService.TimestampNow();
 
             return await _campaignProvider.UpdateSearchUrlProgressAsync<T>(searchUrlProgress, message);
@@ -224,13 +269,12 @@ namespace Domain.Providers.Campaigns
             HalOperationResult<T> result = new();
             IList<CampaignProspectRequest> campaignProspectRequests = new List<CampaignProspectRequest>();
             foreach (IWebElement connectableProspect in connectableProspects)
-            {
+            {   
                 if (NumberOfConnectionsSent >= message.ProspectsToCrawl)
                     break;
 
-                CampaignProspectRequest request = ExecuteSendConnectionInternal(webDriver, connectableProspect, message.CampaignId);
-                campaignProspectRequests.Add(request);
-
+                CampaignProspectRequest request = ExecuteSendConnectionInternal(webDriver, connectableProspect, message.CampaignId);                
+                campaignProspectRequests.Add(request);                
                 NumberOfConnectionsSent += 1;
             }
 
@@ -242,7 +286,6 @@ namespace Domain.Providers.Campaigns
                     return result;
                 }
             }
-
             result.Succeeded = true;
             return result;
         }
@@ -260,30 +303,17 @@ namespace Domain.Providers.Campaigns
             return request;
         }
 
-        private async Task<HalOperationResult<T>> ExecuteProspectListInternalAsync<T>(IWebDriver webDriver, NetworkingMessageBody message)
+        private async Task<HalOperationResult<T>> ExecuteProspectListInternalAsync<T>(IWebDriver webDriver, NetworkingMessageBody message, IList<IWebElement> connectableProspectsOnThisPage)
             where T : IOperationResponse
         {
-            HalOperationResult<T> result = new();
-            // grab everyone from the search result hit list
-            IList<IWebElement> connectableProspectsOnThisPage = GetConnectableProspects(webDriver, message.PrimaryProspectListId);
-            if (connectableProspectsOnThisPage == null)
-            {
-                return result;
-            }
-
             // save prospects in batches
-            result = await PersistConnectableProspectsAsync<T>(connectableProspectsOnThisPage, message);
+            HalOperationResult<T> result = await PersistConnectableProspectsAsync<T>(connectableProspectsOnThisPage, message);
+
             if (result.Succeeded == false)
             {
                 return result;
             }
 
-            IGatherProspects rawProspects = new GatherProspects
-            {
-                ProspectElements = connectableProspectsOnThisPage.ToList()
-            };
-
-            result.Value = (T)rawProspects;
             result.Succeeded = true;
             return result;
         }
@@ -340,10 +370,8 @@ namespace Domain.Providers.Campaigns
             bool sendConnectionSuccess = true;
             _logger.LogInformation("[SendConnectionRequests]: Sending connection request to the given prospect");
 
-            IWebElement searchResultsHeader = _linkedInPageFacade.LinkedInSearchPage.ResultsHeader(webDriver);
-            _humanBehaviorService.RandomClickElement(searchResultsHeader);
-
             _humanBehaviorService.RandomWaitMilliSeconds(700, 3000);
+            _linkedInPageFacade.LinkedInSearchPage.ScrollTop(webDriver);
             HalOperationResult<IOperationResponse> sendConnectionResult = _linkedInPageFacade.LinkedInSearchPage.SendConnectionRequest<IOperationResponse>(prospect);
             if (sendConnectionResult.Succeeded == false)
             {

@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", ".\Domain\Domain.csproj", "{CD0F6EA1-5B5B-4EC1-BE9E-92D9589F0555}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "Domain\Domain.csproj", "{CD0F6EA1-5B5B-4EC1-BE9E-92D9589F0555}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PageObjects", ".\PageObjects\PageObjects.csproj", "{F61016DF-EB3F-446C-9762-6557F4B54CCA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PageObjects", "PageObjects\PageObjects.csproj", "{F61016DF-EB3F-446C-9762-6557F4B54CCA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hal", ".\Hal\Hal.csproj", "{1F632170-FF57-4C9C-862C-003D22E60289}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hal", "Hal\Hal.csproj", "{1F632170-FF57-4C9C-862C-003D22E60289}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure", ".\Infrastructure\Infrastructure.csproj", "{815C5179-8015-45AD-9177-3EB912079C77}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{815C5179-8015-45AD-9177-3EB912079C77}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Leadsly.Application.Model", "..\Leadsly.Application.Model\Leadsly.Application.Model.csproj", "{6B725237-E37E-431A-9238-5978B5AD6DA0}"
 EndProject

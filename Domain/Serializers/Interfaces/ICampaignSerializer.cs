@@ -12,5 +12,7 @@ namespace Domain.Serializers.Interfaces
         public GetSentConnectionsUrlStatusPayload DeserializeSentConnectionsUrlStatuses(string json);
 
         public NewAcceptedCampaignProspectsPayload DeserializeNewAcceptedCampaignProspects(string json);
+
+        public SearchUrlProgressResponse DeserializeSearchUrlsProgress(string json);
     }
 }

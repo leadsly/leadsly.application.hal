@@ -35,7 +35,7 @@ namespace PageObjects.Pages
             try
             {
                 _logger.LogInformation("Retrieving search results footer and then trying to move it into view with 'MoveToElement' method");
-                searchResultFooter = webDriver.FindElement(By.CssSelector(".artdeco-card.mb6"));
+                searchResultFooter = webDriver.FindElement(By.XPath("//ul[contains(@class, 'artdeco-pagination__pages--number')]/parent::div/parent::div"));
                 Actions actions = new Actions(webDriver);
                 actions.MoveToElement(searchResultFooter);
                 actions.Perform();
@@ -120,7 +120,7 @@ namespace PageObjects.Pages
 
         public HalOperationResult<T> GetTotalSearchResults<T>(IWebDriver driver) where T : IOperationResponse
         {
-            HalOperationResult<T> result = new();
+            HalOperationResult<T> result = new();          
 
             IWebElement numberOfPages = LastPage(driver);
 
@@ -380,7 +380,14 @@ namespace PageObjects.Pages
             {
                 if (actionButton.Text == ApiConstants.PageObjectConstants.Connect)
                 {
-                    actionButton.Click();
+                    try
+                    {
+                        actionButton.Click();
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
                 }
                 else
                 {
@@ -645,6 +652,9 @@ namespace PageObjects.Pages
             return searchLimitDiv != null;
         }
 
-        
+        public void ScrollTop(IWebDriver webDriver)
+        {
+            _webDriverUtilities.ScrollTop(webDriver);
+        }
     }
 }

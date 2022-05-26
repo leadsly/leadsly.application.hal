@@ -1,4 +1,5 @@
-﻿using Domain.Services.Interfaces;
+﻿using Domain.Models.Requests;
+using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Requests;
@@ -205,6 +206,12 @@ namespace Domain.Services
                             op = "replace",
                             path = "/lastActivityTimestamp",
                             value = request.LastActivityTimestamp.ToString()
+                        },
+                        new
+                        {
+                            op = "replace",
+                            path = "/totalSearchResults",
+                            value = request.TotalSearchResults.ToString()
                         }
                     })
                 };
