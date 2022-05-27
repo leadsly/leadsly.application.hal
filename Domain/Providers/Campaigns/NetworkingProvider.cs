@@ -57,7 +57,7 @@ namespace Domain.Providers.Campaigns
 
         private int NumberOfConnectionsSent { get; set; }
 
-        public async Task<HalOperationResult<T>> ExecuteNetworkingAsync<T>(NetworkingMessageBody message, IList<SearchUrlProgress> searchUrlsProgress, CancellationToken ct = default) where T : IOperationResponse
+        public async Task<HalOperationResult<T>> ExecuteNetworkingAsync<T>(NetworkingMessageBody message, IList<SearchUrlProgressRequest> searchUrlsProgress, CancellationToken ct = default) where T : IOperationResponse
         {
             string halId = message.HalId;
             _logger.LogInformation("Executing Networking Phase on hal id {halId}", halId);
@@ -90,11 +90,11 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        private async Task<HalOperationResult<T>> ExecuteNetworkingInternalAsync<T>(NetworkingMessageBody message, IWebDriver webDriver, IList<SearchUrlProgress> searchUrlsProgress, CancellationToken ct = default)
+        private async Task<HalOperationResult<T>> ExecuteNetworkingInternalAsync<T>(NetworkingMessageBody message, IWebDriver webDriver, IList<SearchUrlProgressRequest> searchUrlsProgress, CancellationToken ct = default)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
-            foreach (SearchUrlProgress searchUrlProgress in searchUrlsProgress)
+            foreach (SearchUrlProgressRequest searchUrlProgress in searchUrlsProgress)
             {
                 result = _webDriverProvider.SwitchToOrNewTab<T>(webDriver, searchUrlProgress.WindowHandleId);
                 if (result.Succeeded == false)
@@ -122,7 +122,7 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        private HalOperationResult<T> GetTotalResults<T>(IWebDriver webDriver, SearchUrlProgress searchUrlProgress)
+        private HalOperationResult<T> GetTotalResults<T>(IWebDriver webDriver, SearchUrlProgressRequest searchUrlProgress)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -147,7 +147,7 @@ namespace Domain.Providers.Campaigns
         }
 
 
-        private async Task<HalOperationResult<T>> NetworkingAsync<T>(IWebDriver webDriver, NetworkingMessageBody message, SearchUrlProgress searchUrlProgress)
+        private async Task<HalOperationResult<T>> NetworkingAsync<T>(IWebDriver webDriver, NetworkingMessageBody message, SearchUrlProgressRequest searchUrlProgress)
             where T : IOperationResponse
         {
             int totalResults = 0;
@@ -168,7 +168,7 @@ namespace Domain.Providers.Campaigns
             return await ConnectWithProspectsAsync<T>(webDriver, message, searchUrlProgress, totalResults);
         }
 
-        private async Task<HalOperationResult<T>> ConnectWithProspectsAsync<T>(IWebDriver webDriver, NetworkingMessageBody message, SearchUrlProgress searchUrlProgress, int totalResults)
+        private async Task<HalOperationResult<T>> ConnectWithProspectsAsync<T>(IWebDriver webDriver, NetworkingMessageBody message, SearchUrlProgressRequest searchUrlProgress, int totalResults)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -244,7 +244,7 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        private async Task<HalOperationResult<T>> UpdateSearchUrlProgressAsync<T>(IWebDriver webDriver, SearchUrlProgress searchUrlProgress, NetworkingMessageBody message, int currentPage, bool markExhausted, int totalSearchResults)
+        private async Task<HalOperationResult<T>> UpdateSearchUrlProgressAsync<T>(IWebDriver webDriver, SearchUrlProgressRequest searchUrlProgress, NetworkingMessageBody message, int currentPage, bool markExhausted, int totalSearchResults)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();

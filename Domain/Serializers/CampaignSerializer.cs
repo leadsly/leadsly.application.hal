@@ -1,5 +1,6 @@
 ﻿using Domain.Serializers.Interfaces;
 using Leadsly.Application.Model.Campaigns;
+using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
@@ -46,18 +47,18 @@ namespace Domain.Serializers
             return payload;
         }
 
-        public SearchUrlProgressResponse DeserializeSearchUrlsProgress(string json)
+        public SearchUrlProgressPayload DeserializeSearchUrlsProgress(string json)
         {
-            _logger.LogInformation("Deserializing SearchUrlProgressResponse");
-            SearchUrlProgressResponse payload = default;
+            _logger.LogInformation("Deserializing SearchUrlProgressPayload");
+            SearchUrlProgressPayload payload = default;
             try
             {
-                payload = JsonConvert.DeserializeObject<SearchUrlProgressResponse>(json);
-                _logger.LogDebug("Successfully deserialized SearchUrlProgressResponse");
+                payload = JsonConvert.DeserializeObject<SearchUrlProgressPayload>(json);
+                _logger.LogDebug("Successfully deserialized SearchUrlProgressPayload");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to deserialize SearchUrlProgressResponse");
+                _logger.LogError(ex, "Failed to deserialize SearchUrlProgressPayload");
             }
             return payload;
         }

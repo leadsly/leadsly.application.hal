@@ -17,7 +17,7 @@ namespace Domain.Services.Interfaces
     {
         Task<HttpResponseMessage> GetLatestSentConnectionsUrlStatusesAsync(SearchUrlDetailsRequest request, CancellationToken ct = default);
 
-        Task<HttpResponseMessage> GetSearchUrlProgressAsync(GetSearchUrlProgressRequest request, CancellationToken ct = default);
+        Task<HttpResponseMessage> GetSearchUrlProgressAsync(SearchUrlProgressRequest request, CancellationToken ct = default);
 
         Task<HttpResponseMessage> UpdateSendConnectionsUrlStatusesAsync(UpdateSearchUrlDetailsRequest request, CancellationToken ct = default);
         Task<HttpResponseMessage> UpdateSearchUrlProgressAsync(UpdateSearchUrlProgressRequest request, CancellationToken ct = default);

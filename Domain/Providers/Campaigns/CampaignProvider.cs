@@ -120,7 +120,7 @@ namespace Domain.Providers.Campaigns
         {
             HalOperationResult<T> result = new();
 
-            GetSearchUrlProgressRequest request = new()
+            SearchUrlProgressRequest request = new()
             {
                 RequestUrl = $"api/Networking/{message.CampaignId}/url",
                 NamespaceName = message.NamespaceName,
@@ -137,7 +137,7 @@ namespace Domain.Providers.Campaigns
             }
 
             string json = await responseMessage.Content.ReadAsStringAsync();
-            ISearchUrlProgressResponse sentConnectionStatuses = _campaignSerializer.DeserializeSearchUrlsProgress(json);
+            ISearchUrlProgressPayload sentConnectionStatuses = _campaignSerializer.DeserializeSearchUrlsProgress(json);
             if (sentConnectionStatuses == null)
             {
                 return result;
@@ -149,7 +149,7 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        public async Task<HalOperationResult<T>> UpdateSearchUrlProgressAsync<T>(SearchUrlProgress updatedSearchUrlProgress, NetworkingMessageBody message, CancellationToken ct = default) where T : IOperationResponse
+        public async Task<HalOperationResult<T>> UpdateSearchUrlProgressAsync<T>(SearchUrlProgressRequest updatedSearchUrlProgress, NetworkingMessageBody message, CancellationToken ct = default) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 

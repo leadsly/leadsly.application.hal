@@ -56,7 +56,7 @@ namespace Domain.Services
             return response;
         }
 
-        public async Task<HttpResponseMessage> GetSearchUrlProgressAsync(GetSearchUrlProgressRequest request, CancellationToken ct = default)
+        public async Task<HttpResponseMessage> GetSearchUrlProgressAsync(SearchUrlProgressRequest request, CancellationToken ct = default)
         {
             string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 

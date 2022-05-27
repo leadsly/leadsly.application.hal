@@ -26,7 +26,7 @@ namespace Domain.Providers.Campaigns.Interfaces
         Task<HalOperationResult<T>> GetSearchUrlProgressAsync<T>(NetworkingMessageBody message, CancellationToken ct = default)
             where T : IOperationResponse;
 
-        Task<HalOperationResult<T>> UpdateSearchUrlProgressAsync<T>(SearchUrlProgress updatedSearchUrlProgress, NetworkingMessageBody message, CancellationToken ct = default)
+        Task<HalOperationResult<T>> UpdateSearchUrlProgressAsync<T>(SearchUrlProgressRequest updatedSearchUrlProgress, NetworkingMessageBody message, CancellationToken ct = default)
             where T : IOperationResponse;
     }
 }

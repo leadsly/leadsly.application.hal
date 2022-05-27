@@ -209,7 +209,7 @@ namespace Domain.Facades
                 return result;
             }
 
-            ISearchUrlProgressResponse response = ((ISearchUrlProgressResponse)result.Value);
+            ISearchUrlProgressPayload response = ((ISearchUrlProgressPayload)result.Value);
             if(response == null)
             {
                 return result;
