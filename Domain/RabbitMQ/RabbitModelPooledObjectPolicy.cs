@@ -12,14 +12,14 @@ namespace Domain.RabbitMQ
 {
     public class RabbitModelPooledObjectPolicy : PooledObjectPolicy<IModel>
     {
-        public RabbitModelPooledObjectPolicy(RabbitMQConfigOptions options)
+        public RabbitModelPooledObjectPolicy(RabbitMQConfigOptions options, string halId)
         {
-            _connection = GetConnection(options);
+            _connection = GetConnection(options, halId);
         }
 
         private readonly IConnection _connection;
 
-        private IConnection GetConnection(RabbitMQConfigOptions options)
+        private IConnection GetConnection(RabbitMQConfigOptions options, string halId)
         {
             var factory = new ConnectionFactory()
             {
@@ -29,7 +29,7 @@ namespace Domain.RabbitMQ
                 Port = options.ConnectionFactoryConfigOptions.Port,
                 VirtualHost = options.ConnectionFactoryConfigOptions.VirtualHost,
                 DispatchConsumersAsync = true,
-                ClientProvidedName = "[Consumer]"
+                ClientProvidedName = $"[Consumer] {halId}"
             };
 
             return factory.CreateConnection();

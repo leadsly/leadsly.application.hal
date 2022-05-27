@@ -180,7 +180,13 @@ namespace Hal.Configurations
             {
                 ObjectPoolProvider provider = s.GetRequiredService<ObjectPoolProvider>();
                 IOptions<RabbitMQConfigOptions> rabbitMQConfigOptions = s.GetRequiredService<IOptions<RabbitMQConfigOptions>>();
-                return provider.Create(new RabbitModelPooledObjectPolicy(rabbitMQConfigOptions.Value));
+                string halId = Environment.GetEnvironmentVariable("HAL_ID");
+                if (halId == string.Empty || halId == null)
+                {
+                    Log.Warning("HAL_ID enviornment variable was not found or its value was not set");
+                    throw new ArgumentNullException("HAL_ID env variable was null but is expected to be set");
+                }
+                return provider.Create(new RabbitModelPooledObjectPolicy(rabbitMQConfigOptions.Value, halId));
             });
 
             return services;
