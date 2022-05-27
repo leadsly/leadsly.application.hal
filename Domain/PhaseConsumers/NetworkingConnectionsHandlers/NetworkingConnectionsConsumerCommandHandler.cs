@@ -1,4 +1,5 @@
-﻿using Domain.Services.Interfaces;
+﻿using Domain.RabbitMQ;
+using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using RabbitMQ.Client.Events;
 using System;

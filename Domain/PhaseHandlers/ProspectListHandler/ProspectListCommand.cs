@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.PhaseHandlers.NetworkingConnectionsHandler
+namespace Domain.PhaseHandlers.ProspectListHandler
 {
     public class ProspectListCommand : ICommand
     {

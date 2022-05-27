@@ -1,5 +1,5 @@
 ﻿using Domain.Facades.Interfaces;
-using Domain.Models;
+using Domain.Models.Requests;
 using Domain.POMs.Pages;
 using Domain.Providers.Interfaces;
 using Leadsly.Application.Model;

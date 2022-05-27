@@ -20,7 +20,7 @@ namespace PageObjects.Pages
             _logger = logger;
             _rnd = new Random();
         }
-
+        
         private readonly ILogger _logger;
         private readonly Random _rnd;
 

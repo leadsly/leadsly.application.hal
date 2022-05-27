@@ -1,5 +1,4 @@
-﻿using Domain.Models.Requests;
-using Leadsly.Application.Model.WebDriver;
+﻿using Leadsly.Application.Model.WebDriver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,11 +6,11 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Models
+namespace Domain.Models.Requests
 {
     [DataContract]
     public class AuthenticateAccountRequest : BaseRequest
-    {        
+    {
         [DataMember(IsRequired = true)]
         public string Username { get; set; }
 

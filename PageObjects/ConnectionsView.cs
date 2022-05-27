@@ -1,4 +1,5 @@
 ﻿using Domain.POMs;
+using Domain.POMs.Controls;
 using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
@@ -13,13 +14,14 @@ namespace PageObjects
 {
     public class ConnectionsView : IConnectionsView
     {
-        public ConnectionsView(ILogger<ConnectionsView> logger)
+        public ConnectionsView(ILogger<ConnectionsView> logger, IConversationCards conversationCards)
         {
             _logger = logger;
+            _conversationCards = conversationCards;
         }
 
         private readonly ILogger<ConnectionsView> _logger;
-
+        private readonly IConversationCards _conversationCards;
 
         private void WaitUntilUlTagIsVisible(IWebDriver webDriver)
         {
@@ -295,5 +297,9 @@ namespace PageObjects
             return result;
         }
 
+        public IReadOnlyCollection<IWebElement> GetAllConversationsCloseButtons(IWebDriver webDriver)
+        {
+            return _conversationCards.GetAllConversationCloseButtons(webDriver);
+        }
     }
 }

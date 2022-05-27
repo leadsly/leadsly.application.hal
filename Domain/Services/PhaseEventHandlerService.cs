@@ -2,8 +2,8 @@
 using Domain.PhaseConsumers;
 using Domain.PhaseHandlers.FollowUpMessageHandlers;
 using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
-using Domain.PhaseHandlers.NetworkingConnectionsHandler;
 using Domain.PhaseHandlers.NetworkingHandler;
+using Domain.PhaseHandlers.ProspectListHandler;
 using Domain.PhaseHandlers.ScanProspectsForRepliesHandler;
 using Domain.PhaseHandlers.SendConnectionsHandler;
 using Domain.Providers.Campaigns;

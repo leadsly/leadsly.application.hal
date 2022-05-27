@@ -4,8 +4,6 @@ using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.Campaigns.Interfaces;
-using Leadsly.Application.Model.LinkedInPages.SearchResultPage;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage.Interfaces;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;

@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
@@ -40,11 +41,19 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
 
             if (MonitorForNewProspectsProvider.IsRunning == false)
             {
-                await StartMonitorForNewConnectionsAsync(body);
-            }            
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                // this is required because this task can run for 8 - 10 hours a day. The AppServer does not know IF this task/phase is already
+                // running on Hal thus it will trigger messages blindly. Otherwise if we await this here, then none of the blindly triggered
+                // messages make it here, thus clugg up the queue
+                Task.Run(() =>
+                {
+                    StartMonitorForNewConnectionsAsync(command, body);
+                });
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+            }
         }
 
-        public async Task StartMonitorForNewConnectionsAsync(MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections)
+        public async Task StartMonitorForNewConnectionsAsync(MonitorForNewConnectionsCommand command, MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections)
         {
             try
             {
@@ -62,6 +71,7 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Exception occured while executing Follow Up Messages Phase. Negatively acknowledging the message and re-queuing it");
+                command.Channel.BasicNack(command.EventArgs.DeliveryTag, false, true);
             }
         }
     }

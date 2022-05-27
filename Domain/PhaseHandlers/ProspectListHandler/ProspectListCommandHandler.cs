@@ -12,7 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.PhaseHandlers.NetworkingConnectionsHandler
+namespace Domain.PhaseHandlers.ProspectListHandler
 {
     public class ProspectListCommandHandler : ICommandHandler<ProspectListCommand>
     {
@@ -21,19 +21,19 @@ namespace Domain.PhaseHandlers.NetworkingConnectionsHandler
             ICampaignPhaseFacade campaignPhaseFacade
             )
         {
-            _campaignPhaseFacade = campaignPhaseFacade;            
+            _campaignPhaseFacade = campaignPhaseFacade;
             _logger = logger;
         }
 
         private readonly ILogger<ProspectListCommandHandler> _logger;
-        private readonly ICampaignPhaseFacade _campaignPhaseFacade;        
+        private readonly ICampaignPhaseFacade _campaignPhaseFacade;
 
         public async Task HandleAsync(ProspectListCommand command)
         {
             IModel channel = command.Channel;
             BasicDeliverEventArgs eventArgs = command.EventArgs;
 
-            ProspectListBody body = command.MessageBody as ProspectListBody;            
+            ProspectListBody body = command.MessageBody as ProspectListBody;
 
             Action ackOperation = default;
             try

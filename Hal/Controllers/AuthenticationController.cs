@@ -1,4 +1,4 @@
-﻿using Domain.Models;
+﻿using Domain.Models.Requests;
 using Domain.Supervisor;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses.Hal;

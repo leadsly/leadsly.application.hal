@@ -10,16 +10,18 @@ using Domain.PhaseConsumers.NetworkingHandler;
 using Domain.PhaseConsumers.ScanProspectsForRepliesHandlers;
 using Domain.PhaseHandlers.FollowUpMessageHandlers;
 using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
-using Domain.PhaseHandlers.NetworkingConnectionsHandler;
 using Domain.PhaseHandlers.NetworkingHandler;
+using Domain.PhaseHandlers.ProspectListHandler;
 using Domain.PhaseHandlers.ScanProspectsForRepliesHandler;
 using Domain.PhaseHandlers.SendConnectionsHandler;
 using Domain.POMs;
+using Domain.POMs.Controls;
 using Domain.POMs.Pages;
 using Domain.Providers;
 using Domain.Providers.Campaigns;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
+using Domain.RabbitMQ;
 using Domain.Repositories;
 using Domain.Serializers;
 using Domain.Serializers.Interfaces;
@@ -31,6 +33,7 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Infrastructure.Repositories;
 using Leadsly.Application.Model;
+using Leadsly.Application.Model.RabbitMQ;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
@@ -39,10 +42,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.ObjectPool;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using PageObjects;
+using PageObjects.Controls;
 using PageObjects.Pages;
 using Serilog;
 using System;
@@ -139,6 +145,7 @@ namespace Hal.Configurations
 
             services.AddScoped<ICrawlProspectsService, CrawlProspectsService>();
             services.AddScoped<ICampaignProspectsService, CampaignProspectsService>();
+            services.AddScoped<IScreenHouseKeeperService, ScreenHouseKeeperService>();
             
             return services;
         }
@@ -168,6 +175,13 @@ namespace Hal.Configurations
             Log.Information("Registering rabbit mq services configuration.");
 
             services.Configure<RabbitMQConfigOptions>(options => configuration.GetSection(nameof(RabbitMQConfigOptions)).Bind(options));
+            services.AddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();
+            services.AddSingleton(s =>
+            {
+                ObjectPoolProvider provider = s.GetRequiredService<ObjectPoolProvider>();
+                IOptions<RabbitMQConfigOptions> rabbitMQConfigOptions = s.GetRequiredService<IOptions<RabbitMQConfigOptions>>();
+                return provider.Create(new RabbitModelPooledObjectPolicy(rabbitMQConfigOptions.Value));
+            });
 
             return services;
         }
@@ -186,6 +200,7 @@ namespace Hal.Configurations
             services.AddScoped<ILinkedInNotificationsPage, LinkedInNotificationsPage>();
             services.AddScoped<IAcceptedInvitiationsView, AcceptedInvitationsView>();
             services.AddScoped<IConnectionsView, ConnectionsView>();
+            services.AddScoped<IConversationCards, ConversationCards>();
 
             return services;
         }

@@ -32,11 +32,13 @@ namespace Domain.Providers.Campaigns
             ILogger<MonitorForNewProspectsProvider> logger, 
             IWebDriverProvider webDriverProvider,            
             ITimestampService timestampService,
+            IScreenHouseKeeperService screenKeeperService,
             IHumanBehaviorService humanBehaviorService,            
             IPhaseDataProcessingService campaignProcessingPhase,            
             ILinkedInPageFacade linkedInPageFacade
             )
         {
+            _screenHouseKeeperService = screenKeeperService;
             _logger = logger;
             _humanBehaviorService = humanBehaviorService;
             _linkedInPageFacade = linkedInPageFacade;
@@ -45,16 +47,16 @@ namespace Domain.Providers.Campaigns
             _webDriverProvider = webDriverProvider;            
         }
 
+        private readonly IScreenHouseKeeperService _screenHouseKeeperService;
         private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly ILinkedInPageFacade _linkedInPageFacade;
         private readonly ITimestampService _timestampService;
         private readonly IWebDriverProvider _webDriverProvider;        
         private readonly ILogger<MonitorForNewProspectsProvider> _logger;                
         private readonly IPhaseDataProcessingService _campaignProcessingPhase;
-
         private int PreviousConnectionsCount = 0;
         private IList<RecentlyAddedProspect> PreviousRecentlyAdded = new List<RecentlyAddedProspect>();
-        public static bool IsRunning { get; private set; }
+        public static bool IsRunning { get; private set; }        
 
         public async Task<HalOperationResult<T>> ExecutePhaseOffHoursScanPhaseAsync<T>(MonitorForNewAcceptedConnectionsBody message) where T : IOperationResponse
         {
@@ -98,9 +100,7 @@ namespace Domain.Providers.Campaigns
             IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)result.Value).WebDriver;
 
             try
-            {
-                // grab the new notifications on initial page load
-                // await CheckForNewConnectionsOnPageLoad(webDriver, message);                
+            {               
                 await MonitorForNewConnections(webDriver, message);
             }
             catch(Exception ex)
@@ -180,6 +180,8 @@ namespace Domain.Providers.Campaigns
 
                 _humanBehaviorService.RandomWaitMinutes(2, 5);
 
+                CloseAllConversations(webDriver);
+
                 HalOperationResult<IOperationResponse> result = _webDriverProvider.Refresh<IOperationResponse>(webDriver);
                 if(result.Succeeded == false)
                 {
@@ -197,6 +199,16 @@ namespace Domain.Providers.Campaigns
             IsRunning = false;
 
             _logger.LogInformation("Stopping to look for new connections. MonitorForNewAcceptedConnections finished running because it is end of the work day");
+        }
+
+        private void CloseAllConversations(IWebDriver webDriver)
+        {
+            IReadOnlyCollection<IWebElement> closeButtons = _screenHouseKeeperService.GetAllConversationCardsCloseButtons(webDriver);
+            foreach (IWebElement closeButton in closeButtons)
+            {
+                _humanBehaviorService.RandomWaitSeconds(1, 3);
+                _screenHouseKeeperService.CloseConversation(closeButton);
+            }
         }
 
         #region MonitorForNewConnections on MyNetwork Connections page

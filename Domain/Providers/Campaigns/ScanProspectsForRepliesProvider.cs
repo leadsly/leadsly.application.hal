@@ -29,12 +29,14 @@ namespace Domain.Providers.Campaigns
         public ScanProspectsForRepliesProvider(
             ILogger<ScanProspectsForRepliesProvider> logger,
             IPhaseDataProcessingProvider phaseDataProcessingProvider,
-            IWebDriverProvider webDriverProvider,
-            ILinkedInPageFacade linkedInPageFacade,
+            IWebDriverProvider webDriverProvider,            
+            IScreenHouseKeeperService screenHouseKeeperService,
+            ILinkedInPageFacade linkedInPageFacade,            
             IHumanBehaviorService humanService,
             ITimestampService timestampService)
         {
             _logger = logger;
+            _screenHouseKeeperService = screenHouseKeeperService;
             _humanService = humanService;
             _linkedInPageFacade = linkedInPageFacade;
             _webDriverProvider = webDriverProvider;
@@ -43,8 +45,9 @@ namespace Domain.Providers.Campaigns
         }
 
         private readonly IPhaseDataProcessingProvider _phaseDataProcessingProvider;
-        private readonly IHumanBehaviorService _humanService;
+        private readonly IHumanBehaviorService _humanService;        
         private readonly ILogger<ScanProspectsForRepliesProvider> _logger;
+        private readonly IScreenHouseKeeperService _screenHouseKeeperService;
         private readonly ILinkedInPageFacade _linkedInPageFacade;
         private readonly IWebDriverProvider _webDriverProvider;        
         private readonly ITimestampService _timestampService;        
@@ -109,6 +112,8 @@ namespace Domain.Providers.Campaigns
             {
                 _humanService.RandomWaitSeconds(30, 45);
 
+                CloseAllConversations(webDriver);
+
                 await ScanProspectsAsync<T>(webDriver, message);
             }
 
@@ -119,6 +124,16 @@ namespace Domain.Providers.Campaigns
 
             result.Succeeded = true;
             return result;
+        }
+
+        private void CloseAllConversations(IWebDriver webDriver)
+        {
+            IReadOnlyCollection<IWebElement> closeButtons = _screenHouseKeeperService.GetAllConversationCardsCloseButtons(webDriver);
+            foreach (IWebElement closeButton in closeButtons)
+            {
+                _humanService.RandomWaitSeconds(1, 3);
+                _screenHouseKeeperService.CloseConversation(closeButton);
+            }
         }
 
         private async Task<HalOperationResult<T>> ScanProspectsAsync<T>(IWebDriver webDriver, ScanProspectsForRepliesBody message)

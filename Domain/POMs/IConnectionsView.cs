@@ -15,5 +15,7 @@ namespace Domain.POMs
         IList<RecentlyAddedProspect> GetAllRecentlyAdded(IWebDriver webDriver);
 
         IList<RecentlyAddedProspect> GetRecentlyAdded(IWebDriver webDriver, int fromMaxHoursAgo);
+
+        IReadOnlyCollection<IWebElement> GetAllConversationsCloseButtons(IWebDriver webDriver);
     }
 }
