@@ -1,5 +1,4 @@
 ﻿using Domain.Facades.Interfaces;
-using Domain.Models.Responses.Interfaces;
 using Domain.Providers.Campaigns.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;

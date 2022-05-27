@@ -1,5 +1,4 @@
 ﻿using Domain.Models.Requests;
-using Domain.Models.Responses.Interfaces;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Serializers.Interfaces;
 using Domain.Services.Interfaces;
