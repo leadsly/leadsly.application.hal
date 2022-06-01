@@ -1,9 +1,12 @@
-﻿using Domain.Repositories;
+﻿using Domain.RabbitMQ.Interfaces;
+using Domain.Repositories;
+using Leadsly.Application.Model;
 using Leadsly.Application.Model.RabbitMQ;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Collections.Generic;
 
 namespace Domain.RabbitMQ
 {
@@ -33,11 +36,14 @@ namespace Domain.RabbitMQ
             string queueName = options.QueueConfigOptions.Name.Replace("{halId}", halId);
             queueName = queueName.Replace("{queueName}", queueNameIn);
 
+            IDictionary<string, object> arguments = new Dictionary<string, object>();
+            arguments.Add(RabbitMQConstants.QueueType, RabbitMQConstants.Quorum);
+
             channel.QueueDeclare(queue: queueName,
-                             durable: false,
+                             durable: true,
                              exclusive: false,
                              autoDelete: false,
-                             arguments: null);
+                             arguments: arguments);
 
             string routingKey = options.RoutingKey.Replace("{halId}", halId);
             routingKey = routingKey.Replace("{purpose}", routingKeyIn);

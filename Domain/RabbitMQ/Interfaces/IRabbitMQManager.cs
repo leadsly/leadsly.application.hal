@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.RabbitMQ
+namespace Domain.RabbitMQ.Interfaces
 {
     public interface IRabbitMQManager
     {

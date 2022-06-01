@@ -20,22 +20,32 @@ namespace Domain
         {
             _logger.LogInformation("HalWorkCommandHandler executing");
             // check to see if right now is during hal's work day
-            string timeZone = command.TimeZoneId;
-            _logger.LogInformation("User's timezone is {timeZone}", timeZone);
-       
-            DateTime startOfWorkDay = DateTime.Parse(command.StartOfWorkDay);
-            _logger.LogDebug($"Hal's start of work day is {startOfWorkDay.Date}");
-            DateTime endOfWorkDay = DateTime.Parse(command.EndOfWorkDay);
-            _logger.LogDebug($"Hal's end of work day is {endOfWorkDay.Date}");
-            DateTime nowLocal = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, timeZone);
-            _logger.LogDebug($"User's local now time is {nowLocal.Date}");
+            string tzId = command.TimeZoneId;
+            _logger.LogInformation("User's TimeZone id is {tzId}", tzId);
+            TimeZoneInfo tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tzId);
 
-            if ((nowLocal > startOfWorkDay) && (nowLocal < endOfWorkDay))
+            _logger.LogDebug($"Start of work day value is {command.StartOfWorkDay}");
+            DateTimeOffset startOfWorkDay = DateTimeOffset.Parse(command.StartOfWorkDay);            
+            DateTimeOffset startOfDayLocalized = TimeZoneInfo.ConvertTime(startOfWorkDay, tzInfo);
+            _logger.LogDebug($"Hal's start of work day is {startOfDayLocalized}");
+
+            _logger.LogDebug($"End of work day value is {command.EndOfWorkDay}");
+            DateTimeOffset endOfWorkDay = DateTimeOffset.Parse(command.EndOfWorkDay);            
+            DateTimeOffset endOfDayLocalized = TimeZoneInfo.ConvertTime(endOfWorkDay, tzInfo);
+            _logger.LogDebug($"Hal's end of work day is {endOfDayLocalized}");
+
+            DateTimeOffset nowLocal = TimeZoneInfo.ConvertTime(DateTime.UtcNow, tzInfo);
+            _logger.LogDebug($"User's configured local now time is {nowLocal}");
+
+            if ((nowLocal > startOfDayLocalized) && (nowLocal < endOfDayLocalized))
             {
                 _logger.LogDebug("Task is within Hal's work day. Executing task...");
                 await this._decorated.HandleAsync(command);
             }
-            _logger.LogDebug("Task is outside of Hal's work day. The task will NOT be executed today");
+            else
+            {
+                _logger.LogDebug("Task is outside of Hal's work day. The task will NOT be executed today");
+            }            
         }
     }
 }

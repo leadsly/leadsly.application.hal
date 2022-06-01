@@ -1,4 +1,5 @@
 ﻿using Domain.Facades.Interfaces;
+using Domain.RabbitMQ;
 using Domain.Serializers.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
@@ -34,8 +35,7 @@ namespace Domain.PhaseHandlers.ProspectListHandler
             BasicDeliverEventArgs eventArgs = command.EventArgs;
 
             ProspectListBody body = command.MessageBody as ProspectListBody;
-
-            Action ackOperation = default;
+            
             try
             {
                 HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecutePhaseAsync<IOperationResponse>(body);
@@ -43,22 +43,18 @@ namespace Domain.PhaseHandlers.ProspectListHandler
                 if (operationResult.Succeeded == true)
                 {
                     _logger.LogInformation("ExecuteFollowUpMessagesPhase executed successfully. Acknowledging message");
-                    ackOperation = () => channel.BasicAck(eventArgs.DeliveryTag, false);
+                    channel.BasicAck(eventArgs.DeliveryTag, false);
                 }
                 else
                 {
                     _logger.LogWarning("Executing Follow Up Messages Phase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
-                    ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
+                    channel.BasicNackRetry(eventArgs);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Exception occured while executing Follow Up Messages Phase. Negatively acknowledging the message and re-queuing it");
-                ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
-            }
-            finally
-            {
-                ackOperation();
+                channel.BasicNackRetry(eventArgs);
             }
         }
     }

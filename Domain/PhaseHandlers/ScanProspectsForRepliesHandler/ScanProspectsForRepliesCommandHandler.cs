@@ -50,22 +50,14 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
 
         public async Task StartScanningProspectsForRepliesAsync(ScanProspectsForRepliesCommand command, ScanProspectsForRepliesBody body)
         {
-            try
+            HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecutePhaseAsync<IOperationResponse>(body);
+            if (operationResult.Succeeded == true)
             {
-                HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecutePhaseAsync<IOperationResponse>(body);
-                if (operationResult.Succeeded == true)
-                {
-                    _logger.LogInformation("ExecuteScanProspectsForRepliesPhase executed successfully. Acknowledging message");
-                }
-                else
-                {
-                    _logger.LogWarning("ExecuteScanProspectsForRepliesPhase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
-                }
+                _logger.LogInformation("ExecuteScanProspectsForRepliesPhase executed successfully. Acknowledging message");
             }
-            catch (Exception ex)
+            else
             {
-                _logger.LogError(ex, "Exception occured while executing ExecuteScanProspectsForRepliesPhase");
-                command.Channel.BasicNack(command.EventArgs.DeliveryTag, false, true);
+                _logger.LogWarning("ExecuteScanProspectsForRepliesPhase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
             }
         }
 

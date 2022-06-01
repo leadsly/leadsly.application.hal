@@ -1,4 +1,5 @@
 ﻿using Domain.Facades.Interfaces;
+using Domain.RabbitMQ;
 using Domain.Serializers.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
@@ -37,36 +38,31 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
 
             try
             {
-                await StartDeepScanningProspectsForRepliesAsync(body);
-                channel.BasicAck(eventArgs.DeliveryTag, false);
-                _logger.LogInformation("Successfully acknowledged DeepScanProspectsForReplies phase");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error occured execution ScanProspectsForReplies 'ExecuteOnce' phase. Requeing message");
-                channel.BasicNack(eventArgs.DeliveryTag, false, true);
-            }
-        }
-
-        private async Task StartDeepScanningProspectsForRepliesAsync(ScanProspectsForRepliesBody scanProspectsForRepliesBody)
-        {
-            try
-            {
-                HalOperationResult<IOperationResponse>  operationResult = await _campaignPhaseFacade.ExecuteDeepScanPhaseAsync<IOperationResponse>(scanProspectsForRepliesBody);
-                if (operationResult.Succeeded == true)
+                HalOperationResult<IOperationResponse> result = await StartDeepScanningProspectsForRepliesAsync(body);
+                if (result.Succeeded == true)
                 {
                     _logger.LogInformation("ExecuteScanProspectsForRepliesPhase executed successfully. Acknowledging message");
+                    channel.BasicAck(eventArgs.DeliveryTag, false);
                 }
                 else
                 {
                     _logger.LogWarning("ExecuteScanProspectsForRepliesPhase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
+                    channel.BasicNackRetry(eventArgs);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception occured while executing ExecuteScanProspectsForRepliesPhase");
-                throw;
-            }
+                channel.BasicNackRetry(eventArgs);
+            }            
+
+            _logger.LogInformation("Successfully acknowledged DeepScanProspectsForReplies phase");
+        }
+
+        private async Task<HalOperationResult<IOperationResponse>> StartDeepScanningProspectsForRepliesAsync(ScanProspectsForRepliesBody scanProspectsForRepliesBody)
+        {
+            HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecuteDeepScanPhaseAsync<IOperationResponse>(scanProspectsForRepliesBody);
+            
+            return operationResult;
         }
     }
 }

@@ -45,34 +45,27 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
                 // this is required because this task can run for 8 - 10 hours a day. The AppServer does not know IF this task/phase is already
                 // running on Hal thus it will trigger messages blindly. Otherwise if we await this here, then none of the blindly triggered
                 // messages make it here, thus clugg up the queue
-                Task.Run(() =>
+                Task cacheTask = Task.Run(() =>
                 {
                     StartMonitorForNewConnectionsAsync(command, body);
                 });
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+
             }
         }
 
         public async Task StartMonitorForNewConnectionsAsync(MonitorForNewConnectionsCommand command, MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections)
         {
-            try
-            {
-                HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecutePhase<IOperationResponse>(monitorForNewAcceptedConnections);
+            HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecutePhase<IOperationResponse>(monitorForNewAcceptedConnections);
 
-                if (operationResult.Succeeded == true)
-                {
-                    _logger.LogInformation("ExecuteFollowUpMessagesPhase executed successfully. Acknowledging message");
-                }
-                else
-                {
-                    _logger.LogWarning("Executing Follow Up Messages Phase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
-                }
-            }
-            catch (Exception ex)
+            if (operationResult.Succeeded == true)
             {
-                _logger.LogError(ex, "Exception occured while executing Follow Up Messages Phase. Negatively acknowledging the message and re-queuing it");
-                command.Channel.BasicNack(command.EventArgs.DeliveryTag, false, true);
+                _logger.LogInformation("ExecuteFollowUpMessagesPhase executed successfully. Acknowledging message");
             }
+            else
+            {
+                _logger.LogWarning("Executing Follow Up Messages Phase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
+            }            
         }
     }
 }

@@ -35,15 +35,8 @@ namespace Domain.PhaseHandlers.FollowUpMessageHandlers
 
             FollowUpMessageBody body = command.MessageBody as FollowUpMessageBody;
 
-            try
-            {
-                await StartFollowUpMessagesAsync(body);
-                channel.BasicAck(args.DeliveryTag, false);
-            }
-            catch(Exception ex)
-            {
-                channel.BasicNack(args.DeliveryTag, false, true);
-            }                        
+            await StartFollowUpMessagesAsync(body);
+            channel.BasicAck(args.DeliveryTag, false);
         }
 
         private async Task StartFollowUpMessagesAsync(FollowUpMessageBody followUpMessages)

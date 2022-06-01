@@ -22,6 +22,7 @@ using Domain.Providers.Campaigns;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.RabbitMQ;
+using Domain.RabbitMQ.Interfaces;
 using Domain.Repositories;
 using Domain.Serializers;
 using Domain.Serializers.Interfaces;

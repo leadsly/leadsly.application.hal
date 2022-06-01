@@ -201,6 +201,7 @@ namespace Domain.Facades
 
         public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(NetworkingMessageBody message) where T : IOperationResponse
         {
+            throw new Exception("Test");
             // fetch latest url
             HalOperationResult<T> result = await _campaignProvider.GetSearchUrlProgressAsync<T>(message);
 

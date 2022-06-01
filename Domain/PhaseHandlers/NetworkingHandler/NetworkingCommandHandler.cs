@@ -1,4 +1,5 @@
 ﻿using Domain.Facades.Interfaces;
+using Domain.RabbitMQ;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Responses;
@@ -34,30 +35,23 @@ namespace Domain.PhaseHandlers.NetworkingHandler
 
             NetworkingMessageBody body = command.MessageBody as NetworkingMessageBody;
 
-            Action ackOperation = default;
             try
             {
                 HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecutePhaseAsync<IOperationResponse>(body);
-
                 if (operationResult.Succeeded == true)
                 {
                     _logger.LogInformation("Networking phase executed successfully. Acknowledging message");
-                    ackOperation = () => channel.BasicAck(eventArgs.DeliveryTag, false);
+                    channel.BasicAck(eventArgs.DeliveryTag, false);
                 }
                 else
                 {
                     _logger.LogWarning("Networking phase did not successfully execute. Negatively acknowledging the message and re-queuing it");
-                    ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
+                    channel.BasicNackRetry(eventArgs);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception occured while executing networking phase requests. Negatively acknowledging the message and re-queuing it");
-                ackOperation = () => channel.BasicNack(eventArgs.DeliveryTag, false, true);
-            }
-            finally
-            {
-                ackOperation();
+                channel.BasicNackRetry(eventArgs);
             }
         }
     }

@@ -172,8 +172,8 @@ namespace Domain.Providers.Campaigns
         private async Task MonitorForNewConnections(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
         {
             IsRunning = true;
-            DateTimeOffset endOfWorkDayInZone = _timestampService.GetDateTimeWithZone(message.TimeZoneId, message.EndWorkTime);            
-            while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayInZone)
+            DateTimeOffset endOfWorkDayLocal = _timestampService.GetDateTimeOffsetLocal(message.TimeZoneId, message.EndWorkTime);            
+            while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayLocal)
             {
                 PreviousConnectionsCount = _linkedInPageFacade.ConnectionsView.GetConnectionsCount(webDriver);
                 PreviousRecentlyAdded = _linkedInPageFacade.ConnectionsView.GetAllRecentlyAdded(webDriver);
@@ -219,8 +219,8 @@ namespace Domain.Providers.Campaigns
             foreach (RecentlyAddedProspect prospect in prospects)
             {
                 // create timestamp with minues num of hours
-                DateTimeOffset dateTimeOffset = _timestampService.GetNowLocalized(message.TimeZoneId);
-                DateTimeOffset connectionAcceptedTime = dateTimeOffset.AddHours(-prospect.NumberOfHoursAgo);
+                DateTimeOffset dateTimeOffsetLocalized = _timestampService.GetNowLocalized(message.TimeZoneId);
+                DateTimeOffset connectionAcceptedTime = dateTimeOffsetLocalized.AddHours(-prospect.NumberOfHoursAgo);
 
                 NewProspectConnectionRequest newProspect = new()
                 {

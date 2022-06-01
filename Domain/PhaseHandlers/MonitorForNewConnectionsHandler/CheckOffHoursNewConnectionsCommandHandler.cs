@@ -1,4 +1,5 @@
 ﻿using Domain.Facades.Interfaces;
+using Domain.RabbitMQ;
 using Domain.Serializers.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
@@ -35,14 +36,21 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
 
             MonitorForNewAcceptedConnectionsBody body = command.MessageBody as MonitorForNewAcceptedConnectionsBody;
 
-            HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecuteOffHoursScanPhaseAsync<IOperationResponse>(body);
-            if(operationResult.Succeeded == true)
+            try
             {
-                channel.BasicAck(eventArgs.DeliveryTag, false);
+                HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecuteOffHoursScanPhaseAsync<IOperationResponse>(body);
+                if (operationResult.Succeeded == true)
+                {
+                    channel.BasicAck(eventArgs.DeliveryTag, false);
+                }
+                else
+                {
+                    channel.BasicNackRetry(eventArgs);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                channel.BasicNack(eventArgs.DeliveryTag, false, true);
+                channel.BasicNackRetry(eventArgs);
             }            
         }
     }

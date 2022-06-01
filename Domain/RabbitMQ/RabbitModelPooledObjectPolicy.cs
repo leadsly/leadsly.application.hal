@@ -29,7 +29,7 @@ namespace Domain.RabbitMQ
                 Port = options.ConnectionFactoryConfigOptions.Port,
                 VirtualHost = options.ConnectionFactoryConfigOptions.VirtualHost,
                 DispatchConsumersAsync = true,
-                ClientProvidedName = $"[Consumer] {halId}"
+                ClientProvidedName = $"[Consumer] HalId: {halId}"
             };
 
             return factory.CreateConnection();

@@ -22,6 +22,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -221,7 +222,7 @@ namespace Domain.Services
             MonitorForNewAcceptedConnectionsBody messageBody = _serializer.DeserializeMonitorForNewAcceptedConnectionsBody(message);
 
             if (executionType == RabbitMQConstants.MonitorNewAcceptedConnections.ExecuteOffHoursScan)
-            {                
+            {
                 CheckOffHoursNewConnectionsCommand offHoursCommand = new CheckOffHoursNewConnectionsCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);
                 await _offHoursHandler.HandleAsync(offHoursCommand);
             }
@@ -232,7 +233,7 @@ namespace Domain.Services
             }
         }
 
-        #endregion
+        #endregion        
         
         #region ScanProspectsForReplies
         public async Task OnScanProspectsForRepliesEventReceivedAsync(object sender, BasicDeliverEventArgs eventArgs)

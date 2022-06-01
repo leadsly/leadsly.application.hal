@@ -13,23 +13,31 @@ namespace Domain.Services
 
         private readonly ILogger<TimestampService> _logger;
 
-        public DateTime GetNowLocalized(string zoneId)
+        //public DateTime GetNowLocalized(string zoneId)
+        //{
+        //    _logger.LogInformation("Executing GetDateTimeNowWithZone for zone {zoneId}", zoneId);
+        //    DateTime nowLocal = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, zoneId);
+        //    _logger.LogInformation($"Now in local zone {zoneId} is {nowLocal.Date}");
+        //    return nowLocal;
+        //}
+
+        public DateTimeOffset GetNowLocalized(string zoneId)
         {
             _logger.LogInformation("Executing GetDateTimeNowWithZone for zone {zoneId}", zoneId);
-            DateTime nowLocal = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, zoneId);
+            DateTimeOffset nowLocal = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, zoneId);
             _logger.LogInformation($"Now in local zone {zoneId} is {nowLocal.Date}");
             return nowLocal;
         }
 
-        public DateTime GetDateTimeWithZone(string zoneId, long timestamp)
+        public DateTimeOffset GetDateTimeOffsetLocal(string zoneId, long timestamp)
         {
             _logger.LogInformation("Executing GetDateTimeWithZone for zone {zoneId} and timestamp {timestamp}", zoneId, timestamp);
             TimeZoneInfo timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(zoneId);
             DateTimeOffset timestampOffSet = DateTimeOffset.FromUnixTimeSeconds(timestamp);
-            DateTime localDateTime = new DateTimeWithZone(timestampOffSet.DateTime, timeZoneInfo).LocalTime;
-            _logger.LogInformation($"Local date time in zone {zoneId} is {localDateTime.Date}");
+            DateTimeOffset targetTime = TimeZoneInfo.ConvertTime(timestampOffSet, timeZoneInfo);
+            _logger.LogInformation($"Local date time in zone {zoneId} is {targetTime.Date}");
 
-            return localDateTime;
+            return targetTime;
         }
 
         public long TimestampNow()
