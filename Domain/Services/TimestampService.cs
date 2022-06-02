@@ -15,10 +15,23 @@ namespace Domain.Services
 
         public DateTimeOffset GetNowLocalized(string zoneId)
         {
+            TimeZoneInfo tzInfo = TimeZoneInfo.FindSystemTimeZoneById(zoneId);
             _logger.LogInformation("Executing GetDateTimeNowWithZone for zone {zoneId}", zoneId);
-            DateTimeOffset nowLocal = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, zoneId);
-            _logger.LogInformation($"Now in local zone {zoneId} is {nowLocal.Date}");
-            return nowLocal;
+
+            DateTime nowLocalTime = new DateTimeWithZone(DateTime.Now, tzInfo).LocalTime;            
+            DateTimeOffset targetDateTimeOffset =
+                new DateTimeOffset
+                (
+                    DateTime.SpecifyKind(nowLocalTime, DateTimeKind.Unspecified
+                ),
+                tzInfo.GetUtcOffset
+                (
+                    DateTime.SpecifyKind(nowLocalTime, DateTimeKind.Local)
+                ));
+
+            
+            _logger.LogInformation($"Now in local zone {zoneId} is {targetDateTimeOffset}");
+            return targetDateTimeOffset;
         }
 
         public DateTimeOffset GetDateTimeOffsetLocal(string zoneId, long timestamp)
@@ -42,6 +55,28 @@ namespace Domain.Services
         {
             _logger.LogInformation("Executing timestamp from datetimeoffset");
             return dateTimeOffset.ToUnixTimeSeconds();
+        }
+
+        public DateTimeOffset ParseDateTimeOffsetLocalized(string zoneId, string timeOfDay)
+        {
+            TimeZoneInfo tzInfo = TimeZoneInfo.FindSystemTimeZoneById(zoneId);
+            if (DateTime.TryParse(timeOfDay, out DateTime dateTime) == false)
+            {
+                string startTime = timeOfDay;
+                _logger.LogError("Failed to parse Networking start time. Tried to parse {startTime}", startTime);
+            }
+
+            DateTimeOffset targetDateTimeOffset =
+                new DateTimeOffset
+                (
+                    DateTime.SpecifyKind(dateTime, DateTimeKind.Unspecified
+                ),
+                tzInfo.GetUtcOffset
+                (
+                    DateTime.SpecifyKind(dateTime, DateTimeKind.Local)
+                ));
+
+            return targetDateTimeOffset;
         }
     }
 }

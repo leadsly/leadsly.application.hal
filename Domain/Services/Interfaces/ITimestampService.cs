@@ -11,6 +11,7 @@ namespace Domain.Services.Interfaces
     {
         DateTimeOffset GetNowLocalized(string zoneId);
         DateTimeOffset GetDateTimeOffsetLocal(string zoneId, long timestamp);
+        DateTimeOffset ParseDateTimeOffsetLocalized(string zoneId, string timeOfDay);
         long TimestampNow();
         long TimestampFromDateTimeOffset(DateTimeOffset dateTimeOffset);
     }

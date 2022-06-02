@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Domain.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
@@ -7,12 +8,14 @@ namespace Domain
     public class HalWorkCommandHandlerDecorator<TCommand> : ICommandHandler<TCommand>
         where TCommand : ICommand 
     {
-        public HalWorkCommandHandlerDecorator(ICommandHandler<TCommand> decorated, ILogger<HalWorkCommandHandlerDecorator<TCommand>> logger)
+        public HalWorkCommandHandlerDecorator(ICommandHandler<TCommand> decorated, ILogger<HalWorkCommandHandlerDecorator<TCommand>> logger, ITimestampService timestampService)
         {
             _decorated = decorated;
             _logger = logger;
+            _timestampService = timestampService;
         }
         
+        private readonly ITimestampService _timestampService;
         private readonly ICommandHandler<TCommand> _decorated;
         private readonly ILogger<HalWorkCommandHandlerDecorator<TCommand>> _logger;
 
@@ -21,18 +24,17 @@ namespace Domain
             _logger.LogInformation("HalWorkCommandHandler executing");
             // check to see if right now is during hal's work day
             string tzId = command.TimeZoneId;
-            _logger.LogInformation("User's TimeZone id is {tzId}", tzId);
-            TimeZoneInfo tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tzId);
+            _logger.LogInformation("User's TimeZone id is {tzId}", tzId);            
 
             _logger.LogDebug($"Start of work day value is {command.StartOfWorkDay}");
-            DateTimeOffset startOfWorkDay = DateTimeOffset.Parse(command.StartOfWorkDay);                        
+            DateTimeOffset startOfWorkDay = _timestampService.ParseDateTimeOffsetLocalized(tzId, command.StartOfWorkDay);
             _logger.LogDebug($"Hal's start of work day is {startOfWorkDay}");
 
             _logger.LogDebug($"End of work day value is {command.EndOfWorkDay}");
-            DateTimeOffset endOfWorkDay = DateTimeOffset.Parse(command.EndOfWorkDay);                        
+            DateTimeOffset endOfWorkDay = _timestampService.ParseDateTimeOffsetLocalized(tzId, command.EndOfWorkDay);
             _logger.LogDebug($"Hal's end of work day is {endOfWorkDay}");
 
-            DateTimeOffset nowLocal = TimeZoneInfo.ConvertTime(DateTime.UtcNow, tzInfo);
+            DateTimeOffset nowLocal = _timestampService.GetNowLocalized(tzId);
             _logger.LogDebug($"User's configured local now time is {nowLocal}");
 
             if ((nowLocal > startOfWorkDay) && (nowLocal < endOfWorkDay))
