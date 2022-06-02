@@ -25,19 +25,17 @@ namespace Domain
             TimeZoneInfo tzInfo = TimeZoneInfo.FindSystemTimeZoneById(tzId);
 
             _logger.LogDebug($"Start of work day value is {command.StartOfWorkDay}");
-            DateTimeOffset startOfWorkDay = DateTimeOffset.Parse(command.StartOfWorkDay);            
-            DateTimeOffset startOfDayLocalized = TimeZoneInfo.ConvertTime(startOfWorkDay, tzInfo);
-            _logger.LogDebug($"Hal's start of work day is {startOfDayLocalized}");
+            DateTimeOffset startOfWorkDay = DateTimeOffset.Parse(command.StartOfWorkDay);                        
+            _logger.LogDebug($"Hal's start of work day is {startOfWorkDay}");
 
             _logger.LogDebug($"End of work day value is {command.EndOfWorkDay}");
-            DateTimeOffset endOfWorkDay = DateTimeOffset.Parse(command.EndOfWorkDay);            
-            DateTimeOffset endOfDayLocalized = TimeZoneInfo.ConvertTime(endOfWorkDay, tzInfo);
-            _logger.LogDebug($"Hal's end of work day is {endOfDayLocalized}");
+            DateTimeOffset endOfWorkDay = DateTimeOffset.Parse(command.EndOfWorkDay);                        
+            _logger.LogDebug($"Hal's end of work day is {endOfWorkDay}");
 
             DateTimeOffset nowLocal = TimeZoneInfo.ConvertTime(DateTime.UtcNow, tzInfo);
             _logger.LogDebug($"User's configured local now time is {nowLocal}");
 
-            if ((nowLocal > startOfDayLocalized) && (nowLocal < endOfDayLocalized))
+            if ((nowLocal > startOfWorkDay) && (nowLocal < endOfWorkDay))
             {
                 _logger.LogDebug("Task is within Hal's work day. Executing task...");
                 await this._decorated.HandleAsync(command);

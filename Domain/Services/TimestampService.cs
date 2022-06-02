@@ -13,14 +13,6 @@ namespace Domain.Services
 
         private readonly ILogger<TimestampService> _logger;
 
-        //public DateTime GetNowLocalized(string zoneId)
-        //{
-        //    _logger.LogInformation("Executing GetDateTimeNowWithZone for zone {zoneId}", zoneId);
-        //    DateTime nowLocal = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, zoneId);
-        //    _logger.LogInformation($"Now in local zone {zoneId} is {nowLocal.Date}");
-        //    return nowLocal;
-        //}
-
         public DateTimeOffset GetNowLocalized(string zoneId)
         {
             _logger.LogInformation("Executing GetDateTimeNowWithZone for zone {zoneId}", zoneId);
