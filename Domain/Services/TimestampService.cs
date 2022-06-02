@@ -18,7 +18,7 @@ namespace Domain.Services
             TimeZoneInfo tzInfo = TimeZoneInfo.FindSystemTimeZoneById(zoneId);
             _logger.LogInformation("Executing GetDateTimeNowWithZone for zone {zoneId}", zoneId);
 
-            DateTime nowLocalTime = new DateTimeWithZone(DateTime.Now, tzInfo).LocalTime;            
+            DateTime nowLocalTime = TimeZoneInfo.ConvertTime(DateTime.Now, tzInfo);
             DateTimeOffset targetDateTimeOffset =
                 new DateTimeOffset
                 (

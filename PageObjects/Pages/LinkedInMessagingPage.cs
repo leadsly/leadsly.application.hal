@@ -678,7 +678,7 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogInformation(ex, "Converstaion list item does not contain notifications. This list item does not have any unread messages");
+                _logger.LogInformation("Converstaion list item does not contain notifications. This list item does not have any unread messages");
             }
 
             return hasNotification;

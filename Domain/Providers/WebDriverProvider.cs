@@ -499,8 +499,10 @@ namespace Domain.Providers
         public HalOperationResult<T> SwitchToOrNewTab<T>(IWebDriver webDriver, string windowHandleId) where T : IOperationResponse
         {
             // check if window handle exists
-            if(WindowHandleExists(webDriver, windowHandleId) == false)
+            _logger.LogDebug($"Determining if {windowHandleId} exists on the current instance of the webdriver");
+            if (WindowHandleExists(webDriver, windowHandleId) == false)
             {
+                _logger.LogDebug($"WindowHandleId {windowHandleId} does NOT exist. Creating a new tab");
                 // create a new tab 
                 return this.NewTab<T>(webDriver);
             }
@@ -511,7 +513,7 @@ namespace Domain.Providers
         }
 
         private bool WindowHandleExists(IWebDriver webDriver, string windowHandleId)
-        {
+        {            
             return webDriver.WindowHandles.Any(w => w == windowHandleId);
         }
     }
