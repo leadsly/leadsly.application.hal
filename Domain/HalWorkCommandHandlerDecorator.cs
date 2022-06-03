@@ -21,6 +21,7 @@ namespace Domain
 
         public async Task HandleAsync(TCommand command)
         {
+            _timestampService.GetDateTimeOffsetLocal(command.TimeZoneId, 1654053761);
             _logger.LogInformation("HalWorkCommandHandler executing");
             // check to see if right now is during hal's work day
             string tzId = command.TimeZoneId;

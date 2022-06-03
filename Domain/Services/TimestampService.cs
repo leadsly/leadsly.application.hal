@@ -60,21 +60,19 @@ namespace Domain.Services
         public DateTimeOffset ParseDateTimeOffsetLocalized(string zoneId, string timeOfDay)
         {
             TimeZoneInfo tzInfo = TimeZoneInfo.FindSystemTimeZoneById(zoneId);
-            if (DateTime.TryParse(timeOfDay, out DateTime dateTime) == false)
-            {
-                string startTime = timeOfDay;
-                _logger.LogError("Failed to parse Networking start time. Tried to parse {startTime}", startTime);
-            }
+            TimeSpan ts = DateTime.Parse(timeOfDay).TimeOfDay;
+            DateTime nowLocalTime = TimeZoneInfo.ConvertTime(DateTime.Now, tzInfo);
+            DateTime targetDateTime = nowLocalTime.Date.AddTicks(ts.Ticks);
 
             DateTimeOffset targetDateTimeOffset =
                 new DateTimeOffset
                 (
-                    DateTime.SpecifyKind(dateTime, DateTimeKind.Unspecified
-                ),
-                tzInfo.GetUtcOffset
-                (
-                    DateTime.SpecifyKind(dateTime, DateTimeKind.Local)
-                ));
+                    targetDateTime,
+                    tzInfo.GetUtcOffset
+                    (
+                        DateTime.SpecifyKind(targetDateTime, DateTimeKind.Local)
+                    )   
+                );
 
             return targetDateTimeOffset;
         }

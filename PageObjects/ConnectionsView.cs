@@ -245,7 +245,7 @@ namespace PageObjects
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to locate connections header which contains number of connections user has by class name 'mn-connections__header'");
+                // this is already being logged
             }
             return connectionsHeader;
         }
@@ -263,7 +263,7 @@ namespace PageObjects
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to locate connection header after waiting for 30 seconds");
+                _logger.LogError(ex, "Failed to locate connection header after waiting for 30 seconds by class name 'mn-connections__header'");
             }
         }
 
