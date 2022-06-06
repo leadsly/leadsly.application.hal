@@ -196,6 +196,7 @@ namespace Domain.Services
             NetworkingMessageBody messageBody = _serializer.DeserializeNetworkingMessageBody(message);
 
             int deliveryCount = eventArgs.GetDeliveryCountHeaderValue();
+            _logger.LogInformation($"DeliveryCount value is {deliveryCount}");
             messageBody.FailedDeliveryCount = deliveryCount;
 
             NetworkingCommand networkingCommand = new NetworkingCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);

@@ -202,12 +202,14 @@ namespace Domain.Facades
         public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(NetworkingMessageBody message) where T : IOperationResponse
         {
             // fetch latest url
+            _logger.LogTrace("Fetching search url progress data");
             HalOperationResult<T> result = await _campaignProvider.GetSearchUrlProgressAsync<T>(message);
 
             if(result.Succeeded == false)
             {
                 return result;
             }
+            _logger.LogTrace("Successfully fetched search url progress data");
 
             ISearchUrlProgressPayload response = ((ISearchUrlProgressPayload)result.Value);
             if(response == null)
@@ -215,6 +217,7 @@ namespace Domain.Facades
                 return result;
             }
 
+            _logger.LogTrace($"Starting to execute Networking phase of the campaign id {message.CampaignId}");
             result = await _networkingProvider.ExecuteNetworkingAsync<T>(message, response.SearchUrlsProgress);
             if (result.Succeeded == false)
             {

@@ -33,7 +33,8 @@ namespace Domain.RabbitMQ
             var headers = eventArgs.BasicProperties.Headers;                        
             if(headers == null)
             {
-                throw new NullReferenceException("Headers property does not exist");
+                // on the initial run if headers value was not explicitly provided then headers value is null
+                return 0;
             }
 
             headers.TryGetValue(RabbitMQConstants.DeliveryCount, out object count);
