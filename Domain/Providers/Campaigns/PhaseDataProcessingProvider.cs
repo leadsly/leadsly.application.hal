@@ -182,7 +182,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/ScanProspectsForReplies/{message.HalId}/prospects-replies",
+                RequestUrl = $"api/ScanProspectsForReplies/{message.HalId}/prospects-replied",
                 ProspectsReplied = prospectsReplied
             };
 

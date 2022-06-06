@@ -32,11 +32,6 @@ namespace Hal
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            //PostgresOptions postgresOptions = new();
-            //Configuration.GetSection(nameof(PostgresOptions)).Bind(postgresOptions);
-            //string authToken = RDSAuthTokenGenerator.GenerateAuthToken(postgresOptions.Host, postgresOptions.Port, postgresOptions.UserId);
-            //string defaultConnection = $"Host={postgresOptions.Host};User Id={postgresOptions.UserId};Password={authToken};Database={postgresOptions.Database}";
-
             services.AddControllers()
                     .AddJsonOptionsConfiguration();
 
@@ -52,8 +47,7 @@ namespace Hal
                     .AddRemoveNull204FormatterConfigration()
                     .AddRabbitMQConfiguration(Configuration)
                     .AddPageObjectModelsConfiguration()
-                    .AddFacadesConfiguration()
-                    //.AddHangfireConfig(defaultConnection)
+                    .AddFacadesConfiguration()                    
                     .AddProvidersConfiguration()
                     .AddSerializersConfiguration()
                     .AddServicesConfiguration()

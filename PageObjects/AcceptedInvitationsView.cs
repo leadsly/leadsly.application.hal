@@ -99,7 +99,7 @@ namespace PageObjects
 
                 if(newProspectInfo.ProspectName != null && newProspectInfo.ProfileUrl != null)
                 {
-                    newProspectInfo.AcceptedTimestamp = new DateTimeOffset(new DateTimeWithZone(DateTime.Now, TimeZoneInfo.FindSystemTimeZoneById(timeZoneId)).LocalTime).ToUnixTimeSeconds();
+                    newProspectInfo.AcceptedTimestamp = new DateTimeOffset().ToUnixTimeSeconds();
                     prospectsInfo.Add(newProspectInfo);
                 }
             }

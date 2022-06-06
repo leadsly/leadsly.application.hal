@@ -10,11 +10,7 @@ using OpenQA.Selenium.Interactions;
 using OpenQA.Selenium.Support.UI;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace PageObjects.Pages
 {
@@ -281,7 +277,7 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "[NoSearchResultsContainer] The NoSearchResultsContainer has not been found");
+                _logger.LogDebug("The NoSearchResultsContainer has not been found by class name '.search-no-results__image-container'");
             }
 
             return noSearchResultsContainer;
@@ -292,17 +288,16 @@ namespace PageObjects.Pages
             bool isDisplayed = false;
             try
             {
-                _logger.LogTrace("[IsNoSearchResultsContainerDisplayed]: Determining if NoSearchResultsContainer is displayed");
-                IWebElement noResultsSearchContainer = NoSearchResultsContainer(driver);
+                IWebElement noResultsSearchContainer = _webDriverUtilities.WaitUntilNotNull(NoSearchResultsContainer, driver, 1);
                 if(noResultsSearchContainer != null)
                 {
                     isDisplayed = noResultsSearchContainer.Displayed;
-                    _logger.LogTrace("NoSearchResultsContainer element was found. Is it displayed: {isDisplayed}", isDisplayed);                    
+                    _logger.LogDebug("NoSearchResultsContainer element was found. Is it displayed: {isDisplayed}", isDisplayed);                    
                 }
             }
             catch(Exception ex)
             {
-                _logger.LogWarning(ex, "[IsNoSearchResultsContainerDisplayed]: Web driver error occured locating the element");
+                // logging already occurs in the NoSearchResultsContainer method
             }
 
             return isDisplayed;
@@ -318,7 +313,7 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "[RetrySearchButton]: Failed to locate retry search button");
+                _logger.LogWarning(ex, "[RetrySearchButton]: Failed to locate retry search button by 'button[data-test='no-results-cta']'");
             }
             return retrySearchButton;
         }
@@ -376,20 +371,16 @@ namespace PageObjects.Pages
             HalOperationResult<T> result = new();
 
             IWebElement actionButton = GetProspectsActionBtn(prospect);
-            if (actionButton != null)
+            if(actionButton == null)
             {
-                if (actionButton.Text == ApiConstants.PageObjectConstants.Connect)
-                {
-                    try
-                    {
-                        actionButton.Click();
-                    }
-                    catch (Exception ex)
-                    {
+                // prospect must not contain an action button
+                return result;
+            }
 
-                    }
-                }
-                else
+            if (actionButton.Text == ApiConstants.PageObjectConstants.Connect)
+            {
+                result = ClickButton<T>(actionButton);
+                if(result.Succeeded == false)
                 {
                     return result;
                 }
@@ -397,6 +388,23 @@ namespace PageObjects.Pages
             else
             {
                 return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        private HalOperationResult<T> ClickButton<T>(IWebElement btn)
+            where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+            try
+            {
+                btn.Click();
+            }
+            catch (Exception ex)
+            {
+                // let the caller log the error
             }
 
             result.Succeeded = true;
@@ -413,7 +421,7 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Prospect does not contain action button");
+                _logger.LogDebug("Prospect does not contain action button");
             }
             return actionButton;
         }

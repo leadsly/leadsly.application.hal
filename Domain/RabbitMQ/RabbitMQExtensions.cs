@@ -9,12 +9,12 @@ namespace Domain.RabbitMQ
     {
         public static void BasicNackRetry(this IModel channel, BasicDeliverEventArgs eventArgs)
         {
-            var headers = eventArgs.BasicProperties.Headers;            
+            var headers = eventArgs.BasicProperties.Headers;
             if (headers != null)
             {
                 headers.TryGetValue(RabbitMQConstants.DeliveryCount, out object count);
 
-                if(count != null)
+                if (count != null)
                 {
                     int deliveryCount = Convert.ToInt32(count);
                     if (deliveryCount <= 3)
@@ -27,5 +27,26 @@ namespace Domain.RabbitMQ
 
             channel.BasicNack(eventArgs.DeliveryTag, false, false);
         }
+
+        public static int GetDeliveryCountHeaderValue(this BasicDeliverEventArgs eventArgs)
+        {
+            var headers = eventArgs.BasicProperties.Headers;                        
+            if(headers == null)
+            {
+                throw new NullReferenceException("Headers property does not exist");
+            }
+
+            headers.TryGetValue(RabbitMQConstants.DeliveryCount, out object count);
+            if (count != null)
+            {
+                int deliveryCount = Convert.ToInt32(count);
+                return deliveryCount;
+            }
+            else
+            {
+                throw new ArgumentException($"{RabbitMQConstants.DeliveryCount} header does not exist!");
+            }
+        }
+
     }
 }

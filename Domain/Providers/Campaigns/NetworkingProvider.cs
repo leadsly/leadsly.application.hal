@@ -11,6 +11,7 @@ using Leadsly.Application.Model.WebDriver;
 using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -55,6 +56,25 @@ namespace Domain.Providers.Campaigns
 
         private int NumberOfConnectionsSent { get; set; }
 
+        /// <summary>
+        /// Connectable Prospects Query
+        /// </summary>
+        private Func<IWebElement, bool> ConnectableProspects
+        {
+            get
+            {
+                return (IWebElement r) =>
+                {
+                    IWebElement actionBtn = _linkedInPageFacade.LinkedInSearchPage.GetProspectsActionButton(r);
+                    if (actionBtn == null)
+                    {
+                        return false;
+                    }
+                    return actionBtn.Text == ApiConstants.PageObjectConstants.Connect;
+                };
+            }
+        }
+
         public async Task<HalOperationResult<T>> ExecuteNetworkingAsync<T>(NetworkingMessageBody message, IList<SearchUrlProgressRequest> searchUrlsProgress, CancellationToken ct = default) where T : IOperationResponse
         {
             string halId = message.HalId;
@@ -79,6 +99,10 @@ namespace Domain.Providers.Campaigns
             try
             {
                 result = await ExecuteNetworkingInternalAsync<T>(message, webDriver, searchUrlsProgress, ct);
+                if(result.Succeeded == false)
+                {
+                    CleanUpBrowserTab(webDriver, message.FailedDeliveryCount);
+                }
             }
             finally
             {
@@ -86,6 +110,23 @@ namespace Domain.Providers.Campaigns
             }
             
             return result;
+        }
+
+        private void CleanUpBrowserTab(IWebDriver webDriver, int redeliveryCount)
+        {
+            try
+            {
+                if(redeliveryCount >= 3)
+                {
+                    _logger.LogDebug("This message has been redelivered 3 times already. Attempting to close the current tab");
+                    string currentWindowHandleId = webDriver.CurrentWindowHandle;
+                    _webDriverProvider.CloseTab<IOperationResponse>(BrowserPurpose.Networking, currentWindowHandleId);
+                }                
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to close webdriver tab");
+            }
         }
 
         private async Task<HalOperationResult<T>> ExecuteNetworkingInternalAsync<T>(NetworkingMessageBody message, IWebDriver webDriver, IList<SearchUrlProgressRequest> searchUrlsProgress, CancellationToken ct = default)
@@ -140,6 +181,12 @@ namespace Domain.Providers.Campaigns
                 return result;
             }
 
+            IWebElement linkedInlogoFooter  = _linkedInPageFacade.LinkedInSearchPage.LinkInFooterLogoIcon(webDriver);
+            _humanBehaviorService.RandomClickElement(linkedInlogoFooter);
+            _humanBehaviorService.RandomWaitMilliSeconds(500, 800);
+
+            _linkedInPageFacade.LinkedInSearchPage.ScrollTop(webDriver);
+
             result.Succeeded = true;
             return result;
         }
@@ -172,7 +219,7 @@ namespace Domain.Providers.Campaigns
             HalOperationResult<T> result = new();
 
             int lastPage = searchUrlProgress.LastPage;
-            for (int i = lastPage; i < totalResults; i++)
+            for (int i = lastPage; i < totalResults + 1; i++)
             {
                 // get connactable prospects on this page
                 IList<IWebElement> connectableProspects = GetConnectableProspects(webDriver, message.PrimaryProspectListId);
@@ -184,27 +231,17 @@ namespace Domain.Providers.Campaigns
                 //if connectable prospects equals 0, go to the next page
                 if(connectableProspects.Count == 0)
                 {
-                    result = _linkedInPageFacade.LinkedInSearchPage.ClickNext<T>(webDriver);
-                    if (result.Succeeded == false)
+                    // if we are on the last page and there are no prospects to crawl update the search url
+                    if (await IsLastPageAsync(lastPage, totalResults, webDriver, message, searchUrlProgress))
                     {
-                        _logger.LogError("Failed to navigate to the next page");
-                        return result;
-                    }
-
-                    result = _linkedInPageFacade.LinkedInSearchPage.WaitUntilSearchResultsFinishedLoading<T>(webDriver);
-                    if (result.Succeeded == false)
-                    {
-                        _logger.LogError("Search results never finished loading.");
-                        return result;
-                    }                    
-
-                    if (i == totalResults)
-                    {
-                        result = await UpdateSearchUrlProgressAsync<T>(webDriver, searchUrlProgress, message, lastPage, true, totalResults);
                         break;
                     }
 
-                    lastPage += 1;
+                    result = GoToTheNextPage<T>(webDriver, totalResults, ref lastPage);
+                    if (result.Succeeded == false)
+                    {
+                        return result;
+                    }
 
                     continue;
                 }
@@ -229,14 +266,70 @@ namespace Domain.Providers.Campaigns
                     break;
                 }
 
-                if (i == totalResults)
+                IList<IWebElement> afterOperationConnectableProspects = connectableProspects.Where(ConnectableProspects).ToList();
+                connectableProspects = afterOperationConnectableProspects;
+                if (connectableProspects.Count == 0)
                 {
-                    result = await UpdateSearchUrlProgressAsync<T>(webDriver, searchUrlProgress, message, lastPage, true, totalResults);
-                    break;
-                }
+                    // if we are on the last page and there are no prospects to crawl update the search url
+                    if (await IsLastPageAsync(lastPage, totalResults, webDriver, message, searchUrlProgress))
+                    {
+                        break;
+                    }
 
-                lastPage += 1;
+                    result = GoToTheNextPage<T>(webDriver, totalResults, ref lastPage);
+                    if(result.Succeeded == false)
+                    {
+                        return result;
+                    }
+                }
             }
+
+            result.Succeeded = true;
+            return result;
+        }
+
+        private async Task<bool> IsLastPageAsync(int lastPage, int totalResults, IWebDriver webDriver, NetworkingMessageBody message, SearchUrlProgressRequest searchUrlProgress)
+        {
+            bool isLastPage = false;
+            if (lastPage == totalResults)
+            {
+                HalOperationResult<IOperationResponse> result = await UpdateSearchUrlProgressAsync<IOperationResponse>(webDriver, searchUrlProgress, message, lastPage, true, totalResults);
+                isLastPage = true;
+            }
+            return isLastPage;
+        }
+
+        private HalOperationResult<T> GoToTheNextPage<T>(IWebDriver webDriver, int totalResults, ref int lastPage)
+            where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            HalOperationResult<IOperationResponse> scrollFooterIntoViewResult = _linkedInPageFacade.LinkedInSearchPage.ScrollFooterIntoView<IOperationResponse>(webDriver);
+            if (scrollFooterIntoViewResult.Succeeded == false)
+            {
+                _logger.LogError("Failed to scroll footer into view");
+                return result;
+            }
+
+            IWebElement linkedInFooterLogo = _linkedInPageFacade.LinkedInSearchPage.LinkInFooterLogoIcon(webDriver);
+            _humanBehaviorService.RandomClickElement(linkedInFooterLogo);
+            _humanBehaviorService.RandomWaitMilliSeconds(2000, 5000);
+
+            result = _linkedInPageFacade.LinkedInSearchPage.ClickNext<T>(webDriver);
+            if (result.Succeeded == false)
+            {
+                _logger.LogError("Failed to navigate to the next page");
+                return result;
+            }
+
+            result = _linkedInPageFacade.LinkedInSearchPage.WaitUntilSearchResultsFinishedLoading<T>(webDriver);
+            if (result.Succeeded == false)
+            {
+                _logger.LogError("Search results never finished loading.");
+                return result;
+            }
+
+            lastPage += 1;
 
             result.Succeeded = true;
             return result;
@@ -350,15 +443,7 @@ namespace Domain.Providers.Campaigns
                 return null;
             }
             // filter down the list to only those prospects that we can connect with
-            IList<IWebElement> connectableProspectsOnThisPage = rawCollectedProspects.Where(r =>
-            {
-                IWebElement actionBtn = _linkedInPageFacade.LinkedInSearchPage.GetProspectsActionButton(r);
-                if (actionBtn == null)
-                {
-                    return false;
-                }
-                return actionBtn.Text == ApiConstants.PageObjectConstants.Connect;
-            }).ToList();
+            IList<IWebElement> connectableProspectsOnThisPage = rawCollectedProspects.Where(ConnectableProspects).ToList();
 
             return connectableProspectsOnThisPage;
         }
@@ -369,7 +454,7 @@ namespace Domain.Providers.Campaigns
             _logger.LogInformation("[SendConnectionRequests]: Sending connection request to the given prospect");
 
             _humanBehaviorService.RandomWaitMilliSeconds(700, 3000);
-            _linkedInPageFacade.LinkedInSearchPage.ScrollTop(webDriver);
+            //_linkedInPageFacade.LinkedInSearchPage.ScrollTop(webDriver);
             HalOperationResult<IOperationResponse> sendConnectionResult = _linkedInPageFacade.LinkedInSearchPage.SendConnectionRequest<IOperationResponse>(prospect);
             if (sendConnectionResult.Succeeded == false)
             {

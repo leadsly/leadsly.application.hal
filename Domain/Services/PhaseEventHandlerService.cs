@@ -8,6 +8,7 @@ using Domain.PhaseHandlers.ScanProspectsForRepliesHandler;
 using Domain.PhaseHandlers.SendConnectionsHandler;
 using Domain.Providers.Campaigns;
 using Domain.Providers.Interfaces;
+using Domain.RabbitMQ;
 using Domain.Serializers.Interfaces;
 using Domain.Services.Interfaces;
 using Hangfire;
@@ -193,6 +194,9 @@ namespace Domain.Services
             byte[] body = eventArgs.Body.ToArray();
             string message = Encoding.UTF8.GetString(body);
             NetworkingMessageBody messageBody = _serializer.DeserializeNetworkingMessageBody(message);
+
+            int deliveryCount = eventArgs.GetDeliveryCountHeaderValue();
+            messageBody.FailedDeliveryCount = deliveryCount;
 
             NetworkingCommand networkingCommand = new NetworkingCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);
             await _networkingHandler.HandleAsync(networkingCommand);

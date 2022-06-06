@@ -70,24 +70,13 @@ namespace Domain.Services
                 _humanBehaviorService.RandomWaitMilliSeconds(3000, 5000);
             }
 
-            _linkedInPageFacade.LinkedInSearchPage.ScrollIntoView(propsAsWebElements[3], webDriver);
+            _linkedInPageFacade.LinkedInSearchPage.ScrollTop(webDriver);
             _humanBehaviorService.RandomWaitMilliSeconds(2000, 3000);
 
             _logger.LogTrace("Creating PrimaryProspects from IWebElements");
 
             IWebElement areResultsHelpfulText = _linkedInPageFacade.LinkedInSearchPage.AreResultsHelpfulPTag(webDriver);
-            _humanBehaviorService.RandomClickElement(areResultsHelpfulText);
-
-            HalOperationResult<IOperationResponse> scrollFooterIntoViewResult = _linkedInPageFacade.LinkedInSearchPage.ScrollFooterIntoView<IOperationResponse>(webDriver);
-            if (scrollFooterIntoViewResult.Succeeded == false)
-            {
-                _logger.LogError("Failed to scroll footer into view");
-                return crawlResult;
-            }
-
-            IWebElement linkedInFooterLogo = _linkedInPageFacade.LinkedInSearchPage.LinkInFooterLogoIcon(webDriver);
-            _humanBehaviorService.RandomClickElement(linkedInFooterLogo);
-            _humanBehaviorService.RandomWaitMilliSeconds(2000, 5000);
+            _humanBehaviorService.RandomClickElement(areResultsHelpfulText);            
 
             crawlResult = true;
             return crawlResult;

@@ -46,8 +46,8 @@ namespace Domain
             {
                 if(options.UseGrid == false)
                 {
-                    string currentDir = $"{Directory.GetCurrentDirectory()}";
-                    defaultChromeProfilesDir = Path.GetFullPath(Path.Combine(currentDir, @".."));                    
+                    // string currentDir = $"{Directory.GetCurrentDirectory()}";
+                    defaultChromeProfilesDir = options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir; // Path.GetFullPath(Path.Combine(currentDir, @".."));                    
                 }
                 else
                 {

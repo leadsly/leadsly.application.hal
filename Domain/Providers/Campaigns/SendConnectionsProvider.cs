@@ -175,7 +175,7 @@ namespace Domain.Providers.Campaigns
                         // update sent connections url status
                         currentSentConnectionsUrlStatus.CurrentUrl = webDriver.Url;
                         currentSentConnectionsUrlStatus.StartedCrawling = true;
-                        currentSentConnectionsUrlStatus.LastActivityTimestamp = new DateTimeOffset(new DateTimeWithZone(DateTime.Now, TimeZoneInfo.FindSystemTimeZoneById(timeZoneId)).LocalTime).ToUnixTimeSeconds();
+                        currentSentConnectionsUrlStatus.LastActivityTimestamp = new DateTimeOffset().ToUnixTimeSeconds();
                         currentSentConnectionsUrlStatus.WindowHandleId = webDriver.CurrentWindowHandle;
                         updatedSentConnectionsUrlStatusRequests.Add(currentSentConnectionsUrlStatus);
 
@@ -222,7 +222,7 @@ namespace Domain.Providers.Campaigns
                     currentSentConnectionsUrlStatus.StartedCrawling = true;
                     currentSentConnectionsUrlStatus.FinishedCrawling = true;
                     currentSentConnectionsUrlStatus.WindowHandleId = string.Empty;
-                    currentSentConnectionsUrlStatus.LastActivityTimestamp = new DateTimeOffset(new DateTimeWithZone(DateTime.Now, TimeZoneInfo.FindSystemTimeZoneById(timeZoneId)).LocalTime).ToUnixTimeSeconds();
+                    currentSentConnectionsUrlStatus.LastActivityTimestamp = new DateTimeOffset().ToUnixTimeSeconds();
                     updatedSentConnectionsUrlStatusRequests.Add(currentSentConnectionsUrlStatus);
 
                     if(allSentConnectionsUrlStatuses.Count > 0)
