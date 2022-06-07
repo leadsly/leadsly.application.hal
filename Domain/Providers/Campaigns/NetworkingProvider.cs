@@ -98,14 +98,11 @@ namespace Domain.Providers.Campaigns
 
             try
             {
-                result = await ExecuteNetworkingInternalAsync<T>(message, webDriver, searchUrlsProgress, ct);
-                if(result.Succeeded == false)
-                {
-                    CleanUpBrowserTab(webDriver, message.FailedDeliveryCount);
-                }
+                await ExecuteNetworkingInternalAsync<T>(message, webDriver, searchUrlsProgress, ct);                
             }
             finally
             {
+                _webDriverProvider.CloseBrowser<IOperationResponse>(BrowserPurpose.Networking);
                 NumberOfConnectionsSent = 0;
             }
             
