@@ -9,8 +9,7 @@ namespace Domain.Services.Interfaces
 {
     public interface ITimestampService
     {
-        DateTimeOffset GetNowLocalized(string zoneId);
-        DateTimeOffset GetDateTimeOffsetLocal(string zoneId, long timestamp);
+        DateTimeOffset GetNowLocalized(string zoneId);        
         DateTimeOffset ParseDateTimeOffsetLocalized(string zoneId, string timeOfDay);
         long TimestampNow();
         long TimestampFromDateTimeOffset(DateTimeOffset dateTimeOffset);

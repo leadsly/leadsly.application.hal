@@ -172,7 +172,7 @@ namespace Domain.Providers.Campaigns
         private async Task MonitorForNewConnections(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
         {
             IsRunning = true;
-            DateTimeOffset endOfWorkDayLocal = _timestampService.GetDateTimeOffsetLocal(message.TimeZoneId, message.EndWorkTime);            
+            DateTimeOffset endOfWorkDayLocal = _timestampService.ParseDateTimeOffsetLocalized(message.TimeZoneId, message.EndOfWorkday);
             while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayLocal)
             {
                 PreviousConnectionsCount = _linkedInPageFacade.ConnectionsView.GetConnectionsCount(webDriver);

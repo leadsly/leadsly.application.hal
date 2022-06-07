@@ -107,7 +107,7 @@ namespace Domain.Providers.Campaigns
         {
             HalOperationResult<T> result = new();
             IsRunning = true;
-            DateTimeOffset endOfWorkDayLocal = _timestampService.GetDateTimeOffsetLocal(message.TimeZoneId, message.EndWorkTime);
+            DateTimeOffset endOfWorkDayLocal = _timestampService.ParseDateTimeOffsetLocalized(message.TimeZoneId, message.EndOfWorkday);
             while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayLocal)
             {
                 _humanService.RandomWaitSeconds(30, 45);
