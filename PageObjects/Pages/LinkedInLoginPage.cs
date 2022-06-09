@@ -13,11 +13,13 @@ namespace PageObjects.Pages
     {
         private const string BaseUrl = "https://www.linkedin.com";
 
-        public LinkedInLoginPage(ILogger<LinkedInLoginPage> logger) : base(logger)
+        public LinkedInLoginPage(ILogger<LinkedInLoginPage> logger, IWebDriverUtilities webDriverUtilities) : base(logger)
         {
             this._logger = logger;
+            _webDriverUtilities = webDriverUtilities;
         }
         private readonly ILogger<LinkedInLoginPage> _logger;
+        private readonly IWebDriverUtilities _webDriverUtilities;
         private TwoFactorAuthType? _authType = null;
         public TwoFactorAuthType TwoFactorAuthenticationType(IWebDriver webDriver)
         {
@@ -26,7 +28,8 @@ namespace PageObjects.Pages
 
         public bool SomethingUnexpectedHappenedToastDisplayed(IWebDriver webDriver)
         {
-            return SomethingUnexpectedHappenedToast(webDriver) != null;
+            IWebElement somethingUnexpectedToast = _webDriverUtilities.WaitUntilNotNull(SomethingUnexpectedHappenedToast, webDriver, 5);
+            return somethingUnexpectedToast != null;
         }
 
         public IWebElement SomethingUnexpectedHappenedToast(IWebDriver webDriver)
@@ -388,7 +391,7 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogError("[LinkedInLoginPage]: Failed to locate sign in button.");
+                _logger.LogDebug("[LinkedInLoginPage]: Failed to locate sign in button.");
             }
 
             return signInButton;
@@ -495,7 +498,13 @@ namespace PageObjects.Pages
             HalOperationResult<T> result = new();
             try
             {
-                SignInButton(webDriver).Click();
+                IWebElement signInButton = _webDriverUtilities.WaitUntilNotNull(SignInButton, webDriver, 5);
+                if(signInButton == null)
+                {
+                    return result;
+                }
+
+                signInButton.Click();
             }
             catch(Exception ex)
             {

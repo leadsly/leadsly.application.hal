@@ -38,10 +38,24 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to locate search result navigational footer");
+                _logger.LogDebug("Failed to locate search result navigational footer");
             }
 
             return searchResultFooter;
+        }
+
+        private IWebElement SearchResultsFooterUlElement(IWebElement searchResultsFooter)
+        {
+            IWebElement searchResultsFooterUl = default;
+            try
+            {
+                searchResultsFooterUl = searchResultsFooter.FindElement(By.CssSelector(".artdeco-pagination .artdeco-pagination__pages"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("Failed to locate SearchResultsFooter ul element");
+            }
+            return searchResultsFooterUl;
         }
 
         private IWebElement LastPage(IWebDriver webDriver)
@@ -50,7 +64,18 @@ namespace PageObjects.Pages
             try
             {
                 _logger.LogTrace("Getting last page of the search results from the hitlist");
-                IWebElement ul = SearchResultFooter(webDriver).FindElement(By.CssSelector(".artdeco-pagination .artdeco-pagination__pages"));
+                IWebElement searchResultsFooter = _webDriverUtilities.WaitUntilNotNull(SearchResultFooter, webDriver, 10);
+                if(searchResultsFooter == null)
+                {
+                    return null;
+                }
+
+                IWebElement ul = SearchResultsFooterUlElement(searchResultsFooter);
+                if(ul == null)
+                {
+                    return null;
+                }
+
                 lis = ul.FindElements(By.TagName("li")).ToList();
                 string last = lis.LastOrDefault()?.Text;
                 _logger.LogTrace("Successfully found total hit list page result count. Last page is: {last}", last);
@@ -156,7 +181,7 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to locate the footer");
+                _logger.LogDebug("Failed to locate the footer");
             }
 
             return footer;
@@ -166,10 +191,10 @@ namespace PageObjects.Pages
         {
             HalOperationResult<T> result = new();
 
-            IWebElement footer = Footer(webDriver);
+            IWebElement footer = _webDriverUtilities.WaitUntilNotNull(Footer, webDriver, 10);
             if (footer == null)
             {
-                _logger.LogTrace("Footer could not be located");
+                _logger.LogTrace("Failed to locate the footer after waiting for 10 seconds");
                 return result;
             }
             else

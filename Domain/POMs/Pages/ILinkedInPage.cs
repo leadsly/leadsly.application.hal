@@ -11,7 +11,8 @@ namespace Domain.POMs.Pages
 {
     public interface ILinkedInPage
     {
-        public bool IsAuthenticationRequired(IWebDriver webDriver);    
+        public bool IsAuthenticationRequired(IWebDriver webDriver);
+        public bool IsSignInContainerDisplayed(IWebDriver webDriver);
         HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)
             where T : IOperationResponse;
     }

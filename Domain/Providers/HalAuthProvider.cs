@@ -24,8 +24,7 @@ namespace Domain.Providers
         }
 
         private readonly ILinkedInPageFacade _linkedInPageFacade;
-        private readonly IWebDriverProvider _webDriverProvider;        
-        private readonly IWebDriverManagerProvider _webDriverManagerProvider;        
+        private readonly IWebDriverProvider _webDriverProvider;                      
         private readonly ILogger<HalAuthProvider> _logger;
         public const string DefaultUrl = "https://www.LinkedIn.com";
 
@@ -52,12 +51,20 @@ namespace Domain.Providers
             if(result.Succeeded == false)
             {
                 return result;
-            }            
+            }
 
-            bool authRequired = _linkedInPageFacade.LinkedInPage.IsAuthenticationRequired(webDriver);
-
+            bool authRequired = _linkedInPageFacade.LinkedInPage.IsSignInContainerDisplayed(webDriver);
             if (authRequired == false)
             {
+                // check if the news feed is displayed
+                if(_linkedInPageFacade.LinkedInHomePage.IsNewsFeedDisplayed(webDriver) == false)
+                {
+                    webDriver.Dispose();
+
+                    result.Succeeded = false;
+                    return result;
+                }
+
                 result = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);
 
                 IConnectAccountResponse response = new ConnectAccountResponse
@@ -186,6 +193,8 @@ namespace Domain.Providers
             {
                 Succeeded = false
             };
+
+            _linkedInPageFacade.LinkedInHomePage.WaitUntilNewsFeedIsDisplayed(webDriver);
 
             if (_linkedInPageFacade.LinkedInLoginPage.ConfirmAccountDisplayed(webDriver))
             {
@@ -319,7 +328,6 @@ namespace Domain.Providers
                 return result;
             }
 
-            // TODO verify user is authenticated
             result = _webDriverProvider.CloseBrowser<T>(request.BrowserPurpose);
             bool browserClosed = result.Succeeded;
             if(result.Succeeded == false)

@@ -9,16 +9,26 @@ namespace PageObjects.Pages
 {
     public class LinkedInPage : LeadslyBase, ILinkedInPage
     {
-        public LinkedInPage(ILogger<LinkedInPage> logger) : base(logger)
+        public LinkedInPage(ILogger<LinkedInPage> logger, IWebDriverUtilities webDriverUtilities) : base(logger)
         {
             this._logger = logger;
+            _webDriverUtilities = webDriverUtilities;
         }
 
         private readonly ILogger<LinkedInPage> _logger;
+        private readonly IWebDriverUtilities _webDriverUtilities;
 
         public bool IsAuthenticationRequired(IWebDriver webDriver)
         {            
             return SignInContainer(webDriver) != null;            
+        }
+
+        public bool IsSignInContainerDisplayed(IWebDriver webDriver)
+        {
+            _logger.LogDebug("Checking if the sign in container is displayed, waiting for 3 seconds");
+            IWebElement signInContainer = _webDriverUtilities.WaitUntilNotNull(SignInContainer, webDriver, 3);
+
+            return signInContainer != null;
         }
 
         private IWebElement SignInContainer(IWebDriver webDriver)

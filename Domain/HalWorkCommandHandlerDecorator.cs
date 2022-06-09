@@ -45,6 +45,7 @@ namespace Domain
             else
             {
                 _logger.LogDebug("Task is outside of Hal's work day. The task will NOT be executed today");
+                command.Channel.BasicAck(command.EventArgs.DeliveryTag, false);
             }            
         }
     }

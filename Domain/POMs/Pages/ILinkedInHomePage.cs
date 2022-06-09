@@ -14,5 +14,9 @@ namespace Domain.POMs.Pages
         public HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)
             where T : IOperationResponse;
 
+        bool IsNewsFeedDisplayed(IWebDriver webDriver);
+
+        void WaitUntilNewsFeedIsDisplayed(IWebDriver webDriver);
+
     }
 }
