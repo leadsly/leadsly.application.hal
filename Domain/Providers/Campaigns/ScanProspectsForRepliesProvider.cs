@@ -243,6 +243,7 @@ namespace Domain.Providers.Campaigns
             {
                 if(_linkedInPageFacade.LinkedInMessagingPage.HasNotification(listItem) == true)
                 {
+                    _logger.LogInformation($"This ListItem [{listItem.Text}] does contain a new notification");
                     newConversationListItem.Add(listItem);
                 }
             }

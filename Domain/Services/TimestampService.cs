@@ -16,21 +16,21 @@ namespace Domain.Services
         public DateTimeOffset GetNowLocalized(string zoneId)
         {
             TimeZoneInfo tzInfo = TimeZoneInfo.FindSystemTimeZoneById(zoneId);
-            _logger.LogInformation("Executing GetDateTimeNowWithZone for zone {zoneId}", zoneId);
+            _logger.LogDebug("Executing GetDateTimeNowWithZone for zone {zoneId}", zoneId);
 
             DateTime nowLocalTime = TimeZoneInfo.ConvertTime(DateTime.Now, tzInfo);
             DateTimeOffset targetDateTimeOffset =
                 new DateTimeOffset
                 (
-                    DateTime.SpecifyKind(nowLocalTime, DateTimeKind.Unspecified
-                ),
-                tzInfo.GetUtcOffset
-                (
-                    DateTime.SpecifyKind(nowLocalTime, DateTimeKind.Local)
-                ));
+                    nowLocalTime,
+                    tzInfo.GetUtcOffset
+                    (
+                        DateTime.SpecifyKind(nowLocalTime, DateTimeKind.Local)
+                    )
+                );
 
-            
-            _logger.LogInformation($"Now in local zone {zoneId} is {targetDateTimeOffset}");
+
+            _logger.LogDebug($"Now in local zone {zoneId} is {targetDateTimeOffset}");
             return targetDateTimeOffset;
         }
 
