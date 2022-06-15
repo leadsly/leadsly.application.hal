@@ -110,14 +110,16 @@ namespace Domain.Providers.Campaigns
             DateTimeOffset endOfWorkDayLocal = _timestampService.ParseDateTimeOffsetLocalized(message.TimeZoneId, message.EndOfWorkday);
             while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayLocal)
             {
+                _logger.LogDebug("[ScanProspectsForReplies]: Waiting between 30 to 45 seconds to start scanning.");
                 _humanService.RandomWaitSeconds(30, 45);
 
+                _logger.LogDebug("[ScanProspectsForReplies]: Looking to close any active message windows.");
                 CloseAllConversations(webDriver);
 
                 await ScanProspectsAsync<T>(webDriver, message);
             }
 
-            _logger.LogInformation("Stopping to scan for prospect replies. ScanProspectsForReplies finished running because it is end of the work day.");
+            _logger.LogInformation("[ScanProspectsForReplies]: Stopping to scan for prospect replies. ScanProspectsForReplies finished running because it is end of the work day.");
             _webDriverProvider.CloseBrowser<T>(BrowserPurpose.ScanForReplies);
 
             IsRunning = false;

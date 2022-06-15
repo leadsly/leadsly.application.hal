@@ -15,8 +15,7 @@ namespace Domain.Services
 
         public DateTimeOffset GetNowLocalized(string zoneId)
         {
-            TimeZoneInfo tzInfo = TimeZoneInfo.FindSystemTimeZoneById(zoneId);
-            _logger.LogDebug("Executing GetDateTimeNowWithZone for zone {zoneId}", zoneId);
+            TimeZoneInfo tzInfo = TimeZoneInfo.FindSystemTimeZoneById(zoneId);            
 
             DateTime nowLocalTime = TimeZoneInfo.ConvertTime(DateTime.Now, tzInfo);
             DateTimeOffset targetDateTimeOffset =
@@ -29,8 +28,6 @@ namespace Domain.Services
                     )
                 );
 
-
-            _logger.LogDebug($"Now in local zone {zoneId} is {targetDateTimeOffset}");
             return targetDateTimeOffset;
         }
 
