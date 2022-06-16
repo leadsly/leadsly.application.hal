@@ -63,7 +63,23 @@ namespace Domain.Providers.Campaigns
 
             IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)result.Value).WebDriver;
 
-            return await ExecutePhaseUntilEndOfWorkDayAsync<T>(webDriver, message);
+            try
+            {
+                await ExecutePhaseUntilEndOfWorkDayAsync(webDriver, message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occured while scanning prospects for replies");
+                throw;
+            }
+            finally
+            {
+                _logger.LogInformation("[ScanProspectsForReplies]: Stopping to scan for prospect replies. ScanProspectsForReplies finished running because it is end of the work day.");
+                _webDriverProvider.CloseBrowser<T>(BrowserPurpose.ScanForReplies);
+            }
+
+            result.Succeeded = true;
+            return result;
         }
 
         private HalOperationResult<T> SetUpForScanning<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
@@ -103,9 +119,8 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
-        public async Task<HalOperationResult<T>> ExecutePhaseUntilEndOfWorkDayAsync<T>(IWebDriver webDriver, ScanProspectsForRepliesBody message) where T : IOperationResponse
+        public async Task ExecutePhaseUntilEndOfWorkDayAsync(IWebDriver webDriver, ScanProspectsForRepliesBody message)
         {
-            HalOperationResult<T> result = new();
             IsRunning = true;
             DateTimeOffset endOfWorkDayLocal = _timestampService.ParseDateTimeOffsetLocalized(message.TimeZoneId, message.EndOfWorkday);
             while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayLocal)
@@ -116,16 +131,10 @@ namespace Domain.Providers.Campaigns
                 _logger.LogDebug("[ScanProspectsForReplies]: Looking to close any active message windows.");
                 CloseAllConversations(webDriver);
 
-                await ScanProspectsAsync<T>(webDriver, message);
+                await ScanProspectsAsync<IOperationResponse>(webDriver, message);
             }
 
-            _logger.LogInformation("[ScanProspectsForReplies]: Stopping to scan for prospect replies. ScanProspectsForReplies finished running because it is end of the work day.");
-            _webDriverProvider.CloseBrowser<T>(BrowserPurpose.ScanForReplies);
-
             IsRunning = false;
-
-            result.Succeeded = true;
-            return result;
         }
 
         private void CloseAllConversations(IWebDriver webDriver)
