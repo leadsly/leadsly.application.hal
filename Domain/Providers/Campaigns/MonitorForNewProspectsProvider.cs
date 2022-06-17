@@ -171,7 +171,8 @@ namespace Domain.Providers.Campaigns
 
         private async Task MonitorForNewConnections(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
         {
-            IsRunning = true;
+            _logger.LogDebug("[MonitorForNewConnections]: Setting IsRunning property to 'true'");
+            IsRunning = true;            
             DateTimeOffset endOfWorkDayLocal = _timestampService.ParseDateTimeOffsetLocalized(message.TimeZoneId, message.EndOfWorkday);
             while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayLocal)
             {
@@ -201,6 +202,7 @@ namespace Domain.Providers.Campaigns
                     _logger.LogDebug("[MonitorForNewConnections]: Finished processing newly detected connections");
                 }
             }
+            _logger.LogDebug("[MonitorForNewConnections]: Setting IsRunning property to 'false'");
             IsRunning = false;
 
             _logger.LogInformation("[MonitorForNewConnections]: Stopping to look for new connections. MonitorForNewAcceptedConnections finished running because it is end of the work day");

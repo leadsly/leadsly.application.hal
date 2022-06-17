@@ -121,6 +121,7 @@ namespace Domain.Providers.Campaigns
 
         public async Task ExecutePhaseUntilEndOfWorkDayAsync(IWebDriver webDriver, ScanProspectsForRepliesBody message)
         {
+            _logger.LogDebug("[ScanProspectsForReplies]: Setting IsRunning property to 'true'");
             IsRunning = true;
             DateTimeOffset endOfWorkDayLocal = _timestampService.ParseDateTimeOffsetLocalized(message.TimeZoneId, message.EndOfWorkday);
             while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayLocal)
@@ -133,8 +134,10 @@ namespace Domain.Providers.Campaigns
 
                 await ScanProspectsAsync<IOperationResponse>(webDriver, message);
             }
-
+            _logger.LogDebug("[ScanProspectsForReplies]: Setting IsRunning property to 'false'");
             IsRunning = false;
+
+            _logger.LogInformation("[ScanProspectsForReplies]: Stopping to look for new messages from prospects. ScanProspectsForReplies finished running because it is end of the work day");
         }
 
         private void CloseAllConversations(IWebDriver webDriver)

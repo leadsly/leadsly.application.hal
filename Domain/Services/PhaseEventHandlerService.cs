@@ -228,13 +228,19 @@ namespace Domain.Services
 
             if (executionType == RabbitMQConstants.MonitorNewAcceptedConnections.ExecuteOffHoursScan)
             {
+                _logger.LogInformation("[CheckOffHoursNewConnections] Executing CheckOffHoursNewConnections phase");
                 CheckOffHoursNewConnectionsCommand offHoursCommand = new CheckOffHoursNewConnectionsCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);
                 await _offHoursHandler.HandleAsync(offHoursCommand);
             }
             else if(executionType == RabbitMQConstants.MonitorNewAcceptedConnections.ExecutePhase)
             {
+                _logger.LogInformation("[MonitorForNewConnections] Executing MonitorForNewConnections phase");
                 MonitorForNewConnectionsCommand monitorCommand = new MonitorForNewConnectionsCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);
                 await _monitorHandler.HandleAsync(monitorCommand);
+            }
+            else
+            {
+                _logger.LogInformation("Header called execution-type did not match any expected values. It's value was {executionType}", executionType);
             }
         }
 

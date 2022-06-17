@@ -41,6 +41,7 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
 
             if (MonitorForNewProspectsProvider.IsRunning == false)
             {
+                _logger.LogInformation("MonitorForNewProspects phase is currently NOT running. Executing the phase until the end of work day");
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                 // this is required because this task can run for 8 - 10 hours a day. The AppServer does not know IF this task/phase is already
                 // running on Hal thus it will trigger messages blindly. Otherwise if we await this here, then none of the blindly triggered
@@ -51,6 +52,10 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
                 });
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
+            }
+            else
+            {
+                _logger.LogInformation("MonitorForNewProspects phase is currently running.");
             }
         }
 
