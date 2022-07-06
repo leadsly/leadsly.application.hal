@@ -1,35 +1,34 @@
-﻿using Domain.Models;
-using Domain.Providers;
+﻿using Domain.Facades.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Repositories;
-using Leadsly.Application.Model;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using OpenQA.Selenium;
 
 namespace Domain.Supervisor
 {
     public partial class Supervisor : ISupervisor
     {
         public Supervisor(
-            IWebDriverRepository webDriverRepository, 
-            IHalAuthProvider halAuthProvider, 
-            IFileManager fileManager, 
+            IWebDriverRepository webDriverRepository,
+            IHalAuthProvider halAuthProvider,
+            IFileManager fileManager,
             IWebDriverProvider webDriverProvider,
             IMemoryCache memoryCache,
+            ILinkedInPageFacade linkedInPageFacade,
             IWebDriverManagerProvider webDriverManagerProvider,
             ILogger<Supervisor> logger)
         {
             _logger = logger;
             _memoryCache = memoryCache;
             _fileManager = fileManager;
+            _linkedInPageFacade = linkedInPageFacade;
             _webDriverRepository = webDriverRepository;
             _halAuthProvider = halAuthProvider;
             _webDriverProvider = webDriverProvider;
             _webDriverManagerProvider = webDriverManagerProvider;
         }
 
+        private readonly ILinkedInPageFacade _linkedInPageFacade;
         private readonly IWebDriverManagerProvider _webDriverManagerProvider;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly IHalAuthProvider _halAuthProvider;

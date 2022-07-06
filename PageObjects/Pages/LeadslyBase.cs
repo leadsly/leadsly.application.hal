@@ -1,15 +1,9 @@
 ﻿using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
-using Leadsly.Application.Model.WebDriver;
-using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PageObjects.Pages
 {
@@ -20,7 +14,7 @@ namespace PageObjects.Pages
             _logger = logger;
             _rnd = new Random();
         }
-        
+
         private readonly ILogger _logger;
         private readonly Random _rnd;
 
@@ -48,8 +42,25 @@ namespace PageObjects.Pages
                 return result;
             }
 
-            result.Succeeded = true;            
+            result.Succeeded = true;
             return result;
+        }
+
+        protected void NavigateToPage(IWebDriver webDriver, string pageUrl)
+        {
+            try
+            {
+                webDriver.Navigate().GoToUrl(new Uri(pageUrl));
+            }
+            catch (WebDriverTimeoutException timeoutEx)
+            {
+                throw timeoutEx;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Failed to navigate to page {pageUrl}");
+                throw ex;
+            }
         }
 
         protected void RandomWait(int minWaitTime, int maxWaitTime)

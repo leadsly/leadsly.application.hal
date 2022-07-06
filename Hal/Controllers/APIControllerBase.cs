@@ -1,15 +1,11 @@
-﻿using Domain;
-using Leadsly.Application.Model;
+﻿using Leadsly.Application.Model;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Hal.Controllers
 {
@@ -49,15 +45,15 @@ namespace Hal.Controllers
                 Detail = ProblemDetailsDescriptions.LeadslySocialAccountAuthenticationError,
                 Instance = this.HttpContext.Request.Path.Value
             });
-        } 
-        protected ObjectResult BadRequest_Test()
+        }
+        protected ObjectResult BadRequest(string details)
         {
             return ProblemDetailsResult(new ProblemDetails
             {
                 Type = ProblemDetailsTypes.BadRequestType,
                 Status = StatusCodes.Status400BadRequest,
                 Title = ReasonPhrases.GetReasonPhrase(400),
-                Detail = "Details for this problem are outlined here",
+                Detail = details,
                 Instance = this.HttpContext.Request.Path.Value
             });
         }

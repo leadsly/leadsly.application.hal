@@ -1,38 +1,36 @@
 ﻿using Domain.Models;
 using Domain.Providers.Interfaces;
 using Domain.Repositories;
-using Domain.Services;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.WebDriver;
 using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Providers
 {
     public class WebDriverProvider : IWebDriverProvider
     {
-        public WebDriverProvider(IWebDriverRepository webDriverRepository, IWebDriverService webDriverService, IMemoryCache memoryCache, ILogger<WebDriverProvider> logger)
+        public WebDriverProvider(IFileManager fileManager, IWebDriverRepository webDriverRepository, IWebDriverService webDriverService, IMemoryCache memoryCache, ILogger<WebDriverProvider> logger)
         {
             _logger = logger;
             _webDriverRepository = webDriverRepository;
             _webDriverService = webDriverService;
             _memoryCache = memoryCache;
+            _fileManager = fileManager;
         }
 
         private readonly ILogger<WebDriverProvider> _logger;
         private readonly IWebDriverRepository _webDriverRepository;
         private readonly IMemoryCache _memoryCache;
+        private readonly IFileManager _fileManager;
         private readonly IWebDriverService _webDriverService;
         private readonly object _getWebDriverLock = new object();
         private static Dictionary<BrowserPurpose, IWebDriver> Drivers { get; set; } = new Dictionary<BrowserPurpose, IWebDriver>();
@@ -48,7 +46,7 @@ namespace Domain.Providers
                 getWebDriverOperationResult = GetWebDriver<IGetOrCreateWebDriverOperation>(browserPurpose);
             }
 
-            if(getWebDriverOperationResult.Succeeded == false)
+            if (getWebDriverOperationResult.Succeeded == false)
             {
                 result.Failures = getWebDriverOperationResult.Failures;
                 return result;
@@ -60,10 +58,10 @@ namespace Domain.Providers
         private HalOperationResult<T> CreateWebDriver<T>(BrowserPurpose browserPurpose, string chromeProfileName)
             where T : IOperationResponse
         {
-            WebDriverOptions webDriverOptions = GetWebDriverOptions();         
+            WebDriverOptions webDriverOptions = GetWebDriverOptions();
             return _webDriverService.Create<T>(browserPurpose, webDriverOptions, chromeProfileName);
         }
-        
+
         private HalOperationResult<T> WebDriverDoesNotExist<T>(WebDriverOperationData operationData) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -80,7 +78,7 @@ namespace Domain.Providers
                 // add web driver to the list
                 Drivers.Add(operationData.BrowserPurpose, createWebDriverResult.Value.WebDriver);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to add new webdriver to the list");
                 result.Failures.Add(new()
@@ -106,7 +104,7 @@ namespace Domain.Providers
             };
 
             HalOperationResult<IGetOrCreateWebDriverOperation> getWebDriverResult = GetWebDriver<IGetOrCreateWebDriverOperation>(browserPurpose);
-            if(getWebDriverResult.Succeeded == false)
+            if (getWebDriverResult.Succeeded == false)
             {
                 string purpose = Enum.GetName(browserPurpose);
                 _logger.LogWarning("Failed to get web driver by purpose {purpose}", purpose);
@@ -127,7 +125,7 @@ namespace Domain.Providers
             {
                 Drivers.Remove(browserPurpose);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 result.Failures.Add(new()
                 {
@@ -177,11 +175,11 @@ namespace Domain.Providers
             {
                 // try and get the value         
                 Drivers.TryGetValue(browserPurpose, out driver);
-                if(driver == null)
+                if (driver == null)
                 {
                     _logger.LogDebug("WebDriver does not exist in the list. New WebDriver instance will need to be created for browser purpose: {browser}", browser);
                     return result;
-                }                
+                }
             }
             catch (Exception ex)
             {
@@ -222,7 +220,7 @@ namespace Domain.Providers
                 Drivers.Remove(operationData.BrowserPurpose);
                 Drivers.Add(operationData.BrowserPurpose, createWebDriverResult.Value.WebDriver);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to remove then add webdriver to the list");
                 result.Failures.Add(new()
@@ -245,17 +243,17 @@ namespace Domain.Providers
             if (result.Succeeded == false)
             {
                 result = WebDriverDoesNotExist<T>(operationData);
-                if(result.Succeeded == false)
+                if (result.Succeeded == false)
                 {
                     return result;
                 }
             }
 
             result = CheckWebDriverConnection<T>(operationData.BrowserPurpose);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 result = CannotEstablishConnectionToWebDriver<T>(operationData);
-                if(result.Succeeded == false)
+                if (result.Succeeded == false)
                 {
                     return result;
                 }
@@ -263,7 +261,7 @@ namespace Domain.Providers
 
             result.Succeeded = true;
             return result;
-        }        
+        }
 
         private WebDriverOptions GetWebDriverOptions()
         {
@@ -285,7 +283,7 @@ namespace Domain.Providers
             string driverPurpose = Enum.GetName(browserPurpose);
             _logger.LogInformation("Checking if {driverPurpose} has been initialized already", driverPurpose);
             HalOperationResult<IGetOrCreateWebDriverOperation> getWebDriverResult = GetWebDriver<IGetOrCreateWebDriverOperation>(browserPurpose);
-            if(getWebDriverResult.Succeeded == false)
+            if (getWebDriverResult.Succeeded == false)
             {
                 result.Failures = getWebDriverResult.Failures;
                 return result;
@@ -298,7 +296,7 @@ namespace Domain.Providers
         private HalOperationResult<T> CheckWebDriverConnection<T>(BrowserPurpose browserPurpose) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
-            string driverPurpose = Enum.GetName(browserPurpose);            
+            string driverPurpose = Enum.GetName(browserPurpose);
             // we need to verify that we can successfully send commands to the web driver before we proceed, if we can't we need to re-create the web driver
             HalOperationResult<IGetOrCreateWebDriverOperation> getWebDriverResult = GetWebDriver<IGetOrCreateWebDriverOperation>(browserPurpose);
             if (getWebDriverResult.Succeeded == false)
@@ -318,18 +316,18 @@ namespace Domain.Providers
             HalOperationResult<T> result = new();
 
             result = GetWebDriver<T>(operationData.BrowserPurpose);
-            if(result.Succeeded == true)
+            if (result.Succeeded == true)
             {
                 return result;
             }
 
             result = CreateWebDriver<T>(operationData);
-            if(result.Succeeded == true)
+            if (result.Succeeded == true)
             {
                 return result;
             }
 
-            _logger.LogError("Failed to get or create web driver instance.");            
+            _logger.LogError("Failed to get or create web driver instance.");
             return result;
         }
 
@@ -346,7 +344,7 @@ namespace Domain.Providers
             IWebDriver webDriver = createWebDriverResult.Value.WebDriver;
 
             result = AddWebDriver<T>(operationData.BrowserPurpose, webDriver);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 return result;
             }
@@ -355,13 +353,44 @@ namespace Domain.Providers
             result.Value = (T)createWebDriverResult.Value;
             return result;
         }
-        
+
+        public IWebDriver CreateWebDriver(BrowserPurpose browserPurpose, string chromeProfile)
+        {
+            WebDriverOptions webDriverOptions = GetWebDriverOptions();
+            //string chromeProfile = chromeProfileName;
+            string browser = Enum.GetName(browserPurpose);
+            string defaultChromeProfileDir = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir;
+            if (browserPurpose == BrowserPurpose.Auth)
+            {
+                chromeProfile = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeProfileName;
+            }
+            else
+            {
+                string newChromeProfile = chromeProfile + "_" + browser;
+                _fileManager.CloneDefaultChromeProfile(newChromeProfile, webDriverOptions);
+                string newChromeProfilePath = defaultChromeProfileDir + "/" + newChromeProfile;
+                _logger.LogDebug("New chrome profile directory that will be used is: {newChromeProfileDir}", newChromeProfilePath);
+                chromeProfile = newChromeProfile;
+            }
+            IList<string> webDriverArguments = webDriverOptions.ChromeProfileConfigOptions.AddArguments;
+            ChromeOptions options = _webDriverService.SetChromeOptions(webDriverArguments, chromeProfile, defaultChromeProfileDir);
+
+            IWebDriver webDriver = _webDriverService.Create(options, webDriverOptions);
+            if (webDriver != null)
+            {
+                AddWebDriver<IOperationResponse>(browserPurpose, webDriver);
+            }
+
+            return webDriver;
+        }
+
+
         public HalOperationResult<T> GetWebDriver<T>(WebDriverOperationData operationData) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
             result = WebDriverExists<T>(operationData.BrowserPurpose);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 string browserPurpose = Enum.GetName(operationData.BrowserPurpose);
                 result.Failures.Add(new()
@@ -374,7 +403,7 @@ namespace Domain.Providers
             }
 
             result = CheckWebDriverConnection<T>(operationData.BrowserPurpose);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 string browserPurpose = Enum.GetName(operationData.BrowserPurpose);
                 result.Failures.Add(new()
@@ -385,10 +414,19 @@ namespace Domain.Providers
                 });
                 return result;
             }
-            HalOperationResult<IGetOrCreateWebDriverOperation> getWebDriverResult = GetWebDriver<IGetOrCreateWebDriverOperation>(operationData.BrowserPurpose);            
+            HalOperationResult<IGetOrCreateWebDriverOperation> getWebDriverResult = GetWebDriver<IGetOrCreateWebDriverOperation>(operationData.BrowserPurpose);
             result.Value = (T)getWebDriverResult.Value;
             result.Succeeded = true;
             return result;
+        }
+
+        public IWebDriver GetWebDriver(BrowserPurpose browserPurpose)
+        {
+            if (Drivers.ContainsKey(browserPurpose))
+            {
+                return Drivers[browserPurpose];
+            }
+            return null;
         }
 
         public HalOperationResult<T> SwitchTo<T>(IWebDriver webDriver, string windowHandleId) where T : IOperationResponse
@@ -398,7 +436,7 @@ namespace Domain.Providers
             try
             {
                 string windownHandleToSwitchTo = webDriver.WindowHandles.Where(wH => wH == windowHandleId).FirstOrDefault();
-                if(windownHandleToSwitchTo != null)
+                if (windownHandleToSwitchTo != null)
                 {
                     _logger.LogInformation("Requested window handle was found! Switching to it.");
                     webDriver.SwitchTo().Window(windownHandleToSwitchTo);
@@ -408,9 +446,9 @@ namespace Domain.Providers
                     _logger.LogInformation("Requested window was not found. Keeping focus on the current tab.");
                     return result;
                 }
-                
+
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 result.Failures.Add(new()
                 {
@@ -488,10 +526,10 @@ namespace Domain.Providers
                     return false;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return false;
-            }            
+            }
 
             return true;
         }
@@ -513,7 +551,7 @@ namespace Domain.Providers
         }
 
         private bool WindowHandleExists(IWebDriver webDriver, string windowHandleId)
-        {            
+        {
             return webDriver.WindowHandles.Any(w => w == windowHandleId);
         }
     }

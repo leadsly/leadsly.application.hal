@@ -1,11 +1,7 @@
 ﻿using Domain.Models;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain
 {
@@ -13,6 +9,8 @@ namespace Domain
     {
         public HalOperationResult<T> CloneDefaultChromeProfile<T>(string newChromeProfileName, WebDriverOptions options)
             where T : IOperationResponse;
+
+        public void CloneDefaultChromeProfile(string newChromeProfile, WebDriverOptions options);
 
         public HalOperationResult<T> RemoveDirectory<T>(string directory)
             where T : IOperationResponse;

@@ -96,7 +96,6 @@ namespace PageObjects.Pages
             }
             _authType = TwoFactorAuthType.None;
             return false;
-
         }
 
         private IWebElement TwoFactorAuthenticationCodeInput(IWebDriver webDriver)
@@ -186,7 +185,6 @@ namespace PageObjects.Pages
             }
 
             return twoFactorAuthSMSView;
-
         }
 
         public bool ConfirmAccountDisplayed(IWebDriver webDriver)
@@ -225,7 +223,7 @@ namespace PageObjects.Pages
 
         public bool SMSVerificationCodeErrorDisplayed(IWebDriver webDriver)
         {
-            return SMSVerificationCodeError(webDriver) != null;            
+            return SMSVerificationCodeError(webDriver) != null;
         }
 
         private IWebElement SMSVerificationCodeError(IWebDriver webDriver)
@@ -412,7 +410,7 @@ namespace PageObjects.Pages
                     Thread.Sleep(rnd.Next(500));
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to enter two factor auth code");
                 result.WebDriverError = true;
@@ -424,7 +422,7 @@ namespace PageObjects.Pages
                 });
                 return result;
             }
-            
+
             result.Succeeded = true;
             return result;
         }
@@ -440,7 +438,7 @@ namespace PageObjects.Pages
                 TwoStepAuthenticationSubmitButton(webDriver).Click();
                 Thread.Sleep(rnd.Next(1000));
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to submit user's two factor auth code");
                 result.Failures.Add(new()
@@ -499,14 +497,14 @@ namespace PageObjects.Pages
             try
             {
                 IWebElement signInButton = _webDriverUtilities.WaitUntilNotNull(SignInButton, webDriver, 5);
-                if(signInButton == null)
+                if (signInButton == null)
                 {
                     return result;
                 }
 
                 signInButton.Click();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to click the sign in button");
                 result.Failures.Add(new()
@@ -518,7 +516,7 @@ namespace PageObjects.Pages
                 result.WebDriverError = true;
                 return result;
             }
-            
+
             result.Succeeded = true;
             return result;
         }

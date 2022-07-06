@@ -5,18 +5,13 @@ using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.WebDriver;
 using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Remote;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Services
 {
@@ -81,6 +76,61 @@ namespace Domain.Services
             return result;
         }
 
+        public IWebDriver Create(ChromeOptions options, WebDriverOptions webDriverOptions)
+        {
+            IWebDriver driver = null;
+            try
+            {
+                _logger.LogTrace("Creating new WebDriver instance");
+                if (webDriverOptions != null && webDriverOptions.UseGrid == false)
+                {
+                    driver = new ChromeDriver(options);
+                }
+                else
+                {
+                    string seleniumGridUrl = $"{webDriverOptions.SeleniumGrid.Url}:{webDriverOptions.SeleniumGrid.Port}";
+                    driver = new RemoteWebDriver(new Uri(seleniumGridUrl), options);
+                }
+
+                _logger.LogTrace("New WebDriver instance successfully created");
+
+                _logger.LogTrace("Maximizing WebDriver's main window.");
+                driver.Manage().Window.Maximize();
+                _logger.LogTrace("WebDriver main window was successfully maximized.");
+                long implicitWait = webDriverOptions.DefaultImplicitWait;
+                _logger.LogTrace("Setting WebDriver ImplicitWait to {implicitWait}", implicitWait);
+                driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(implicitWait);
+                long pageLoadTimeout = webDriverOptions.PagLoadTimeout;
+                _logger.LogTrace("Setting webdriver's page load timeout to {pageLoadTimeout}", pageLoadTimeout);
+                driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(pageLoadTimeout);
+                _logger.LogTrace("Successfully set WebDriver's ImplicitWait");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create new WebDriver instance");
+                throw ex;
+            }
+
+            return driver;
+        }
+
+        public ChromeOptions SetChromeOptions(IList<string> addArguments, string chromeProfile, string defaultChromeProfileDir)
+        {
+            _logger.LogInformation("Setting chrome options. Chrome profile name: {chromeProfile}. UserDataDir is: {defaultChromeProfileDir}", chromeProfile, defaultChromeProfileDir);
+
+            ChromeOptions options = new();
+            foreach (string addArgument in addArguments)
+            {
+                _logger.LogDebug("New WebDriver argument: {addArgument}", addArgument);
+                options.AddArgument(addArgument);
+            }
+
+            _logger.LogDebug($"Setting --user-data-dir to {defaultChromeProfileDir}/{chromeProfile}");
+            options.AddArgument(@$"--user-data-dir={defaultChromeProfileDir}/{chromeProfile}");
+
+            return options;
+        }
+
         public HalOperationResult<T> Create<T>(BrowserPurpose browserPurpose, WebDriverOptions webDriverOptions, string chromeProfileName) where T : IOperationResponse
         {
             string browser = Enum.GetName(browserPurpose);
@@ -96,9 +146,9 @@ namespace Domain.Services
             {
                 string newChromeProfileName = chromeProfileName + "_" + browser;
 
-                result = _fileManager.CloneDefaultChromeProfile<T>(newChromeProfileName, webDriverOptions);                
+                result = _fileManager.CloneDefaultChromeProfile<T>(newChromeProfileName, webDriverOptions);
 
-                if(result.Succeeded == false)
+                if (result.Succeeded == false)
                 {
                     return result;
                 }
@@ -106,10 +156,10 @@ namespace Domain.Services
 
                 _logger.LogDebug("New chrome profile directory that will be used is: {newChromeProfileDir}", newChromeProfileDir);
 
-                options = SetChromeOptions(webDriverOptions, newChromeProfileName, webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir);                
+                options = SetChromeOptions(webDriverOptions, newChromeProfileName, webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir);
             }
 
-            return Create<T>(options, webDriverOptions);            
+            return Create<T>(options, webDriverOptions);
         }
 
         private HalOperationResult<T> Create<T>(ChromeOptions options, WebDriverOptions webDriverOptions) where T : IOperationResponse
@@ -142,7 +192,7 @@ namespace Domain.Services
                 driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(pageLoadTimeout);
                 _logger.LogTrace("Successfully set WebDriver's ImplicitWait");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to create new WebDriver instance");
 
@@ -180,8 +230,8 @@ namespace Domain.Services
                 options.AddArgument(addArgument);
             }
 
-            _logger.LogDebug($"Setting --user-data-dir to {userDataDir}/{profileName}");             
-            options.AddArgument(@$"--user-data-dir={userDataDir}/{profileName}");            
+            _logger.LogDebug($"Setting --user-data-dir to {userDataDir}/{profileName}");
+            options.AddArgument(@$"--user-data-dir={userDataDir}/{profileName}");
 
             return options;
         }
@@ -189,7 +239,7 @@ namespace Domain.Services
         public HalOperationResult<T> SwitchTo<T>(IWebDriver webDriver, WebDriverOperationData operationData, out string currentWindowHandleId) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
-            currentWindowHandleId = string.Empty;            
+            currentWindowHandleId = string.Empty;
             try
             {
                 if (operationData.RequestedWindowHandleId == null)
@@ -208,7 +258,7 @@ namespace Domain.Services
                             Code = Codes.WEBDRIVER_WINDOW_LOCATION_ERROR,
                             Reason = "Failed to find the requested window handle",
                             Detail = $"Web driver could not find any tabs that match {operationData.RequestedWindowHandleId}"
-                        });                        
+                        });
                         return result;
                     }
                     // only switch tabs if current window handle id does not equal requested handle id
@@ -218,13 +268,13 @@ namespace Domain.Services
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 result.Failures.Add(new()
                 {
                     Reason = "Web driver failed to switch tabs",
                     Detail = ex.Message
-                });                
+                });
                 return result;
             }
 
@@ -239,9 +289,9 @@ namespace Domain.Services
             try
             {
                 // close all sessions of this webdriver
-                driver.Dispose();              
+                driver.Dispose();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 result.Failures.Add(new()
                 {

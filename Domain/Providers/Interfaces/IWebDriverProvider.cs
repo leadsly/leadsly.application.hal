@@ -1,13 +1,7 @@
-﻿using Domain.Models;
-using Leadsly.Application.Model;
+﻿using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.WebDriver;
 using OpenQA.Selenium;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Providers.Interfaces
 {
@@ -22,10 +16,14 @@ namespace Domain.Providers.Interfaces
         HalOperationResult<T> CreateWebDriver<T>(WebDriverOperationData operationData)
             where T : IOperationResponse;
 
+        IWebDriver CreateWebDriver(BrowserPurpose browserPurpose, string chromeProfileName);
+
         HalOperationResult<T> GetWebDriver<T>(WebDriverOperationData operationData)
             where T : IOperationResponse;
 
-        HalOperationResult<T> GetOrCreateWebDriver<T>(WebDriverOperationData operationData) 
+        IWebDriver GetWebDriver(BrowserPurpose browserPurpose);
+
+        HalOperationResult<T> GetOrCreateWebDriver<T>(WebDriverOperationData operationData)
             where T : IOperationResponse;
 
         HalOperationResult<T> SwitchTo<T>(IWebDriver webDriver, string windowHandleId)

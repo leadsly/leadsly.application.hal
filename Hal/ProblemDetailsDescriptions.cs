@@ -8,5 +8,7 @@
         public const string ExternalJwtIsInvalid = "External provider jwt is invalid.";
         public const string Unauthorized = "Authentication credentials are missing or invalid.";
         public const string LeadslySocialAccountAuthenticationError = "Failed to authenticate user's social account";
+        public const string SignInError = "Failed to sign user in";
+        public const string TwoFactorAuth = "Error occured entering two factor auth code";
     }
 }

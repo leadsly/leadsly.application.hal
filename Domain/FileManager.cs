@@ -9,9 +9,6 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
-using System.Security.AccessControl;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain
 {
@@ -37,14 +34,12 @@ namespace Domain
             return leadslyChromeProfileDirectories;
         }
 
-        public HalOperationResult<T> CloneDefaultChromeProfile<T>(string newChromeProfile, WebDriverOptions options) where T : IOperationResponse
+        public void CloneDefaultChromeProfile(string newChromeProfile, WebDriverOptions options)
         {
-            HalOperationResult<T> result = new();
-
             string defaultChromeProfilesDir = string.Empty;
             if (_env.IsDevelopment() == true)
             {
-                if(options.UseGrid == false)
+                if (options.UseGrid == false)
                 {
                     // string currentDir = $"{Directory.GetCurrentDirectory()}";
                     defaultChromeProfilesDir = options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir; // Path.GetFullPath(Path.Combine(currentDir, @".."));                    
@@ -57,7 +52,57 @@ namespace Domain
             else
             {
                 defaultChromeProfilesDir = options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir;
-            }                        
+            }
+
+            if (Directory.Exists(defaultChromeProfilesDir) == false)
+            {
+                _logger.LogError("Could not locate {defaultProfileDir}", defaultChromeProfilesDir);
+                throw new Exception("Could not locate default chrome profiles directory");
+            }
+
+            string newProfileDir = Path.Combine(defaultChromeProfilesDir, newChromeProfile);
+            string defaultChromeProfileDir = Path.Combine(defaultChromeProfilesDir, options.ChromeProfileConfigOptions.DefaultChromeProfileName);
+            if (_env.IsDevelopment() == true)
+            {
+                _logger.LogInformation("Starting to copy all contents of default chrome profile directory, which is: {defaultChromeProfileDir}", defaultChromeProfileDir);
+                WalkDirectoryTree(new DirectoryInfo(defaultChromeProfileDir), newProfileDir, _logger);
+                _logger.LogInformation("Completed copying all contents of default chrome profile directory");
+            }
+            else
+            {
+                _logger.LogInformation("Starting to copy all contents of default chrome profile directory, which is: {defaultChromeProfileDir}", defaultChromeProfileDir);
+                //BashScriptExecutor.Exec($"cp -a /leadsly_chrome_profiles/leadsly_default_chrome_profile/. {newProfileDir}");
+                BashScriptExecutor.Exec($"cp -a {defaultChromeProfileDir}/. {newProfileDir}");
+                _logger.LogInformation("Completed copying all contents of default chrome profile directory");
+
+                _logger.LogInformation($"Changing permissions on the freshly copied directory {newProfileDir}");
+                // before returning update the permissions on the file                
+                BashScriptExecutor.Exec($"chmod a+rw {newProfileDir}");
+                _logger.LogInformation($"Completed changing permissions");
+            }
+        }
+
+        public HalOperationResult<T> CloneDefaultChromeProfile<T>(string newChromeProfile, WebDriverOptions options) where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            string defaultChromeProfilesDir = string.Empty;
+            if (_env.IsDevelopment() == true)
+            {
+                if (options.UseGrid == false)
+                {
+                    // string currentDir = $"{Directory.GetCurrentDirectory()}";
+                    defaultChromeProfilesDir = options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir; // Path.GetFullPath(Path.Combine(currentDir, @".."));                    
+                }
+                else
+                {
+                    defaultChromeProfilesDir = options.ProfilesVolume;
+                }
+            }
+            else
+            {
+                defaultChromeProfilesDir = options.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir;
+            }
 
             if (Directory.Exists(defaultChromeProfilesDir) == false)
             {
@@ -71,8 +116,8 @@ namespace Domain
             }
 
             string newProfileDir = Path.Combine(defaultChromeProfilesDir, newChromeProfile);
-            string defaultChromeProfileDir = Path.Combine(defaultChromeProfilesDir, options.ChromeProfileConfigOptions.DefaultChromeProfileName);            
-            if(_env.IsDevelopment() == true)
+            string defaultChromeProfileDir = Path.Combine(defaultChromeProfilesDir, options.ChromeProfileConfigOptions.DefaultChromeProfileName);
+            if (_env.IsDevelopment() == true)
             {
                 _logger.LogInformation("Starting to copy all contents of default chrome profile directory, which is: {defaultChromeProfileDir}", defaultChromeProfileDir);
                 WalkDirectoryTree(new DirectoryInfo(defaultChromeProfileDir), newProfileDir, _logger);
@@ -95,7 +140,7 @@ namespace Domain
                 // before returning update the permissions on the file                
                 BashScriptExecutor.Exec($"chmod a+rw {newProfileDir}");
                 _logger.LogInformation($"Completed changing permissions");
-            }            
+            }
 
             result.Succeeded = true;
             return result;
@@ -206,7 +251,7 @@ namespace Domain
 
                 Directory.Delete(directory);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 string dirName = directory;
                 _logger.LogError(ex, "Failed to remove directory {dirName}", dirName);
@@ -217,7 +262,7 @@ namespace Domain
                     Detail = ex.Message
                 });
                 return result;
-            }            
+            }
 
             result.Succeeded = true;
             return result;

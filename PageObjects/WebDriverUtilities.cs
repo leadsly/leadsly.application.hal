@@ -4,9 +4,6 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PageObjects
 {
@@ -35,7 +32,7 @@ namespace PageObjects
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "WebDrivers wait method timedout. This means that the maximum allowed wait time elapsed and the element was not found. Wait time in seconds {waitTimeInSeconds}", waitTimeInSeconds);
+                _logger.LogDebug("WebDrivers wait method timedout. This means that the maximum allowed wait time elapsed and the element was not found. Wait time in seconds {waitTimeInSeconds}", waitTimeInSeconds);
             }
             return elementToFind;
         }
@@ -46,7 +43,7 @@ namespace PageObjects
             try
             {
                 WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(waitTimeInSeconds));
-                
+
                 wait.Until(drv =>
                 {
                     elementsToFind = searchFunc(drv);
@@ -81,7 +78,7 @@ namespace PageObjects
 
         public void ScrollTop(IWebDriver webDriver)
         {
-            IWebElement html = webDriver.FindElement(By.XPath("//body"));            
+            IWebElement html = webDriver.FindElement(By.XPath("//body"));
             IJavaScriptExecutor js = (IJavaScriptExecutor)webDriver;
             long pageHeight = (long)js.ExecuteScript("return document.body.scrollHeight");
             int totalScrolled = 0;
