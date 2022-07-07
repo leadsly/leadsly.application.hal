@@ -4,6 +4,7 @@ using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.WebDriver;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 using OpenQA.Selenium;
 
 namespace Domain.Supervisor
@@ -12,16 +13,16 @@ namespace Domain.Supervisor
     {
         private const string SignInUrl = "https://www.LinkedIn.com";
 
-        public SignInResultResponse SignUserIn(LinkedInSignInRequest request)
+        public SignInResultResponse SignUserIn(LinkedInSignInRequest request, StringValues attemptCountHeader)
         {
             SignInResultResponse resp = default;
             try
             {
-                resp = SignIn(request);
+                resp = InitializeSignInProcedure(request, attemptCountHeader);
             }
             finally
             {
-                if (resp.InvalidCredentials == false && resp.TwoFactorAuthRequired == false)
+                if (resp.InvalidEmail == false && resp.InvalidPassword == false && resp.TwoFactorAuthRequired == false)
                 {
                     this._logger.LogInformation("Closing browser after auth");
                     _webDriverProvider.CloseBrowser<IOperationResponse>(BrowserPurpose.Auth);
@@ -30,18 +31,38 @@ namespace Domain.Supervisor
             return resp;
         }
 
-        private SignInResultResponse SignIn(LinkedInSignInRequest request)
+        private SignInResultResponse InitializeSignInProcedure(LinkedInSignInRequest request, StringValues attemptCountHeader)
         {
-            IWebDriver webDriver = _webDriverProvider.CreateWebDriver(BrowserPurpose.Auth, string.Empty);
+            string header = attemptCountHeader.ToString();
+            if (header == string.Empty)
+            {
+                // close any auth browsers running to start from scratch
+                _webDriverProvider.CloseBrowser<IOperationResponse>(BrowserPurpose.Auth);
+            }
+
+            IWebDriver webDriver = _webDriverProvider.GetOrCreateWebDriver(BrowserPurpose.Auth, string.Empty, out bool isNewWebDriver);
             if (webDriver == null)
             {
                 return null;
             }
 
-            _linkedInPageFacade.LinkedInPage.NavigateToPage(webDriver, SignInUrl);
+            if (isNewWebDriver)
+            {
+                _linkedInPageFacade.LinkedInPage.NavigateToPage(webDriver, SignInUrl);
+            }
 
+            return SignIn(request.Username, request.Password, webDriver);
+        }
+
+        private SignInResultResponse SignIn(string username, string password, IWebDriver webDriver)
+        {
             // wait until we either have signin container or homepage news feed
             SignInOperationResult signInOperationResult = _linkedInPageFacade.LinkedInPage.DetermineSignInStatus(webDriver);
+
+            if (signInOperationResult == SignInOperationResult.None)
+            {
+                return null;
+            }
 
             if (signInOperationResult == SignInOperationResult.Unknown)
             {
@@ -52,38 +73,88 @@ namespace Domain.Supervisor
             {
                 return new()
                 {
-                    InvalidCredentials = false,
                     TwoFactorAuthRequired = false,
                     TwoFactorAuthType = TwoFactorAuthType.None,
                     UnexpectedErrorOccured = false
                 };
             }
 
-            HalOperationResult<IOperationResponse> enterEmailResult = _linkedInPageFacade.LinkedInLoginPage.EnterEmail<IOperationResponse>(webDriver, request.Username);
-            if (enterEmailResult.Succeeded == false)
+            if (signInOperationResult == SignInOperationResult.InvalidEmail)
             {
-                return new()
+                HalOperationResult<IOperationResponse> reenterEmailResult = _linkedInPageFacade.LinkedInLoginPage.ReEnterEmail<IOperationResponse>(webDriver, username);
+                if (reenterEmailResult.Succeeded == false)
                 {
-                    InvalidCredentials = false,
-                    UnexpectedErrorOccured = true,
-                    TwoFactorAuthRequired = false,
-                    TwoFactorAuthType = TwoFactorAuthType.None
-                };
+                    return new()
+                    {
+                        TwoFactorAuthRequired = false,
+                        TwoFactorAuthType = TwoFactorAuthType.None,
+                        UnexpectedErrorOccured = true
+                    };
+                }
+
+                _humanBehaviorService.RandomWaitMilliSeconds(500, 1050);
+
+                // ensure password is still entered, otherwise re-enter it too
+                HalOperationResult<IOperationResponse> reenterPasswordResult = _linkedInPageFacade.LinkedInLoginPage.ReEnterPasswordIfEmpty<IOperationResponse>(webDriver, password);
+                if (reenterPasswordResult.Succeeded == false)
+                {
+                    return new()
+                    {
+                        TwoFactorAuthRequired = false,
+                        TwoFactorAuthType = TwoFactorAuthType.None,
+                        UnexpectedErrorOccured = true
+                    };
+                }
+
+                _humanBehaviorService.RandomWaitMilliSeconds(300, 1350);
+                _linkedInPageFacade.LinkedInLoginPage.ReSignIn<IOperationResponse>(webDriver);
             }
 
-            HalOperationResult<IOperationResponse> enterPasswordResult = _linkedInPageFacade.LinkedInLoginPage.EnterPassword<IOperationResponse>(webDriver, request.Password);
-            if (enterPasswordResult.Succeeded == false)
+            if (signInOperationResult == SignInOperationResult.InvalidPassword)
             {
-                return new()
+                HalOperationResult<IOperationResponse> reenterPasswordResult = _linkedInPageFacade.LinkedInLoginPage.ReEnterPassword<IOperationResponse>(webDriver, password);
+                if (reenterPasswordResult.Succeeded == false)
                 {
-                    InvalidCredentials = false,
-                    UnexpectedErrorOccured = true,
-                    TwoFactorAuthRequired = false,
-                    TwoFactorAuthType = TwoFactorAuthType.None
-                };
+                    return new()
+                    {
+                        TwoFactorAuthRequired = false,
+                        TwoFactorAuthType = TwoFactorAuthType.None,
+                        UnexpectedErrorOccured = true
+                    };
+                }
+
+                _humanBehaviorService.RandomWaitMilliSeconds(500, 1100);
+                _linkedInPageFacade.LinkedInLoginPage.ReSignIn<IOperationResponse>(webDriver);
             }
 
-            _linkedInPageFacade.LinkedInLoginPage.SignIn<IOperationResponse>(webDriver);
+            if (signInOperationResult == SignInOperationResult.SignIn)
+            {
+                HalOperationResult<IOperationResponse> enterEmailResult = _linkedInPageFacade.LinkedInLoginPage.EnterEmail<IOperationResponse>(webDriver, username);
+                if (enterEmailResult.Succeeded == false)
+                {
+                    return new()
+                    {
+                        UnexpectedErrorOccured = true,
+                        TwoFactorAuthRequired = false,
+                        TwoFactorAuthType = TwoFactorAuthType.None
+                    };
+                }
+
+                _humanBehaviorService.RandomWaitMilliSeconds(500, 1200);
+                HalOperationResult<IOperationResponse> enterPasswordResult = _linkedInPageFacade.LinkedInLoginPage.EnterPassword<IOperationResponse>(webDriver, password);
+                if (enterPasswordResult.Succeeded == false)
+                {
+                    return new()
+                    {
+                        UnexpectedErrorOccured = true,
+                        TwoFactorAuthRequired = false,
+                        TwoFactorAuthType = TwoFactorAuthType.None
+                    };
+                }
+
+                _humanBehaviorService.RandomWaitMilliSeconds(500, 1100);
+                _linkedInPageFacade.LinkedInLoginPage.SignIn<IOperationResponse>(webDriver);
+            }
 
             AfterSignInResult afterSigninResult = _linkedInPageFacade.LinkedInPage.DetermineAfterSigninStatus(webDriver);
 
@@ -91,7 +162,6 @@ namespace Domain.Supervisor
             {
                 return new()
                 {
-                    InvalidCredentials = false,
                     TwoFactorAuthRequired = false,
                     TwoFactorAuthType = TwoFactorAuthType.None,
                     UnexpectedErrorOccured = false
@@ -103,18 +173,28 @@ namespace Domain.Supervisor
                 TwoFactorAuthType twoFactorAuthType = _linkedInPageFacade.LinkedInLoginPage.TwoFactorAuthenticationType(webDriver);
                 return new()
                 {
-                    InvalidCredentials = false,
                     TwoFactorAuthRequired = true,
                     TwoFactorAuthType = twoFactorAuthType,
                     UnexpectedErrorOccured = false
                 };
             }
 
-            if (afterSigninResult == AfterSignInResult.InvalidCredentials)
+            if (afterSigninResult == AfterSignInResult.InvalidEmail)
             {
                 return new()
                 {
-                    InvalidCredentials = true,
+                    InvalidEmail = true,
+                    TwoFactorAuthRequired = false,
+                    TwoFactorAuthType = TwoFactorAuthType.None,
+                    UnexpectedErrorOccured = false
+                };
+            }
+
+            if (afterSigninResult == AfterSignInResult.InvalidPassword)
+            {
+                return new()
+                {
+                    InvalidPassword = true,
                     TwoFactorAuthRequired = false,
                     TwoFactorAuthType = TwoFactorAuthType.None,
                     UnexpectedErrorOccured = false
@@ -162,6 +242,7 @@ namespace Domain.Supervisor
                 };
             }
 
+            _humanBehaviorService.RandomWaitMilliSeconds(400, 950);
             HalOperationResult<IOperationResponse> submitCodeResult = _linkedInPageFacade.LinkedInLoginPage.SubmitTwoFactorAuthCode<IOperationResponse>(webDriver);
             if (submitCodeResult.Succeeded == false)
             {
@@ -173,23 +254,45 @@ namespace Domain.Supervisor
                 };
             }
 
-            if (_linkedInPageFacade.LinkedInLoginPage.CheckIfUnexpectedViewRendered(webDriver))
+            TwoFactorAuthResult twoFactorAuthResult = _linkedInPageFacade.LinkedInLoginPage.DetermineTwoFactorAuthStatus(webDriver);
+
+            if (twoFactorAuthResult == TwoFactorAuthResult.Unknown)
+            {
+                return null;
+            }
+
+            if (twoFactorAuthResult == TwoFactorAuthResult.None)
+            {
+                return null;
+            }
+
+            if (twoFactorAuthResult == TwoFactorAuthResult.InvalidOrExpiredCode)
             {
                 return new()
                 {
                     FailedToEnterCode = false,
-                    UnexpectedErrorOccured = true,
-                    InvalidOrExpiredCode = false
+                    InvalidOrExpiredCode = true,
+                    UnexpectedErrorOccured = false
                 };
             }
 
-            if (_linkedInPageFacade.LinkedInLoginPage.SMSVerificationCodeErrorDisplayed(webDriver))
+            if (twoFactorAuthResult == TwoFactorAuthResult.ToastErrorMessage)
             {
                 return new()
                 {
-                    UnexpectedErrorOccured = false,
                     FailedToEnterCode = false,
-                    InvalidOrExpiredCode = true
+                    InvalidOrExpiredCode = false,
+                    UnexpectedErrorOccured = true
+                };
+            }
+
+            if (twoFactorAuthResult == TwoFactorAuthResult.UnexpectedError)
+            {
+                return new()
+                {
+                    FailedToEnterCode = false,
+                    InvalidOrExpiredCode = false,
+                    UnexpectedErrorOccured = true
                 };
             }
 

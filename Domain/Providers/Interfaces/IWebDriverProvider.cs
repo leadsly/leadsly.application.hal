@@ -16,7 +16,7 @@ namespace Domain.Providers.Interfaces
         HalOperationResult<T> CreateWebDriver<T>(WebDriverOperationData operationData)
             where T : IOperationResponse;
 
-        IWebDriver CreateWebDriver(BrowserPurpose browserPurpose, string chromeProfileName);
+        IWebDriver GetOrCreateWebDriver(BrowserPurpose browserPurpose, string chromeProfileName, out bool isNewWebdriver);
 
         HalOperationResult<T> GetWebDriver<T>(WebDriverOperationData operationData)
             where T : IOperationResponse;

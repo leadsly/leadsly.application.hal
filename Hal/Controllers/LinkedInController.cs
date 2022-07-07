@@ -1,9 +1,11 @@
 ﻿using Domain.Models.Requests;
 using Domain.Models.Responses;
 using Domain.Supervisor;
+using Hal.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 
 namespace Hal.Controllers
 {
@@ -21,18 +23,22 @@ namespace Hal.Controllers
         private readonly ILogger<LinkedInController> _logger;
 
         [HttpPost("signin")]
+        [AuthAttemptCount]
         [AllowAnonymous]
         public IActionResult SignIn(LinkedInSignInRequest request)
         {
-            SignInResultResponse response = _supervisor.SignUserIn(request);
+            HttpContext.Request.Headers.TryGetValue("X-Auth-Attempt-Count", out StringValues attemptCount);
+            SignInResultResponse response = _supervisor.SignUserIn(request, attemptCount);
 
             return response == null ? BadRequest(ProblemDetailsDescriptions.SignInError) : Ok(response);
         }
 
         [HttpPost("2fa")]
+        [AuthAttemptCount]
         [AllowAnonymous]
         public IActionResult EnterTwoFactorAuth([FromBody] TwoFactorAuthRequest request)
         {
+            var header = HttpContext.Request.Headers["X-Auth-Attempt-Count"];
             TwoFactorAuthResultResponse response = _supervisor.EnterTwoFactorAuth(request);
 
             return response == null ? BadRequest(ProblemDetailsDescriptions.TwoFactorAuth) : Ok(response);

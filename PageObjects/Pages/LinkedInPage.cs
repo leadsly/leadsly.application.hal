@@ -54,16 +54,34 @@ namespace PageObjects.Pages
 
         private SignInOperationResult SignInViewResult(IWebDriver webDriver)
         {
+            IWebElement homePageNewsFeed = _webDriverUtilities.WaitUntilNotNull(HomePageNewsFeed, webDriver, 3);
+            if (homePageNewsFeed != null)
+            {
+                return SignInOperationResult.HomePage;
+            }
+
             IWebElement signInContainer = _webDriverUtilities.WaitUntilNotNull(SignInContainer, webDriver, 3);
             if (signInContainer != null)
             {
                 return SignInOperationResult.SignIn;
             }
 
-            IWebElement homePageNewsFeed = _webDriverUtilities.WaitUntilNotNull(HomePageNewsFeed, webDriver, 3);
-            if (homePageNewsFeed != null)
+            IWebElement errorForUsernameDiv = _webDriverUtilities.WaitUntilNotNull(ErrorForUsernameDiv, webDriver, 3);
+            if (errorForUsernameDiv != null)
             {
-                return SignInOperationResult.HomePage;
+                if (errorForUsernameDiv.Displayed)
+                {
+                    return SignInOperationResult.InvalidEmail;
+                }
+            }
+
+            IWebElement errorForPasswordDiv = _webDriverUtilities.WaitUntilNotNull(ErrorForPasswordDiv, webDriver, 3);
+            if (errorForPasswordDiv != null)
+            {
+                if (errorForPasswordDiv.Displayed)
+                {
+                    return SignInOperationResult.InvalidPassword;
+                }
             }
 
             return SignInOperationResult.Unknown;
@@ -90,8 +108,8 @@ namespace PageObjects.Pages
 
         private AfterSignInResult AfterSignInViewResult(IWebDriver webDriver)
         {
-            IWebElement signInContainer = _webDriverUtilities.WaitUntilNotNull(TwoFactorAuthContainer, webDriver, 3);
-            if (signInContainer != null)
+            IWebElement twoFactorAuthContainer = _webDriverUtilities.WaitUntilNotNull(TwoFactorAuthContainer, webDriver, 3);
+            if (twoFactorAuthContainer != null)
             {
                 return AfterSignInResult.TwoFactorAuthRequired;
             }
@@ -102,16 +120,28 @@ namespace PageObjects.Pages
                 return AfterSignInResult.HomePage;
             }
 
-            IWebElement credentialsContainer = _webDriverUtilities.WaitUntilNotNull(CredentialsContainer, webDriver, 3);
-            if (credentialsContainer != null)
+            IWebElement errorForUsernameDiv = _webDriverUtilities.WaitUntilNotNull(ErrorForUsernameDiv, webDriver, 3);
+            if (errorForUsernameDiv != null)
             {
-                return AfterSignInResult.InvalidCredentials;
+                if (errorForUsernameDiv.Displayed)
+                {
+                    return AfterSignInResult.InvalidEmail;
+                }
+            }
+
+            IWebElement errorForPasswordDiv = _webDriverUtilities.WaitUntilNotNull(ErrorForPasswordDiv, webDriver, 3);
+            if (errorForPasswordDiv != null)
+            {
+                if (errorForPasswordDiv.Displayed)
+                {
+                    return AfterSignInResult.InvalidPassword;
+                }
             }
 
             IWebElement errorToast = _webDriverUtilities.WaitUntilNotNull(ErrorToaster, webDriver, 3);
             if (errorToast != null)
             {
-                return AfterSignInResult.InvalidCredentials;
+                return AfterSignInResult.ToastMessageError;
             }
 
             return AfterSignInResult.Unknown;
@@ -135,6 +165,42 @@ namespace PageObjects.Pages
                 _logger.LogInformation("Something unexpected toast displayed. This probably means that the password entered is incorrect");
             }
             return toast;
+        }
+
+        public IWebElement ErrorForUsernameDiv(IWebDriver webDriver)
+        {
+            IWebElement errorForUsernameDiv = default;
+            try
+            {
+                IWebElement credentialsContainer = CredentialsContainer(webDriver);
+                if (credentialsContainer != null)
+                {
+                    errorForUsernameDiv = credentialsContainer.FindElement(By.Id("error-for-username"));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("Couldnt find 'error-for-username' div");
+            }
+            return errorForUsernameDiv;
+        }
+
+        public IWebElement ErrorForPasswordDiv(IWebDriver webDriver)
+        {
+            IWebElement errorForPasswordDiv = default;
+            try
+            {
+                IWebElement credentialsContainer = CredentialsContainer(webDriver);
+                if (credentialsContainer != null)
+                {
+                    errorForPasswordDiv = credentialsContainer.FindElement(By.Id("error-for-password"));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("Couldnt find 'error-for-password' div");
+            }
+            return errorForPasswordDiv;
         }
 
         public IWebElement CredentialsContainer(IWebDriver webDriver)
@@ -249,6 +315,7 @@ namespace PageObjects.Pages
 
         public void NavigateToPage(IWebDriver webDriver, string pageUrl)
         {
+
             base.NavigateToPage(webDriver, pageUrl);
         }
     }

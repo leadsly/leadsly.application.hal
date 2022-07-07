@@ -1,8 +1,11 @@
-﻿using Domain.POMs.Pages;
+﻿using Domain;
+using Domain.POMs.Pages;
+using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
+using OpenQA.Selenium.Support.UI;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -13,12 +16,15 @@ namespace PageObjects.Pages
     {
         private const string BaseUrl = "https://www.linkedin.com";
 
-        public LinkedInLoginPage(ILogger<LinkedInLoginPage> logger, IWebDriverUtilities webDriverUtilities) : base(logger)
+        public LinkedInLoginPage(ILogger<LinkedInLoginPage> logger, IWebDriverUtilities webDriverUtilities, IHumanBehaviorService humanBehaviorService) : base(logger)
         {
             this._logger = logger;
+
             _webDriverUtilities = webDriverUtilities;
+            _humanBehaviorService = humanBehaviorService;
         }
         private readonly ILogger<LinkedInLoginPage> _logger;
+        private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly IWebDriverUtilities _webDriverUtilities;
         private TwoFactorAuthType? _authType = null;
         public TwoFactorAuthType TwoFactorAuthenticationType(IWebDriver webDriver)
@@ -396,6 +402,7 @@ namespace PageObjects.Pages
 
         }
 
+
         public HalOperationResult<T> EnterTwoFactorAuthCode<T>(IWebDriver webDriver, string twoFactorAuthCode)
             where T : IOperationResponse
         {
@@ -618,6 +625,236 @@ namespace PageObjects.Pages
 
             result.Succeeded = true;
             return result;
+        }
+
+        private IWebElement ReAuthEmailInputField(IWebDriver webDriver)
+        {
+            IWebElement reAuthEmailInputField = default;
+            try
+            {
+                reAuthEmailInputField = webDriver.FindElement(By.Id("username"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("Failed to locate email input field.");
+            }
+            return reAuthEmailInputField;
+        }
+
+        private IWebElement ReAuthPasswordInputField(IWebDriver webDriver)
+        {
+            IWebElement reAuthPasswordInputField = default;
+            try
+            {
+                reAuthPasswordInputField = webDriver.FindElement(By.Id("password"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("Failed to locate password input field.");
+            }
+
+            return reAuthPasswordInputField;
+        }
+
+        public HalOperationResult<T> ReEnterEmail<T>(IWebDriver driver, string email)
+            where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+            try
+            {
+                IWebElement reEnterEmailInputField = ReAuthEmailInputField(driver);
+                if (reEnterEmailInputField != null)
+                {
+                    reEnterEmailInputField.Clear();
+                    _humanBehaviorService.RandomWaitMilliSeconds(700, 2000);
+                    _humanBehaviorService.EnterValues(reEnterEmailInputField, email, 400, 850);
+                    string enteredValue = reEnterEmailInputField.GetAttribute("value");
+                    if (enteredValue == email)
+                    {
+                        result.Succeeded = true;
+                    }
+                    else
+                    {
+                        result.Succeeded = false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return result;
+        }
+
+        public HalOperationResult<T> ReEnterPassword<T>(IWebDriver driver, string password)
+            where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+            try
+            {
+                IWebElement reEnterPasswordInputField = ReAuthPasswordInputField(driver);
+                if (reEnterPasswordInputField != null)
+                {
+                    reEnterPasswordInputField.Clear();
+                    _humanBehaviorService.RandomWaitMilliSeconds(700, 2000);
+                    _humanBehaviorService.EnterValues(reEnterPasswordInputField, password, 400, 850);
+                    string enteredValue = reEnterPasswordInputField.GetAttribute("value");
+                    if (enteredValue == password)
+                    {
+                        result.Succeeded = true;
+                    }
+                    else
+                    {
+                        result.Succeeded = false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return result;
+        }
+
+        public HalOperationResult<T> ReEnterPasswordIfEmpty<T>(IWebDriver driver, string password)
+            where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            IWebElement reEnterPasswordInputField = ReAuthPasswordInputField(driver);
+            if (reEnterPasswordInputField != null)
+            {
+                string enteredPassword = reEnterPasswordInputField.GetAttribute("value");
+                if (enteredPassword == string.Empty)
+                {
+                    _humanBehaviorService.RandomWaitMilliSeconds(700, 1200);
+                    _humanBehaviorService.EnterValues(reEnterPasswordInputField, password, 400, 850);
+                    string enteredValue = reEnterPasswordInputField.GetAttribute("value");
+                    if (enteredValue == password)
+                    {
+                        result.Succeeded = true;
+                    }
+                    else
+                    {
+                        result.Succeeded = false;
+                    }
+                }
+                else
+                {
+                    result.Succeeded = true;
+                }
+            }
+            return result;
+        }
+
+        private IWebElement ReSignInButton(IWebDriver webDriver)
+        {
+            IWebElement reSignInButton = default;
+            try
+            {
+                reSignInButton = webDriver.FindElement(By.CssSelector("button[data-litms-control-urn='login-submit']"));
+            }
+            catch (Exception)
+            {
+                _logger.LogInformation("Failed to locate re sign in button");
+            }
+            return reSignInButton;
+        }
+
+        public HalOperationResult<T> ReSignIn<T>(IWebDriver driver)
+            where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+            try
+            {
+                IWebElement reSignInButton = ReSignInButton(driver);
+                if (reSignInButton != null)
+                {
+                    reSignInButton.Click();
+                    result.Succeeded = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to click the re-sign in button");
+            }
+
+            return result;
+        }
+
+        public TwoFactorAuthResult DetermineTwoFactorAuthStatus(IWebDriver webDriver)
+        {
+            TwoFactorAuthResult result = TwoFactorAuthResult.None;
+            try
+            {
+                WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(30));
+                wait.Until(drv =>
+                {
+                    result = TwoFactorAuthViewResult(drv);
+                    return result != TwoFactorAuthResult.Unknown;
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("WebDrivers wait method timedout. This means that the maximum allowed wait time elapsed and the element was not found. Wait time in seconds: ", 30);
+            }
+            return result;
+        }
+
+        private TwoFactorAuthResult TwoFactorAuthViewResult(IWebDriver webDriver)
+        {
+            IWebElement signedIn = _webDriverUtilities.WaitUntilNotNull(HomePageView, webDriver, 3);
+            if (signedIn != null)
+            {
+                return TwoFactorAuthResult.SignedIn;
+            }
+
+            IWebElement invalidCodeBanner = _webDriverUtilities.WaitUntilNotNull(InvalidTwoFactorAuthCodeBanner, webDriver, 3);
+            if (invalidCodeBanner != null)
+            {
+                return TwoFactorAuthResult.InvalidOrExpiredCode;
+            }
+
+            IWebElement errorToast = _webDriverUtilities.WaitUntilNotNull(ErrorToaster, webDriver, 3);
+            if (errorToast != null)
+            {
+                return TwoFactorAuthResult.ToastErrorMessage;
+            }
+
+            return TwoFactorAuthResult.Unknown;
+        }
+
+        private IWebElement InvalidTwoFactorAuthCodeBanner(IWebDriver webDriver)
+        {
+            IWebElement invalidTwoFactorAuthCodeBanner = default;
+            try
+            {
+                invalidTwoFactorAuthCodeBanner = webDriver.FindElement(By.ClassName("body__banner--error"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Could not locate error banner indicating the two factor auth code was invalid.");
+            }
+            return invalidTwoFactorAuthCodeBanner;
+        }
+
+        private IWebElement ErrorToaster(IWebDriver webDriver)
+        {
+            IWebElement toast = default;
+            try
+            {
+                toast = webDriver.FindElement(By.CssSelector("artdeco-toast"));
+                if (toast.GetAttribute("type") == "error")
+                {
+                    return toast;
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("Something unexpected toast displayed. This probably means that the password entered is incorrect");
+            }
+            return toast;
         }
     }
 }

@@ -1,20 +1,13 @@
+using Domain;
+using Domain.Services;
+using Hal.Configurations;
+using Hal.Middlewares;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Serilog;
-using Microsoft.Extensions.FileProviders;
-using System.IO;
-using Microsoft.AspNetCore.Http;
-using Hal.Middlewares;
-using Hal.Configurations;
-using Domain.Services;
-using Domain.OptionsJsonModels;
-using Amazon.RDS.Util;
-using Hangfire;
 
 namespace Hal
 {
@@ -47,7 +40,7 @@ namespace Hal
                     .AddRemoveNull204FormatterConfigration()
                     .AddRabbitMQConfiguration(Configuration)
                     .AddPageObjectModelsConfiguration()
-                    .AddFacadesConfiguration()                    
+                    .AddFacadesConfiguration()
                     .AddProvidersConfiguration()
                     .AddSerializersConfiguration()
                     .AddServicesConfiguration()

@@ -4,6 +4,8 @@
     {
         None,
         SignIn,
+        InvalidEmail,
+        InvalidPassword,
         HomePage,
         Unknown
     }

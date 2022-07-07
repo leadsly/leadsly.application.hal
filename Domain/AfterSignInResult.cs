@@ -5,7 +5,9 @@
         None,
         TwoFactorAuthRequired,
         HomePage,
-        InvalidCredentials,
+        InvalidEmail,
+        InvalidPassword,
+        ToastMessageError,
         Unknown
     }
 }

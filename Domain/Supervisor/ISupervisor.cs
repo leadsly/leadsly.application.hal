@@ -3,6 +3,7 @@ using Domain.Models.Requests;
 using Domain.Models.Responses;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
+using Microsoft.Extensions.Primitives;
 
 namespace Domain.Supervisor
 {
@@ -10,7 +11,7 @@ namespace Domain.Supervisor
     {
         IWebDriverInformation CreateWebDriver(InstantiateWebDriver newWebDriver);
 
-        SignInResultResponse SignUserIn(LinkedInSignInRequest request);
+        SignInResultResponse SignUserIn(LinkedInSignInRequest request, StringValues attemptCount);
 
         HalOperationResult<T> AuthenticateAccount<T>(AuthenticateAccountRequest request)
             where T : IOperationResponse;

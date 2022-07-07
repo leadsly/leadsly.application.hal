@@ -354,7 +354,7 @@ namespace Domain.Providers
             return result;
         }
 
-        public IWebDriver CreateWebDriver(BrowserPurpose browserPurpose, string chromeProfile)
+        private IWebDriver CreateWebDriver(BrowserPurpose browserPurpose, string chromeProfile)
         {
             WebDriverOptions webDriverOptions = GetWebDriverOptions();
             //string chromeProfile = chromeProfileName;
@@ -384,6 +384,18 @@ namespace Domain.Providers
             return webDriver;
         }
 
+        public IWebDriver GetOrCreateWebDriver(BrowserPurpose browserPurpose, string chromeProfileName, out bool isNewWebdriver)
+        {
+            isNewWebdriver = false;
+            IWebDriver webDriver = GetWebDriver(browserPurpose);
+            if (webDriver == null)
+            {
+                isNewWebdriver = true;
+                webDriver = CreateWebDriver(browserPurpose, chromeProfileName);
+            }
+
+            return webDriver;
+        }
 
         public HalOperationResult<T> GetWebDriver<T>(WebDriverOperationData operationData) where T : IOperationResponse
         {
