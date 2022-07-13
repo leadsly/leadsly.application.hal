@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 
 namespace Hal
@@ -58,35 +59,34 @@ namespace Hal
             app.UseCors(ApiConstants.Cors.AllowAll);
             app.UsePathBase("/api");
 
-            //if (env.IsDevelopment())
-            //{
-            //    app.UseCors(ApiConstants.Cors.AllowAll);
-            //}
-            //else
-            //{
-            //    app.UseCors(ApiConstants.Cors.WithOrigins);
-            //    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-            //    app.UseHsts();
-            //}
+            if (env.IsDevelopment())
+            {
+                app.UseCors(ApiConstants.Cors.AllowAll);
+            }
+            else
+            {
+                app.UseCors(ApiConstants.Cors.WithOrigins);
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseHsts();
+            }
 
             app.UseMiddleware<ErrorHandlingMiddleware>();
 
             app.UseHttpsRedirection();
 
-            app.UseRouting();
-
             app.UseAuthentication();
 
+            app.UseRouting();
+
             app.UseAuthorization();
-
-            // app.UseHangfireDashboard("/hangfire");
-
-            app.UseSerilogRequestLogging();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
+
+            app.UseSerilogRequestLogging();
+
         }
     }
 }

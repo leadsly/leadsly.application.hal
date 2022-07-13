@@ -4,11 +4,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Services
 {
@@ -33,7 +28,7 @@ namespace Domain.Services
             {
                 string hostName = _appServerConfigOptions.HostName;
                 long port = _appServerConfigOptions.Port;
-                url = $"http://{hostName}:{port}";
+                url = $"https://{hostName}:{port}";
             }
             else if (_env.IsStaging())
             {

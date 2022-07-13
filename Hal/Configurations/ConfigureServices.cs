@@ -2,7 +2,6 @@
 using Domain.Facades;
 using Domain.Facades.Interfaces;
 using Domain.OptionsJsonModels;
-using Domain.PhaseConsumers;
 using Domain.PhaseConsumers.FollowUpMessageHandlers;
 using Domain.PhaseConsumers.MonitorForNewConnectionsHandlers;
 using Domain.PhaseConsumers.NetworkingConnectionsHandlers;
@@ -34,7 +33,6 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Infrastructure.Repositories;
 using Leadsly.Application.Model;
-using Leadsly.Application.Model.RabbitMQ;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
@@ -130,7 +128,7 @@ namespace Hal.Configurations
             services.Configure<WebDriverConfigOptions>(options => configuration.GetSection(nameof(WebDriverConfigOptions)).Bind(options));
             WebDriverConfigOptions webDriverConfigOptions = new();
             configuration.GetSection(nameof(WebDriverConfigOptions)).Bind(webDriverConfigOptions);
-                
+
             services.AddSingleton<IFileManager, FileManager>();
             services.AddSingleton<IHalIdentity, HalIdentity>(opt =>
             {
@@ -139,7 +137,7 @@ namespace Hal.Configurations
                 {
                     Log.Warning("HAL_ID enviornment variable was not found or its value was not set");
                     throw new ArgumentNullException("HAL_ID env variable was null but is expected to be set");
-                }                    
+                }
 
                 return new HalIdentity(halId);
             });
@@ -147,7 +145,7 @@ namespace Hal.Configurations
             services.AddScoped<ICrawlProspectsService, CrawlProspectsService>();
             services.AddScoped<ICampaignProspectsService, CampaignProspectsService>();
             services.AddScoped<IScreenHouseKeeperService, ScreenHouseKeeperService>();
-            
+
             return services;
         }
 
@@ -255,7 +253,7 @@ namespace Hal.Configurations
 
             services.AddScoped<IWebDriverService, WebDriverService>();
             services.AddScoped<ITimestampService, TimestampService>();
-            services.AddScoped<IPhaseEventHandlerService, PhaseEventHandlerService>();                        
+            services.AddScoped<IPhaseEventHandlerService, PhaseEventHandlerService>();
             services.AddScoped<IRabbitMQManager, RabbitMQManager>();
             services.AddScoped<IWebDriverUtilities, WebDriverUtilities>();
             services.AddScoped<IHumanBehaviorService, HumanBehaviorService>();
@@ -288,7 +286,9 @@ namespace Hal.Configurations
                 ValidateIssuer = true,
                 ValidIssuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)],
 
-                ValidateAudience = true,
+                // do not validate audience because audience is created for the frontend app user not hal, but for now this is ok.
+                // will need to be refactored in the future.
+                ValidateAudience = false,
                 ValidAudience = jwtAppSettingOptions[nameof(JwtIssuerOptions.Audience)],
 
                 ValidateIssuerSigningKey = true,
@@ -345,7 +345,7 @@ namespace Hal.Configurations
             {
                 // remove formatter that turns nulls into 204 - Angular http client treats 204s as failed requests
                 HttpNoContentOutputFormatter noContentFormatter = opt.OutputFormatters.OfType<HttpNoContentOutputFormatter>().FirstOrDefault();
-                if(noContentFormatter != null)
+                if (noContentFormatter != null)
                 {
                     noContentFormatter.TreatNullValueAsNoContent = false;
                 }

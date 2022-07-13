@@ -2,7 +2,6 @@
 using Domain.Models.Responses;
 using Domain.Supervisor;
 using Hal.Filters;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
@@ -24,7 +23,6 @@ namespace Hal.Controllers
 
         [HttpPost("signin")]
         [AuthAttemptCount]
-        [AllowAnonymous]
         public IActionResult SignIn(LinkedInSignInRequest request)
         {
             HttpContext.Request.Headers.TryGetValue("X-Auth-Attempt-Count", out StringValues attemptCount);
@@ -35,10 +33,8 @@ namespace Hal.Controllers
 
         [HttpPost("2fa")]
         [AuthAttemptCount]
-        [AllowAnonymous]
         public IActionResult EnterTwoFactorAuth([FromBody] TwoFactorAuthRequest request)
         {
-            var header = HttpContext.Request.Headers["X-Auth-Attempt-Count"];
             TwoFactorAuthResultResponse response = _supervisor.EnterTwoFactorAuth(request);
 
             return response == null ? BadRequest(ProblemDetailsDescriptions.TwoFactorAuth) : Ok(response);
