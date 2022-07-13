@@ -1,12 +1,9 @@
-using System;
-using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using Azure.Identity;
-using Azure.Security.KeyVault.Secrets;
-using Azure.Extensions.AspNetCore.Configuration.Secrets;
+using System;
+using System.IO;
 
 namespace Hal
 {
@@ -30,11 +27,11 @@ namespace Hal
             {
                 Log.Information($"ASPNETCORE_ENVIORNMENT variable is: {env}.");
 
-                CreateHostBuilder(args)                    
+                CreateHostBuilder(args)
                     .Build()
                     .Run();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Log.Fatal(ex, "Application start-up failed.");
                 throw;
@@ -59,22 +56,18 @@ namespace Hal
                            {
                                IHostEnvironment env = hostBuilderContext.HostingEnvironment;
                                Log.Information($"Application is running in: {env.EnvironmentName} mode.");
-
-                               //if (env.IsProduction())
-                               //{
-                               //    IConfigurationRoot builtConfig = builder.Build();
-                               //    SecretClient secretClient = new SecretClient(
-                               //        new Uri(builtConfig["VaultUri"]),
-                               //        new DefaultAzureCredential());
-                               //    builder.AddAzureKeyVault(secretClient, new KeyVaultSecretManager());
-                               //}
+                               if (env.IsProduction() || env.IsStaging())
+                               {
+                                   Log.Information("Using AWS Secrets Manager");
+                                   builder.AddSecretsManager();
+                               }
                            });
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Log.Fatal(ex, "Host builder error.");
                 throw;
             }
-        }            
+        }
     }
 }
