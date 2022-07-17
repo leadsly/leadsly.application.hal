@@ -16,6 +16,7 @@ namespace Hal
     {
         public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
+
             Configuration = configuration;
             Environment = env;
         }

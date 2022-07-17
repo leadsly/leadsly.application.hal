@@ -4,11 +4,13 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
 using System.IO;
+using System.Threading;
 
 namespace Hal
 {
     public class Program
     {
+        private static CancellationToken CancelTokenSource = new CancellationToken();
         public static void Main(string[] args)
         {
             //https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
