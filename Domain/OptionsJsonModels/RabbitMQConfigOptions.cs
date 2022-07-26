@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Domain.OptionsJsonModels
+﻿namespace Domain.OptionsJsonModels
 {
     public class RabbitMQConfigOptions
     {
@@ -22,6 +16,12 @@ namespace Domain.OptionsJsonModels
         public int Port { get; set; }
         public string VirtualHost { get; set; }
         public string ClientProvidedName { get; set; }
+        public Ssl Ssl { get; set; }
+    }
+
+    public class Ssl
+    {
+        public bool Enabled { get; set; }
     }
 
     public class ExchangeConfigOptions

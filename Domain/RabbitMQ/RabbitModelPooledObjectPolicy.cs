@@ -1,12 +1,6 @@
 ﻿using Domain.OptionsJsonModels;
-using Leadsly.Application.Model.RabbitMQ;
 using Microsoft.Extensions.ObjectPool;
 using RabbitMQ.Client;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.RabbitMQ
 {
@@ -29,7 +23,11 @@ namespace Domain.RabbitMQ
                 Port = options.ConnectionFactoryConfigOptions.Port,
                 VirtualHost = options.ConnectionFactoryConfigOptions.VirtualHost,
                 DispatchConsumersAsync = true,
-                ClientProvidedName = $"[Consumer] HalId: {halId}"
+                ClientProvidedName = $"[Consumer] HalId: {halId}",
+                Ssl = new SslOption()
+                {
+                    Enabled = options.ConnectionFactoryConfigOptions.Ssl.Enabled
+                }
             };
 
             return factory.CreateConnection();
