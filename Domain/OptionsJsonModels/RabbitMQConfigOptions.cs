@@ -22,6 +22,7 @@
     public class Ssl
     {
         public bool Enabled { get; set; }
+        public string ServerName { get; set; }
     }
 
     public class ExchangeConfigOptions

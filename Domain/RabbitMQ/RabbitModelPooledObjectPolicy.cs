@@ -15,20 +15,24 @@ namespace Domain.RabbitMQ
 
         private IConnection GetConnection(RabbitMQConfigOptions options, string halId)
         {
-            var factory = new ConnectionFactory()
+            var factory = new ConnectionFactory();
+
+            if (options.ConnectionFactoryConfigOptions.Ssl.Enabled == true)
             {
-                UserName = options.ConnectionFactoryConfigOptions.UserName,
-                Password = options.ConnectionFactoryConfigOptions.Password,
-                HostName = options.ConnectionFactoryConfigOptions.HostName,
-                Port = options.ConnectionFactoryConfigOptions.Port,
-                VirtualHost = options.ConnectionFactoryConfigOptions.VirtualHost,
-                DispatchConsumersAsync = true,
-                ClientProvidedName = $"[Consumer] HalId: {halId}",
-                Ssl = new SslOption()
+                factory.Ssl = new SslOption
                 {
-                    Enabled = options.ConnectionFactoryConfigOptions.Ssl.Enabled
-                }
-            };
+                    Enabled = options.ConnectionFactoryConfigOptions.Ssl.Enabled,
+                    ServerName = options.ConnectionFactoryConfigOptions.Ssl.ServerName
+                };
+            }
+
+            factory.UserName = options.ConnectionFactoryConfigOptions.UserName;
+            factory.Password = options.ConnectionFactoryConfigOptions.Password;
+            factory.HostName = options.ConnectionFactoryConfigOptions.HostName;
+            factory.Port = options.ConnectionFactoryConfigOptions.Port;
+            factory.VirtualHost = options.ConnectionFactoryConfigOptions.VirtualHost;
+            factory.DispatchConsumersAsync = true;
+            factory.ClientProvidedName = $"[Consumer] HalId: {halId}";
 
             return factory.CreateConnection();
         }
