@@ -26,11 +26,10 @@ namespace Domain.RabbitMQ
                 };
             }
 
+            factory.HostName = options.ConnectionFactoryConfigOptions.HostName;
             factory.UserName = options.ConnectionFactoryConfigOptions.UserName;
             factory.Password = options.ConnectionFactoryConfigOptions.Password;
-            factory.HostName = options.ConnectionFactoryConfigOptions.HostName;
             factory.Port = options.ConnectionFactoryConfigOptions.Port;
-            factory.VirtualHost = options.ConnectionFactoryConfigOptions.VirtualHost;
             factory.DispatchConsumersAsync = true;
             factory.ClientProvidedName = $"[Consumer] HalId: {halId}";
 
