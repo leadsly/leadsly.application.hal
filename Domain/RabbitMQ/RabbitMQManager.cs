@@ -28,16 +28,16 @@ namespace Domain.RabbitMQ
             RabbitMQOptions options = _rabbitMQRepository.GetRabbitMQConfigOptions();
             string exchangeName = options.ExchangeOptions.Name;
             string exchangeType = options.ExchangeOptions.ExchangeType;
-            
+
             _logger.LogInformation("Successfully created connection to RabbitMQ");
-            var channel = _pool.Get();            
+            var channel = _pool.Get();
             channel.ExchangeDeclare(exchangeName, exchangeType);
 
             string queueName = options.QueueConfigOptions.Name.Replace("{halId}", halId);
             queueName = queueName.Replace("{queueName}", queueNameIn);
 
             IDictionary<string, object> arguments = new Dictionary<string, object>();
-            arguments.Add(RabbitMQConstants.QueueType, RabbitMQConstants.Quorum);
+            arguments.Add(RabbitMQConstants.QueueType, RabbitMQConstants.Classic);
 
             channel.QueueDeclare(queue: queueName,
                              durable: true,

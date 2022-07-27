@@ -1,30 +1,18 @@
-﻿using Domain.Facades.Interfaces;
-using Domain.PhaseConsumers;
-using Domain.PhaseHandlers.FollowUpMessageHandlers;
+﻿using Domain.PhaseHandlers.FollowUpMessageHandlers;
 using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
 using Domain.PhaseHandlers.NetworkingHandler;
 using Domain.PhaseHandlers.ProspectListHandler;
 using Domain.PhaseHandlers.ScanProspectsForRepliesHandler;
 using Domain.PhaseHandlers.SendConnectionsHandler;
-using Domain.Providers.Campaigns;
 using Domain.Providers.Interfaces;
-using Domain.RabbitMQ;
 using Domain.Serializers.Interfaces;
 using Domain.Services.Interfaces;
-using Hangfire;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.RabbitMQ;
-using Leadsly.Application.Model.Responses;
-using Leadsly.Application.Model.WebDriver;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -33,7 +21,7 @@ namespace Domain.Services
     public class PhaseEventHandlerService : IPhaseEventHandlerService
     {
         public PhaseEventHandlerService(
-            ILogger<PhaseEventHandlerService> logger,             
+            ILogger<PhaseEventHandlerService> logger,
             HalWorkCommandHandlerDecorator<FollowUpMessageCommand> followUpHandler,
             HalWorkCommandHandlerDecorator<SendConnectionsCommand> sendConnectionsHandler,
             HalWorkCommandHandlerDecorator<ProspectListCommand> prospectListHandler,
@@ -60,14 +48,14 @@ namespace Domain.Services
         }
 
         private readonly HalWorkCommandHandlerDecorator<CheckOffHoursNewConnectionsCommand> _offHoursHandler;
-        private readonly HalWorkCommandHandlerDecorator<DeepScanProspectsForRepliesCommand> _deepScanHandler;        
+        private readonly HalWorkCommandHandlerDecorator<DeepScanProspectsForRepliesCommand> _deepScanHandler;
         private readonly HalWorkCommandHandlerDecorator<ScanProspectsForRepliesCommand> _scanHandler;
         private readonly HalWorkCommandHandlerDecorator<MonitorForNewConnectionsCommand> _monitorHandler;
         private readonly HalWorkCommandHandlerDecorator<FollowUpMessageCommand> _followUpHandler;
         private readonly HalWorkCommandHandlerDecorator<SendConnectionsCommand> _sendConnectionsHandler;
         private readonly HalWorkCommandHandlerDecorator<ProspectListCommand> _prospectListHandler;
         private readonly HalWorkCommandHandlerDecorator<NetworkingCommand> _networkingHandler;
-        private readonly ILogger<PhaseEventHandlerService> _logger;        
+        private readonly ILogger<PhaseEventHandlerService> _logger;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly IRabbitMQSerializer _serializer;
 
@@ -80,7 +68,7 @@ namespace Domain.Services
             var headers = eventArgs.BasicProperties.Headers;
             headers.TryGetValue(RabbitMQConstants.NetworkingConnections.NetworkingType, out object networkTypeObj);
 
-            byte[] networkTypeArr = networkTypeObj as byte[];   
+            byte[] networkTypeArr = networkTypeObj as byte[];
             if (networkTypeArr == null)
             {
                 _logger.LogError("Failed to determine networking connection type. It should be a header either for SendConnectionRequests or for ProspectList");
@@ -97,7 +85,7 @@ namespace Domain.Services
                 ProspectListCommand prospectListCommand = new ProspectListCommand(channel, eventArgs, prospectListBody, prospectListBody.StartOfWorkday, prospectListBody.EndOfWorkday, prospectListBody.TimeZoneId);
                 await _prospectListHandler.HandleAsync(prospectListCommand);
             }
-            else if((networkType as string) == RabbitMQConstants.NetworkingConnections.SendConnectionRequests)
+            else if ((networkType as string) == RabbitMQConstants.NetworkingConnections.SendConnectionRequests)
             {
                 byte[] body = eventArgs.Body.ToArray();
                 string message = Encoding.UTF8.GetString(body);
@@ -110,7 +98,7 @@ namespace Domain.Services
             {
                 string networkTypeStr = networkType as string;
                 _logger.LogError("Invalid network type specified {networkTypeStr}", networkTypeStr);
-            }                       
+            }
         }
 
         #endregion
@@ -127,7 +115,7 @@ namespace Domain.Services
 
             FollowUpMessageCommand followUpMessageCommand = new FollowUpMessageCommand(channel, eventArgs, followUpMessages, followUpMessages.StartOfWorkday, followUpMessages.EndOfWorkday, followUpMessages.TimeZoneId);
             await _followUpHandler.HandleAsync(followUpMessageCommand);
-        }        
+        }
 
         #endregion
 
@@ -195,9 +183,10 @@ namespace Domain.Services
             string message = Encoding.UTF8.GetString(body);
             NetworkingMessageBody messageBody = _serializer.DeserializeNetworkingMessageBody(message);
 
-            int deliveryCount = eventArgs.GetDeliveryCountHeaderValue();
-            _logger.LogInformation($"DeliveryCount value is {deliveryCount}");
-            messageBody.FailedDeliveryCount = deliveryCount;
+            // quorum queues are currently not supported in aws 
+            //int deliveryCount = eventArgs.GetDeliveryCountHeaderValue();
+            //_logger.LogInformation($"DeliveryCount value is {deliveryCount}");
+            //messageBody.FailedDeliveryCount = deliveryCount;
 
             NetworkingCommand networkingCommand = new NetworkingCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);
             await _networkingHandler.HandleAsync(networkingCommand);
@@ -232,7 +221,7 @@ namespace Domain.Services
                 CheckOffHoursNewConnectionsCommand offHoursCommand = new CheckOffHoursNewConnectionsCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);
                 await _offHoursHandler.HandleAsync(offHoursCommand);
             }
-            else if(executionType == RabbitMQConstants.MonitorNewAcceptedConnections.ExecutePhase)
+            else if (executionType == RabbitMQConstants.MonitorNewAcceptedConnections.ExecutePhase)
             {
                 _logger.LogInformation("[MonitorForNewConnections] Executing MonitorForNewConnections phase");
                 MonitorForNewConnectionsCommand monitorCommand = new MonitorForNewConnectionsCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);
@@ -244,8 +233,8 @@ namespace Domain.Services
             }
         }
 
-        #endregion        
-        
+        #endregion
+
         #region ScanProspectsForReplies
         public async Task OnScanProspectsForRepliesEventReceivedAsync(object sender, BasicDeliverEventArgs eventArgs)
         {
