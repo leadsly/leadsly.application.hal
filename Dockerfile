@@ -52,4 +52,7 @@ VOLUME /leadsly_chrome_profiles
 
 WORKDIR /app
 
+EXPOSE 443
+EXPOSE 80
+
 ENTRYPOINT ["dotnet", "Hal.dll"]

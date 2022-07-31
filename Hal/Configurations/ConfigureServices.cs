@@ -283,13 +283,13 @@ namespace Hal.Configurations
 
             TokenValidationParameters tokenValidationParameters = new TokenValidationParameters
             {
-                ValidateIssuer = true,
-                ValidIssuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)],
+                ValidateIssuer = false,
+                // ValidIssuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)],
 
                 // do not validate audience because audience is created for the frontend app user not hal, but for now this is ok.
                 // will need to be refactored in the future.
                 ValidateAudience = false,
-                ValidAudience = jwtAppSettingOptions[nameof(JwtIssuerOptions.Audience)],
+                // ValidAudience = jwtAppSettingOptions[nameof(JwtIssuerOptions.Audience)],
 
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = signingKey,

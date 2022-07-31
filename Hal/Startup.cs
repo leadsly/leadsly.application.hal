@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Serilog;
 
 namespace Hal
@@ -60,16 +59,18 @@ namespace Hal
             app.UseCors(ApiConstants.Cors.AllowAll);
             app.UsePathBase("/api");
 
-            if (env.IsDevelopment())
-            {
-                app.UseCors(ApiConstants.Cors.AllowAll);
-            }
-            else
-            {
-                app.UseCors(ApiConstants.Cors.WithOrigins);
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
+            //if (env.IsDevelopment())
+            //{
+            //app.UseCors(ApiConstants.Cors.AllowAll);
+            //}
+            //else
+            //{
+            // app.UseCors(ApiConstants.Cors.WithOrigins);
+            // need to configure docker to use SSL first and configure certificates
+            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+            // app.UseHsts();
+            //}
+            app.UseCors(ApiConstants.Cors.AllowAll);
 
             app.UseMiddleware<ErrorHandlingMiddleware>();
 
