@@ -42,7 +42,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\Leadsly.Application.Model\Leadsly.Application.Model.csproj" />
+		<ProjectReference Include="..\Leadsly.Application.Model\Leadsly.Application.Model.csproj" />
 		<ProjectReference Include="..\Domain\Domain.csproj" />
 		<ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
 		<ProjectReference Include="..\PageObjects\PageObjects.csproj" />

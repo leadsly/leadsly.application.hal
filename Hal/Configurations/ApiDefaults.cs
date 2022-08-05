@@ -1,7 +1,5 @@
 ﻿using Hal.Filters;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Hal.Configurations
 {
@@ -16,8 +14,8 @@ namespace Hal.Configurations
             options.Filters.Add<CustomHeaderFilter>();
             options.Filters.Add(new ProducesAttribute("application/json"));
 
-            AuthorizationPolicy defaultPolicy = new AuthorizationOptions().DefaultPolicy;
-            options.Conventions.Add(new BearerTokenAuthorizeConvention(defaultPolicy));
+            //AuthorizationPolicy defaultPolicy = new AuthorizationOptions().DefaultPolicy;
+            //options.Conventions.Add(new BearerTokenAuthorizeConvention(defaultPolicy));
         }
     }
 }

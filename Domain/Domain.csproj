@@ -21,7 +21,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\Leadsly.Application.Model\Leadsly.Application.Model.csproj" />
+		<ProjectReference Include="..\Leadsly.Application.Model\Leadsly.Application.Model.csproj" />
 	</ItemGroup>
 
 </Project>

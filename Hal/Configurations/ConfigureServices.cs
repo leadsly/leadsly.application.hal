@@ -34,8 +34,6 @@ using Hangfire.PostgreSql;
 using Infrastructure.Repositories;
 using Leadsly.Application.Model;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
@@ -284,12 +282,12 @@ namespace Hal.Configurations
             TokenValidationParameters tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = false,
-                // ValidIssuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)],
+                ValidIssuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)],
 
                 // do not validate audience because audience is created for the frontend app user not hal, but for now this is ok.
                 // will need to be refactored in the future.
                 ValidateAudience = false,
-                // ValidAudience = jwtAppSettingOptions[nameof(JwtIssuerOptions.Audience)],
+                ValidAudience = jwtAppSettingOptions[nameof(JwtIssuerOptions.Audience)],
 
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = signingKey,
@@ -327,12 +325,12 @@ namespace Hal.Configurations
         {
             Log.Information("Configuring authorization options.");
 
-            services.AddAuthorization(options =>
-            {
-                options.DefaultPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
-                                .AddRequirements(new DenyAnonymousAuthorizationRequirement())
-                                .Build();
-            });
+            //services.AddAuthorization(options =>
+            //{
+            //    options.DefaultPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
+            //                    .AddRequirements(new DenyAnonymousAuthorizationRequirement())
+            //                    .Build();
+            //});
 
             return services;
         }
