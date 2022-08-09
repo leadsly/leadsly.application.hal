@@ -37,7 +37,7 @@ namespace Domain.Services
             }
             else
             {
-                url = $"https://{serviceDiscoveryName}.{namespaceName}";
+                url = $"http://{serviceDiscoveryName}.{namespaceName}";
             }
 
             _logger.LogDebug("Final app server url is {url}", url);
