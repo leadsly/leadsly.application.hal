@@ -2,16 +2,12 @@
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.Campaigns.interfaces;
 using Leadsly.Application.Model.Requests;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -83,7 +79,7 @@ namespace Domain.Providers.Campaigns
                 Prospects = collectedProspects,
                 RequestUrl = $"api/ProspectList/{message.HalId}",
                 NamespaceName = message.NamespaceName,
-                ServiceDiscoveryName = message.ServiceDiscoveryName,
+                ServiceDiscoveryName = message.ServiceDiscoveryName
             };
 
             HttpResponseMessage responseMessage = await _phaseDataProcessingService.ProcessProspectListAsync(request, ct);
@@ -104,7 +100,7 @@ namespace Domain.Providers.Campaigns
         }
 
         public async Task<HalOperationResult<T>> ProcessConnectionRequestSentForCampaignProspectsAsync<T>(
-                IList<CampaignProspectRequest> campaignProspects, 
+                IList<CampaignProspectRequest> campaignProspects,
                 PublishMessageBody message,
                 string campaignId,
                 CancellationToken ct = default
@@ -207,7 +203,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/SocialAccounts/{socialAccountId}"                
+                RequestUrl = $"api/SocialAccounts/{socialAccountId}"
             };
 
             HttpResponseMessage responseMessage = await _phaseDataProcessingService.UpdateSocialAccountMonthlySearchLimitAsync(request, ct);

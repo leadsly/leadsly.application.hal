@@ -9,8 +9,6 @@ using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Services
 {
@@ -43,7 +41,7 @@ namespace Domain.Services
             }
 
             _humanBehaviorService.RandomWaitMilliSeconds(2000, 7000);
-            IWebElement resultsDiv = _linkedInPageFacade.LinkedInSearchPage.ResultsHeader(webDriver);            
+            IWebElement resultsDiv = _linkedInPageFacade.LinkedInSearchPage.ResultsHeader(webDriver);
             _humanBehaviorService.RandomClickElement(resultsDiv);
 
             HalOperationResult<IGatherProspects> result = _linkedInPageFacade.LinkedInSearchPage.GatherProspects<IGatherProspects>(webDriver);
@@ -55,7 +53,7 @@ namespace Domain.Services
             }
 
             rawCollectedProspects = result.Value.ProspectElements;
-            List<IWebElement> propsAsWebElements = result.Value.ProspectElements;            
+            List<IWebElement> propsAsWebElements = result.Value.ProspectElements;
 
             // we need to perform a random scroll
             if (propsAsWebElements.Count > 3)
@@ -76,7 +74,7 @@ namespace Domain.Services
             _logger.LogTrace("Creating PrimaryProspects from IWebElements");
 
             IWebElement areResultsHelpfulText = _linkedInPageFacade.LinkedInSearchPage.AreResultsHelpfulPTag(webDriver);
-            _humanBehaviorService.RandomClickElement(areResultsHelpfulText);            
+            _humanBehaviorService.RandomClickElement(areResultsHelpfulText);
 
             crawlResult = true;
             return crawlResult;
@@ -161,7 +159,7 @@ namespace Domain.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Webdriver error occured extracting prospects avatar url");
+                _logger.LogWarning("Could not extract user's avatar. This probably means user does not have an avatar set.");
             }
             return avatarSrc;
         }
@@ -184,12 +182,12 @@ namespace Domain.Services
             string prospectEmploymentInfo = string.Empty;
             try
             {
-                IWebElement prospectEmploymentPTag = webElement.FindElement(By.CssSelector(".entity-result__summary"));
+                IWebElement prospectEmploymentPTag = webElement.FindElement(By.CssSelector(".entity-result__primary-subtitle"));
                 prospectEmploymentInfo = prospectEmploymentPTag.Text;
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Webdriver error occured extracting prospects employment info");
+                _logger.LogWarning("Could not extract prospects employment information.");
             }
 
             return prospectEmploymentInfo;

@@ -1,16 +1,10 @@
 ﻿using Domain.Services.Interfaces;
-using Leadsly.Application.Model;
 using Leadsly.Application.Model.Requests;
 using Leadsly.Application.Model.Requests.FromHal;
-using Leadsly.Application.Model.Responses;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -62,7 +56,7 @@ namespace Domain.Services
 
         public async Task<HttpResponseMessage> ProcessProspectListAsync(CollectedProspectsRequest request, CancellationToken ct = default)
         {
-            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);            
+            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 
             HttpResponseMessage response = default;
             try
@@ -286,5 +280,5 @@ namespace Domain.Services
             return response;
         }
     }
-    
+
 }

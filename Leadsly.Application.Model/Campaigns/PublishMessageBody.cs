@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.Serialization;
 
 namespace Leadsly.Application.Model.Campaigns
 {
@@ -36,5 +31,6 @@ namespace Leadsly.Application.Model.Campaigns
 
         [DataMember]
         public string ChromeProfileName { get; set; } = string.Empty;
+
     }
 }

@@ -1,11 +1,5 @@
-﻿using Leadsly.Application.Model.Entities.Campaigns;
-using Leadsly.Application.Model.Requests.Hal;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Leadsly.Application.Model.Requests.FromHal
 {
@@ -25,7 +19,9 @@ namespace Leadsly.Application.Model.Requests.FromHal
         public string CampaignProspectListId { get; set; }
 
         [DataMember(Name = "Prospects", IsRequired = true)]
-        public IList<PrimaryProspectRequest> Prospects { get; set; }        
+        public IList<PrimaryProspectRequest> Prospects { get; set; }
 
+        [DataMember(Name = "AccessToken", IsRequired = true)]
+        public string AccessToken { get; set; }
     }
 }
