@@ -31,6 +31,12 @@
             public const string RoutingKey = "networking-phase";
         }
 
+        public static class RestartApplication
+        {
+            public const string QueueName = "restart.application";
+            public const string RoutingKey = "restart-application";
+        }
+
         public static class FollowUpMessage
         {
             public const string QueueName = "follow.up.message";

@@ -2,6 +2,7 @@
 using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
 using Domain.PhaseHandlers.NetworkingHandler;
 using Domain.PhaseHandlers.ProspectListHandler;
+using Domain.PhaseHandlers.RestartApplicationHandler;
 using Domain.PhaseHandlers.ScanProspectsForRepliesHandler;
 using Domain.PhaseHandlers.SendConnectionsHandler;
 using Domain.Providers.Interfaces;
@@ -22,6 +23,7 @@ namespace Domain.Services
     {
         public PhaseEventHandlerService(
             ILogger<PhaseEventHandlerService> logger,
+            ICommandHandler<RestartApplicationCommand> restartAppHandler,
             HalWorkCommandHandlerDecorator<FollowUpMessageCommand> followUpHandler,
             HalWorkCommandHandlerDecorator<SendConnectionsCommand> sendConnectionsHandler,
             HalWorkCommandHandlerDecorator<ProspectListCommand> prospectListHandler,
@@ -35,6 +37,7 @@ namespace Domain.Services
             )
         {
             _logger = logger;
+            _restartAppHandler = restartAppHandler;
             _networkingHandler = networkingHandler;
             _webDriverProvider = webDriverProvider;
             _followUpHandler = followUpHandler;
@@ -47,6 +50,7 @@ namespace Domain.Services
             _serializer = serializer;
         }
 
+        private readonly ICommandHandler<RestartApplicationCommand> _restartAppHandler;
         private readonly HalWorkCommandHandlerDecorator<CheckOffHoursNewConnectionsCommand> _offHoursHandler;
         private readonly HalWorkCommandHandlerDecorator<DeepScanProspectsForRepliesCommand> _deepScanHandler;
         private readonly HalWorkCommandHandlerDecorator<ScanProspectsForRepliesCommand> _scanHandler;
@@ -267,6 +271,17 @@ namespace Domain.Services
                 ScanProspectsForRepliesCommand scanProspectsCommand = new ScanProspectsForRepliesCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);
                 await _scanHandler.HandleAsync(scanProspectsCommand);
             }
+        }
+
+        #endregion
+
+        #region RestartApplication
+
+        public async Task OnRestartApplicationEventReceivedAsync(object sender, BasicDeliverEventArgs eventArgs)
+        {
+            IModel channel = ((AsyncEventingBasicConsumer)sender).Model;
+            RestartApplicationCommand restartCommand = new RestartApplicationCommand(channel, eventArgs);
+            await _restartAppHandler.HandleAsync(restartCommand);
         }
 
         #endregion

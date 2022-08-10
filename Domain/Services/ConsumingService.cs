@@ -1,21 +1,14 @@
-﻿using Domain.PhaseConsumers;
-using Domain.PhaseConsumers.FollowUpMessageHandlers;
+﻿using Domain.PhaseConsumers.FollowUpMessageHandlers;
 using Domain.PhaseConsumers.MonitorForNewConnectionsHandlers;
 using Domain.PhaseConsumers.NetworkingConnectionsHandlers;
 using Domain.PhaseConsumers.NetworkingHandler;
+using Domain.PhaseConsumers.RestartApplicationHandler;
 using Domain.PhaseConsumers.ScanProspectsForRepliesHandlers;
-using Domain.Repositories;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
-using Leadsly.Application.Model.RabbitMQ;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Domain.Services
@@ -36,6 +29,13 @@ namespace Domain.Services
             using (var scope = _serviceProvider.CreateScope())
             {
                 IHalIdentity halIdentity = scope.ServiceProvider.GetRequiredService<IHalIdentity>();
+
+                ////////////////////////////////////////////////////////////////////////////////////
+                /// Consume RestartApplication messages
+                ////////////////////////////////////////////////////////////////////////////////////
+                HalConsumingCommandHandlerDecorator<RestartApplicationConsumerCommand> restartAppHandler = scope.ServiceProvider.GetRequiredService<HalConsumingCommandHandlerDecorator<RestartApplicationConsumerCommand>>();
+                RestartApplicationConsumerCommand restartAppCommand = new RestartApplicationConsumerCommand(halIdentity.Id);
+                await restartAppHandler.ConsumeAsync(restartAppCommand);
 
                 ////////////////////////////////////////////////////////////////////////////////////
                 /// Consume MonitorForNewConnections messages

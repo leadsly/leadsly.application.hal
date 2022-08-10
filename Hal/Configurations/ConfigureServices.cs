@@ -6,11 +6,13 @@ using Domain.PhaseConsumers.FollowUpMessageHandlers;
 using Domain.PhaseConsumers.MonitorForNewConnectionsHandlers;
 using Domain.PhaseConsumers.NetworkingConnectionsHandlers;
 using Domain.PhaseConsumers.NetworkingHandler;
+using Domain.PhaseConsumers.RestartApplicationHandler;
 using Domain.PhaseConsumers.ScanProspectsForRepliesHandlers;
 using Domain.PhaseHandlers.FollowUpMessageHandlers;
 using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
 using Domain.PhaseHandlers.NetworkingHandler;
 using Domain.PhaseHandlers.ProspectListHandler;
+using Domain.PhaseHandlers.RestartApplicationHandler;
 using Domain.PhaseHandlers.ScanProspectsForRepliesHandler;
 using Domain.PhaseHandlers.SendConnectionsHandler;
 using Domain.POMs;
@@ -81,6 +83,7 @@ namespace Hal.Configurations
             Log.Information("Registering command handlers.");
 
             // Commands fired to start consuming
+            services.AddScoped<HalConsumingCommandHandlerDecorator<RestartApplicationConsumerCommand>>();
             services.AddScoped<HalConsumingCommandHandlerDecorator<FollowUpMessageConsumerCommand>>();
             services.AddScoped<HalConsumingCommandHandlerDecorator<MonitorForNewConnectionsConsumerCommand>>();
             services.AddScoped<HalConsumingCommandHandlerDecorator<NetworkingConnectionsConsumerCommand>>();
@@ -88,6 +91,7 @@ namespace Hal.Configurations
             services.AddScoped<HalConsumingCommandHandlerDecorator<ScanProspectsForRepliesConsumerCommand>>();
 
             // Commands fired to start processing the given phase
+            services.AddScoped<HalWorkCommandHandlerDecorator<RestartApplicationCommand>>();
             services.AddScoped<HalWorkCommandHandlerDecorator<FollowUpMessageCommand>>();
             services.AddScoped<HalWorkCommandHandlerDecorator<MonitorForNewConnectionsCommand>>();
             services.AddScoped<HalWorkCommandHandlerDecorator<ProspectListCommand>>();
@@ -98,6 +102,7 @@ namespace Hal.Configurations
             services.AddScoped<HalWorkCommandHandlerDecorator<NetworkingCommand>>();
 
             // Handlers for starting consumption
+            services.AddScoped<IConsumeCommandHandler<RestartApplicationConsumerCommand>, RestartApplicationConsumerCommandHandler>();
             services.AddScoped<IConsumeCommandHandler<FollowUpMessageConsumerCommand>, FollowUpMessageConsumerCommandHandler>();
             services.AddScoped<IConsumeCommandHandler<MonitorForNewConnectionsConsumerCommand>, MonitorForNewConnectionsConsumerCommandHandler>();
             services.AddScoped<IConsumeCommandHandler<NetworkingConnectionsConsumerCommand>, NetworkingConnectionsConsumerCommandHandler>();
@@ -105,6 +110,7 @@ namespace Hal.Configurations
             services.AddScoped<IConsumeCommandHandler<NetworkingConsumerCommand>, NetworkingConsumerCommandHandler>();
 
             // Handlers for processing the given phase
+            services.AddScoped<ICommandHandler<RestartApplicationCommand>, RestartApplicationCommandHandler>();
             services.AddScoped<ICommandHandler<FollowUpMessageCommand>, FollowUpMessageCommandHandler>();
             services.AddScoped<ICommandHandler<MonitorForNewConnectionsCommand>, MonitorForNewConnectionsCommandHandler>();
             services.AddScoped<ICommandHandler<ProspectListCommand>, ProspectListCommandHandler>();

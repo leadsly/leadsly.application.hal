@@ -1,16 +1,10 @@
 ﻿using Domain.Facades.Interfaces;
-using Domain.Serializers.Interfaces;
-using Hangfire;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Domain.PhaseHandlers.FollowUpMessageHandlers
@@ -18,15 +12,15 @@ namespace Domain.PhaseHandlers.FollowUpMessageHandlers
     public class FollowUpMessageCommandHandler : ICommandHandler<FollowUpMessageCommand>
     {
         public FollowUpMessageCommandHandler(
-            ICampaignPhaseFacade campaignPhaseFacade,             
+            ICampaignPhaseFacade campaignPhaseFacade,
             ILogger<FollowUpMessageCommandHandler> logger)
         {
-            _campaignPhaseFacade = campaignPhaseFacade;            
+            _campaignPhaseFacade = campaignPhaseFacade;
             _logger = logger;
         }
 
         private readonly ILogger<FollowUpMessageCommandHandler> _logger;
-        private readonly ICampaignPhaseFacade _campaignPhaseFacade;        
+        private readonly ICampaignPhaseFacade _campaignPhaseFacade;
 
         public async Task HandleAsync(FollowUpMessageCommand command)
         {
@@ -45,11 +39,11 @@ namespace Domain.PhaseHandlers.FollowUpMessageHandlers
 
             if (operationResult.Succeeded == true)
             {
-                _logger.LogInformation("ExecuteFollowUpMessagesPhase executed successfully. Acknowledging message");                
+                _logger.LogInformation("ExecuteFollowUpMessagesPhase executed successfully. Acknowledging message");
             }
             else
             {
-                _logger.LogWarning("Executing Follow Up Messages Phase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");                
+                _logger.LogWarning("Executing Follow Up Messages Phase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
             }
         }
 
