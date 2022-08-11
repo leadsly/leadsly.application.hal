@@ -39,12 +39,6 @@ ENV AWS_REGION=us-east-1
 ENV AWS_SECRET_ACCESS_KEY=jvsp7dTl13UXVGuqsjiLVReeAG+7yh/Iwk+KY5JY
 ENV HAL_ID=7e0c10e4-3f52-4389-97e8-427b6efa51c1
 
-WORKDIR /leadsly_chrome_profiles
-COPY "./leadsly_default_chrome_profile" ./leadsly_default_chrome_profile
-RUN chmod a+rw /leadsly_chrome_profiles \
-  && chmod a+rw /leadsly_chrome_profiles/leadsly_default_chrome_profile
-VOLUME /leadsly_chrome_profiles
-
 WORKDIR /app
 
 EXPOSE 443

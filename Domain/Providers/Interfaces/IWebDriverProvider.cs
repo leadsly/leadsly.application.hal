@@ -1,4 +1,5 @@
-﻿using Leadsly.Application.Model;
+﻿using Domain.Models;
+using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.WebDriver;
 using OpenQA.Selenium;
@@ -13,17 +14,17 @@ namespace Domain.Providers.Interfaces
         HalOperationResult<T> CloseBrowser<T>(BrowserPurpose browserPurpose)
             where T : IOperationResponse;
 
-        HalOperationResult<T> CreateWebDriver<T>(WebDriverOperationData operationData)
+        HalOperationResult<T> CreateWebDriver<T>(WebDriverOperationData operationData, FileManagerLocation fileManagerLocation)
             where T : IOperationResponse;
 
-        IWebDriver GetOrCreateWebDriver(BrowserPurpose browserPurpose, string chromeProfileName, out bool isNewWebdriver);
+        IWebDriver GetOrCreateWebDriver(BrowserPurpose browserPurpose, string chromeProfileName, FileManagerLocation fileManagerLocation, out bool isNewWebdriver);
 
         HalOperationResult<T> GetWebDriver<T>(WebDriverOperationData operationData)
             where T : IOperationResponse;
 
         IWebDriver GetWebDriver(BrowserPurpose browserPurpose);
 
-        HalOperationResult<T> GetOrCreateWebDriver<T>(WebDriverOperationData operationData)
+        HalOperationResult<T> GetOrCreateWebDriver<T>(WebDriverOperationData operationData, FileManagerLocation fileManagerLocation)
             where T : IOperationResponse;
 
         HalOperationResult<T> SwitchTo<T>(IWebDriver webDriver, string windowHandleId)

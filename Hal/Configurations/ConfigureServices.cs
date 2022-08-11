@@ -242,17 +242,22 @@ namespace Hal.Configurations
 
             services.AddHttpClient<IPhaseDataProcessingService, PhaseDataProcessingService>(opt =>
             {
-                opt.Timeout = TimeSpan.FromSeconds(5000);
+                opt.Timeout = TimeSpan.FromMinutes(5);
             });
 
             services.AddHttpClient<ICampaignService, CampaignService>(opt =>
             {
-                opt.Timeout = TimeSpan.FromSeconds(5000);
+                opt.Timeout = TimeSpan.FromMinutes(5);
             });
 
             services.AddHttpClient<ITriggerPhaseService, TriggerPhaseService>(opt =>
             {
-                opt.Timeout = TimeSpan.FromSeconds(5000);
+                opt.Timeout = TimeSpan.FromMinutes(5);
+            });
+
+            services.AddHttpClient<ILeadslyGridSidecartService, LeadslyGridSidecartService>(opt =>
+            {
+                opt.Timeout = TimeSpan.FromMinutes(5);
             });
 
             services.AddScoped<IWebDriverService, WebDriverService>();

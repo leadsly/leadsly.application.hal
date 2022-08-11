@@ -1,4 +1,5 @@
 ﻿using Domain.Models;
+using Domain.Models.Requests;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
@@ -12,19 +13,23 @@ using OpenQA.Selenium.Remote;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Domain.Services
 {
     public class WebDriverService : IWebDriverService
     {
-        public WebDriverService(ILogger<WebDriverService> logger, IFileManager fileManager, IWebHostEnvironment env)
+        public WebDriverService(ILeadslyGridSidecartService leadslyGridSidecartService, ILogger<WebDriverService> logger, IFileManager fileManager, IWebHostEnvironment env)
         {
             _logger = logger;
             _fileManager = fileManager;
             _env = env;
+            _leadslyGridSidecartService = leadslyGridSidecartService;
         }
 
         private readonly ILogger<WebDriverService> _logger;
+        private readonly ILeadslyGridSidecartService _leadslyGridSidecartService;
         private readonly IFileManager _fileManager;
         private readonly IWebHostEnvironment _env;
 
@@ -131,7 +136,7 @@ namespace Domain.Services
             return options;
         }
 
-        public HalOperationResult<T> Create<T>(BrowserPurpose browserPurpose, WebDriverOptions webDriverOptions, string chromeProfileName) where T : IOperationResponse
+        public HalOperationResult<T> Create<T>(BrowserPurpose browserPurpose, WebDriverOptions webDriverOptions, string chromeProfileName, FileManagerLocation fileManagerLocation) where T : IOperationResponse
         {
             string browser = Enum.GetName(browserPurpose);
             _logger.LogInformation("Creating a new WebDriver instance for browser purpose {browser}", browser);
@@ -146,9 +151,26 @@ namespace Domain.Services
             {
                 string newChromeProfileName = chromeProfileName + "_" + browser;
 
-                result = _fileManager.CloneDefaultChromeProfile<T>(newChromeProfileName, webDriverOptions);
+                // result = _fileManager.CloneDefaultChromeProfile<T>(newChromeProfileName, webDriverOptions);
+                Task<HttpResponseMessage> task = Task.Run(() =>
+                {
+                    CloneChromeProfileRequest req = new()
+                    {
+                        BaseUrl = fileManagerLocation.Base,
+                        Endpoint = fileManagerLocation.Endpoint,
+                        DefaultChromeProfileName = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeProfileName,
+                        DefaultChromeUserProfilesDir = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir,
+                        NewChromeProfile = newChromeProfileName,
+                        ProfilesVolume = webDriverOptions.ProfilesVolume,
+                        UseGrid = webDriverOptions.UseGrid
+                    };
 
-                if (result.Succeeded == false)
+                    return _leadslyGridSidecartService.CloneChromeProfileAsync(req);
+                });
+                task.Wait();
+                HttpResponseMessage resp = task.Result;
+
+                if (resp.IsSuccessStatusCode == false)
                 {
                     return result;
                 }

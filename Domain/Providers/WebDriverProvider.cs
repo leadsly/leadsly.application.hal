@@ -1,4 +1,5 @@
 ﻿using Domain.Models;
+using Domain.Models.Requests;
 using Domain.Providers.Interfaces;
 using Domain.Repositories;
 using Domain.Services.Interfaces;
@@ -13,21 +14,25 @@ using OpenQA.Selenium.Chrome;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace Domain.Providers
 {
     public class WebDriverProvider : IWebDriverProvider
     {
-        public WebDriverProvider(IFileManager fileManager, IWebDriverRepository webDriverRepository, IWebDriverService webDriverService, IMemoryCache memoryCache, ILogger<WebDriverProvider> logger)
+        public WebDriverProvider(ILeadslyGridSidecartService leadslyGridSideCartService, IFileManager fileManager, IWebDriverRepository webDriverRepository, IWebDriverService webDriverService, IMemoryCache memoryCache, ILogger<WebDriverProvider> logger)
         {
             _logger = logger;
             _webDriverRepository = webDriverRepository;
             _webDriverService = webDriverService;
             _memoryCache = memoryCache;
             _fileManager = fileManager;
+            _leadslyGridSideCartService = leadslyGridSideCartService;
         }
 
         private readonly ILogger<WebDriverProvider> _logger;
+        private readonly ILeadslyGridSidecartService _leadslyGridSideCartService;
         private readonly IWebDriverRepository _webDriverRepository;
         private readonly IMemoryCache _memoryCache;
         private readonly IFileManager _fileManager;
@@ -55,18 +60,18 @@ namespace Domain.Providers
             return _webDriverService.CloseTab<T>(getWebDriverOperationResult.Value.WebDriver, windowHandleId);
         }
 
-        private HalOperationResult<T> CreateWebDriver<T>(BrowserPurpose browserPurpose, string chromeProfileName)
+        private HalOperationResult<T> CreateWebDriver<T>(BrowserPurpose browserPurpose, string chromeProfileName, FileManagerLocation fileManagerLocation)
             where T : IOperationResponse
         {
             WebDriverOptions webDriverOptions = GetWebDriverOptions();
-            return _webDriverService.Create<T>(browserPurpose, webDriverOptions, chromeProfileName);
+            return _webDriverService.Create<T>(browserPurpose, webDriverOptions, chromeProfileName, fileManagerLocation);
         }
 
-        private HalOperationResult<T> WebDriverDoesNotExist<T>(WebDriverOperationData operationData) where T : IOperationResponse
+        private HalOperationResult<T> WebDriverDoesNotExist<T>(WebDriverOperationData operationData, FileManagerLocation fileManagerLocation) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
             // re-create the webdriver
-            HalOperationResult<IGetOrCreateWebDriverOperation> createWebDriverResult = CreateWebDriver<IGetOrCreateWebDriverOperation>(operationData.BrowserPurpose, operationData.ChromeProfileName);
+            HalOperationResult<IGetOrCreateWebDriverOperation> createWebDriverResult = CreateWebDriver<IGetOrCreateWebDriverOperation>(operationData.BrowserPurpose, operationData.ChromeProfileName, fileManagerLocation);
             if (createWebDriverResult.Succeeded == false)
             {
                 result.Failures = createWebDriverResult.Failures;
@@ -203,11 +208,11 @@ namespace Domain.Providers
             return result;
         }
 
-        private HalOperationResult<T> CannotEstablishConnectionToWebDriver<T>(WebDriverOperationData operationData) where T : IOperationResponse
+        private HalOperationResult<T> CannotEstablishConnectionToWebDriver<T>(WebDriverOperationData operationData, FileManagerLocation fileManagerLocation) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
             // re-create the webdriver
-            HalOperationResult<IGetOrCreateWebDriverOperation> createWebDriverResult = CreateWebDriver<IGetOrCreateWebDriverOperation>(operationData.BrowserPurpose, operationData.ChromeProfileName);
+            HalOperationResult<IGetOrCreateWebDriverOperation> createWebDriverResult = CreateWebDriver<IGetOrCreateWebDriverOperation>(operationData.BrowserPurpose, operationData.ChromeProfileName, fileManagerLocation);
             if (createWebDriverResult.Succeeded == false)
             {
                 result.Failures = createWebDriverResult.Failures;
@@ -236,13 +241,13 @@ namespace Domain.Providers
             return result;
         }
 
-        private HalOperationResult<T> EnsureWebDriverIsAvailable<T>(WebDriverOperationData operationData) where T : IOperationResponse
+        private HalOperationResult<T> EnsureWebDriverIsAvailable<T>(WebDriverOperationData operationData, FileManagerLocation fileManagerLocation) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
             result = WebDriverExists<T>(operationData.BrowserPurpose);
             if (result.Succeeded == false)
             {
-                result = WebDriverDoesNotExist<T>(operationData);
+                result = WebDriverDoesNotExist<T>(operationData, fileManagerLocation);
                 if (result.Succeeded == false)
                 {
                     return result;
@@ -252,7 +257,7 @@ namespace Domain.Providers
             result = CheckWebDriverConnection<T>(operationData.BrowserPurpose);
             if (result.Succeeded == false)
             {
-                result = CannotEstablishConnectionToWebDriver<T>(operationData);
+                result = CannotEstablishConnectionToWebDriver<T>(operationData, fileManagerLocation);
                 if (result.Succeeded == false)
                 {
                     return result;
@@ -311,7 +316,7 @@ namespace Domain.Providers
             return result;
         }
 
-        public HalOperationResult<T> GetOrCreateWebDriver<T>(WebDriverOperationData operationData) where T : IOperationResponse
+        public HalOperationResult<T> GetOrCreateWebDriver<T>(WebDriverOperationData operationData, FileManagerLocation fileManagerLocation) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
@@ -321,7 +326,7 @@ namespace Domain.Providers
                 return result;
             }
 
-            result = CreateWebDriver<T>(operationData);
+            result = CreateWebDriver<T>(operationData, fileManagerLocation);
             if (result.Succeeded == true)
             {
                 return result;
@@ -331,11 +336,11 @@ namespace Domain.Providers
             return result;
         }
 
-        public HalOperationResult<T> CreateWebDriver<T>(WebDriverOperationData operationData) where T : IOperationResponse
+        public HalOperationResult<T> CreateWebDriver<T>(WebDriverOperationData operationData, FileManagerLocation fileManagerLocation) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
-            HalOperationResult<IGetOrCreateWebDriverOperation> createWebDriverResult = CreateWebDriver<IGetOrCreateWebDriverOperation>(operationData.BrowserPurpose, operationData.ChromeProfileName);
+            HalOperationResult<IGetOrCreateWebDriverOperation> createWebDriverResult = CreateWebDriver<IGetOrCreateWebDriverOperation>(operationData.BrowserPurpose, operationData.ChromeProfileName, fileManagerLocation);
             if (createWebDriverResult.Succeeded == false)
             {
                 result.Failures = createWebDriverResult.Failures;
@@ -354,7 +359,7 @@ namespace Domain.Providers
             return result;
         }
 
-        private IWebDriver CreateWebDriver(BrowserPurpose browserPurpose, string chromeProfile)
+        private IWebDriver CreateWebDriver(BrowserPurpose browserPurpose, string chromeProfile, FileManagerLocation fileManagerLocation)
         {
             WebDriverOptions webDriverOptions = GetWebDriverOptions();
             //string chromeProfile = chromeProfileName;
@@ -367,7 +372,25 @@ namespace Domain.Providers
             else
             {
                 string newChromeProfile = chromeProfile + "_" + browser;
-                _fileManager.CloneDefaultChromeProfile(newChromeProfile, webDriverOptions);
+                Task<HttpResponseMessage> task = Task.Run(() =>
+                {
+                    CloneChromeProfileRequest req = new()
+                    {
+                        BaseUrl = fileManagerLocation.Base,
+                        Endpoint = fileManagerLocation.Endpoint,
+                        DefaultChromeProfileName = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeProfileName,
+                        DefaultChromeUserProfilesDir = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir,
+                        NewChromeProfile = newChromeProfile,
+                        ProfilesVolume = webDriverOptions.ProfilesVolume,
+                        UseGrid = webDriverOptions.UseGrid
+                    };
+
+                    return _leadslyGridSideCartService.CloneChromeProfileAsync(req);
+                });
+                task.Wait();
+                HttpResponseMessage response = task.Result;
+
+                // _fileManager.CloneDefaultChromeProfile(newChromeProfile, webDriverOptions);
                 string newChromeProfilePath = defaultChromeProfileDir + "/" + newChromeProfile;
                 _logger.LogDebug("New chrome profile directory that will be used is: {newChromeProfileDir}", newChromeProfilePath);
                 chromeProfile = newChromeProfile;
@@ -384,14 +407,14 @@ namespace Domain.Providers
             return webDriver;
         }
 
-        public IWebDriver GetOrCreateWebDriver(BrowserPurpose browserPurpose, string chromeProfileName, out bool isNewWebdriver)
+        public IWebDriver GetOrCreateWebDriver(BrowserPurpose browserPurpose, string chromeProfileName, FileManagerLocation fileManagerLocation, out bool isNewWebdriver)
         {
             isNewWebdriver = false;
             IWebDriver webDriver = GetWebDriver(browserPurpose);
             if (webDriver == null)
             {
                 isNewWebdriver = true;
-                webDriver = CreateWebDriver(browserPurpose, chromeProfileName);
+                webDriver = CreateWebDriver(browserPurpose, chromeProfileName, fileManagerLocation);
             }
 
             return webDriver;

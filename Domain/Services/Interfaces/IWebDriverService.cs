@@ -13,7 +13,7 @@ namespace Domain.Services.Interfaces
         HalOperationResult<T> SwitchTo<T>(IWebDriver webDriver, WebDriverOperationData operationData, out string currentWindowHandle)
             where T : IOperationResponse;
 
-        HalOperationResult<T> Create<T>(BrowserPurpose browserPurpose, WebDriverOptions webDriverOptions, string chromeProfileName) where T : IOperationResponse;
+        HalOperationResult<T> Create<T>(BrowserPurpose browserPurpose, WebDriverOptions webDriverOptions, string chromeProfileName, FileManagerLocation fileManagerLocation) where T : IOperationResponse;
 
         IWebDriver Create(ChromeOptions options, WebDriverOptions webDriverOptions);
         ChromeOptions SetChromeOptions(IList<string> addArguments, string chromeProfile, string defaultChromeProfileDir);
