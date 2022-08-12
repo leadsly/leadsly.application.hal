@@ -24,7 +24,7 @@ namespace Domain.Services
 
         public async Task<HttpResponseMessage> CloneChromeProfileAsync(CloneChromeProfileRequest request, CancellationToken ct = default)
         {
-            string url = _urlService.GetBaseGridUrl(request.GridNamespaceName, request.GridServiceDiscoveryName);
+            string url = _urlService.GetBaseGridUrl(request.GridServiceDiscoveryName, request.GridNamespaceName);
 
             HttpRequestMessage req = new HttpRequestMessage
             {
