@@ -101,7 +101,7 @@ namespace Domain.Services
                     }
                     else
                     {
-                        seleniumGridUrl = $"{gridCloudMapServiceName}.{gridNamespaceName}:{webDriverOptions.SeleniumGrid.Port}";
+                        seleniumGridUrl = $"http://{gridCloudMapServiceName}.{gridNamespaceName}:{webDriverOptions.SeleniumGrid.Port}";
 
                     }
                     _logger.LogDebug("Remote Grid url is: {seleniumGridUrl}", seleniumGridUrl);
@@ -216,7 +216,7 @@ namespace Domain.Services
                     }
                     else
                     {
-                        seleniumGridUrl = $"{gridCloudMapServiceName}.{gridNamespaceName}:{webDriverOptions.SeleniumGrid.Port}";
+                        seleniumGridUrl = $"http://{gridCloudMapServiceName}.{gridNamespaceName}:{webDriverOptions.SeleniumGrid.Port}";
 
                     }
                     _logger.LogDebug("Remote Grid url is: {seleniumGridUrl}", seleniumGridUrl);
