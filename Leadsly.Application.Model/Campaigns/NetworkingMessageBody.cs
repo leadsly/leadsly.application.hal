@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Leadsly.Application.Model.Campaigns
 {
@@ -32,6 +28,7 @@ namespace Leadsly.Application.Model.Campaigns
 
         [DataMember]
         public int FailedDeliveryCount { get; set; }
+
 
     }
 }

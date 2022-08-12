@@ -32,7 +32,7 @@ namespace Domain.Providers.Campaigns
 
             MarkProspectListPhaseCompleteRequest request = new()
             {
-                RequestUrl = $"api/ProspectListPhase/{message.ProspectListPhaseId}",
+                RequestUrl = $"ProspectListPhase/{message.ProspectListPhaseId}",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
                 HalId = message.HalId
@@ -77,7 +77,7 @@ namespace Domain.Providers.Campaigns
                 PrimaryProspectListId = primaryProspectListId,
                 CampaignProspectListId = campaignProspectListId,
                 Prospects = collectedProspects,
-                RequestUrl = $"api/ProspectList/{message.HalId}",
+                RequestUrl = $"ProspectList/{message.HalId}",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName
             };
@@ -114,7 +114,7 @@ namespace Domain.Providers.Campaigns
                 UserId = message.UserId,
                 CampaignId = campaignId,
                 CampaignProspects = campaignProspects,
-                RequestUrl = $"api/SendConnections/{campaignId}/prospects",
+                RequestUrl = $"SendConnections/{campaignId}/prospects",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
             };
@@ -153,7 +153,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/DeepScanProspectsForReplies/{message.HalId}",
+                RequestUrl = $"DeepScanProspectsForReplies/{message.HalId}",
                 ProspectsReplied = prospectsReplied
             };
 
@@ -178,7 +178,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/ScanProspectsForReplies/{message.HalId}/prospects-replied",
+                RequestUrl = $"ScanProspectsForReplies/{message.HalId}/prospects-replied",
                 ProspectsReplied = prospectsReplied
             };
 
@@ -203,7 +203,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/SocialAccounts/{socialAccountId}"
+                RequestUrl = $"SocialAccounts/{socialAccountId}"
             };
 
             HttpResponseMessage responseMessage = await _phaseDataProcessingService.UpdateSocialAccountMonthlySearchLimitAsync(request, ct);
@@ -225,7 +225,7 @@ namespace Domain.Providers.Campaigns
 
             sentFollowUpMessageRequest.NamespaceName = message.NamespaceName;
             sentFollowUpMessageRequest.ServiceDiscoveryName = message.ServiceDiscoveryName;
-            sentFollowUpMessageRequest.RequestUrl = $"api/FollowUpMessage/{sentFollowUpMessageRequest.CampaignProspectId}/follow-up";
+            sentFollowUpMessageRequest.RequestUrl = $"FollowUpMessage/{sentFollowUpMessageRequest.CampaignProspectId}/follow-up";
 
             HttpResponseMessage responseMessage = await _phaseDataProcessingService.ProcessFollowUpMessageSentAsync(sentFollowUpMessageRequest, ct);
 

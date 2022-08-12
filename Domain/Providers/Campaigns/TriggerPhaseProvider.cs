@@ -5,11 +5,7 @@ using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -35,7 +31,7 @@ namespace Domain.Providers.Campaigns
                 CampaignId = message.CampaignId,
                 UserId = message.UserId,
                 HalId = message.HalId,
-                RequestUrl = $"api/SendConnections/{message.HalId}",
+                RequestUrl = $"SendConnections/{message.HalId}",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
             };
@@ -61,7 +57,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/ScanProspectsForReplies/{message.HalId}",
+                RequestUrl = $"ScanProspectsForReplies/{message.HalId}",
                 UserId = message.UserId
             };
 
@@ -87,7 +83,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/FollowUpMessage/{message.HalId}",
+                RequestUrl = $"FollowUpMessage/{message.HalId}",
                 UserId = message.UserId
             };
 

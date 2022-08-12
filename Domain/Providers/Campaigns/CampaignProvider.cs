@@ -1,19 +1,14 @@
-﻿using Domain.Models.Requests;
-using Domain.Providers.Campaigns.Interfaces;
+﻿using Domain.Providers.Campaigns.Interfaces;
 using Domain.Serializers.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.Campaigns.interfaces;
 using Leadsly.Application.Model.Campaigns.Interfaces;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,9 +16,9 @@ namespace Domain.Providers.Campaigns
 {
     public class CampaignProvider : ICampaignProvider
     {
-        public CampaignProvider(            
-            ICampaignService campaignService,            
-            ILogger<CampaignProvider> logger, 
+        public CampaignProvider(
+            ICampaignService campaignService,
+            ILogger<CampaignProvider> logger,
             ICampaignSerializer campaignSerializer)
         {
             _logger = logger;
@@ -44,12 +39,12 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/SendConnections/{message.CampaignId}/url"
+                RequestUrl = $"SendConnections/{message.CampaignId}/url"
             };
 
             HttpResponseMessage responseMessage = await _campaignService.GetLatestSentConnectionsUrlStatusesAsync(request, ct);
 
-            if(responseMessage.IsSuccessStatusCode == false)
+            if (responseMessage.IsSuccessStatusCode == false)
             {
                 _logger.LogError("Response from application server was not a successful status code. The request was responsible for getting latest sent connections url status");
                 return result;
@@ -57,7 +52,7 @@ namespace Domain.Providers.Campaigns
 
             string json = await responseMessage.Content.ReadAsStringAsync();
             IGetSentConnectionsUrlStatusPayload sentConnectionStatuses = _campaignSerializer.DeserializeSentConnectionsUrlStatuses(json);
-            if(sentConnectionStatuses == null)
+            if (sentConnectionStatuses == null)
             {
                 return result;
             }
@@ -76,7 +71,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/SendConnections/{message.CampaignId}/url",
+                RequestUrl = $"SendConnections/{message.CampaignId}/url",
                 SearchUrlDetailsRequests = updatedSearchUrlsStatuses
             };
 
@@ -98,7 +93,7 @@ namespace Domain.Providers.Campaigns
 
             MarkCampaignExhaustedRequest request = new()
             {
-                RequestUrl = $"api/campaigns/{message.CampaignId}",
+                RequestUrl = $"campaigns/{message.CampaignId}",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
                 HalId = message.HalId
@@ -106,7 +101,7 @@ namespace Domain.Providers.Campaigns
 
             HttpResponseMessage responseMessage = await _campaignService.MarkCampaignExhausted(request, ct);
 
-            if(responseMessage.IsSuccessStatusCode == false)
+            if (responseMessage.IsSuccessStatusCode == false)
             {
                 _logger.LogError("Response from application server was not a successful status code. The request was responsible for updating campaign");
                 return result;
@@ -122,7 +117,7 @@ namespace Domain.Providers.Campaigns
 
             SearchUrlProgressRequest request = new()
             {
-                RequestUrl = $"api/Networking/{message.CampaignId}/url",
+                RequestUrl = $"Networking/{message.CampaignId}/url",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
                 HalId = message.HalId
@@ -155,7 +150,7 @@ namespace Domain.Providers.Campaigns
 
             UpdateSearchUrlProgressRequest request = new()
             {
-                RequestUrl = $"api/Networking/{updatedSearchUrlProgress.SearchUrlProgressId}/url",
+                RequestUrl = $"Networking/{updatedSearchUrlProgress.SearchUrlProgressId}/url",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
                 HalId = message.HalId,

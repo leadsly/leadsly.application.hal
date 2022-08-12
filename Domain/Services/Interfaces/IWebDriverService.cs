@@ -13,9 +13,9 @@ namespace Domain.Services.Interfaces
         HalOperationResult<T> SwitchTo<T>(IWebDriver webDriver, WebDriverOperationData operationData, out string currentWindowHandle)
             where T : IOperationResponse;
 
-        HalOperationResult<T> Create<T>(BrowserPurpose browserPurpose, WebDriverOptions webDriverOptions, string chromeProfileName, FileManagerLocation fileManagerLocation) where T : IOperationResponse;
+        HalOperationResult<T> Create<T>(BrowserPurpose browserPurpose, WebDriverOptions webDriverOptions, string chromeProfileName, string namespaceName, string serviceDiscoveryName) where T : IOperationResponse;
 
-        IWebDriver Create(ChromeOptions options, WebDriverOptions webDriverOptions);
+        IWebDriver Create(ChromeOptions options, WebDriverOptions webDriverOptions, string gridNamespaceName, string gridCloudMapServiceName);
         ChromeOptions SetChromeOptions(IList<string> addArguments, string chromeProfile, string defaultChromeProfileDir);
 
         HalOperationResult<T> CloseTab<T>(IWebDriver driver, string windowHandleId)

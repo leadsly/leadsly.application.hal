@@ -1,12 +1,9 @@
 ﻿using Domain.Facades.Interfaces;
-using Domain.POMs.Pages;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.Campaigns.Interfaces;
-using Leadsly.Application.Model.Entities.Campaigns;
 using Leadsly.Application.Model.LinkedInPages.Interface;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
@@ -17,9 +14,7 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Domain.Providers.Campaigns
@@ -29,9 +24,9 @@ namespace Domain.Providers.Campaigns
         public ScanProspectsForRepliesProvider(
             ILogger<ScanProspectsForRepliesProvider> logger,
             IPhaseDataProcessingProvider phaseDataProcessingProvider,
-            IWebDriverProvider webDriverProvider,            
+            IWebDriverProvider webDriverProvider,
             IScreenHouseKeeperService screenHouseKeeperService,
-            ILinkedInPageFacade linkedInPageFacade,            
+            ILinkedInPageFacade linkedInPageFacade,
             IHumanBehaviorService humanService,
             ITimestampService timestampService)
         {
@@ -45,18 +40,18 @@ namespace Domain.Providers.Campaigns
         }
 
         private readonly IPhaseDataProcessingProvider _phaseDataProcessingProvider;
-        private readonly IHumanBehaviorService _humanService;        
+        private readonly IHumanBehaviorService _humanService;
         private readonly ILogger<ScanProspectsForRepliesProvider> _logger;
         private readonly IScreenHouseKeeperService _screenHouseKeeperService;
         private readonly ILinkedInPageFacade _linkedInPageFacade;
-        private readonly IWebDriverProvider _webDriverProvider;        
-        private readonly ITimestampService _timestampService;        
+        private readonly IWebDriverProvider _webDriverProvider;
+        private readonly ITimestampService _timestampService;
         public static bool IsRunning { get; private set; }
 
         public async Task<HalOperationResult<T>> ExecutePhaseAsync<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
         {
             HalOperationResult<T> result = SetUpForScanning<T>(message);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 return result;
             }
@@ -93,7 +88,7 @@ namespace Domain.Providers.Campaigns
                 ChromeProfileName = message.ChromeProfileName
             };
 
-            HalOperationResult<T> driverOperationResult = _webDriverProvider.GetOrCreateWebDriver<T>(operationData);
+            HalOperationResult<T> driverOperationResult = _webDriverProvider.GetOrCreateWebDriver<T>(operationData, message.GridNamespaceName, message.GridServiceDiscoveryName);
             if (driverOperationResult.Succeeded == false)
             {
                 _logger.LogWarning("There was an issue getting or creating webdriver instance");
@@ -157,7 +152,7 @@ namespace Domain.Providers.Campaigns
 
             // grab the first batch of 20 conversations
             result = _linkedInPageFacade.LinkedInMessagingPage.GetVisibleConversationListItems<T>(webDriver);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 return result;
             }
@@ -167,7 +162,7 @@ namespace Domain.Providers.Campaigns
 
             IList<ProspectRepliedRequest> prospectsReplied = new List<ProspectRepliedRequest>();
             IList<IWebElement> newMessagesListItems = GrabNewMessagesListItems(elements.HtmlElements);
-            if(newMessagesListItems.Count > 0)
+            if (newMessagesListItems.Count > 0)
             {
                 // extract those users names and send back to the api server for processing
                 foreach (IWebElement prospectMessage in newMessagesListItems)
@@ -178,7 +173,7 @@ namespace Domain.Providers.Campaigns
                     _linkedInPageFacade.LinkedInMessagingPage.ClickConverstaionListItem(prospectMessage);
 
                     bool isActive = WaitUntilConversationListItemIsActive(webDriver, prospectMessage);
-                    if(isActive == false)
+                    if (isActive == false)
                     {
                         continue;
                     }
@@ -198,12 +193,12 @@ namespace Domain.Providers.Campaigns
                     List<IWebElement> messages = messageElements.HtmlElements.ToList();
                     IWebElement lastMessage = messages.LastOrDefault();
                     string responseMessage = string.Empty;
-                    if(lastMessage != null)
+                    if (lastMessage != null)
                     {
                         responseMessage = lastMessage.Text;
                     }
 
-                    if(responseMessage != string.Empty)
+                    if (responseMessage != string.Empty)
                     {
                         ProspectRepliedRequest potentialProspectResponse = new ProspectRepliedRequest()
                         {
@@ -219,11 +214,11 @@ namespace Domain.Providers.Campaigns
                     {
                         _logger.LogWarning("Failed to retrieve last message from the prospect");
                     }
-                    
+
                 }
             }
 
-            if(prospectsReplied.Count > 0)
+            if (prospectsReplied.Count > 0)
             {
                 // fire off request to the application server for processing of prospects that have replied to us (may not be prospects from our campaigns so we will ignore those)\
                 await _phaseDataProcessingProvider.ProcessProspectsRepliedAsync<T>(prospectsReplied, message);
@@ -255,7 +250,7 @@ namespace Domain.Providers.Campaigns
             IList<IWebElement> newConversationListItem = new List<IWebElement>();
             foreach (IWebElement listItem in listItems)
             {
-                if(_linkedInPageFacade.LinkedInMessagingPage.HasNotification(listItem) == true)
+                if (_linkedInPageFacade.LinkedInMessagingPage.HasNotification(listItem) == true)
                 {
                     _logger.LogInformation($"This ListItem [{listItem.Text}] does contain a new notification");
                     newConversationListItem.Add(listItem);

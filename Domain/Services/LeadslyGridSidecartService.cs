@@ -13,19 +13,23 @@ namespace Domain.Services
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<LeadslyGridSidecartService> _logger;
+        private readonly IUrlService _urlService;
 
-        public LeadslyGridSidecartService(HttpClient httpClient, ILogger<LeadslyGridSidecartService> logger)
+        public LeadslyGridSidecartService(HttpClient httpClient, ILogger<LeadslyGridSidecartService> logger, IUrlService urlService)
         {
             _httpClient = httpClient;
+            _urlService = urlService;
             _logger = logger;
         }
 
         public async Task<HttpResponseMessage> CloneChromeProfileAsync(CloneChromeProfileRequest request, CancellationToken ct = default)
         {
+            string url = _urlService.GetBaseGridUrl(request.GridNamespaceName, request.GridServiceDiscoveryName);
+
             HttpRequestMessage req = new HttpRequestMessage
             {
                 Method = HttpMethod.Post,
-                RequestUri = new Uri($"{request.BaseUrl}/{request.Endpoint}"),
+                RequestUri = new Uri($"{url}/{request.RequestUrl}", UriKind.Absolute),
                 Content = JsonContent.Create(new
                 {
                     NewChromeProfile = request.NewChromeProfile,

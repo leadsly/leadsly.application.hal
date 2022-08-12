@@ -1,10 +1,5 @@
 ﻿using Leadsly.Application.Model.WebDriver;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Models.Requests
 {
@@ -16,7 +11,14 @@ namespace Domain.Models.Requests
 
         [DataMember(IsRequired = true)]
         public BrowserPurpose BrowserPurpose { get; set; }
+
         [DataMember(IsRequired = true)]
         public long AttemptNumber { get; set; }
+
+        [DataMember(IsRequired = true)]
+        public string SidecartBaseUrl { get; set; }
+
+        [DataMember(IsRequired = true)]
+        public string SidecartRequestUrl { get; set; }
     }
 }

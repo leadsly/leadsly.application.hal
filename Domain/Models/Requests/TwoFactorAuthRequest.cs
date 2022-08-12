@@ -7,5 +7,11 @@ namespace Domain.Models.Requests
     {
         [DataMember(IsRequired = true)]
         public string Code { get; set; }
+
+        [DataMember(IsRequired = true)]
+        public string GridServiceDiscoveryName { get; set; }
+
+        [DataMember(IsRequired = true)]
+        public string GridNamespaceName { get; set; }
     }
 }

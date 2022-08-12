@@ -6,6 +6,7 @@ using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.WebDriver;
 using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -28,10 +29,10 @@ namespace Domain.Services
             _leadslyGridSidecartService = leadslyGridSidecartService;
         }
 
+        private readonly IWebHostEnvironment _env;
         private readonly ILogger<WebDriverService> _logger;
         private readonly ILeadslyGridSidecartService _leadslyGridSidecartService;
         private readonly IFileManager _fileManager;
-        private readonly IWebHostEnvironment _env;
 
         public HalOperationResult<T> CloseTab<T>(IWebDriver driver, string windowHandleId) where T : IOperationResponse
         {
@@ -81,7 +82,7 @@ namespace Domain.Services
             return result;
         }
 
-        public IWebDriver Create(ChromeOptions options, WebDriverOptions webDriverOptions)
+        public IWebDriver Create(ChromeOptions options, WebDriverOptions webDriverOptions, string gridNamespaceName, string gridCloudMapServiceName)
         {
             IWebDriver driver = null;
             try
@@ -93,7 +94,17 @@ namespace Domain.Services
                 }
                 else
                 {
-                    string seleniumGridUrl = $"{webDriverOptions.SeleniumGrid.Url}:{webDriverOptions.SeleniumGrid.Port}";
+                    string seleniumGridUrl = string.Empty;
+                    if (_env.IsDevelopment() || _env.IsStaging())
+                    {
+                        seleniumGridUrl = $"{webDriverOptions.SeleniumGrid.Url}:{webDriverOptions.SeleniumGrid.Port}";
+                    }
+                    else
+                    {
+                        seleniumGridUrl = $"{gridCloudMapServiceName}.{gridNamespaceName}:{webDriverOptions.SeleniumGrid.Port}";
+
+                    }
+                    _logger.LogDebug("Remote Grid url is: {seleniumGridUrl}", seleniumGridUrl);
                     driver = new RemoteWebDriver(new Uri(seleniumGridUrl), options);
                 }
 
@@ -136,7 +147,7 @@ namespace Domain.Services
             return options;
         }
 
-        public HalOperationResult<T> Create<T>(BrowserPurpose browserPurpose, WebDriverOptions webDriverOptions, string chromeProfileName, FileManagerLocation fileManagerLocation) where T : IOperationResponse
+        public HalOperationResult<T> Create<T>(BrowserPurpose browserPurpose, WebDriverOptions webDriverOptions, string chromeProfileName, string gridNamespaceName, string gridServiceDiscoveryName) where T : IOperationResponse
         {
             string browser = Enum.GetName(browserPurpose);
             _logger.LogInformation("Creating a new WebDriver instance for browser purpose {browser}", browser);
@@ -156,8 +167,9 @@ namespace Domain.Services
                 {
                     CloneChromeProfileRequest req = new()
                     {
-                        BaseUrl = fileManagerLocation.Base,
-                        Endpoint = fileManagerLocation.Endpoint,
+                        GridNamespaceName = gridNamespaceName,
+                        GridServiceDiscoveryName = gridServiceDiscoveryName,
+                        RequestUrl = "FileManager/clone-profile",
                         DefaultChromeProfileName = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeProfileName,
                         DefaultChromeUserProfilesDir = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir,
                         NewChromeProfile = newChromeProfileName,
@@ -181,10 +193,10 @@ namespace Domain.Services
                 options = SetChromeOptions(webDriverOptions, newChromeProfileName, webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir);
             }
 
-            return Create<T>(options, webDriverOptions);
+            return Create<T>(options, webDriverOptions, gridNamespaceName, gridServiceDiscoveryName);
         }
 
-        private HalOperationResult<T> Create<T>(ChromeOptions options, WebDriverOptions webDriverOptions) where T : IOperationResponse
+        private HalOperationResult<T> Create<T>(ChromeOptions options, WebDriverOptions webDriverOptions, string gridNamespaceName, string gridCloudMapServiceName) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
             IWebDriver driver = null;
@@ -197,7 +209,17 @@ namespace Domain.Services
                 }
                 else
                 {
-                    string seleniumGridUrl = $"{webDriverOptions.SeleniumGrid.Url}:{webDriverOptions.SeleniumGrid.Port}";
+                    string seleniumGridUrl = string.Empty;
+                    if (_env.IsDevelopment() || _env.IsStaging())
+                    {
+                        seleniumGridUrl = $"{webDriverOptions.SeleniumGrid.Url}:{webDriverOptions.SeleniumGrid.Port}";
+                    }
+                    else
+                    {
+                        seleniumGridUrl = $"{gridCloudMapServiceName}.{gridNamespaceName}:{webDriverOptions.SeleniumGrid.Port}";
+
+                    }
+                    _logger.LogDebug("Remote Grid url is: {seleniumGridUrl}", seleniumGridUrl);
                     driver = new RemoteWebDriver(new Uri(seleniumGridUrl), options);
                 }
 

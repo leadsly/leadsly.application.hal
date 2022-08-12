@@ -129,6 +129,8 @@ namespace Hal.Configurations
 
             services.Configure<AppServerConfigOptions>(options => configuration.GetSection(nameof(AppServerConfigOptions)).Bind(options));
 
+            services.Configure<SidecartServerConfigOptions>(options => configuration.GetSection(nameof(SidecartServerConfigOptions)).Bind(options));
+
             services.Configure<WebDriverConfigOptions>(options => configuration.GetSection(nameof(WebDriverConfigOptions)).Bind(options));
             WebDriverConfigOptions webDriverConfigOptions = new();
             configuration.GetSection(nameof(WebDriverConfigOptions)).Bind(webDriverConfigOptions);

@@ -4,8 +4,6 @@ using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.Campaigns.interfaces;
-using Leadsly.Application.Model.Campaigns.ProspectList;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage.Interfaces;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
@@ -13,9 +11,7 @@ using Leadsly.Application.Model.WebDriver;
 using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Domain.Providers.Campaigns
@@ -64,7 +60,7 @@ namespace Domain.Providers.Campaigns
                 PageUrls = message.SearchUrls
             };
 
-            HalOperationResult<T> driverOperationResult = _webDriverProvider.GetOrCreateWebDriver<T>(operationData);
+            HalOperationResult<T> driverOperationResult = _webDriverProvider.GetOrCreateWebDriver<T>(operationData, message.GridNamespaceName, message.GridServiceDiscoveryName);
             if (driverOperationResult.Succeeded == false)
             {
                 _logger.LogWarning("There was an issue getting or creating webdriver instance");
@@ -83,7 +79,7 @@ namespace Domain.Providers.Campaigns
         private async Task<HalOperationResult<T>> ProspectListAsync<T>(IWebDriver webDriver, ProspectListBody message)
             where T : IOperationResponse
         {
-            HalOperationResult<T> result = new();            
+            HalOperationResult<T> result = new();
             foreach (string searchUrl in message.SearchUrls)
             {
                 result = GoToPage<T>(webDriver, searchUrl);
@@ -131,7 +127,7 @@ namespace Domain.Providers.Campaigns
             for (int i = 0; i < totalResults; i++)
             {
                 bool monthlySearchLimitReached = _linkedInPageFacade.LinkedInSearchPage.MonthlySearchLimitReached(webDriver);
-                if(monthlySearchLimitReached == true)
+                if (monthlySearchLimitReached == true)
                 {
                     _logger.LogInformation("User's monthly search limit has been reached.");
                     await _phaseDataProcessingProvider.UpdateSocialAccountMonthlySearchLimitAsync<IOperationResponse>(message.SocialAccountId, message);
@@ -139,7 +135,7 @@ namespace Domain.Providers.Campaigns
                 }
 
                 bool crawlResult = CrawlProspects(webDriver, message.PrimaryProspectListId, out IList<PrimaryProspectRequest> collectedProspects);
-                if(crawlResult == false)
+                if (crawlResult == false)
                 {
                     break;
                 }
@@ -159,7 +155,7 @@ namespace Domain.Providers.Campaigns
                 }
 
                 HalOperationResult<IOperationResponse> result = await _phaseDataProcessingProvider.ProcessProspectListAsync<IOperationResponse>(collectedProspects, message, message.CampaignId, message.PrimaryProspectListId, message.CampaignProspectListId);
-                if(result.Succeeded == false)
+                if (result.Succeeded == false)
                 {
                     _logger.LogError("Failed to process scraped prospect list. This was batch {i} out of {totalResults}", i, totalResults);
                 }

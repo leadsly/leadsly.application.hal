@@ -1,18 +1,11 @@
 ﻿using Domain.Facades.Interfaces;
-using Domain.POMs;
-using Domain.POMs.Pages;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
-using Domain.Serializers.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.Campaigns.Interfaces;
-using Leadsly.Application.Model.Campaigns.MonitorForNewProspects;
-using Leadsly.Application.Model.Entities;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
-using Leadsly.Application.Model.Responses.Hal.Interfaces;
 using Leadsly.Application.Model.WebDriver;
 using Leadsly.Application.Model.WebDriver.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -20,21 +13,19 @@ using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Domain.Providers.Campaigns
 {
     public class MonitorForNewProspectsProvider : IMonitorForNewProspectsProvider
     {
-        public MonitorForNewProspectsProvider(                        
-            ILogger<MonitorForNewProspectsProvider> logger, 
-            IWebDriverProvider webDriverProvider,            
+        public MonitorForNewProspectsProvider(
+            ILogger<MonitorForNewProspectsProvider> logger,
+            IWebDriverProvider webDriverProvider,
             ITimestampService timestampService,
             IScreenHouseKeeperService screenKeeperService,
-            IHumanBehaviorService humanBehaviorService,            
-            IPhaseDataProcessingService campaignProcessingPhase,            
+            IHumanBehaviorService humanBehaviorService,
+            IPhaseDataProcessingService campaignProcessingPhase,
             ILinkedInPageFacade linkedInPageFacade
             )
         {
@@ -42,26 +33,26 @@ namespace Domain.Providers.Campaigns
             _logger = logger;
             _humanBehaviorService = humanBehaviorService;
             _linkedInPageFacade = linkedInPageFacade;
-            _timestampService = timestampService;            
+            _timestampService = timestampService;
             _campaignProcessingPhase = campaignProcessingPhase;
-            _webDriverProvider = webDriverProvider;            
+            _webDriverProvider = webDriverProvider;
         }
 
         private readonly IScreenHouseKeeperService _screenHouseKeeperService;
         private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly ILinkedInPageFacade _linkedInPageFacade;
         private readonly ITimestampService _timestampService;
-        private readonly IWebDriverProvider _webDriverProvider;        
-        private readonly ILogger<MonitorForNewProspectsProvider> _logger;                
+        private readonly IWebDriverProvider _webDriverProvider;
+        private readonly ILogger<MonitorForNewProspectsProvider> _logger;
         private readonly IPhaseDataProcessingService _campaignProcessingPhase;
         private int PreviousConnectionsCount = 0;
         private IList<RecentlyAddedProspect> PreviousRecentlyAdded = new List<RecentlyAddedProspect>();
-        public static bool IsRunning { get; private set; }        
+        public static bool IsRunning { get; private set; }
 
         public async Task<HalOperationResult<T>> ExecutePhaseOffHoursScanPhaseAsync<T>(MonitorForNewAcceptedConnectionsBody message) where T : IOperationResponse
         {
             HalOperationResult<T> result = SetUpPhaseAsync<T>(message);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 return result;
             }
@@ -71,7 +62,7 @@ namespace Domain.Providers.Campaigns
             try
             {
                 result = await ScanForAnyNewOffHoursConnectionsAsync<T>(webDriver, message);
-                if(result.Succeeded == false)
+                if (result.Succeeded == false)
                 {
                     return result;
                 }
@@ -85,7 +76,7 @@ namespace Domain.Providers.Campaigns
             {
                 _logger.LogInformation("Finished running MonitorForNewAcceptedConnections phase from off hours");
             }
-                        
+
             return result;
         }
 
@@ -100,10 +91,10 @@ namespace Domain.Providers.Campaigns
             IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)result.Value).WebDriver;
 
             try
-            {               
+            {
                 await MonitorForNewConnections(webDriver, message);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occured while monitoring for new connections");
                 throw;
@@ -132,7 +123,7 @@ namespace Domain.Providers.Campaigns
                 PageUrl = message.PageUrl
             };
 
-            HalOperationResult<T> driverOperationResult = _webDriverProvider.GetOrCreateWebDriver<T>(operationData);
+            HalOperationResult<T> driverOperationResult = _webDriverProvider.GetOrCreateWebDriver<T>(operationData, message.GridNamespaceName, message.GridServiceDiscoveryName);
 
             if (driverOperationResult.Succeeded == false)
             {
@@ -155,7 +146,7 @@ namespace Domain.Providers.Campaigns
             result.Succeeded = true;
             return result;
         }
-        
+
         private async Task<HalOperationResult<T>> ScanForAnyNewOffHoursConnectionsAsync<T>(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
             where T : IOperationResponse
         {
@@ -172,11 +163,11 @@ namespace Domain.Providers.Campaigns
         private async Task MonitorForNewConnections(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
         {
             _logger.LogDebug("[MonitorForNewConnections]: Setting IsRunning property to 'true'");
-            IsRunning = true;            
+            IsRunning = true;
             DateTimeOffset endOfWorkDayLocal = _timestampService.ParseDateTimeOffsetLocalized(message.TimeZoneId, message.EndOfWorkday);
             while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayLocal)
             {
-                PreviousConnectionsCount = _linkedInPageFacade.ConnectionsView.GetConnectionsCount(webDriver);                
+                PreviousConnectionsCount = _linkedInPageFacade.ConnectionsView.GetConnectionsCount(webDriver);
                 PreviousRecentlyAdded = _linkedInPageFacade.ConnectionsView.GetAllRecentlyAdded(webDriver);
 
                 _logger.LogDebug("[MonitorForNewConnections]: Entering random wait time between 2 and 5 minutes.");
@@ -187,13 +178,13 @@ namespace Domain.Providers.Campaigns
 
                 _logger.LogDebug("[MonitorForNewConnections]: Refreshing the browser.");
                 HalOperationResult<IOperationResponse> result = _webDriverProvider.Refresh<IOperationResponse>(webDriver);
-                if(result.Succeeded == false)
+                if (result.Succeeded == false)
                 {
                     break;
                 }
 
                 int connectionCount = _linkedInPageFacade.ConnectionsView.GetConnectionsCount(webDriver);
-                if(connectionCount > PreviousConnectionsCount)
+                if (connectionCount > PreviousConnectionsCount)
                 {
                     _logger.LogDebug("[MonitorForNewConnections]: New connections detected!");
                     IList<RecentlyAddedProspect> currentProspects = _linkedInPageFacade.ConnectionsView.GetAllRecentlyAdded(webDriver);
@@ -290,7 +281,7 @@ namespace Domain.Providers.Campaigns
         {
             // first grab any new notifications displayed in the view 
 
-            bool areNewNotification = _linkedInPageFacade.LinkedInNavBar.AreNewNotifications(webDriver);            
+            bool areNewNotification = _linkedInPageFacade.LinkedInNavBar.AreNewNotifications(webDriver);
 
             if (areNewNotification == true)
             {
@@ -311,7 +302,7 @@ namespace Domain.Providers.Campaigns
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"api/MonitorForNewProspects/{message.HalId}/new-prospects",
+                RequestUrl = $"MonitorForNewProspects/{message.HalId}/new-prospects",
                 NewAcceptedProspectsConnections = newProspects,
                 ApplicationUserId = message.UserId
             };
@@ -320,13 +311,13 @@ namespace Domain.Providers.Campaigns
         }
 
 
-        private IList<NewProspectConnectionRequest> GrabNewlyConnectedProspectsInfo(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)            
+        private IList<NewProspectConnectionRequest> GrabNewlyConnectedProspectsInfo(IWebDriver webDriver, MonitorForNewAcceptedConnectionsBody message)
         {
             IList<NewProspectConnectionRequest> newProspectInfoRequests = new List<NewProspectConnectionRequest>();
 
             HalOperationResult<IOperationResponse> result = _linkedInPageFacade.LinkedInNotificationsPage.ClickNewNotificationsButton<IOperationResponse>(webDriver);
             // if the button was not clicked successfully, or it wasn't found
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 // if web driver failed to locate or click new notifications button, click Notifications tab directly
                 result = _linkedInPageFacade.LinkedInNavBar.ClickNotificationsTab<IOperationResponse>(webDriver);

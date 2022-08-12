@@ -45,7 +45,7 @@ namespace Domain.Providers.Campaigns
         }
 
         private readonly IHumanBehaviorService _humanBehaviorService;
-        private readonly IPhaseDataProcessingProvider _phaseDataProcessingProvider;        
+        private readonly IPhaseDataProcessingProvider _phaseDataProcessingProvider;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<ProspectListProvider> _logger;
         private readonly ICampaignProspectsService _campaignProspectService;
@@ -87,7 +87,7 @@ namespace Domain.Providers.Campaigns
                 ChromeProfileName = message.ChromeProfileName
             };
 
-            HalOperationResult<T> result = _webDriverProvider.GetOrCreateWebDriver<T>(operationData);
+            HalOperationResult<T> result = _webDriverProvider.GetOrCreateWebDriver<T>(operationData, message.GridNamespaceName, message.GridServiceDiscoveryName);
             if (result.Succeeded == false)
             {
                 _logger.LogWarning("There was an issue getting or creating webdriver instance");
@@ -98,14 +98,14 @@ namespace Domain.Providers.Campaigns
 
             try
             {
-                await ExecuteNetworkingInternalAsync<T>(message, webDriver, searchUrlsProgress, ct);                
+                await ExecuteNetworkingInternalAsync<T>(message, webDriver, searchUrlsProgress, ct);
             }
             finally
             {
                 _webDriverProvider.CloseBrowser<IOperationResponse>(BrowserPurpose.Networking);
                 NumberOfConnectionsSent = 0;
             }
-            
+
             return result;
         }
 
@@ -113,12 +113,12 @@ namespace Domain.Providers.Campaigns
         {
             try
             {
-                if(redeliveryCount >= 3)
+                if (redeliveryCount >= 3)
                 {
                     _logger.LogDebug("This message has been redelivered 3 times already. Attempting to close the current tab");
                     string currentWindowHandleId = webDriver.CurrentWindowHandle;
                     _webDriverProvider.CloseTab<IOperationResponse>(BrowserPurpose.Networking, currentWindowHandleId);
-                }                
+                }
             }
             catch (Exception ex)
             {
@@ -145,7 +145,7 @@ namespace Domain.Providers.Campaigns
                 }
 
                 result = await NetworkingAsync<T>(webDriver, message, searchUrlProgress);
-                if(result.Succeeded == false)
+                if (result.Succeeded == false)
                 {
                     return result;
                 }
@@ -178,7 +178,7 @@ namespace Domain.Providers.Campaigns
                 return result;
             }
 
-            IWebElement linkedInlogoFooter  = _linkedInPageFacade.LinkedInSearchPage.LinkInFooterLogoIcon(webDriver);
+            IWebElement linkedInlogoFooter = _linkedInPageFacade.LinkedInSearchPage.LinkInFooterLogoIcon(webDriver);
             _humanBehaviorService.RandomClickElement(linkedInlogoFooter);
             _humanBehaviorService.RandomWaitMilliSeconds(500, 800);
 
@@ -226,7 +226,7 @@ namespace Domain.Providers.Campaigns
                 }
 
                 //if connectable prospects equals 0, go to the next page
-                if(connectableProspects.Count == 0)
+                if (connectableProspects.Count == 0)
                 {
                     // if we are on the last page and there are no prospects to crawl update the search url
                     if (await IsLastPageAsync(lastPage, totalResults, webDriver, message, searchUrlProgress))
@@ -245,14 +245,14 @@ namespace Domain.Providers.Campaigns
 
                 // ProspectListPhase
                 result = await ExecuteProspectListInternalAsync<T>(webDriver, message, connectableProspects);
-                if(result.Succeeded == false)
+                if (result.Succeeded == false)
                 {
                     return result;
-                }            
+                }
 
                 // SendConnectionsPhase
                 result = await ExecuteSendConnectionsInternalAsync<T>(webDriver, message, connectableProspects);
-                if(result.Succeeded == false)
+                if (result.Succeeded == false)
                 {
                     return result;
                 }
@@ -274,7 +274,7 @@ namespace Domain.Providers.Campaigns
                     }
 
                     result = GoToTheNextPage<T>(webDriver, totalResults, ref lastPage);
-                    if(result.Succeeded == false)
+                    if (result.Succeeded == false)
                     {
                         return result;
                     }
@@ -336,7 +336,7 @@ namespace Domain.Providers.Campaigns
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
- 
+
             string currentUrl = webDriver.Url;
             string currentWindowHandleId = webDriver.CurrentWindowHandle;
 
@@ -357,16 +357,16 @@ namespace Domain.Providers.Campaigns
             HalOperationResult<T> result = new();
             IList<CampaignProspectRequest> campaignProspectRequests = new List<CampaignProspectRequest>();
             foreach (IWebElement connectableProspect in connectableProspects)
-            {   
+            {
                 if (NumberOfConnectionsSent >= message.ProspectsToCrawl)
                     break;
 
-                CampaignProspectRequest request = ExecuteSendConnectionInternal(webDriver, connectableProspect, message.CampaignId);                
-                campaignProspectRequests.Add(request);                
+                CampaignProspectRequest request = ExecuteSendConnectionInternal(webDriver, connectableProspect, message.CampaignId);
+                campaignProspectRequests.Add(request);
                 NumberOfConnectionsSent += 1;
             }
 
-            if(campaignProspectRequests.Count > 0)
+            if (campaignProspectRequests.Count > 0)
             {
                 result = await _phaseDataProcessingProvider.ProcessConnectionRequestSentForCampaignProspectsAsync<T>(campaignProspectRequests, message, message.CampaignId);
                 if (result.Succeeded == false)

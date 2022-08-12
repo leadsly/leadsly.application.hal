@@ -33,7 +33,7 @@ namespace Domain.Providers.Campaigns
             _humanBehaviorService = humanBehaviorService;
             _webDriverProvider = webDriverProvider;
             _linkedInPageFacade = linkedInPageFacade;
-            _logger = logger;            
+            _logger = logger;
         }
 
         private readonly ICampaignProspectsService _campaignProspectsService;
@@ -53,7 +53,7 @@ namespace Domain.Providers.Campaigns
                 ChromeProfileName = message.ChromeProfileName
             };
 
-            HalOperationResult<T> driverOperationResult = _webDriverProvider.GetOrCreateWebDriver<T>(operationData);
+            HalOperationResult<T> driverOperationResult = _webDriverProvider.GetOrCreateWebDriver<T>(operationData, message.GridNamespaceName, message.GridServiceDiscoveryName);
             if (driverOperationResult.Succeeded == false)
             {
                 _logger.LogWarning("There was an issue getting or creating webdriver instance");
@@ -64,7 +64,7 @@ namespace Domain.Providers.Campaigns
 
             result = SendConnections<T>(webDriver, message, sentConnectionsUrlStatusPayload);
 
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 return result;
             }
@@ -91,7 +91,7 @@ namespace Domain.Providers.Campaigns
             if (sentConnectionsUrlStatus.WindowHandleId != string.Empty)
             {
                 result = _webDriverProvider.SwitchTo<T>(webDriver, sentConnectionsUrlStatus.WindowHandleId);
-                if(result.Succeeded == false)
+                if (result.Succeeded == false)
                 {
                     result = _webDriverProvider.NewTab<T>(webDriver);
                     if (result.Succeeded == false)
@@ -122,7 +122,7 @@ namespace Domain.Providers.Campaigns
             }
 
             result = SendConnectionRequests<T>(webDriver, message.SendConnectionsStage.ConnectionsLimit, message.CampaignId, message.TimeZoneId, sentConnectionsUrlStatusPayload);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 return result;
             }
@@ -170,7 +170,7 @@ namespace Domain.Providers.Campaigns
 
                 foreach (IWebElement prospect in gatherProspectsResult.Value.ProspectElements)
                 {
-                    if(stageConnectionsLimit == 0)
+                    if (stageConnectionsLimit == 0)
                     {
                         // update sent connections url status
                         currentSentConnectionsUrlStatus.CurrentUrl = webDriver.Url;
@@ -199,7 +199,7 @@ namespace Domain.Providers.Campaigns
 
                     _humanBehaviorService.RandomWaitMilliSeconds(700, 1400);
                     result = _linkedInPageFacade.LinkedInSearchPage.ClickSendInModal<T>(webDriver);
-                    if(result.Succeeded == false)
+                    if (result.Succeeded == false)
                     {
                         continue;
                     }
@@ -210,7 +210,7 @@ namespace Domain.Providers.Campaigns
                 }
 
                 result = _linkedInPageFacade.LinkedInSearchPage.ScrollFooterIntoView<T>(webDriver);
-                if(result.Succeeded == false)
+                if (result.Succeeded == false)
                 {
                     return result;
                 }
@@ -225,7 +225,7 @@ namespace Domain.Providers.Campaigns
                     currentSentConnectionsUrlStatus.LastActivityTimestamp = new DateTimeOffset().ToUnixTimeSeconds();
                     updatedSentConnectionsUrlStatusRequests.Add(currentSentConnectionsUrlStatus);
 
-                    if(allSentConnectionsUrlStatuses.Count > 0)
+                    if (allSentConnectionsUrlStatuses.Count > 0)
                     {
                         currentSentConnectionsUrlStatus = allSentConnectionsUrlStatuses.Dequeue();
 
@@ -259,7 +259,7 @@ namespace Domain.Providers.Campaigns
             }
 
             ISendConnectionsPayload campaignProspectsPayload = default;
-            finalize:
+        finalize:
             {
                 campaignProspectsPayload = new SendConnectionsPayload
                 {

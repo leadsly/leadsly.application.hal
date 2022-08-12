@@ -1,5 +1,4 @@
 ﻿using Domain.Facades.Interfaces;
-using Domain.POMs.Pages;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
@@ -17,7 +16,7 @@ namespace Domain.Providers.Campaigns
     public class FollowUpMessagesProvider : IFollowUpMessagesProvider
     {
         public FollowUpMessagesProvider(
-            ILinkedInPageFacade linkedInPageFacade, 
+            ILinkedInPageFacade linkedInPageFacade,
             ILogger<FollowUpMessagesProvider> logger,
             IHumanBehaviorService humanBehaviorService,
             ITimestampService timestampService,
@@ -27,7 +26,7 @@ namespace Domain.Providers.Campaigns
             _humanBehaviorService = humanBehaviorService;
             _linkedInPageFacade = linkedInPageFacade;
             _timestampService = timestampService;
-            _webDriverProvider = webDriverProvider;            
+            _webDriverProvider = webDriverProvider;
         }
 
         private readonly IHumanBehaviorService _humanBehaviorService;
@@ -49,9 +48,9 @@ namespace Domain.Providers.Campaigns
                 PageUrl = message.PageUrl
             };
 
-            HalOperationResult<T> driverOperationResult = _webDriverProvider.GetOrCreateWebDriver<T>(operationData);
+            HalOperationResult<T> driverOperationResult = _webDriverProvider.GetOrCreateWebDriver<T>(operationData, message.GridNamespaceName, message.GridServiceDiscoveryName);
 
-            if(driverOperationResult.Succeeded == false)
+            if (driverOperationResult.Succeeded == false)
             {
                 _logger.LogWarning("There was an issue getting or creating webdriver instance");
                 return result;
@@ -84,7 +83,7 @@ namespace Domain.Providers.Campaigns
             _humanBehaviorService.RandomClickElement(messagingHeader);
 
             result = _linkedInPageFacade.LinkedInMessagingPage.ClickCreateNewMessage<T>(webDriver);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 _logger.LogWarning("Failed to click create new message button");
                 return result;
@@ -93,14 +92,14 @@ namespace Domain.Providers.Campaigns
             _humanBehaviorService.RandomWaitMilliSeconds(600, 1200);
 
             result = _linkedInPageFacade.LinkedInMessagingPage.EnterProspectsName<T>(webDriver, message.ProspectName);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 _logger.LogWarning("Failed to enter user's name when creating new message");
                 return result;
             }
 
             result = _linkedInPageFacade.LinkedInMessagingPage.ConfirmProspectName<T>(webDriver);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 return result;
             }
@@ -108,7 +107,7 @@ namespace Domain.Providers.Campaigns
             _humanBehaviorService.RandomWaitMilliSeconds(300, 500);
 
             result = _linkedInPageFacade.LinkedInMessagingPage.ClickWriteAMessageBox<T>(webDriver);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 return result;
             }
@@ -116,14 +115,14 @@ namespace Domain.Providers.Campaigns
             _humanBehaviorService.RandomWaitMilliSeconds(300, 500);
 
             result = _linkedInPageFacade.LinkedInMessagingPage.EnterMessageContent<T>(webDriver, message.Content);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 _logger.LogWarning("Failed to enter message content");
                 return result;
             }
 
             result = _linkedInPageFacade.LinkedInMessagingPage.ClickSend<T>(webDriver);
-            if(result.Succeeded == false)
+            if (result.Succeeded == false)
             {
                 return result;
             }

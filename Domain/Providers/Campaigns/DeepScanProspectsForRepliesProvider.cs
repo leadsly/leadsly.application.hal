@@ -5,7 +5,6 @@ using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Campaigns.Interfaces;
-using Leadsly.Application.Model.Entities.Campaigns;
 using Leadsly.Application.Model.LinkedInPages.Interface;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;
@@ -41,7 +40,7 @@ namespace Domain.Providers.Campaigns
         private readonly ILogger<DeepScanProspectsForRepliesProvider> _logger;
         private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly ILinkedInPageFacade _linkedInPageFacade;
-        private readonly IWebDriverProvider _webDriverProvider;                
+        private readonly IWebDriverProvider _webDriverProvider;
 
         public HalOperationResult<T> ExecutePhase<T>(ScanProspectsForRepliesBody message) where T : IOperationResponse
         {
@@ -67,7 +66,7 @@ namespace Domain.Providers.Campaigns
                 ChromeProfileName = message.ChromeProfileName
             };
 
-            HalOperationResult<T> driverOperationResult = _webDriverProvider.GetOrCreateWebDriver<T>(operationData);
+            HalOperationResult<T> driverOperationResult = _webDriverProvider.GetOrCreateWebDriver<T>(operationData, message.GridNamespaceName, message.GridServiceDiscoveryName);
             if (driverOperationResult.Succeeded == false)
             {
                 _logger.LogWarning("There was an issue getting or creating webdriver instance");
@@ -144,7 +143,7 @@ namespace Domain.Providers.Campaigns
             }
             catch (WebDriverTimeoutException ex)
             {
-                _logger.LogWarning(ex, "Search results from before hal entered in search term and AFTER hal entered search term are the same! Most cases they should be different");                
+                _logger.LogWarning(ex, "Search results from before hal entered in search term and AFTER hal entered search term are the same! Most cases they should be different");
             }
 
             return searchResultsDiffer;
@@ -162,7 +161,7 @@ namespace Domain.Providers.Campaigns
             while (sw.Elapsed.TotalSeconds < 15)
             {
                 bool searchResultsDiffer = WaitForSearchResults(webDriver, beforeSearchMessagesCount);
-                if(searchResultsDiffer == false)
+                if (searchResultsDiffer == false)
                 {
                     break;
                 }
@@ -196,7 +195,7 @@ namespace Domain.Providers.Campaigns
             try
             {
                 WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(15));
-                wait.Until(drv => 
+                wait.Until(drv =>
                 {
                     isActive = _linkedInPageFacade.LinkedInMessagingPage.IsConversationListItemActive(targetProspect);
                     return isActive;
@@ -240,16 +239,16 @@ namespace Domain.Providers.Campaigns
                     continue;
                 }
 
-                IWebElement targetProspect = GetProspectsMessageItem(webDriver, contactedCampaignProspect.Name, conversationsBeforeSearch);                
+                IWebElement targetProspect = GetProspectsMessageItem(webDriver, contactedCampaignProspect.Name, conversationsBeforeSearch);
 
-                if(targetProspect == null)
+                if (targetProspect == null)
                 {
                     continue;
                 }
 
                 _linkedInPageFacade.LinkedInMessagingPage.ClickConverstaionListItem(targetProspect);
                 bool isActive = IsConversationListItemActive(webDriver, targetProspect);
-                if(isActive == false)
+                if (isActive == false)
                 {
                     continue;
                 }
@@ -282,7 +281,7 @@ namespace Domain.Providers.Campaigns
                     if (prospectName == contactedCampaignProspect.Name)
                     {
                         // we have a resonse from the prospect add it to payload going out to the server
-                        string response = _linkedInPageFacade.LinkedInMessagingPage.GetMessageContent(nextMessage);                        
+                        string response = _linkedInPageFacade.LinkedInMessagingPage.GetMessageContent(nextMessage);
                         ProspectRepliedRequest request = CreateProspectRepliedRequest(contactedCampaignProspect, response, prospectName, message.TimeZoneId);
                         prospectsReplied.Add(request);
                     }
