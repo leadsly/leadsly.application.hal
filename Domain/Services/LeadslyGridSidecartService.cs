@@ -43,7 +43,9 @@ namespace Domain.Services
             HttpResponseMessage response = default;
             try
             {
+                _logger.LogDebug("Sending request to clone chrome profile");
                 response = await _httpClient.SendAsync(req, ct);
+                _logger.LogDebug("Finished sending request to clone chrome profile");
             }
             catch (Exception ex)
             {

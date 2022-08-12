@@ -66,7 +66,7 @@ namespace Domain.Services
                 url = $"http://{serviceDiscoveryName}.{namespaceName}/api";
             }
 
-            _logger.LogDebug("Final app server url is {url}", url);
+            _logger.LogDebug("Final grid and sidecart url is {url}", url);
             return url;
         }
     }
