@@ -34,6 +34,9 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app .
 
+RUN apt-get update && apt-get install -y \
+	curl
+
 ENV AWS_ACCESS_KEY_ID=AKIA2KIVUGORHZXNMOVT
 ENV AWS_REGION=us-east-1
 ENV AWS_SECRET_ACCESS_KEY=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
