@@ -3,7 +3,6 @@ using Domain.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,7 +37,7 @@ namespace Domain.Services
                     DefaultChromeProfileName = request.DefaultChromeProfileName,
                     ProfilesVolume = request.ProfilesVolume,
                     UseGrid = request.UseGrid
-                }, new MediaTypeHeaderValue("application/json"))
+                })
             };
 
             string newChromeProfile = request.NewChromeProfile;
