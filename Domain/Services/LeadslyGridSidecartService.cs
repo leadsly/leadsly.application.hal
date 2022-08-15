@@ -3,6 +3,7 @@ using Domain.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,7 +38,7 @@ namespace Domain.Services
                     DefaultChromeProfileName = request.DefaultChromeProfileName,
                     ProfilesVolume = request.ProfilesVolume,
                     UseGrid = request.UseGrid
-                })
+                }, new MediaTypeHeaderValue("application/json"))
             };
 
             string newChromeProfile = request.NewChromeProfile;
@@ -56,6 +57,7 @@ namespace Domain.Services
             try
             {
                 _logger.LogDebug("Sending request to clone chrome profile");
+                _httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
                 response = await _httpClient.SendAsync(req, ct);
                 _logger.LogDebug("Finished sending request to clone chrome profile");
             }
