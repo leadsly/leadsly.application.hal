@@ -40,6 +40,18 @@ namespace Domain.Services
                 })
             };
 
+            string newChromeProfile = request.NewChromeProfile;
+            string defaultChromeUserProfileDir = request.DefaultChromeUserProfilesDir;
+            string defaultChromeProfilename = request.DefaultChromeProfileName;
+            string profilesVolume = request.ProfilesVolume;
+            bool? userGrid = request.UseGrid;
+
+            _logger.LogDebug("The request is configured with NewChromeProfile to be {newChromeProfile}", newChromeProfile);
+            _logger.LogDebug("The request is configured with DefaultChromeProfileDir to be {defaultChromeUserProfileDir}", defaultChromeUserProfileDir);
+            _logger.LogDebug("The request is configured with DefaultChromeProfileName to be {defaultChromeProfilename}", defaultChromeProfilename);
+            _logger.LogDebug("The request is configured with ProfileVolume to be {profilesVolume}", profilesVolume);
+            _logger.LogDebug("The request is configured with UseGrid to be {userGrid}", userGrid);
+
             HttpResponseMessage response = default;
             try
             {
