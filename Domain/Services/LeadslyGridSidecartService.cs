@@ -35,7 +35,7 @@ namespace Domain.Services
                     NewChromeProfile = request.NewChromeProfile,
                     DefaultChromeUserProfilesDir = request.DefaultChromeUserProfilesDir,
                     DefaultChromeProfileName = request.DefaultChromeProfileName,
-                    ProfilesVolume = request.ProfilesVolume,
+                    ProfilesVolume = request.ProfilesVolume == null ? "" : request.ProfilesVolume,
                     UseGrid = request.UseGrid
                 })
             };
