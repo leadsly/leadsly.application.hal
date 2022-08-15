@@ -42,7 +42,7 @@ namespace Domain.RabbitMQ
             channel.QueueDeclare(queue: queueName,
                              durable: true,
                              exclusive: false,
-                             autoDelete: false,
+                             autoDelete: true,
                              arguments: arguments);
 
             string routingKey = options.RoutingKey.Replace("{halId}", halId);
