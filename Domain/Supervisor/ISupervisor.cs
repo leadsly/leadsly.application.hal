@@ -21,5 +21,7 @@ namespace Domain.Supervisor
 
         TwoFactorAuthResultResponse EnterTwoFactorAuth(TwoFactorAuthRequest request);
 
+        EmailChallengePinResultResponse EnterEmailChallengePin(EmailChallengePinRequest request);
+
     }
 }

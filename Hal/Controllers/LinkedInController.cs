@@ -40,5 +40,14 @@ namespace Hal.Controllers
 
             return response == null ? BadRequest(ProblemDetailsDescriptions.TwoFactorAuth) : Ok(response);
         }
+
+        [HttpPost("email-challenge-pin")]
+        [AuthAttemptCount]
+        public IActionResult EnterEmailChallengePinAuth([FromBody] EmailChallengePinRequest request)
+        {
+            EmailChallengePinResultResponse response = _supervisor.EnterEmailChallengePin(request);
+
+            return response == null ? BadRequest(ProblemDetailsDescriptions.TwoFactorAuth) : Ok(response);
+        }
     }
 }

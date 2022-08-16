@@ -123,6 +123,36 @@ namespace PageObjects.Pages
                 _logger.LogError("[LinkedInLoginPage]: Failed to locate two factor authentication input control.");
             }
             return twoFactorAuthenticationCodeInput;
+        }
+
+        private IWebElement EmailChallengePinInput(IWebDriver webDriver)
+        {
+            IWebElement input = null;
+            try
+            {
+                input = EmailChallengePinForm(webDriver).FindElement(By.Id("input__email-verification_pin"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("[LinkedInLoginPage]: Failed to locate email challenge pin input control.");
+            }
+            return input;
+
+        }
+
+        private IWebElement EmailChallengePinSubmitButton(IWebDriver webDriver)
+        {
+
+            IWebElement button = null;
+            try
+            {
+                button = EmailChallengePinForm(webDriver).FindElement(By.CssSelector(".form__action button#two-step-submit-button"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("[LinkedInLoginPage]: Failed to locate email challenge pin submit button.");
+            }
+            return button;
 
         }
 
@@ -162,6 +192,21 @@ namespace PageObjects.Pages
             }
 
             return twoFactorAuthAppView;
+        }
+
+        private IWebElement EmailChallengePinForm(IWebDriver webDriver)
+        {
+            IWebElement form = default;
+            try
+            {
+                form = webDriver.FindElement(By.Id("email-pin-challenge"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("[LinkedInLoginPage]: Failed to locate email challenge pin form.");
+            }
+
+            return form;
         }
 
         private IWebElement TwoFactorAuthSMSView(IWebDriver webDriver)
@@ -408,13 +453,12 @@ namespace PageObjects.Pages
         {
             HalOperationResult<T> result = new();
 
-            Random rnd = new Random(300);
             try
             {
                 foreach (char character in twoFactorAuthCode)
                 {
                     TwoFactorAuthenticationCodeInput(webDriver).SendKeys(character.ToString());
-                    Thread.Sleep(rnd.Next(500));
+                    _humanBehaviorService.RandomWaitMilliSeconds(500, 1000);
                 }
             }
             catch (Exception ex)
@@ -434,16 +478,46 @@ namespace PageObjects.Pages
             return result;
         }
 
+        public HalOperationResult<T> EnterEmailChallengePin<T>(IWebDriver driver, string pin)
+            where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            try
+            {
+                foreach (char character in pin)
+                {
+                    EmailChallengePinInput(driver).SendKeys(character.ToString());
+                    _humanBehaviorService.RandomWaitMilliSeconds(500, 850);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to enter email challenge pin");
+                result.WebDriverError = true;
+                result.Failures.Add(new()
+                {
+                    Code = Codes.WEBDRIVER_ERROR,
+                    Reason = "Failed to enter user's email challenge pin",
+                    Detail = ex.Message
+                });
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+
+        }
+
         public HalOperationResult<T> SubmitTwoFactorAuthCode<T>(IWebDriver webDriver)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
 
-            Random rnd = new Random(300);
             try
             {
                 TwoStepAuthenticationSubmitButton(webDriver).Click();
-                Thread.Sleep(rnd.Next(1000));
+                _humanBehaviorService.RandomWaitMilliSeconds(500, 1000);
             }
             catch (Exception ex)
             {
@@ -462,14 +536,40 @@ namespace PageObjects.Pages
             return result;
         }
 
+        public HalOperationResult<T> SubmitEmailChallengePin<T>(IWebDriver webDriver)
+            where T : IOperationResponse
+        {
+            HalOperationResult<T> result = new();
+
+            try
+            {
+                EmailChallengePinSubmitButton(webDriver).Click();
+                _humanBehaviorService.RandomWaitMilliSeconds(500, 1000);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to submit user's email challenge pin");
+                result.Failures.Add(new()
+                {
+                    Code = Codes.WEBDRIVER_ERROR,
+                    Reason = "Failed to submit user's email challenge pin",
+                    Detail = ex.Message
+                });
+                result.WebDriverError = true;
+                return result;
+            }
+
+            result.Succeeded = true;
+            return result;
+        }
+
         public HalOperationResult<T> ConfirmAccountInfo<T>(IWebDriver webDriver)
             where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
-            Random rnd = new Random(300);
-            Thread.Sleep(rnd.Next(500));
+            _humanBehaviorService.RandomWaitMilliSeconds(500, 1000);
             this.ConfirmButton(webDriver).Click();
-            Thread.Sleep(rnd.Next(500));
+            _humanBehaviorService.RandomWaitMilliSeconds(500, 1000);
 
             if (this.ConfirmAccountDisplayed(webDriver))
             {
@@ -489,8 +589,7 @@ namespace PageObjects.Pages
         {
             HalOperationResult<T> result = new();
 
-            Random rnd = new Random(300);
-            Thread.Sleep(rnd.Next(500));
+            _humanBehaviorService.RandomWaitMilliSeconds(500, 1000);
             this.SkipButton(webDriver).Click();
 
             result.Succeeded = true;
@@ -535,13 +634,12 @@ namespace PageObjects.Pages
 
             try
             {
-                Random sendKeysTime = new Random(200);
                 foreach (char character in email)
                 {
                     EmailInput(webDriver).SendKeys(character.ToString());
 
                     // simulates user entering in email
-                    Thread.Sleep(sendKeysTime.Next(300));
+                    _humanBehaviorService.RandomWaitMilliSeconds(300, 600);
                 }
 
                 // verify email has been entered
@@ -801,6 +899,61 @@ namespace PageObjects.Pages
             return result;
         }
 
+        public EmailChallengePinResult DetermineEmailChallengeStatus(IWebDriver webDriver)
+        {
+            EmailChallengePinResult result = EmailChallengePinResult.None;
+            try
+            {
+                WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(30));
+                wait.Until(drv =>
+                {
+                    result = EmailChallengePinViewResult(drv);
+                    return result != EmailChallengePinResult.Unknown;
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("WebDrivers wait method timedout. This means that the maximum allowed wait time elapsed and the element was not found. Wait time in seconds: ", 30);
+            }
+            return result;
+        }
+
+        private EmailChallengePinResult EmailChallengePinViewResult(IWebDriver webDriver)
+        {
+            IWebElement signedIn = _webDriverUtilities.WaitUntilNotNull(HomePageView, webDriver, 3);
+            if (signedIn != null)
+            {
+                return EmailChallengePinResult.SignedIn;
+            }
+
+            IWebElement invalidCodeBanner = _webDriverUtilities.WaitUntilNotNull(InvalidEmailChallengePinBanner, webDriver, 3);
+            if (invalidCodeBanner != null)
+            {
+                return EmailChallengePinResult.InvalidOrExpiredPin;
+            }
+
+            // wait until twofactor auth
+            IWebElement twoFactorAuthAppView = _webDriverUtilities.WaitUntilNotNull(TwoFactorAuthAppView, webDriver, 3);
+            if (twoFactorAuthAppView != null)
+            {
+                return EmailChallengePinResult.TwoFactorAuthRequired;
+            }
+
+            IWebElement twoFactorAuthSMSView = _webDriverUtilities.WaitUntilNotNull(TwoFactorAuthSMSView, webDriver, 3);
+            if (twoFactorAuthSMSView != null)
+            {
+                return EmailChallengePinResult.TwoFactorAuthRequired;
+            }
+
+            IWebElement errorToast = _webDriverUtilities.WaitUntilNotNull(ErrorToaster, webDriver, 3);
+            if (errorToast != null)
+            {
+                return EmailChallengePinResult.ToastErrorMessage;
+            }
+
+            return EmailChallengePinResult.Unknown;
+        }
+
         private TwoFactorAuthResult TwoFactorAuthViewResult(IWebDriver webDriver)
         {
             IWebElement signedIn = _webDriverUtilities.WaitUntilNotNull(HomePageView, webDriver, 3);
@@ -838,6 +991,20 @@ namespace PageObjects.Pages
             return invalidTwoFactorAuthCodeBanner;
         }
 
+        private IWebElement InvalidEmailChallengePinBanner(IWebDriver webDriver)
+        {
+            IWebElement banner = default;
+            try
+            {
+                banner = webDriver.FindElement(By.ClassName("body__banner--error"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Could not locate error banner indicating the email challenge pin was invalid.");
+            }
+            return banner;
+        }
+
         private IWebElement ErrorToaster(IWebDriver webDriver)
         {
             IWebElement toast = default;
@@ -852,7 +1019,7 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogInformation("Something unexpected toast displayed. This probably means that the password entered is incorrect");
+                _logger.LogInformation("Something unexpected toast displayed. This probably means that the password/code/pin entered is incorrect");
             }
             return toast;
         }

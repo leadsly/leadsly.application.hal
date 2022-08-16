@@ -61,16 +61,19 @@ namespace Domain.Supervisor
 
             if (signInOperationResult == SignInOperationResult.None)
             {
+                _logger.LogInformation("SignInOperationResult is None");
                 return null;
             }
 
             if (signInOperationResult == SignInOperationResult.Unknown)
             {
+                _logger.LogInformation("SignInOperationResult is Unknown");
                 return null;
             }
 
             if (signInOperationResult == SignInOperationResult.HomePage)
             {
+                _logger.LogInformation("SignInOperationResult is HomePage");
                 return new()
                 {
                     TwoFactorAuthRequired = false,
@@ -81,6 +84,7 @@ namespace Domain.Supervisor
 
             if (signInOperationResult == SignInOperationResult.InvalidEmail)
             {
+                _logger.LogInformation("SignInOperationResult is InvalidEmail");
                 HalOperationResult<IOperationResponse> reenterEmailResult = _linkedInPageFacade.LinkedInLoginPage.ReEnterEmail<IOperationResponse>(webDriver, username);
                 if (reenterEmailResult.Succeeded == false)
                 {
@@ -112,6 +116,7 @@ namespace Domain.Supervisor
 
             if (signInOperationResult == SignInOperationResult.InvalidPassword)
             {
+                _logger.LogInformation("SignInOperationResult is InvalidPassword");
                 HalOperationResult<IOperationResponse> reenterPasswordResult = _linkedInPageFacade.LinkedInLoginPage.ReEnterPassword<IOperationResponse>(webDriver, password);
                 if (reenterPasswordResult.Succeeded == false)
                 {
@@ -129,6 +134,7 @@ namespace Domain.Supervisor
 
             if (signInOperationResult == SignInOperationResult.SignIn)
             {
+                _logger.LogInformation("SignInOperationResult is SignIn");
                 HalOperationResult<IOperationResponse> enterEmailResult = _linkedInPageFacade.LinkedInLoginPage.EnterEmail<IOperationResponse>(webDriver, username);
                 if (enterEmailResult.Succeeded == false)
                 {
@@ -158,8 +164,21 @@ namespace Domain.Supervisor
 
             AfterSignInResult afterSigninResult = _linkedInPageFacade.LinkedInPage.DetermineAfterSigninStatus(webDriver);
 
+            if (afterSigninResult == AfterSignInResult.EmailPinChallenge)
+            {
+                _logger.LogInformation("AfterSigninResult is EmailPinChallenge");
+                return new()
+                {
+                    EmailPinChallenge = true,
+                    TwoFactorAuthRequired = false,
+                    TwoFactorAuthType = TwoFactorAuthType.None,
+                    UnexpectedErrorOccured = false
+                };
+            }
+
             if (afterSigninResult == AfterSignInResult.HomePage)
             {
+                _logger.LogInformation("AfterSignInResult is HomePage");
                 return new()
                 {
                     TwoFactorAuthRequired = false,
@@ -170,6 +189,7 @@ namespace Domain.Supervisor
 
             if (afterSigninResult == AfterSignInResult.TwoFactorAuthRequired)
             {
+                _logger.LogInformation("AfterSignInResult is TwoFactorAuthRequired");
                 TwoFactorAuthType twoFactorAuthType = _linkedInPageFacade.LinkedInLoginPage.TwoFactorAuthenticationType(webDriver);
                 return new()
                 {
@@ -181,6 +201,7 @@ namespace Domain.Supervisor
 
             if (afterSigninResult == AfterSignInResult.InvalidEmail)
             {
+                _logger.LogInformation("AfterSignInResult is InvalidEmail");
                 return new()
                 {
                     InvalidEmail = true,
@@ -192,6 +213,7 @@ namespace Domain.Supervisor
 
             if (afterSigninResult == AfterSignInResult.InvalidPassword)
             {
+                _logger.LogInformation("AfterSignInResult is InvalidPassword");
                 return new()
                 {
                     InvalidPassword = true,
@@ -221,6 +243,123 @@ namespace Domain.Supervisor
             }
 
             return resp;
+        }
+
+        public EmailChallengePinResultResponse EnterEmailChallengePin(EmailChallengePinRequest request)
+        {
+            EmailChallengePinResultResponse resp = default;
+            try
+            {
+                resp = EnterEmailChlngPin(request);
+            }
+            finally
+            {
+                if (resp.FailedToEnterPin == false && resp.InvalidOrExpiredPin == false && resp.UnexpectedErrorOccured == false && resp.TwoFactorAuthRequired == false)
+                {
+                    this._logger.LogInformation("Closing browser after entering email challenge pin");
+                    _webDriverProvider.CloseBrowser<IOperationResponse>(BrowserPurpose.Auth);
+                }
+            }
+
+            return resp;
+        }
+
+        private EmailChallengePinResultResponse EnterEmailChlngPin(EmailChallengePinRequest request)
+        {
+            IWebDriver webDriver = _webDriverProvider.GetWebDriver(BrowserPurpose.Auth);
+            if (webDriver == null)
+            {
+                return null;
+            }
+
+            HalOperationResult<IOperationResponse> enterCodeResult = _linkedInPageFacade.LinkedInLoginPage.EnterEmailChallengePin<IOperationResponse>(webDriver, request.Pin);
+            if (enterCodeResult.Succeeded == false)
+            {
+                return new()
+                {
+                    TwoFactorAuthRequired = false,
+                    FailedToEnterPin = true,
+                    InvalidOrExpiredPin = false,
+                    UnexpectedErrorOccured = false
+                };
+            }
+
+            _humanBehaviorService.RandomWaitMilliSeconds(400, 950);
+            HalOperationResult<IOperationResponse> submitCodeResult = _linkedInPageFacade.LinkedInLoginPage.SubmitEmailChallengePin<IOperationResponse>(webDriver);
+            if (submitCodeResult.Succeeded == false)
+            {
+                return new()
+                {
+                    TwoFactorAuthRequired = false,
+                    FailedToEnterPin = false,
+                    InvalidOrExpiredPin = false,
+                    UnexpectedErrorOccured = true
+                };
+            }
+
+            EmailChallengePinResult emailChallengePinResult = _linkedInPageFacade.LinkedInLoginPage.DetermineEmailChallengeStatus(webDriver);
+
+            if (emailChallengePinResult == EmailChallengePinResult.Unknown)
+            {
+                return null;
+            }
+
+            if (emailChallengePinResult == EmailChallengePinResult.None)
+            {
+                return null;
+            }
+
+            if (emailChallengePinResult == EmailChallengePinResult.InvalidOrExpiredPin)
+            {
+                return new()
+                {
+                    TwoFactorAuthRequired = false,
+                    FailedToEnterPin = false,
+                    InvalidOrExpiredPin = true,
+                    UnexpectedErrorOccured = false
+                };
+            }
+
+            if (emailChallengePinResult == EmailChallengePinResult.TwoFactorAuthRequired)
+            {
+                return new()
+                {
+                    TwoFactorAuthRequired = true,
+                    FailedToEnterPin = false,
+                    InvalidOrExpiredPin = false,
+                    UnexpectedErrorOccured = false
+                };
+            }
+
+            if (emailChallengePinResult == EmailChallengePinResult.ToastErrorMessage)
+            {
+                return new()
+                {
+                    TwoFactorAuthRequired = false,
+                    FailedToEnterPin = false,
+                    InvalidOrExpiredPin = false,
+                    UnexpectedErrorOccured = true
+                };
+            }
+
+            if (emailChallengePinResult == EmailChallengePinResult.UnexpectedError)
+            {
+                return new()
+                {
+                    TwoFactorAuthRequired = false,
+                    FailedToEnterPin = false,
+                    InvalidOrExpiredPin = false,
+                    UnexpectedErrorOccured = true
+                };
+            }
+
+            return new()
+            {
+                TwoFactorAuthRequired = false,
+                FailedToEnterPin = false,
+                UnexpectedErrorOccured = false,
+                InvalidOrExpiredPin = false
+            };
         }
 
         private TwoFactorAuthResultResponse EnterTwoFactorAuthCode(TwoFactorAuthRequest request)

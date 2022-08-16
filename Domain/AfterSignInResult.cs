@@ -4,6 +4,7 @@
     {
         None,
         TwoFactorAuthRequired,
+        EmailPinChallenge,
         HomePage,
         InvalidEmail,
         InvalidPassword,

@@ -13,6 +13,7 @@ namespace Domain.POMs.Pages
         public bool IsTwoFactorAuthRequired(IWebDriver webDriver);
         public TwoFactorAuthType TwoFactorAuthenticationType(IWebDriver webDriver);
         public TwoFactorAuthResult DetermineTwoFactorAuthStatus(IWebDriver webDriver);
+        public EmailChallengePinResult DetermineEmailChallengeStatus(IWebDriver webDriver);
         public IWebElement SomethingUnexpectedHappenedToast(IWebDriver webdriver);
 
         HalOperationResult<T> EnterEmail<T>(IWebDriver driver, string email)
@@ -33,6 +34,10 @@ namespace Domain.POMs.Pages
         HalOperationResult<T> EnterTwoFactorAuthCode<T>(IWebDriver driver, string code)
             where T : IOperationResponse;
         HalOperationResult<T> SubmitTwoFactorAuthCode<T>(IWebDriver driver)
+            where T : IOperationResponse;
+        HalOperationResult<T> EnterEmailChallengePin<T>(IWebDriver driver, string pin)
+            where T : IOperationResponse;
+        HalOperationResult<T> SubmitEmailChallengePin<T>(IWebDriver driver)
             where T : IOperationResponse;
         HalOperationResult<T> ConfirmAccountInfo<T>(IWebDriver driver)
             where T : IOperationResponse;

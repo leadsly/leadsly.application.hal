@@ -108,6 +108,12 @@ namespace PageObjects.Pages
 
         private AfterSignInResult AfterSignInViewResult(IWebDriver webDriver)
         {
+            IWebElement newPlaceSecurityCodeContainer = _webDriverUtilities.WaitUntilNotNull(EmailPinChallengeForm, webDriver, 3);
+            if (newPlaceSecurityCodeContainer != null)
+            {
+                return AfterSignInResult.EmailPinChallenge;
+            }
+
             IWebElement twoFactorAuthContainer = _webDriverUtilities.WaitUntilNotNull(TwoFactorAuthContainer, webDriver, 3);
             if (twoFactorAuthContainer != null)
             {
@@ -234,6 +240,13 @@ namespace PageObjects.Pages
             return twoFactorAuthContainer;
         }
 
+        public IWebElement EmailPinChallengeForm(IWebDriver webDriver)
+        {
+            IWebElement emailPinChallengeFormView = EmailPinChallengeFormView(webDriver);
+
+            return emailPinChallengeFormView;
+        }
+
         private IWebElement TwoFactorAuthSMSView(IWebDriver webDriver)
         {
 
@@ -276,6 +289,36 @@ namespace PageObjects.Pages
             }
 
             return twoFactorAuthAppView;
+        }
+
+        private IWebElement EmailPinChallengeFormView(IWebDriver webDriver)
+        {
+            IWebElement emailPinChallengeForm = default;
+            try
+            {
+                emailPinChallengeForm = webDriver.FindElement(By.Id("email-pin-challenge"));
+                if (emailPinChallengeForm != null)
+                {
+                    _logger.LogDebug("Email pin challenge form was found");
+                    // in case the form is not displayed or visible but is found
+                    if (emailPinChallengeForm.Displayed)
+                    {
+                        _logger.LogDebug("Email pin challenge form is displayed");
+                        return emailPinChallengeForm;
+                    }
+                    else
+                    {
+                        _logger.LogDebug("Email pin challenge form is not displayed");
+                        emailPinChallengeForm = null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation("[LinkedInLoginPage]: Failed to locate Email Pin Challenge form.");
+            }
+
+            return emailPinChallengeForm;
         }
 
 
