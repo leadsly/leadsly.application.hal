@@ -131,6 +131,7 @@ namespace PageObjects.Pages
             try
             {
                 input = EmailChallengePinForm(webDriver).FindElement(By.Id("input__email-verification_pin"));
+                _logger.LogDebug("[LinkedInLoginPage]: Email challenge pin input control located.");
             }
             catch (Exception ex)
             {
@@ -147,6 +148,7 @@ namespace PageObjects.Pages
             try
             {
                 button = EmailChallengePinForm(webDriver).FindElement(By.CssSelector(".form__action button#two-step-submit-button"));
+                _logger.LogDebug("[LinkedInLoginPage]: Email challenge pin submit button located.");
             }
             catch (Exception ex)
             {
@@ -200,6 +202,7 @@ namespace PageObjects.Pages
             try
             {
                 form = webDriver.FindElement(By.Id("email-pin-challenge"));
+                _logger.LogDebug("[LinkedInLoginPage]: Email challenge pin form found.");
             }
             catch (Exception ex)
             {
