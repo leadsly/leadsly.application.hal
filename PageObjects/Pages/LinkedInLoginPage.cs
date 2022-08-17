@@ -147,7 +147,7 @@ namespace PageObjects.Pages
             IWebElement button = null;
             try
             {
-                button = EmailChallengePinForm(webDriver).FindElement(By.CssSelector(".form__action button#two-step-submit-button"));
+                button = EmailChallengePinForm(webDriver).FindElement(By.CssSelector(".form__action button#email-pin-submit-button"));
                 _logger.LogDebug("[LinkedInLoginPage]: Email challenge pin submit button located.");
             }
             catch (Exception ex)
