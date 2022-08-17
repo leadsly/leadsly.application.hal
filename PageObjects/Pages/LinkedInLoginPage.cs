@@ -130,7 +130,7 @@ namespace PageObjects.Pages
             IWebElement input = null;
             try
             {
-                input = EmailChallengePinForm(webDriver).FindElement(By.Id("input__email-verification_pin"));
+                input = EmailChallengePinForm(webDriver).FindElement(By.Id("input__email_verification_pin"));
                 _logger.LogDebug("[LinkedInLoginPage]: Email challenge pin input control located.");
             }
             catch (Exception ex)
