@@ -12,6 +12,7 @@ namespace Domain.Supervisor
     public partial class Supervisor : ISupervisor
     {
         private const string SignInUrl = "https://www.LinkedIn.com";
+        private bool HomePageIsDisplayed { get; set; } = false;
 
         public SignInResultResponse SignUserIn(LinkedInSignInRequest request, StringValues attemptCountHeader)
         {
@@ -22,7 +23,7 @@ namespace Domain.Supervisor
             }
             finally
             {
-                if (resp.InvalidEmail == false && resp.InvalidPassword == false && resp.TwoFactorAuthRequired == false)
+                if (HomePageIsDisplayed == true)
                 {
                     this._logger.LogInformation("Closing browser after auth");
                     _webDriverProvider.CloseBrowser<IOperationResponse>(BrowserPurpose.Auth);
@@ -88,6 +89,7 @@ namespace Domain.Supervisor
                 HalOperationResult<IOperationResponse> reenterEmailResult = _linkedInPageFacade.LinkedInLoginPage.ReEnterEmail<IOperationResponse>(webDriver, username);
                 if (reenterEmailResult.Succeeded == false)
                 {
+                    _logger.LogDebug("ReenterEmailResult failed");
                     return new()
                     {
                         TwoFactorAuthRequired = false,
@@ -102,6 +104,7 @@ namespace Domain.Supervisor
                 HalOperationResult<IOperationResponse> reenterPasswordResult = _linkedInPageFacade.LinkedInLoginPage.ReEnterPasswordIfEmpty<IOperationResponse>(webDriver, password);
                 if (reenterPasswordResult.Succeeded == false)
                 {
+                    _logger.LogDebug("Re-entering password if password field is empty failed.");
                     return new()
                     {
                         TwoFactorAuthRequired = false,
@@ -120,6 +123,7 @@ namespace Domain.Supervisor
                 HalOperationResult<IOperationResponse> reenterPasswordResult = _linkedInPageFacade.LinkedInLoginPage.ReEnterPassword<IOperationResponse>(webDriver, password);
                 if (reenterPasswordResult.Succeeded == false)
                 {
+                    _logger.LogDebug("ReEnterPassword failed");
                     return new()
                     {
                         TwoFactorAuthRequired = false,
@@ -178,6 +182,7 @@ namespace Domain.Supervisor
 
             if (afterSigninResult == AfterSignInResult.HomePage)
             {
+                HomePageIsDisplayed = true;
                 _logger.LogInformation("AfterSignInResult is HomePage");
                 return new()
                 {

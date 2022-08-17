@@ -35,6 +35,7 @@ namespace PageObjects.Pages
 
         public SignInOperationResult DetermineSignInStatus(IWebDriver webDriver)
         {
+            _logger.LogInformation("Determining SignIn status. This is used to determine if user is already authenticated or not");
             SignInOperationResult result = SignInOperationResult.None;
             try
             {
@@ -57,18 +58,21 @@ namespace PageObjects.Pages
             IWebElement homePageNewsFeed = _webDriverUtilities.WaitUntilNotNull(HomePageNewsFeed, webDriver, 3);
             if (homePageNewsFeed != null)
             {
+                _logger.LogDebug("SignInOperationResult found HomePage. User is already authenticated");
                 return SignInOperationResult.HomePage;
             }
 
             IWebElement signInContainer = _webDriverUtilities.WaitUntilNotNull(SignInContainer, webDriver, 3);
             if (signInContainer != null)
             {
+                _logger.LogDebug("SignInOperationResult found SignInContainer. User is not authenticated");
                 return SignInOperationResult.SignIn;
             }
 
             IWebElement errorForUsernameDiv = _webDriverUtilities.WaitUntilNotNull(ErrorForUsernameDiv, webDriver, 3);
             if (errorForUsernameDiv != null)
             {
+                _logger.LogDebug("SignInOperationResult found ErrorForUsernameDiv. User is not authenticated");
                 if (errorForUsernameDiv.Displayed)
                 {
                     return SignInOperationResult.InvalidEmail;
@@ -78,6 +82,7 @@ namespace PageObjects.Pages
             IWebElement errorForPasswordDiv = _webDriverUtilities.WaitUntilNotNull(ErrorForPasswordDiv, webDriver, 3);
             if (errorForPasswordDiv != null)
             {
+                _logger.LogDebug("SignInOperationResult found ErrorForPasswordDiv. User is not authenticated");
                 if (errorForPasswordDiv.Displayed)
                 {
                     return SignInOperationResult.InvalidPassword;
@@ -89,6 +94,7 @@ namespace PageObjects.Pages
 
         public AfterSignInResult DetermineAfterSigninStatus(IWebDriver webDriver)
         {
+            _logger.LogInformation("Determining status of the page after hal clicked to sign user in");
             AfterSignInResult result = AfterSignInResult.None;
             try
             {
@@ -111,24 +117,28 @@ namespace PageObjects.Pages
             IWebElement newPlaceSecurityCodeContainer = _webDriverUtilities.WaitUntilNotNull(EmailPinChallengeForm, webDriver, 3);
             if (newPlaceSecurityCodeContainer != null)
             {
+                _logger.LogDebug("AfterSignInResult found EmailPinChallengeForm. User is not authenticated");
                 return AfterSignInResult.EmailPinChallenge;
             }
 
             IWebElement twoFactorAuthContainer = _webDriverUtilities.WaitUntilNotNull(TwoFactorAuthContainer, webDriver, 3);
             if (twoFactorAuthContainer != null)
             {
+                _logger.LogDebug("AfterSignInResult found TwoFactorAuthContainer. User is not authenticated");
                 return AfterSignInResult.TwoFactorAuthRequired;
             }
 
             IWebElement homePageNewsFeed = _webDriverUtilities.WaitUntilNotNull(HomePageNewsFeed, webDriver, 3);
             if (homePageNewsFeed != null)
             {
+                _logger.LogDebug("AfterSignInResult found HomePage. User is authenticated");
                 return AfterSignInResult.HomePage;
             }
 
             IWebElement errorForUsernameDiv = _webDriverUtilities.WaitUntilNotNull(ErrorForUsernameDiv, webDriver, 3);
             if (errorForUsernameDiv != null)
             {
+                _logger.LogDebug("AfterSignInResult found ErrorForUsernameDiv. User is not authenticated");
                 if (errorForUsernameDiv.Displayed)
                 {
                     return AfterSignInResult.InvalidEmail;
@@ -138,6 +148,7 @@ namespace PageObjects.Pages
             IWebElement errorForPasswordDiv = _webDriverUtilities.WaitUntilNotNull(ErrorForPasswordDiv, webDriver, 3);
             if (errorForPasswordDiv != null)
             {
+                _logger.LogDebug("AfterSignInResult found ErrorForPasswordDiv. User is not authenticated");
                 if (errorForPasswordDiv.Displayed)
                 {
                     return AfterSignInResult.InvalidPassword;
@@ -147,6 +158,7 @@ namespace PageObjects.Pages
             IWebElement errorToast = _webDriverUtilities.WaitUntilNotNull(ErrorToaster, webDriver, 3);
             if (errorToast != null)
             {
+                _logger.LogDebug("AfterSignInResult found ErrorToaster. User is not authenticated");
                 return AfterSignInResult.ToastMessageError;
             }
 
