@@ -26,6 +26,7 @@ namespace Hal.Controllers
         [AuthAttemptCount]
         public async Task<IActionResult> SignIn(LinkedInSignInRequest request)
         {
+            _logger.LogInformation("SignIn action executing.");
             HttpContext.Request.Headers.TryGetValue("X-Auth-Attempt-Count", out StringValues attemptCount);
             SignInResultResponse response = _supervisor.SignUserIn(request, attemptCount);
 
@@ -36,6 +37,8 @@ namespace Hal.Controllers
         [AuthAttemptCount]
         public IActionResult EnterTwoFactorAuth([FromBody] TwoFactorAuthRequest request)
         {
+            _logger.LogInformation("EnterTwoFactorAuth action executing.");
+
             TwoFactorAuthResultResponse response = _supervisor.EnterTwoFactorAuth(request);
 
             return response == null ? BadRequest(ProblemDetailsDescriptions.TwoFactorAuth) : Ok(response);
@@ -43,8 +46,9 @@ namespace Hal.Controllers
 
         [HttpPost("email-challenge-pin")]
         [AuthAttemptCount]
-        public IActionResult EnterEmailChallengePinAuth([FromBody] EmailChallengePinRequest request)
+        public IActionResult EnterEmailChallengePin([FromBody] EmailChallengePinRequest request)
         {
+            _logger.LogInformation("EnterEmailChallengePin action executing.");
             EmailChallengePinResultResponse response = _supervisor.EnterEmailChallengePin(request);
 
             return response == null ? BadRequest(ProblemDetailsDescriptions.TwoFactorAuth) : Ok(response);

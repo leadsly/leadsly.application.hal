@@ -882,6 +882,7 @@ namespace PageObjects.Pages
 
         public TwoFactorAuthResult DetermineTwoFactorAuthStatus(IWebDriver webDriver)
         {
+            _logger.LogInformation("Determining two factor auth status. This is used after hal clicks the button to submit TwoFactorAuthCode to determine current state of the page.");
             TwoFactorAuthResult result = TwoFactorAuthResult.None;
             try
             {
@@ -901,6 +902,7 @@ namespace PageObjects.Pages
 
         public EmailChallengePinResult DetermineEmailChallengeStatus(IWebDriver webDriver)
         {
+            _logger.LogInformation("Determining email challenge status. This is used after hal clicks the button to submit EmailChallengePin to determine current state of the page.");
             EmailChallengePinResult result = EmailChallengePinResult.None;
             try
             {
@@ -923,12 +925,14 @@ namespace PageObjects.Pages
             IWebElement signedIn = _webDriverUtilities.WaitUntilNotNull(HomePageView, webDriver, 3);
             if (signedIn != null)
             {
+                _logger.LogDebug("HomePage in view is visible. User successfully authenticated.");
                 return EmailChallengePinResult.SignedIn;
             }
 
-            IWebElement invalidCodeBanner = _webDriverUtilities.WaitUntilNotNull(InvalidEmailChallengePinBanner, webDriver, 3);
-            if (invalidCodeBanner != null)
+            IWebElement invalidPinBanner = _webDriverUtilities.WaitUntilNotNull(InvalidEmailChallengePinBanner, webDriver, 3);
+            if (invalidPinBanner != null)
             {
+                _logger.LogDebug("InvalidEmailChallengePinBanner is visible. User entered an invalid code.");
                 return EmailChallengePinResult.InvalidOrExpiredPin;
             }
 
@@ -936,18 +940,21 @@ namespace PageObjects.Pages
             IWebElement twoFactorAuthAppView = _webDriverUtilities.WaitUntilNotNull(TwoFactorAuthAppView, webDriver, 3);
             if (twoFactorAuthAppView != null)
             {
+                _logger.LogDebug("TwoFactorAuthAppView is visible. User entered in valid email challenge pin but now two factor auth is required. AuthetnicatorApp view detected.");
                 return EmailChallengePinResult.TwoFactorAuthRequired;
             }
 
             IWebElement twoFactorAuthSMSView = _webDriverUtilities.WaitUntilNotNull(TwoFactorAuthSMSView, webDriver, 3);
             if (twoFactorAuthSMSView != null)
             {
+                _logger.LogDebug("TwoFactorAuthSMSView is visible. User entered in valid email challenge pin but now two factor auth is required. SMS view detected.");
                 return EmailChallengePinResult.TwoFactorAuthRequired;
             }
 
             IWebElement errorToast = _webDriverUtilities.WaitUntilNotNull(ErrorToaster, webDriver, 3);
             if (errorToast != null)
             {
+                _logger.LogDebug("ErrorToaster is visible. User entered an invalid email challenge pin.");
                 return EmailChallengePinResult.ToastErrorMessage;
             }
 
@@ -959,18 +966,21 @@ namespace PageObjects.Pages
             IWebElement signedIn = _webDriverUtilities.WaitUntilNotNull(HomePageView, webDriver, 3);
             if (signedIn != null)
             {
+                _logger.LogDebug("HomePage in view is visible. User successfully authenticated.");
                 return TwoFactorAuthResult.SignedIn;
             }
 
             IWebElement invalidCodeBanner = _webDriverUtilities.WaitUntilNotNull(InvalidTwoFactorAuthCodeBanner, webDriver, 3);
             if (invalidCodeBanner != null)
             {
+                _logger.LogDebug("InvalidTwoFactorAuthCodeBanner is visible. User entered an invalid code.");
                 return TwoFactorAuthResult.InvalidOrExpiredCode;
             }
 
             IWebElement errorToast = _webDriverUtilities.WaitUntilNotNull(ErrorToaster, webDriver, 3);
             if (errorToast != null)
             {
+                _logger.LogDebug("ErrorToaster is visible. User entered an invalid two factor auth code or an error has occured.");
                 return TwoFactorAuthResult.ToastErrorMessage;
             }
 

@@ -274,12 +274,14 @@ namespace Domain.Supervisor
             IWebDriver webDriver = _webDriverProvider.GetWebDriver(BrowserPurpose.Auth);
             if (webDriver == null)
             {
+                _logger.LogError("WebDriver for BrowserPurpose.Auth is null. It is required to enter EmailChallengePin");
                 return null;
             }
 
             HalOperationResult<IOperationResponse> enterCodeResult = _linkedInPageFacade.LinkedInLoginPage.EnterEmailChallengePin<IOperationResponse>(webDriver, request.Pin);
             if (enterCodeResult.Succeeded == false)
             {
+                _logger.LogDebug("Failed to enter in EmailChallengePin");
                 return new()
                 {
                     TwoFactorAuthRequired = false,
@@ -288,11 +290,14 @@ namespace Domain.Supervisor
                     UnexpectedErrorOccured = false
                 };
             }
+            _logger.LogDebug("Successfully entered EmailChallengePin");
 
             _humanBehaviorService.RandomWaitMilliSeconds(400, 950);
+            _logger.LogDebug("Submitting EmailChallengePin");
             HalOperationResult<IOperationResponse> submitCodeResult = _linkedInPageFacade.LinkedInLoginPage.SubmitEmailChallengePin<IOperationResponse>(webDriver);
             if (submitCodeResult.Succeeded == false)
             {
+                _logger.LogDebug("Failed to submit EmailChallengePin");
                 return new()
                 {
                     TwoFactorAuthRequired = false,
@@ -306,16 +311,19 @@ namespace Domain.Supervisor
 
             if (emailChallengePinResult == EmailChallengePinResult.Unknown)
             {
+                _logger.LogDebug("Unknown EmailChallengePinResult");
                 return null;
             }
 
             if (emailChallengePinResult == EmailChallengePinResult.None)
             {
+                _logger.LogDebug("None EmailChallengePinResult");
                 return null;
             }
 
             if (emailChallengePinResult == EmailChallengePinResult.InvalidOrExpiredPin)
             {
+                _logger.LogDebug("InvalidOrExpiredPin EmailChallengePinResult");
                 return new()
                 {
                     TwoFactorAuthRequired = false,
@@ -327,6 +335,7 @@ namespace Domain.Supervisor
 
             if (emailChallengePinResult == EmailChallengePinResult.TwoFactorAuthRequired)
             {
+                _logger.LogDebug("TwoFactorAuthRequired EmailChallengePinResult");
                 return new()
                 {
                     TwoFactorAuthRequired = true,
@@ -338,6 +347,7 @@ namespace Domain.Supervisor
 
             if (emailChallengePinResult == EmailChallengePinResult.ToastErrorMessage)
             {
+                _logger.LogDebug("ToastErrorMessage EmailChallengePinResult");
                 return new()
                 {
                     TwoFactorAuthRequired = false,
@@ -349,6 +359,7 @@ namespace Domain.Supervisor
 
             if (emailChallengePinResult == EmailChallengePinResult.UnexpectedError)
             {
+                _logger.LogDebug("UnexpectedError EmailChallengePinResult");
                 return new()
                 {
                     TwoFactorAuthRequired = false,
