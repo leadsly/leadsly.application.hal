@@ -97,12 +97,6 @@ namespace Domain.Providers.Campaigns
 
             IWebDriver webDriver = ((IGetOrCreateWebDriverOperation)driverOperationResult.Value).WebDriver;
 
-            result = _webDriverProvider.NewTab<T>(webDriver);
-            if (result.Succeeded == false)
-            {
-                return result;
-            }
-
             result = GoToPage<T>(webDriver, message.PageUrl);
             if (result.Succeeded == false)
             {
