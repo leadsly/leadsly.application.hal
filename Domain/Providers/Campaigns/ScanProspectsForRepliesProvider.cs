@@ -112,19 +112,29 @@ namespace Domain.Providers.Campaigns
         {
             _logger.LogDebug("[ScanProspectsForReplies]: Setting IsRunning property to 'true'");
             IsRunning = true;
-            DateTimeOffset endOfWorkDayLocal = _timestampService.ParseDateTimeOffsetLocalized(message.TimeZoneId, message.EndOfWorkday);
-            while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayLocal)
+            try
             {
-                _logger.LogDebug("[ScanProspectsForReplies]: Waiting between 30 to 45 seconds to start scanning.");
-                _humanService.RandomWaitSeconds(30, 45);
+                DateTimeOffset endOfWorkDayLocal = _timestampService.ParseDateTimeOffsetLocalized(message.TimeZoneId, message.EndOfWorkday);
+                while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayLocal)
+                {
+                    _logger.LogDebug("[ScanProspectsForReplies]: Waiting between 30 to 45 seconds to start scanning.");
+                    _humanService.RandomWaitSeconds(30, 45);
 
-                _logger.LogDebug("[ScanProspectsForReplies]: Looking to close any active message windows.");
-                CloseAllConversations(webDriver);
+                    _logger.LogDebug("[ScanProspectsForReplies]: Looking to close any active message windows.");
+                    CloseAllConversations(webDriver);
 
-                await ScanProspectsAsync<IOperationResponse>(webDriver, message);
+                    await ScanProspectsAsync<IOperationResponse>(webDriver, message);
+                }
             }
-            _logger.LogDebug("[ScanProspectsForReplies]: Setting IsRunning property to 'false'");
-            IsRunning = false;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occured while executing ScanProspectsForReplies phase");
+            }
+            finally
+            {
+                _logger.LogDebug("[ScanProspectsForReplies]: Setting IsRunning property to 'false'");
+                IsRunning = false;
+            }
 
             _logger.LogInformation("[ScanProspectsForReplies]: Stopping to look for new messages from prospects. ScanProspectsForReplies finished running because it is end of the work day");
         }

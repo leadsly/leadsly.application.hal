@@ -164,37 +164,47 @@ namespace Domain.Providers.Campaigns
         {
             _logger.LogDebug("[MonitorForNewConnections]: Setting IsRunning property to 'true'");
             IsRunning = true;
-            DateTimeOffset endOfWorkDayLocal = _timestampService.ParseDateTimeOffsetLocalized(message.TimeZoneId, message.EndOfWorkday);
-            while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayLocal)
+            try
             {
-                PreviousConnectionsCount = _linkedInPageFacade.ConnectionsView.GetConnectionsCount(webDriver);
-                PreviousRecentlyAdded = _linkedInPageFacade.ConnectionsView.GetAllRecentlyAdded(webDriver);
-
-                _logger.LogDebug("[MonitorForNewConnections]: Entering random wait time between 2 and 5 minutes.");
-                _humanBehaviorService.RandomWaitMinutes(2, 5);
-
-                _logger.LogDebug("[MonitorForNewConnections]: Looking to close any active message windows.");
-                CloseAllConversations(webDriver);
-
-                _logger.LogDebug("[MonitorForNewConnections]: Refreshing the browser.");
-                HalOperationResult<IOperationResponse> result = _webDriverProvider.Refresh<IOperationResponse>(webDriver);
-                if (result.Succeeded == false)
+                DateTimeOffset endOfWorkDayLocal = _timestampService.ParseDateTimeOffsetLocalized(message.TimeZoneId, message.EndOfWorkday);
+                while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayLocal)
                 {
-                    break;
-                }
+                    PreviousConnectionsCount = _linkedInPageFacade.ConnectionsView.GetConnectionsCount(webDriver);
+                    PreviousRecentlyAdded = _linkedInPageFacade.ConnectionsView.GetAllRecentlyAdded(webDriver);
 
-                int connectionCount = _linkedInPageFacade.ConnectionsView.GetConnectionsCount(webDriver);
-                if (connectionCount > PreviousConnectionsCount)
-                {
-                    _logger.LogDebug("[MonitorForNewConnections]: New connections detected!");
-                    IList<RecentlyAddedProspect> currentProspects = _linkedInPageFacade.ConnectionsView.GetAllRecentlyAdded(webDriver);
-                    IList<RecentlyAddedProspect> newProspects = currentProspects.Where(p => PreviousRecentlyAdded.Any(prev => prev.Name == p.Name) == false).ToList();
-                    await ProcessNewConnectionsAsync(newProspects, message);
-                    _logger.LogDebug("[MonitorForNewConnections]: Finished processing newly detected connections");
+                    _logger.LogDebug("[MonitorForNewConnections]: Entering random wait time between 2 and 5 minutes.");
+                    _humanBehaviorService.RandomWaitMinutes(2, 5);
+
+                    _logger.LogDebug("[MonitorForNewConnections]: Looking to close any active message windows.");
+                    CloseAllConversations(webDriver);
+
+                    _logger.LogDebug("[MonitorForNewConnections]: Refreshing the browser.");
+                    HalOperationResult<IOperationResponse> result = _webDriverProvider.Refresh<IOperationResponse>(webDriver);
+                    if (result.Succeeded == false)
+                    {
+                        break;
+                    }
+
+                    int connectionCount = _linkedInPageFacade.ConnectionsView.GetConnectionsCount(webDriver);
+                    if (connectionCount > PreviousConnectionsCount)
+                    {
+                        _logger.LogDebug("[MonitorForNewConnections]: New connections detected!");
+                        IList<RecentlyAddedProspect> currentProspects = _linkedInPageFacade.ConnectionsView.GetAllRecentlyAdded(webDriver);
+                        IList<RecentlyAddedProspect> newProspects = currentProspects.Where(p => PreviousRecentlyAdded.Any(prev => prev.Name == p.Name) == false).ToList();
+                        await ProcessNewConnectionsAsync(newProspects, message);
+                        _logger.LogDebug("[MonitorForNewConnections]: Finished processing newly detected connections");
+                    }
                 }
             }
-            _logger.LogDebug("[MonitorForNewConnections]: Setting IsRunning property to 'false'");
-            IsRunning = false;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occured while executing MonitorForNewConnections phase. Handling it gracefully.");
+            }
+            finally
+            {
+                _logger.LogDebug("[MonitorForNewConnections]: Setting IsRunning property to 'false'");
+                IsRunning = false;
+            }
 
             _logger.LogInformation("[MonitorForNewConnections]: Stopping to look for new connections. MonitorForNewAcceptedConnections finished running because it is end of the work day");
         }
