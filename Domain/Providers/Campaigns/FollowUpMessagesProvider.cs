@@ -69,8 +69,9 @@ namespace Domain.Providers.Campaigns
 
             result = SendFollowUpMessage<T>(webDriver, message);
 
-            _humanBehaviorService.RandomWaitSeconds(3, 45);
+            _humanBehaviorService.RandomWaitSeconds(10, 45);
 
+            // we should not close and open up a new browser for each follow up message. Launch the browser and wait for 5 mins before closing it out in case multiple follow up messages are going to be sent out
             _webDriverProvider.CloseBrowser<T>(BrowserPurpose.FollowUpMessages);
 
             return result;
