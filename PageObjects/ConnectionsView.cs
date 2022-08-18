@@ -7,8 +7,6 @@ using OpenQA.Selenium.Support.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PageObjects
 {
@@ -111,7 +109,7 @@ namespace PageObjects
         {
             IReadOnlyCollection<IWebElement> recentlyAdded = RecentlyAddedLis(webDriver);
             IList<RecentlyAddedProspect> prospects = CreateRecentlyAddedFromElements(recentlyAdded.ToList());
-            
+
             return prospects;
         }
 
@@ -152,7 +150,7 @@ namespace PageObjects
             IList<IWebElement> recentlyAdded = RecentlyAddedLis(webDriver).ToList();
             foreach (IWebElement newProspect in recentlyAdded)
             {
-                if(AddedBeforeDesiredHoursAgo(newProspect, fromMaxHoursAgo, out int addedNumOfHoursAgo) == true)
+                if (AddedBeforeDesiredHoursAgo(newProspect, fromMaxHoursAgo, out int addedNumOfHoursAgo) == true)
                 {
                     RecentlyAddedProspect recentlyAddedProspect = CreateRecentlyAddedFromElement(newProspect, addedNumOfHoursAgo);
                     prospects.Add(recentlyAddedProspect);
@@ -167,13 +165,13 @@ namespace PageObjects
             IWebElement timeElement = TimeTag(recentlyAdded);
             numOfHoursAgo = 0;
 
-            if (timeElement == null) 
+            if (timeElement == null)
             {
                 return false;
             }
 
             string timeTagText = timeElement.Text;
-            if(timeTagText == null)
+            if (timeTagText == null)
             {
                 return false;
             }
@@ -211,7 +209,7 @@ namespace PageObjects
                 result = int.Parse(resultAsString);
             }
 
-            if(result <= fromMaxHoursAgo)
+            if (result <= fromMaxHoursAgo)
             {
                 numOfHoursAgo = result;
                 return true;

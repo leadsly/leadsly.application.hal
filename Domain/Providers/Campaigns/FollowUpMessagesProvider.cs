@@ -69,6 +69,8 @@ namespace Domain.Providers.Campaigns
 
             result = SendFollowUpMessage<T>(webDriver, message);
 
+            _humanBehaviorService.RandomWaitSeconds(3, 45);
+
             _webDriverProvider.CloseBrowser<T>(BrowserPurpose.FollowUpMessages);
 
             return result;
