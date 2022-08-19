@@ -213,6 +213,7 @@ namespace Domain.Providers.Campaigns
         private async Task<HalOperationResult<T>> ConnectWithProspectsAsync<T>(IWebDriver webDriver, NetworkingMessageBody message, SearchUrlProgressRequest searchUrlProgress, int totalResults)
             where T : IOperationResponse
         {
+            _logger.LogInformation("Executing ConnectWithProspectsAsync method");
             HalOperationResult<T> result = new();
 
             int lastPage = searchUrlProgress.LastPage;
@@ -222,6 +223,7 @@ namespace Domain.Providers.Campaigns
                 IList<IWebElement> connectableProspects = GetConnectableProspects(webDriver, message.PrimaryProspectListId);
                 if (connectableProspects == null)
                 {
+                    _logger.LogDebug("No connectable prospects have been found on this page");
                     return result;
                 }
 
@@ -231,12 +233,14 @@ namespace Domain.Providers.Campaigns
                     // if we are on the last page and there are no prospects to crawl update the search url
                     if (await IsLastPageAsync(lastPage, totalResults, webDriver, message, searchUrlProgress))
                     {
+                        _logger.LogDebug("This is the last page and there are no prospects to crawl. Breaking out of the loop");
                         break;
                     }
 
                     result = GoToTheNextPage<T>(webDriver, totalResults, ref lastPage);
                     if (result.Succeeded == false)
                     {
+                        _logger.LogDebug("Navigation to the next page failed.");
                         return result;
                     }
 
@@ -293,6 +297,7 @@ namespace Domain.Providers.Campaigns
                 HalOperationResult<IOperationResponse> result = await UpdateSearchUrlProgressAsync<IOperationResponse>(webDriver, searchUrlProgress, message, lastPage, true, totalResults);
                 isLastPage = true;
             }
+            _logger.LogDebug($"It was determined that this {(isLastPage ? "is" : "is not")} the last page.");
             return isLastPage;
         }
 
@@ -354,16 +359,28 @@ namespace Domain.Providers.Campaigns
         private async Task<HalOperationResult<T>> ExecuteSendConnectionsInternalAsync<T>(IWebDriver webDriver, NetworkingMessageBody message, IList<IWebElement> connectableProspects)
             where T : IOperationResponse
         {
+            _logger.LogTrace("Executing SendConnections phase");
             HalOperationResult<T> result = new();
             IList<CampaignProspectRequest> campaignProspectRequests = new List<CampaignProspectRequest>();
+            _logger.LogDebug("Number of connectable prospects: {0}", connectableProspects?.Count);
             foreach (IWebElement connectableProspect in connectableProspects)
             {
                 if (NumberOfConnectionsSent >= message.ProspectsToCrawl)
+                {
+                    _logger.LogDebug("Number of connections sent has reached the limit. Number of connections sent is {0}. Number of connections to send out for this phase is {1}", NumberOfConnectionsSent, message.ProspectsToCrawl);
                     break;
+                }
 
                 CampaignProspectRequest request = ExecuteSendConnectionInternal(webDriver, connectableProspect, message.CampaignId);
-                campaignProspectRequests.Add(request);
-                NumberOfConnectionsSent += 1;
+                if (request != null)
+                {
+                    campaignProspectRequests.Add(request);
+                    NumberOfConnectionsSent += 1;
+                }
+                else
+                {
+                    _logger.LogDebug("The CampaignProspectRequest is null. Skipping this prospect and moving onto the next one");
+                }
             }
 
             if (campaignProspectRequests.Count > 0)
@@ -380,10 +397,12 @@ namespace Domain.Providers.Campaigns
 
         private CampaignProspectRequest ExecuteSendConnectionInternal(IWebDriver webDriver, IWebElement prospect, string campaignId)
         {
+            _logger.LogTrace("Preparing to connect with prospect.");
             // send connection
             bool sendConnectionSuccess = SendConnection(webDriver, prospect);
             if (sendConnectionSuccess == false)
             {
+                _logger.LogDebug("Sending connection to the given prospect failed.");
                 return null;
             }
 
@@ -394,6 +413,7 @@ namespace Domain.Providers.Campaigns
         private async Task<HalOperationResult<T>> ExecuteProspectListInternalAsync<T>(IWebDriver webDriver, NetworkingMessageBody message, IList<IWebElement> connectableProspectsOnThisPage)
             where T : IOperationResponse
         {
+            _logger.LogTrace("Executing ProspectList phase. This means hal is only looking to gather prospects with which the user can connect with.");
             // save prospects in batches
             HalOperationResult<T> result = await PersistConnectableProspectsAsync<T>(connectableProspectsOnThisPage, message);
 
@@ -413,13 +433,17 @@ namespace Domain.Providers.Campaigns
 
             if (connectableProspectsOnThisPage.Count > 0)
             {
+                _logger.LogDebug($"Persisting {connectableProspectsOnThisPage.Count} prospects as part of the ProspectListPhase.");
                 IList<PrimaryProspectRequest> collectedProspects = _crawlProspectsService.CreatePrimaryProspects(connectableProspectsOnThisPage, message.PrimaryProspectListId);
                 result = await _phaseDataProcessingProvider.ProcessProspectListAsync<T>(collectedProspects, message, message.CampaignId, message.PrimaryProspectListId, message.CampaignProspectListId);
                 if (result.Succeeded == false)
                 {
-                    // _logger.LogError("Failed to process scraped prospect list. This was batch {i} out of {totalResults}", i, totalResults);
                     return result;
                 }
+            }
+            else
+            {
+                _logger.LogDebug("No connectable prospects were found on this page.");
             }
 
             result.Succeeded = true;
@@ -434,9 +458,11 @@ namespace Domain.Providers.Campaigns
         /// <returns></returns>
         private IList<IWebElement> GetConnectableProspects(IWebDriver webDriver, string primaryProspectListId)
         {
+            _logger.LogTrace("Crawling all of prospects on this page");
             bool crawlResult = _crawlProspectsService.CrawlProspects(webDriver, primaryProspectListId, out IList<IWebElement> rawCollectedProspects);
             if (crawlResult == false)
             {
+                _logger.LogError("Failed to crawl prospects on the current page. Returning explicit null");
                 return null;
             }
             // filter down the list to only those prospects that we can connect with
@@ -451,20 +477,21 @@ namespace Domain.Providers.Campaigns
             _logger.LogInformation("[SendConnectionRequests]: Sending connection request to the given prospect");
 
             _humanBehaviorService.RandomWaitMilliSeconds(700, 3000);
-            //_linkedInPageFacade.LinkedInSearchPage.ScrollTop(webDriver);
             HalOperationResult<IOperationResponse> sendConnectionResult = _linkedInPageFacade.LinkedInSearchPage.SendConnectionRequest<IOperationResponse>(prospect);
             if (sendConnectionResult.Succeeded == false)
             {
-                sendConnectionSuccess = true;
+                _logger.LogDebug("Clicking 'Connect' button on the prospect failed");
+                sendConnectionSuccess = false;
             }
 
             IWebElement modalContent = _linkedInPageFacade.LinkedInSearchPage.GetCustomizeThisInvitationModalContent(webDriver);
             _humanBehaviorService.RandomClickElement(modalContent);
 
-            _humanBehaviorService.RandomWaitMilliSeconds(700, 1400);
+            _humanBehaviorService.RandomWaitMilliSeconds(1000, 2000);
             HalOperationResult<IOperationResponse> clickSendConnectionResult = _linkedInPageFacade.LinkedInSearchPage.ClickSendInModal<IOperationResponse>(webDriver);
             if (clickSendConnectionResult.Succeeded == false)
             {
+                _logger.LogDebug("Clicking 'Send' button on the modal failed");
                 sendConnectionSuccess = false;
             }
 

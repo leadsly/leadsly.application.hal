@@ -2,11 +2,7 @@
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Services
 {
@@ -23,30 +19,31 @@ namespace Domain.Services
 
         public void RandomClickElement(IWebElement webElement)
         {
-            _logger.LogInformation("Clicking the passed in element");
+            _logger.LogTrace("[RandomClickElement] Random click element is executing");
 
             int number = _rnd.Next(1, 5);
 
             try
             {
-                if(webElement != null)
+                if (webElement != null)
                 {
+                    _logger.LogTrace("[RandomClickElement]: The passed in element is not null. This means the element is found.");
                     if (number == 3 || number == 5)
                     {
                         webElement.Click();
-                        _logger.LogInformation("Executing random click. Number is equal to 3. This means we're clicking the passed in element");
+                        _logger.LogInformation($"Executing random click. Number is equal to {number}. This means we're clicking the passed in element");
                     }
-                }                
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to click the passed in element");
+                _logger.LogWarning(ex, "[RandomClickElement] Failed to click the passed in element");
             }
         }
 
         public void EnterValues(IWebElement element, string value, int minMiliseconds, int maxMiliseconds)
         {
-            Stopwatch sw = new Stopwatch(); 
+            Stopwatch sw = new Stopwatch();
             try
             {
                 foreach (char character in value)
@@ -61,7 +58,7 @@ namespace Domain.Services
                     sw.Restart();
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to successfully enter in provided value into the field. Value: {value}", value);
             }
@@ -70,7 +67,7 @@ namespace Domain.Services
         private void RandomWaitTime(int number)
         {
             Stopwatch sw = new Stopwatch();
-            sw.Start();            
+            sw.Start();
             while (sw.Elapsed.TotalMilliseconds < number)
             {
                 continue;

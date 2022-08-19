@@ -23,7 +23,7 @@ namespace PageObjects.Pages
         }
 
         private readonly ILogger<LinkedInSearchPage> _logger;
-        private readonly IWebDriverUtilities _webDriverUtilities;        
+        private readonly IWebDriverUtilities _webDriverUtilities;
 
         private IWebElement SearchResultFooter(IWebDriver webDriver)
         {
@@ -65,13 +65,13 @@ namespace PageObjects.Pages
             {
                 _logger.LogTrace("Getting last page of the search results from the hitlist");
                 IWebElement searchResultsFooter = _webDriverUtilities.WaitUntilNotNull(SearchResultFooter, webDriver, 10);
-                if(searchResultsFooter == null)
+                if (searchResultsFooter == null)
                 {
                     return null;
                 }
 
                 IWebElement ul = SearchResultsFooterUlElement(searchResultsFooter);
-                if(ul == null)
+                if (ul == null)
                 {
                     return null;
                 }
@@ -122,7 +122,7 @@ namespace PageObjects.Pages
         public HalOperationResult<T> GatherProspects<T>(IWebDriver driver) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
-            IList<IWebElement>  prospAsElements = _webDriverUtilities.WaitUntilNotNull(ProspectsAsWebElements, driver, 15);
+            IList<IWebElement> prospAsElements = _webDriverUtilities.WaitUntilNotNull(ProspectsAsWebElements, driver, 15);
 
             if (prospAsElements == null)
             {
@@ -141,22 +141,22 @@ namespace PageObjects.Pages
 
         public HalOperationResult<T> GetTotalSearchResults<T>(IWebDriver driver) where T : IOperationResponse
         {
-            HalOperationResult<T> result = new();          
+            HalOperationResult<T> result = new();
 
             IWebElement numberOfPages = LastPage(driver);
 
-            if(numberOfPages == null)
+            if (numberOfPages == null)
             {
                 _logger.LogWarning("Could not determine the number of pages in the hitlist");
                 result.Failures.Add(new()
                 {
                     Code = Codes.WEBDRIVER_ERROR,
-                    Reason = "Failed to locate last page element"                    
+                    Reason = "Failed to locate last page element"
                 });
                 return result;
             }
 
-            if(int.TryParse(numberOfPages.Text, out int resultCount) == false)
+            if (int.TryParse(numberOfPages.Text, out int resultCount) == false)
             {
                 return result;
             }
@@ -212,7 +212,7 @@ namespace PageObjects.Pages
         {
             IWebElement nextBtn = default;
             try
-            {   
+            {
                 nextBtn = webDriver.FindElement(By.CssSelector("button[aria-label='Next']"));
             }
             catch (Exception ex)
@@ -244,7 +244,7 @@ namespace PageObjects.Pages
 
             IWebElement nextBtn = _webDriverUtilities.WaitUntilNotNull(NextButton, driver, 10);
 
-            if(nextBtn == null)
+            if (nextBtn == null)
             {
                 _logger.LogWarning("[ClickNext]: Next button could not be located");
                 return result;
@@ -255,7 +255,7 @@ namespace PageObjects.Pages
                 _logger.LogTrace("Clicking next button");
                 nextBtn.Click();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogWarning(ex, "[ClickNext]: Failed to click next button");
                 return result;
@@ -298,7 +298,7 @@ namespace PageObjects.Pages
             try
             {
                 _logger.LogInformation("[NoSearchResultsContainer]: Searching for no search results container to see if we got an error page and need to retry the search");
-                noSearchResultsContainer = webDriver.FindElement(By.CssSelector(".search-no-results__image-container"));                
+                noSearchResultsContainer = webDriver.FindElement(By.CssSelector(".search-no-results__image-container"));
             }
             catch (Exception ex)
             {
@@ -314,13 +314,13 @@ namespace PageObjects.Pages
             try
             {
                 IWebElement noResultsSearchContainer = _webDriverUtilities.WaitUntilNotNull(NoSearchResultsContainer, driver, 1);
-                if(noResultsSearchContainer != null)
+                if (noResultsSearchContainer != null)
                 {
                     isDisplayed = noResultsSearchContainer.Displayed;
-                    _logger.LogDebug("NoSearchResultsContainer element was found. Is it displayed: {isDisplayed}", isDisplayed);                    
+                    _logger.LogDebug("NoSearchResultsContainer element was found. Is it displayed: {isDisplayed}", isDisplayed);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 // logging already occurs in the NoSearchResultsContainer method
             }
@@ -348,7 +348,7 @@ namespace PageObjects.Pages
             HalOperationResult<T> result = new();
 
             IWebElement retryButton = RetrySearchButton(driver);
-            if(retryButton == null)
+            if (retryButton == null)
             {
                 return result;
             }
@@ -366,7 +366,7 @@ namespace PageObjects.Pages
                 {
                     _logger.LogTrace("[ClickRetrySearch] locating search results container");
                     IWebElement searchResultContainer = SearchResultContainerQuery(webDriver);
-                    if(searchResultContainer == null)
+                    if (searchResultContainer == null)
                     {
                         _logger.LogTrace("[ClickRetrySearch] Failed to locate search results container. Attemping to click retry button again");
                         retryButton.Click();
@@ -396,22 +396,28 @@ namespace PageObjects.Pages
             HalOperationResult<T> result = new();
 
             IWebElement actionButton = GetProspectsActionBtn(prospect);
-            if(actionButton == null)
+            if (actionButton == null)
             {
+                _logger.LogDebug("[SendConnectionRequest] Action button not found");
                 // prospect must not contain an action button
                 return result;
             }
 
+            _logger.LogDebug("[SendConnectionRequest] Action button was found.");
             if (actionButton.Text == ApiConstants.PageObjectConstants.Connect)
             {
+                _logger.LogDebug("[SendConnectionRequest] Action button text is 'Connect'");
                 result = ClickButton<T>(actionButton);
-                if(result.Succeeded == false)
+                if (result.Succeeded == false)
                 {
+                    _logger.LogDebug("Failed to click 'Connect' button for the prospect");
                     return result;
                 }
             }
             else
             {
+                string actionButtonText = actionButton.Text;
+                _logger.LogDebug("[SendConnectionRequest] Action button text is '{actionButtonText}'", actionButtonText);
                 return result;
             }
 
@@ -441,12 +447,13 @@ namespace PageObjects.Pages
             IWebElement actionButton = default;
             try
             {
+                _logger.LogInformation("Finding prospect's action button");
                 actionButton = prospect.FindElement(By.CssSelector(".entity-result__actions div:not([class='entity-result__actions--empty']"));
                 actionButton = actionButton.FindElement(By.TagName("button"));
             }
             catch (Exception ex)
             {
-                _logger.LogDebug("Prospect does not contain action button");
+                _logger.LogWarning("Prospect does not contain action button");
             }
             return actionButton;
         }
@@ -461,11 +468,12 @@ namespace PageObjects.Pages
             IWebElement modal = default;
             try
             {
+                _logger.LogInformation("Locating customize this invitation modal by CSS selector '#artdeco-modal-outlet .artdeco-modal'");
                 modal = webDriver.FindElement(By.CssSelector("#artdeco-modal-outlet .artdeco-modal"));
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to locate modal by css selector '#artdeco-modal-outlet .artdeco-modal'");
+                _logger.LogError(ex, "Failed to locate modal by css selector '#artdeco-modal-outlet .artdeco-modal'. Cannot connect with the prospect");
             }
             return modal;
         }
@@ -475,11 +483,12 @@ namespace PageObjects.Pages
             IWebElement modalContent = default;
             try
             {
+                _logger.LogInformation("Locating custimize modal content by class name 'artdeco-modal__content'");
                 modalContent = CustomizeThisInvitationModal(webDriver)?.FindElement(By.ClassName("artdeco-modal__content"));
             }
             catch (Exception ex)
             {
-                _logger.LogError("Failed to locate customize modal content. ");
+                _logger.LogError(ex, "Failed to locate customize modal content.");
             }
             return modalContent;
         }
@@ -493,6 +502,7 @@ namespace PageObjects.Pages
 
         public IWebElement GetCustomizeThisInvitationModalContent(IWebDriver webDriver)
         {
+            _logger.LogInformation("Finding customize this invitation modal content");
             IWebElement modalContent = _webDriverUtilities.WaitUntilNotNull(CustomizeModalContent, webDriver, 5);
             return modalContent;
         }
@@ -502,25 +512,33 @@ namespace PageObjects.Pages
             IWebElement button = default;
             try
             {
-                button = CustomizeThisInvitationModal(webDriver).FindElement(By.CssSelector("button[aria-label='Send now']"));
+                _logger.LogInformation("Finding 'Send' button for the given prospect.");
+                IWebElement customizeInvitiationModal = _webDriverUtilities.WaitUntilNotNull(CustomizeThisInvitationModal, webDriver, 5);
+                if (customizeInvitiationModal != null)
+                {
+                    button = customizeInvitiationModal.FindElement(By.CssSelector("button[aria-label='Send now']"));
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to locate send now button");
+                _logger.LogWarning(ex, "Failed to locate 'Send Now' button");
             }
             return button;
         }
 
         public HalOperationResult<T> ClickSendInModal<T>(IWebDriver webDriver) where T : IOperationResponse
         {
+            _logger.LogInformation("Attempting to click 'Send' button in the modal.");
             HalOperationResult<T> result = new();
 
             IWebElement button = SendNowButton(webDriver);
-            if(button == null)
+            if (button == null)
             {
+                _logger.LogDebug("[ClickSendInModal] 'Send' button not found in the modal");
                 return result;
             }
 
+            _logger.LogDebug("Clicking 'Send' button in the modal");
             button.Click();
 
             result.Succeeded = true;
@@ -531,7 +549,7 @@ namespace PageObjects.Pages
         {
             IWebElement nextButton = NextButton(webDriver);
 
-            if(nextButton == null)
+            if (nextButton == null)
             {
                 return false;
             }
@@ -589,7 +607,7 @@ namespace PageObjects.Pages
 
             IWebElement resultsHeader = ResultsHeader(webDriver);
 
-            if(resultsHeader == null)
+            if (resultsHeader == null)
             {
                 return result;
             }
@@ -619,7 +637,7 @@ namespace PageObjects.Pages
 
             IWebElement searchResultLoader = _webDriverUtilities.WaitUntilNull(SearchResultLoader, webDriver, 30);
 
-            if(searchResultLoader != null)
+            if (searchResultLoader != null)
             {
                 return result;
             }
@@ -652,7 +670,7 @@ namespace PageObjects.Pages
         {
             try
             {
-                if(webElement != null)
+                if (webElement != null)
                 {
                     _logger.LogTrace("Executing javascript 'scrollIntoView' to scroll element into view");
                     IJavaScriptExecutor js = (IJavaScriptExecutor)webDriver;
