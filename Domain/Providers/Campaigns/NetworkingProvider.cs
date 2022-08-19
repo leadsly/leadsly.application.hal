@@ -2,6 +2,7 @@
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
+using Domain.Services.Interfaces.SendConnections;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage.Interfaces;
@@ -23,6 +24,8 @@ namespace Domain.Providers.Campaigns
     {
         public NetworkingProvider(
             ILogger<ProspectListProvider> logger,
+            ICustomizeInvitationModalService customizeInvitationModalService,
+            IHowDoYouKnowModalService howDoYouKnowModalService,
             ICrawlProspectsService crawlProspectsService,
             IWebDriverProvider webDriverProvider,
             ICampaignProspectsService campaignProspectService,
@@ -42,8 +45,12 @@ namespace Domain.Providers.Campaigns
             _phaseDataProcessingProvider = phaseDataProcessingProvider;
             _webDriverProvider = webDriverProvider;
             _linkedInPageFacade = linkedInPageFacade;
+            _howDoYouKnowModalService = howDoYouKnowModalService;
+            _customizeInvitationModalService = customizeInvitationModalService;
         }
 
+        private readonly ICustomizeInvitationModalService _customizeInvitationModalService;
+        private readonly IHowDoYouKnowModalService _howDoYouKnowModalService;
         private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly IPhaseDataProcessingProvider _phaseDataProcessingProvider;
         private readonly IWebDriverProvider _webDriverProvider;
@@ -107,23 +114,6 @@ namespace Domain.Providers.Campaigns
             }
 
             return result;
-        }
-
-        private void CleanUpBrowserTab(IWebDriver webDriver, int redeliveryCount)
-        {
-            try
-            {
-                if (redeliveryCount >= 3)
-                {
-                    _logger.LogDebug("This message has been redelivered 3 times already. Attempting to close the current tab");
-                    string currentWindowHandleId = webDriver.CurrentWindowHandle;
-                    _webDriverProvider.CloseTab<IOperationResponse>(BrowserPurpose.Networking, currentWindowHandleId);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to close webdriver tab");
-            }
         }
 
         private async Task<HalOperationResult<T>> ExecuteNetworkingInternalAsync<T>(NetworkingMessageBody message, IWebDriver webDriver, IList<SearchUrlProgressRequest> searchUrlsProgress, CancellationToken ct = default)
@@ -391,6 +381,7 @@ namespace Domain.Providers.Campaigns
                     return result;
                 }
             }
+
             result.Succeeded = true;
             return result;
         }
@@ -398,16 +389,41 @@ namespace Domain.Providers.Campaigns
         private CampaignProspectRequest ExecuteSendConnectionInternal(IWebDriver webDriver, IWebElement prospect, string campaignId)
         {
             _logger.LogTrace("Preparing to connect with prospect.");
+
             // send connection
             bool sendConnectionSuccess = SendConnection(webDriver, prospect);
             if (sendConnectionSuccess == false)
             {
                 _logger.LogDebug("Sending connection to the given prospect failed.");
+                // if there was a failure attempt to close modal dialog if it is open
+                TryCloseModals(webDriver);
+
                 return null;
             }
 
             CampaignProspectRequest request = _campaignProspectService.CreateCampaignProspects(prospect, campaignId);
             return request;
+        }
+
+        private void TryCloseModals(IWebDriver webDriver)
+        {
+            _logger.LogDebug("Attempting to close any open dialogs");
+            SendInviteModalType modalType = _linkedInPageFacade.LinkedInSearchPage.SearchPageDialogManager.CheckModalType(webDriver);
+            if (modalType == SendInviteModalType.CustomizeInvite)
+            {
+                _humanBehaviorService.RandomWaitMilliSeconds(850, 2000);
+                _customizeInvitationModalService.CloseDialog(webDriver);
+            }
+
+            if (modalType == SendInviteModalType.HowDoYouKnow)
+            {
+                _humanBehaviorService.RandomWaitMilliSeconds(850, 2000);
+                _howDoYouKnowModalService.CloseDialog(webDriver);
+            }
+            else
+            {
+                _logger.LogDebug("No open dialogs were found");
+            }
         }
 
         private async Task<HalOperationResult<T>> ExecuteProspectListInternalAsync<T>(IWebDriver webDriver, NetworkingMessageBody message, IList<IWebElement> connectableProspectsOnThisPage)
@@ -483,19 +499,47 @@ namespace Domain.Providers.Campaigns
                 _logger.LogDebug("Clicking 'Connect' button on the prospect failed");
                 sendConnectionSuccess = false;
             }
-
-            IWebElement modalContent = _linkedInPageFacade.LinkedInSearchPage.GetCustomizeThisInvitationModalContent(webDriver);
-            _humanBehaviorService.RandomClickElement(modalContent);
-
-            _humanBehaviorService.RandomWaitMilliSeconds(1000, 2000);
-            HalOperationResult<IOperationResponse> clickSendConnectionResult = _linkedInPageFacade.LinkedInSearchPage.ClickSendInModal<IOperationResponse>(webDriver);
-            if (clickSendConnectionResult.Succeeded == false)
+            else
             {
-                _logger.LogDebug("Clicking 'Send' button on the modal failed");
-                sendConnectionSuccess = false;
+                _humanBehaviorService.RandomWaitMilliSeconds(700, 1500);
+                sendConnectionSuccess = HandleConnectWithProspectModal(webDriver);
             }
 
             return sendConnectionSuccess;
+        }
+
+        private bool HandleConnectWithProspectModal(IWebDriver webDriver)
+        {
+            bool isModalOpen = _linkedInPageFacade.LinkedInSearchPage.SearchPageDialogManager.IsConnectWithProspectModalOpen(webDriver);
+            if (isModalOpen == false)
+            {
+                _logger.LogWarning("Connect with prospect modal is not open. It was expected to be open. Moving on to the next prospect.");
+                return false;
+            }
+
+            // determine if the modal that is open is CustomizeInvite or HowDoYouKnow modal
+            SendInviteModalType modalType = _linkedInPageFacade.LinkedInSearchPage.SearchPageDialogManager.DetermineSendInviteModalType(webDriver);
+
+            if (modalType == SendInviteModalType.CustomizeInvite)
+            {
+                _logger.LogInformation("Handling Customize Invite Modal.");
+                return _customizeInvitationModalService.HandleInteraction(webDriver);
+            }
+
+            if (modalType == SendInviteModalType.HowDoYouKnow)
+            {
+                _logger.LogInformation("Handling 'How Do You Know' Modal.");
+                bool succeeded = _howDoYouKnowModalService.HandleInteraction(webDriver);
+                if (succeeded == true)
+                {
+                    _humanBehaviorService.RandomWaitMilliSeconds(700, 1200);
+                    return _customizeInvitationModalService.HandleInteraction(webDriver);
+                }
+            }
+
+            _logger.LogWarning("Could not determine 'SendInvite' modal type");
+
+            return false;
         }
 
         private HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)

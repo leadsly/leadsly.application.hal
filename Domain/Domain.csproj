@@ -18,6 +18,7 @@
 
 	<ItemGroup>
 		<Folder Include="Converters\" />
+		<Folder Include="NewFolder\" />
 	</ItemGroup>
 
 	<ItemGroup>

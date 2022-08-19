@@ -131,6 +131,7 @@ namespace Domain.Providers.Campaigns
             return result;
         }
 
+        [Obsolete("No longer in use. Currently does not click send inside the modal")]
         private HalOperationResult<T> SendConnectionRequests<T>(IWebDriver webDriver, int stageConnectionsLimit, string campaignId, string timeZoneId, IList<SearchUrlDetailsRequest> sentConnectionsUrlStatusPayload)
             where T : IOperationResponse
         {
@@ -194,11 +195,11 @@ namespace Domain.Providers.Campaigns
                         continue;
                     }
 
-                    IWebElement modalContent = _linkedInPageFacade.LinkedInSearchPage.GetCustomizeThisInvitationModalContent(webDriver);
+                    IWebElement modalContent = _linkedInPageFacade.LinkedInSearchPage.GetSendInvitationModal(webDriver);
                     _humanBehaviorService.RandomClickElement(modalContent);
 
                     _humanBehaviorService.RandomWaitMilliSeconds(700, 1400);
-                    result = _linkedInPageFacade.LinkedInSearchPage.ClickSendInModal<T>(webDriver);
+                    // result = _linkedInPageFacade.LinkedInSearchPage.ClickSendInModal<T>(webDriver);
                     if (result.Succeeded == false)
                     {
                         continue;

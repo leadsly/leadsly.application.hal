@@ -1,16 +1,13 @@
-﻿using Leadsly.Application.Model;
+﻿using Domain.POMs.Dialogs;
+using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using OpenQA.Selenium;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.POMs.Pages
 {
     public interface ILinkedInSearchPage
     {
+        public ISearchPageDialogManager SearchPageDialogManager { get; }
         HalOperationResult<T> GetTotalSearchResults<T>(IWebDriver driver)
             where T : IOperationResponse;
 
@@ -35,15 +32,10 @@ namespace Domain.POMs.Pages
         HalOperationResult<T> SendConnectionRequest<T>(IWebElement prospect)
             where T : IOperationResponse;
 
-        HalOperationResult<T> ClickSendInModal<T>(IWebDriver webDriver)
-            where T : IOperationResponse;
-
         HalOperationResult<T> ScrollFooterIntoView<T>(IWebDriver webDriver)
             where T : IOperationResponse;
 
-        IWebElement GetCustomizeThisInvitationModalElement(IWebDriver webDriver);
-
-        IWebElement GetCustomizeThisInvitationModalContent(IWebDriver webDriver);
+        IWebElement GetSendInvitationModal(IWebDriver webDriver);
 
         bool IsNextButtonDisabled(IWebDriver webDriver);
 

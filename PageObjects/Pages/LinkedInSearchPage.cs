@@ -1,4 +1,5 @@
 ﻿using Domain;
+using Domain.POMs.Dialogs;
 using Domain.POMs.Pages;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage;
@@ -16,12 +17,14 @@ namespace PageObjects.Pages
 {
     public class LinkedInSearchPage : LeadslyBase, ILinkedInSearchPage
     {
-        public LinkedInSearchPage(ILogger<LinkedInSearchPage> logger, IWebDriverUtilities webDriverUtilities) : base(logger)
+        public LinkedInSearchPage(ILogger<LinkedInSearchPage> logger, ISearchPageDialogManager searchPageDialogManager, IWebDriverUtilities webDriverUtilities) : base(logger)
         {
             _logger = logger;
             _webDriverUtilities = webDriverUtilities;
+            SearchPageDialogManager = searchPageDialogManager;
         }
 
+        public ISearchPageDialogManager SearchPageDialogManager { get; }
         private readonly ILogger<LinkedInSearchPage> _logger;
         private readonly IWebDriverUtilities _webDriverUtilities;
 
@@ -463,86 +466,26 @@ namespace PageObjects.Pages
             return GetProspectsActionBtn(prospect);
         }
 
-        private IWebElement CustomizeThisInvitationModal(IWebDriver webDriver)
+        public IWebElement GetSendInvitationModal(IWebDriver webDriver)
+        {
+            _logger.LogInformation("Finding 'Send Invite' modal");
+            IWebElement modal = _webDriverUtilities.WaitUntilNotNull(GetSendInviteModal, webDriver, 5);
+            return modal;
+        }
+
+        private IWebElement GetSendInviteModal(IWebDriver webDriver)
         {
             IWebElement modal = default;
             try
             {
-                _logger.LogInformation("Locating customize this invitation modal by CSS selector '#artdeco-modal-outlet .artdeco-modal'");
+                _logger.LogInformation("Locating send invite modal by css selector '#artdeco-modal-outlet .artdeco-modal'");
                 modal = webDriver.FindElement(By.CssSelector("#artdeco-modal-outlet .artdeco-modal"));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to locate modal by css selector '#artdeco-modal-outlet .artdeco-modal'. Cannot connect with the prospect");
+                _logger.LogWarning("Failed to locate 'Send Invite' modal");
             }
             return modal;
-        }
-
-        private IWebElement CustomizeModalContent(IWebDriver webDriver)
-        {
-            IWebElement modalContent = default;
-            try
-            {
-                _logger.LogInformation("Locating custimize modal content by class name 'artdeco-modal__content'");
-                modalContent = CustomizeThisInvitationModal(webDriver)?.FindElement(By.ClassName("artdeco-modal__content"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to locate customize modal content.");
-            }
-            return modalContent;
-        }
-
-        public IWebElement GetCustomizeThisInvitationModalElement(IWebDriver webDriver)
-        {
-            IWebElement modal = _webDriverUtilities.WaitUntilNotNull(CustomizeThisInvitationModal, webDriver, 10);
-
-            return modal;
-        }
-
-        public IWebElement GetCustomizeThisInvitationModalContent(IWebDriver webDriver)
-        {
-            _logger.LogInformation("Finding customize this invitation modal content");
-            IWebElement modalContent = _webDriverUtilities.WaitUntilNotNull(CustomizeModalContent, webDriver, 5);
-            return modalContent;
-        }
-
-        private IWebElement SendNowButton(IWebDriver webDriver)
-        {
-            IWebElement button = default;
-            try
-            {
-                _logger.LogInformation("Finding 'Send' button for the given prospect.");
-                IWebElement customizeInvitiationModal = _webDriverUtilities.WaitUntilNotNull(CustomizeThisInvitationModal, webDriver, 5);
-                if (customizeInvitiationModal != null)
-                {
-                    button = customizeInvitiationModal.FindElement(By.CssSelector("button[aria-label='Send now']"));
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to locate 'Send Now' button");
-            }
-            return button;
-        }
-
-        public HalOperationResult<T> ClickSendInModal<T>(IWebDriver webDriver) where T : IOperationResponse
-        {
-            _logger.LogInformation("Attempting to click 'Send' button in the modal.");
-            HalOperationResult<T> result = new();
-
-            IWebElement button = SendNowButton(webDriver);
-            if (button == null)
-            {
-                _logger.LogDebug("[ClickSendInModal] 'Send' button not found in the modal");
-                return result;
-            }
-
-            _logger.LogDebug("Clicking 'Send' button in the modal");
-            button.Click();
-
-            result.Succeeded = true;
-            return result;
         }
 
         public bool IsNextButtonDisabled(IWebDriver webDriver)
@@ -615,7 +558,6 @@ namespace PageObjects.Pages
             result.Succeeded = true;
             return result;
         }
-
         private IWebElement SearchResultLoader(IWebDriver webDriver)
         {
             IWebElement searchResultsLoader = default;
@@ -659,6 +601,7 @@ namespace PageObjects.Pages
             }
             return logo;
         }
+
         public IWebElement LinkInFooterLogoIcon(IWebDriver webDriver)
         {
             IWebElement logo = _webDriverUtilities.WaitUntilNotNull(LinkedInLogoFooter, webDriver, 10);

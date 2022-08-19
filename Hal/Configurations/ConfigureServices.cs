@@ -17,6 +17,7 @@ using Domain.PhaseHandlers.ScanProspectsForRepliesHandler;
 using Domain.PhaseHandlers.SendConnectionsHandler;
 using Domain.POMs;
 using Domain.POMs.Controls;
+using Domain.POMs.Dialogs;
 using Domain.POMs.Pages;
 using Domain.Providers;
 using Domain.Providers.Campaigns;
@@ -29,6 +30,8 @@ using Domain.Serializers;
 using Domain.Serializers.Interfaces;
 using Domain.Services;
 using Domain.Services.Interfaces;
+using Domain.Services.Interfaces.SendConnections;
+using Domain.Services.SendConnectionsModals;
 using Domain.Supervisor;
 using Hal.OptionsJsonModels;
 using Hangfire;
@@ -48,6 +51,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using PageObjects;
 using PageObjects.Controls;
+using PageObjects.Dialogs.SearchPageDialogs;
 using PageObjects.Pages;
 using Serilog;
 using System;
@@ -212,6 +216,9 @@ namespace Hal.Configurations
             services.AddScoped<IAcceptedInvitiationsView, AcceptedInvitationsView>();
             services.AddScoped<IConnectionsView, ConnectionsView>();
             services.AddScoped<IConversationCards, ConversationCards>();
+            services.AddScoped<ISearchPageDialogManager, SearchPageDialogManager>();
+            services.AddScoped<IHowDoYouKnowDialog, HowDoYouKnowDialog>();
+            services.AddScoped<ICustomizeYourInvitationDialog, CustomizeYourInvitationDialog>();
 
             return services;
         }
@@ -271,6 +278,8 @@ namespace Hal.Configurations
             services.AddSingleton<IConsumingService, ConsumingService>();
             services.AddSingleton<Random>();
             services.AddScoped<IUrlService, UrlService>();
+            services.AddScoped<IHowDoYouKnowModalService, HowDoYouKnowModalService>();
+            services.AddScoped<ICustomizeInvitationModalService, CustomizeInvitationModalService>();
 
             return services;
         }
