@@ -1,5 +1,4 @@
 ﻿using Domain;
-using Domain.POMs.Dialogs;
 using Domain.POMs.Pages;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage;
@@ -17,14 +16,12 @@ namespace PageObjects.Pages
 {
     public class LinkedInSearchPage : LeadslyBase, ILinkedInSearchPage
     {
-        public LinkedInSearchPage(ILogger<LinkedInSearchPage> logger, ISearchPageDialogManager searchPageDialogManager, IWebDriverUtilities webDriverUtilities) : base(logger)
+        public LinkedInSearchPage(ILogger<LinkedInSearchPage> logger, IWebDriverUtilities webDriverUtilities) : base(logger)
         {
             _logger = logger;
             _webDriverUtilities = webDriverUtilities;
-            SearchPageDialogManager = searchPageDialogManager;
         }
 
-        public ISearchPageDialogManager SearchPageDialogManager { get; }
         private readonly ILogger<LinkedInSearchPage> _logger;
         private readonly IWebDriverUtilities _webDriverUtilities;
 
@@ -544,20 +541,6 @@ namespace PageObjects.Pages
             return resultsHelpfulPTag;
         }
 
-        public HalOperationResult<T> WaitForResultsHeader<T>(IWebDriver webDriver) where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-
-            IWebElement resultsHeader = ResultsHeader(webDriver);
-
-            if (resultsHeader == null)
-            {
-                return result;
-            }
-
-            result.Succeeded = true;
-            return result;
-        }
         private IWebElement SearchResultLoader(IWebDriver webDriver)
         {
             IWebElement searchResultsLoader = default;

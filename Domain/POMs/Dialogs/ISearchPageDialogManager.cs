@@ -4,10 +4,8 @@ namespace Domain.POMs.Dialogs
 {
     public interface ISearchPageDialogManager
     {
-        bool IsConnectWithProspectModalOpen(IWebDriver webDriver);
+        bool HandleConnectWithProspectModal(IWebDriver webDriver);
 
-        SendInviteModalType DetermineSendInviteModalType(IWebDriver webDriver);
-
-        SendInviteModalType CheckModalType(IWebDriver webDriver);
+        void TryCloseModal(IWebDriver webDriver);
     }
 }

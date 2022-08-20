@@ -1,8 +1,9 @@
 ﻿using Domain.Facades.Interfaces;
+using Domain.POMs.Dialogs;
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
-using Domain.Services.Interfaces.SendConnections;
+using Domain.Services.Interfaces.Networking;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage.Interfaces;
@@ -24,19 +25,21 @@ namespace Domain.Providers.Campaigns
     {
         public NetworkingProvider(
             ILogger<ProspectListProvider> logger,
-            ICustomizeInvitationModalService customizeInvitationModalService,
-            IHowDoYouKnowModalService howDoYouKnowModalService,
             ICrawlProspectsService crawlProspectsService,
             IWebDriverProvider webDriverProvider,
             ICampaignProspectsService campaignProspectService,
             ILinkedInPageFacade linkedInPageFacade,
             ICampaignProvider campaignProvider,
+            ISearchPageDialogManager searchPageDialogManager,
             ITimestampService timestampService,
             IHumanBehaviorService humanBehaviorService,
-            IPhaseDataProcessingProvider phaseDataProcessingProvider
+            IPhaseDataProcessingProvider phaseDataProcessingProvider,
+            ISendConnectionsService sendConnectionsService
             )
         {
+            _sendConnectionsService = sendConnectionsService;
             _logger = logger;
+            _searchPageDialogManager = searchPageDialogManager;
             _campaignProvider = campaignProvider;
             _timestampService = timestampService;
             _campaignProspectService = campaignProspectService;
@@ -45,12 +48,10 @@ namespace Domain.Providers.Campaigns
             _phaseDataProcessingProvider = phaseDataProcessingProvider;
             _webDriverProvider = webDriverProvider;
             _linkedInPageFacade = linkedInPageFacade;
-            _howDoYouKnowModalService = howDoYouKnowModalService;
-            _customizeInvitationModalService = customizeInvitationModalService;
         }
 
-        private readonly ICustomizeInvitationModalService _customizeInvitationModalService;
-        private readonly IHowDoYouKnowModalService _howDoYouKnowModalService;
+        private readonly ISendConnectionsService _sendConnectionsService;
+        private readonly ISearchPageDialogManager _searchPageDialogManager;
         private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly IPhaseDataProcessingProvider _phaseDataProcessingProvider;
         private readonly IWebDriverProvider _webDriverProvider;
@@ -396,34 +397,14 @@ namespace Domain.Providers.Campaigns
             {
                 _logger.LogDebug("Sending connection to the given prospect failed.");
                 // if there was a failure attempt to close modal dialog if it is open
-                TryCloseModals(webDriver);
+                _humanBehaviorService.RandomWaitMilliSeconds(850, 2000);
+                _searchPageDialogManager.TryCloseModal(webDriver);
 
                 return null;
             }
 
             CampaignProspectRequest request = _campaignProspectService.CreateCampaignProspects(prospect, campaignId);
             return request;
-        }
-
-        private void TryCloseModals(IWebDriver webDriver)
-        {
-            _logger.LogDebug("Attempting to close any open dialogs");
-            SendInviteModalType modalType = _linkedInPageFacade.LinkedInSearchPage.SearchPageDialogManager.CheckModalType(webDriver);
-            if (modalType == SendInviteModalType.CustomizeInvite)
-            {
-                _humanBehaviorService.RandomWaitMilliSeconds(850, 2000);
-                _customizeInvitationModalService.CloseDialog(webDriver);
-            }
-
-            if (modalType == SendInviteModalType.HowDoYouKnow)
-            {
-                _humanBehaviorService.RandomWaitMilliSeconds(850, 2000);
-                _howDoYouKnowModalService.CloseDialog(webDriver);
-            }
-            else
-            {
-                _logger.LogDebug("No open dialogs were found");
-            }
         }
 
         private async Task<HalOperationResult<T>> ExecuteProspectListInternalAsync<T>(IWebDriver webDriver, NetworkingMessageBody message, IList<IWebElement> connectableProspectsOnThisPage)
@@ -502,44 +483,10 @@ namespace Domain.Providers.Campaigns
             else
             {
                 _humanBehaviorService.RandomWaitMilliSeconds(700, 1500);
-                sendConnectionSuccess = HandleConnectWithProspectModal(webDriver);
+                sendConnectionSuccess = _searchPageDialogManager.HandleConnectWithProspectModal(webDriver);
             }
 
             return sendConnectionSuccess;
-        }
-
-        private bool HandleConnectWithProspectModal(IWebDriver webDriver)
-        {
-            bool isModalOpen = _linkedInPageFacade.LinkedInSearchPage.SearchPageDialogManager.IsConnectWithProspectModalOpen(webDriver);
-            if (isModalOpen == false)
-            {
-                _logger.LogWarning("Connect with prospect modal is not open. It was expected to be open. Moving on to the next prospect.");
-                return false;
-            }
-
-            // determine if the modal that is open is CustomizeInvite or HowDoYouKnow modal
-            SendInviteModalType modalType = _linkedInPageFacade.LinkedInSearchPage.SearchPageDialogManager.DetermineSendInviteModalType(webDriver);
-
-            if (modalType == SendInviteModalType.CustomizeInvite)
-            {
-                _logger.LogInformation("Handling Customize Invite Modal.");
-                return _customizeInvitationModalService.HandleInteraction(webDriver);
-            }
-
-            if (modalType == SendInviteModalType.HowDoYouKnow)
-            {
-                _logger.LogInformation("Handling 'How Do You Know' Modal.");
-                bool succeeded = _howDoYouKnowModalService.HandleInteraction(webDriver);
-                if (succeeded == true)
-                {
-                    _humanBehaviorService.RandomWaitMilliSeconds(700, 1200);
-                    return _customizeInvitationModalService.HandleInteraction(webDriver);
-                }
-            }
-
-            _logger.LogWarning("Could not determine 'SendInvite' modal type");
-
-            return false;
         }
 
         private HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl)

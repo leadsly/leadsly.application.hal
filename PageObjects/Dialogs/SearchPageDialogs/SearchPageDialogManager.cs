@@ -1,5 +1,6 @@
 ﻿using Domain;
 using Domain.POMs.Dialogs;
+using Domain.Services.Interfaces.SendConnections;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
@@ -9,22 +10,77 @@ namespace PageObjects.Dialogs.SearchPageDialogs
 {
     public class SearchPageDialogManager : ISearchPageDialogManager
     {
-        public SearchPageDialogManager(ILogger<SearchPageDialogManager> logger, IWebDriverUtilities webDriverUtilities)
+        public SearchPageDialogManager(
+            ILogger<SearchPageDialogManager> logger,
+            IWebDriverUtilities webDriverUtilities,
+            IHowDoYouKnowModalService howDoYouKnowModalService,
+            ICustomizeInvitationModalService customizeInvitationModalService
+            )
         {
             _logger = logger;
             _webDriverUtilities = webDriverUtilities;
+            _howDoYouKnowModalService = howDoYouKnowModalService;
+            _customizeInvitationModalService = customizeInvitationModalService;
         }
 
+        private readonly ICustomizeInvitationModalService _customizeInvitationModalService;
+        private readonly IHowDoYouKnowModalService _howDoYouKnowModalService;
         private readonly IWebDriverUtilities _webDriverUtilities;
         private readonly ILogger<SearchPageDialogManager> _logger;
 
-        public bool IsConnectWithProspectModalOpen(IWebDriver webDriver)
+        public bool HandleConnectWithProspectModal(IWebDriver webDriver)
         {
-            IWebElement modal = _webDriverUtilities.WaitUntilNotNull(Modal, webDriver, 5);
-            return modal != null;
+            bool isModalOpen = IsConnectWithProspectModalOpen(webDriver);
+            if (isModalOpen == false)
+            {
+                _logger.LogWarning("Connect with prospect modal is not open. It was expected to be open. Moving on to the next prospect.");
+                return false;
+            }
+
+            // determine if the modal that is open is CustomizeInvite or HowDoYouKnow modal
+            SendInviteModalType modalType = DetermineSendInviteModalType(webDriver);
+
+            if (modalType == SendInviteModalType.CustomizeInvite)
+            {
+                _logger.LogInformation("Handling Customize Invite Modal.");
+                return _customizeInvitationModalService.HandleInteraction(webDriver);
+            }
+
+            if (modalType == SendInviteModalType.HowDoYouKnow)
+            {
+                _logger.LogInformation("Handling 'How Do You Know' Modal.");
+                bool succeeded = _howDoYouKnowModalService.HandleInteraction(webDriver);
+                if (succeeded == true)
+                {
+                    _logger.LogInformation("Successfully handled HowDoYouKnow dialog. Proceeding to 'Customize Your Invitation' modal");
+                    return _customizeInvitationModalService.HandleInteraction(webDriver);
+                }
+            }
+
+            _logger.LogWarning("Could not determine 'SendInvite' modal type");
+
+            return false;
         }
 
-        public SendInviteModalType DetermineSendInviteModalType(IWebDriver webDriver)
+        public void TryCloseModal(IWebDriver webDriver)
+        {
+            _logger.LogDebug("Attempting to close any open dialogs");
+            SendInviteModalType modalType = CheckModalType(webDriver);
+            if (modalType == SendInviteModalType.CustomizeInvite)
+            {
+                _customizeInvitationModalService.CloseDialog(webDriver);
+            }
+            else if (modalType == SendInviteModalType.HowDoYouKnow)
+            {
+                _howDoYouKnowModalService.CloseDialog(webDriver);
+            }
+            else
+            {
+                _logger.LogDebug("No open dialogs were found");
+            }
+        }
+
+        private SendInviteModalType DetermineSendInviteModalType(IWebDriver webDriver)
         {
             _logger.LogInformation("Determining Send Invite modal type. This is used to determine the type of modal user is presented with");
             SendInviteModalType result = SendInviteModalType.None;
@@ -44,7 +100,7 @@ namespace PageObjects.Dialogs.SearchPageDialogs
             return result;
         }
 
-        public SendInviteModalType CheckModalType(IWebDriver webDriver)
+        private SendInviteModalType CheckModalType(IWebDriver webDriver)
         {
             IWebElement customizeModal = _webDriverUtilities.WaitUntilNotNull(CustomizeYourInviteModal, webDriver, 3);
             if (customizeModal != null && customizeModal.Displayed)
@@ -124,6 +180,12 @@ namespace PageObjects.Dialogs.SearchPageDialogs
                 _logger.LogWarning("No modal has been located!");
             }
             return modal;
+        }
+
+        private bool IsConnectWithProspectModalOpen(IWebDriver webDriver)
+        {
+            IWebElement modal = _webDriverUtilities.WaitUntilNotNull(Modal, webDriver, 5);
+            return modal != null;
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using Domain.POMs.Dialogs;
-using Leadsly.Application.Model;
+﻿using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using OpenQA.Selenium;
 
@@ -7,7 +6,6 @@ namespace Domain.POMs.Pages
 {
     public interface ILinkedInSearchPage
     {
-        public ISearchPageDialogManager SearchPageDialogManager { get; }
         HalOperationResult<T> GetTotalSearchResults<T>(IWebDriver driver)
             where T : IOperationResponse;
 
@@ -40,9 +38,6 @@ namespace Domain.POMs.Pages
         bool IsNextButtonDisabled(IWebDriver webDriver);
 
         IWebElement ResultsHeader(IWebDriver webDriver);
-
-        HalOperationResult<T> WaitForResultsHeader<T>(IWebDriver webDriver)
-            where T : IOperationResponse;
 
         IWebElement AreResultsHelpfulPTag(IWebDriver webDriver);
 

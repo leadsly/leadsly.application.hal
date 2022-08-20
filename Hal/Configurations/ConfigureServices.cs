@@ -30,7 +30,9 @@ using Domain.Serializers;
 using Domain.Serializers.Interfaces;
 using Domain.Services;
 using Domain.Services.Interfaces;
+using Domain.Services.Interfaces.Networking;
 using Domain.Services.Interfaces.SendConnections;
+using Domain.Services.Networking;
 using Domain.Services.SendConnectionsModals;
 using Domain.Supervisor;
 using Hal.OptionsJsonModels;
@@ -280,6 +282,7 @@ namespace Hal.Configurations
             services.AddScoped<IUrlService, UrlService>();
             services.AddScoped<IHowDoYouKnowModalService, HowDoYouKnowModalService>();
             services.AddScoped<ICustomizeInvitationModalService, CustomizeInvitationModalService>();
+            services.AddScoped<ISendConnectionsService, SendConnectionsService>();
 
             return services;
         }
