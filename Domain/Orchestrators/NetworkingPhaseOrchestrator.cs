@@ -1,0 +1,437 @@
+﻿using Domain.Facades.Interfaces;
+using Domain.Interactions.Networking.ConnectWithProspect;
+using Domain.Interactions.Networking.GatherProspects;
+using Domain.Interactions.Networking.NoResultsFound;
+using Domain.Models.Networking;
+using Domain.Models.Requests;
+using Domain.Orchestrators.Interfaces;
+using Domain.Providers.Campaigns;
+using Domain.Providers.Interfaces;
+using Domain.Services.Interfaces.POMs;
+using Leadsly.Application.Model;
+using Leadsly.Application.Model.Campaigns;
+using Leadsly.Application.Model.Responses;
+using Leadsly.Application.Model.WebDriver;
+using Microsoft.Extensions.Logging;
+using OpenQA.Selenium;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Domain.Orchestrators
+{
+    public class NetworkingPhaseOrchestrator : PhaseOrchestratorBase, INetworkingPhaseOrchestrator
+    {
+        public NetworkingPhaseOrchestrator(
+            ILogger<NetworkingPhaseOrchestrator> logger,
+            INetworkingInteractionFacade interactionFacade,
+            ISearchPageFooterService searchPageFooterService,
+            IWebDriverProvider webDriverProvider
+            ) : base(logger)
+        {
+
+            _searchPageFooterService = searchPageFooterService;
+            _logger = logger;
+            _webDriverProvider = webDriverProvider;
+            _interactionFacade = interactionFacade;
+        }
+
+        private readonly INetworkingInteractionFacade _interactionFacade;
+        private readonly ISearchPageFooterService _searchPageFooterService;
+        private readonly IWebDriverProvider _webDriverProvider;
+        private readonly ILogger<NetworkingPhaseOrchestrator> _logger;
+
+        private List<PersistPrimaryProspectRequest> PersistPrimaryProspectRequests { get; set; } = new List<PersistPrimaryProspectRequest>();
+        private IList<ConnectionSentRequest> ConnectionSentRequests { get; set; } = new List<ConnectionSentRequest>();
+        private IList<Models.Requests.UpdateSearchUrlProgressRequest> UpdateSearchUrlRequests { get; set; } = new List<Models.Requests.UpdateSearchUrlProgressRequest>();
+        private IList<IWebElement> Prospects { get; set; } = new List<IWebElement>();
+        private int NumberOfConnectionsSent { get; set; }
+
+        public IList<UpdateSearchUrlProgressRequest> GetUpdateSearchUrlRequests()
+        {
+            IList<UpdateSearchUrlProgressRequest> requests = UpdateSearchUrlRequests;
+            UpdateSearchUrlRequests = new List<Models.Requests.UpdateSearchUrlProgressRequest>();
+            return requests;
+        }
+
+        public List<PersistPrimaryProspectRequest> GetPersistPrimaryProspectRequests()
+        {
+            List<PersistPrimaryProspectRequest> requests = PersistPrimaryProspectRequests;
+            PersistPrimaryProspectRequests = new List<PersistPrimaryProspectRequest>();
+            return requests;
+        }
+
+        public IList<ConnectionSentRequest> GetConnectionSentRequests()
+        {
+            IList<ConnectionSentRequest> requests = ConnectionSentRequests;
+            ConnectionSentRequests = new List<ConnectionSentRequest>();
+            return requests;
+        }
+
+        public void Execute(NetworkingMessageBody message, IList<SearchUrlProgress> searchUrlsProgress)
+        {
+            string halId = message.HalId;
+            _logger.LogInformation("Executing Networking Phase on hal id {halId}", halId);
+
+            IWebDriver webDriver = _webDriverProvider.GetOrCreateWebDriver(BrowserPurpose.Networking, message.ChromeProfileName, message.GridNamespaceName, message.GridServiceDiscoveryName, out bool isNewWebDriver);
+            if (webDriver == null)
+            {
+                _logger.LogError("WebDriver could not be found or created. Cannot proceed");
+                return;
+            }
+
+            ExecuteInternal(message, webDriver, searchUrlsProgress);
+        }
+
+        private void ExecuteInternal(NetworkingMessageBody message, IWebDriver webDriver, IList<SearchUrlProgress> searchUrlsProgress)
+        {
+            try
+            {
+                BeginNetworking(message, webDriver, searchUrlsProgress);
+            }
+            finally
+            {
+                _webDriverProvider.CloseBrowser<IOperationResponse>(BrowserPurpose.Networking);
+                NumberOfConnectionsSent = 0;
+            }
+        }
+
+        private void BeginNetworking(NetworkingMessageBody message, IWebDriver webDriver, IList<SearchUrlProgress> searchUrlsProgress)
+        {
+            _logger.LogDebug("Begning to execute networking phase");
+            foreach (SearchUrlProgress searchUrlProgress in searchUrlsProgress)
+            {
+                if (PrepareBrowser(webDriver, searchUrlProgress, message.HalId) == false)
+                {
+                    return;
+                }
+
+                int? totalResults = GetTotalNumberOfSearchResults(webDriver, searchUrlProgress);
+                if (totalResults == null)
+                {
+                    // just move onto the next search url
+                    _logger.LogDebug($"Unable to determine total number of search results. Moving on to the next search url in the list. This failure occured for search result: {searchUrlProgress.SearchUrl}");
+                    continue;
+                }
+
+                Add_UpdateSearchUrlProgressRequest(searchUrlProgress.SearchUrlProgressId, searchUrlProgress.LastPage, webDriver.Url, (int)totalResults, webDriver.CurrentWindowHandle);
+
+                ConnectWithProspectsForSearchUrl(webDriver, message, searchUrlProgress, (int)totalResults);
+
+                // see if we can get away with this.
+                if (NumberOfConnectionsSent >= message.ProspectsToCrawl)
+                    break;
+            }
+            _logger.LogDebug("Finished executing networking phase");
+        }
+
+        private void ConnectWithProspectsForSearchUrl(IWebDriver webDriver, NetworkingMessageBody message, SearchUrlProgress searchUrlProgress, int totalResults)
+        {
+            _logger.LogInformation("ConnectWithProspectsForSearchUrl executing");
+            for (int currentPage = searchUrlProgress.LastPage; currentPage < totalResults + 1; currentPage++)
+            {
+                UpdateCurrentPage_SearchUrlProgress(searchUrlProgress.SearchUrlProgressId, currentPage, webDriver.Url);
+
+                if (GatherProspectsInteractions(webDriver, message) == false)
+                {
+                    if (GoToTheNextPage(webDriver, searchUrlProgress.SearchUrlProgressId, currentPage, totalResults) == false)
+                    {
+                        UpdateCurrentPage_SearchUrlProgress(searchUrlProgress.SearchUrlProgressId, currentPage, webDriver.Url);
+                        break;
+                    }
+
+                    continue;
+                }
+
+                _logger.LogInformation("Adding PrimaryProspectRequests List");
+                PersistPrimaryProspectRequests.AddRange(_interactionFacade.PersistPrimaryProspectRequests);
+
+                // if number of prospects comes back as zero continue to the next page
+                if (_interactionFacade.Prospects.Count == 0)
+                {
+                    if (IsLastPage(webDriver, currentPage, totalResults))
+                    {
+                        UpdateCurrentPage_SearchUrlProgress(searchUrlProgress.SearchUrlProgressId, currentPage, webDriver.Url, true);
+                        break;
+                    }
+
+                    if (GoToTheNextPage(webDriver, searchUrlProgress.SearchUrlProgressId, currentPage, totalResults) == false)
+                    {
+                        UpdateCurrentPage_SearchUrlProgress(searchUrlProgress.SearchUrlProgressId, currentPage, webDriver.Url);
+                        break;
+                    }
+
+                    continue;
+                }
+                else
+                {
+                    Prospects = _interactionFacade.Prospects;
+                }
+
+                // if there are available prospects connect with them
+                ConnectWithProspectsOnCurrentPage(webDriver, message, currentPage, totalResults, searchUrlProgress.SearchUrlProgressId);
+
+                if (IsMaxNumberOfConnectionsSentReached(message.ProspectsToCrawl))
+                {
+                    _logger.LogDebug("Number of connections sent has reached the limit. Number of connections sent is {0}. Number of connections to send out for this phase is {1}", NumberOfConnectionsSent, message.ProspectsToCrawl);
+                    if (IsLastPage(webDriver, currentPage, totalResults))
+                    {
+                        bool exhausted = Prospects.Count == 0;
+                        UpdateCurrentPage_SearchUrlProgress(searchUrlProgress.SearchUrlProgressId, currentPage, webDriver.Url, exhausted);
+                    }
+                    else
+                    {
+                        UpdateCurrentPage_SearchUrlProgress(searchUrlProgress.SearchUrlProgressId, currentPage, webDriver.Url);
+                    }
+
+                    break;
+                }
+
+                // if this is the last page update search url progress request with exhausted property set to true                
+                if (IsLastPage(webDriver, currentPage, totalResults))
+                {
+                    bool exhausted = Prospects.Count == 0;
+                    UpdateCurrentPage_SearchUrlProgress(searchUrlProgress.SearchUrlProgressId, currentPage, webDriver.Url, exhausted);
+                    break;
+                }
+
+                // if this is not the last page go to the next page
+                if (GoToTheNextPage(webDriver, searchUrlProgress.SearchUrlProgressId, currentPage, totalResults) == false)
+                {
+                    UpdateCurrentPage_SearchUrlProgress(searchUrlProgress.SearchUrlProgressId, currentPage, webDriver.Url);
+                    break;
+                }
+            }
+        }
+
+        private bool GatherProspectsInteractions(IWebDriver webDriver, NetworkingMessageBody message)
+        {
+            GatherProspectsInteraction gatherProspectsInteraction = new()
+            {
+                WebDriver = webDriver,
+                Message = message,
+            };
+
+            return _interactionFacade.HandleInteraction(gatherProspectsInteraction);
+        }
+
+        private void ConnectWithProspectsOnCurrentPage(IWebDriver webDriver, NetworkingMessageBody message, int currentPage, int totalResults, string searchUrlProgressId)
+        {
+            _logger.LogTrace("Executing ConnectWithProspectsOnCurrentPage");
+            _logger.LogDebug("Number of connectable prospects: {0}", Prospects?.Count);
+            ConnectWithProspectInteraction interaction = new()
+            {
+                CurrentPage = currentPage,
+                TotalResults = totalResults,
+                Message = message,
+                WebDriver = webDriver
+            };
+
+            foreach (IWebElement prospect in Prospects)
+            {
+                if (IsMaxNumberOfConnectionsSentReached(message.ProspectsToCrawl))
+                {
+                    _logger.LogDebug("Number of connections sent has reached the limit. Number of connections sent is {0}. Number of connections to send out for this phase is {1}", NumberOfConnectionsSent, message.ProspectsToCrawl);
+                    break;
+                }
+
+                interaction.Prospect = prospect;
+                bool succeeded = _interactionFacade.HandleInteraction(interaction);
+                if (succeeded == true)
+                {
+                    NumberOfConnectionsSent += 1;
+                    ConnectionSentRequests.Add(_interactionFacade.ConnectionSentRequest);
+                }
+                else
+                {
+                    _logger.LogDebug("The CampaignProspectRequest is null. Skipping this prospect and moving onto the next one");
+                }
+            }
+        }
+
+
+        private bool PrepareBrowser(IWebDriver webDriver, SearchUrlProgress searchUrlProgress, string halId)
+        {
+            HalOperationResult<IOperationResponse> result = _webDriverProvider.SwitchToOrNewTab<IOperationResponse>(webDriver, searchUrlProgress.WindowHandleId);
+            if (result.Succeeded == false)
+            {
+                _logger.LogError("Failed to switch to an existing tab or create a new one. Hal id {halId}", halId);
+                return false;
+            }
+
+            bool pageNavigationSucceeded = GoToPage(webDriver, searchUrlProgress.SearchUrl);
+            if (pageNavigationSucceeded == false)
+            {
+                _logger.LogError("Failed to navigate to page {searchUrl}. Hal id {halId}", searchUrlProgress.SearchUrl, halId);
+                return false;
+            }
+
+            if (NoSearchResultsDisplayed(webDriver) == true)
+            {
+                _logger.LogError("No search results page displayed again. This means we've tried refreshing and waiting for results page to be displayed, but it wasn't.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool NoSearchResultsDisplayed(IWebDriver webDriver)
+        {
+            NoResultsFoundInteraction interaction = new()
+            {
+                WebDriver = webDriver
+            };
+
+            if (_interactionFacade.HandleInteraction(interaction))
+            {
+                _logger.LogError("No search results page displayed again. This means we've tried refreshing and waiting for results page to be displayed, but it wasn't.");
+                return true;
+            }
+            return false;
+        }
+
+        private bool IsLastPage(IWebDriver webDriver, int currentPage, int totalResults)
+        {
+            if (_searchPageFooterService.IsLastPage(webDriver, false, currentPage, totalResults) == true)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private int? GetTotalNumberOfSearchResults(IWebDriver webDriver, SearchUrlProgress searchUrlProgress)
+        {
+            int totalResults = 0;
+            if (searchUrlProgress.TotalSearchResults == 0)
+            {
+                int? totalNumberOfResults = _searchPageFooterService.GetTotalResults(webDriver);
+                if (totalNumberOfResults == null)
+                {
+                    return null;
+                }
+                totalResults = (int)totalNumberOfResults;
+            }
+            else
+            {
+                totalResults = searchUrlProgress.TotalSearchResults;
+            }
+            return totalResults;
+        }
+
+        private bool IsMaxNumberOfConnectionsSentReached(int numberOfProspectsToCrawl)
+        {
+            if (NumberOfConnectionsSent >= numberOfProspectsToCrawl)
+            {
+                _logger.LogDebug("Number of connections sent has reached the max number of connections that can be sent");
+                return true;
+            }
+            _logger.LogDebug("Number of connections sent has not reached the max number of connections that can be sent");
+
+            return false;
+        }
+
+        private void UpdateCurrentPage_SearchUrlProgress(string searchUrlProgressId, int currentPage, string currentUrl, bool exhausted = false)
+        {
+            UpdateSearchUrlProgressRequest request = UpdateSearchUrlRequests.FirstOrDefault(r => r.SearchUrlProgressId == searchUrlProgressId);
+            if (request != null)
+            {
+                request.SearchUrl = currentUrl;
+                request.LastPage = currentPage;
+                request.Exhausted = exhausted;
+            }
+        }
+
+        private void Add_UpdateSearchUrlProgressRequest(string searchUrlProgressId, int currentPage, string currentUrl, int totalResults, string currentWindowHandle)
+        {
+            if (UpdateSearchUrlRequests.Any(req => req.SearchUrlProgressId == searchUrlProgressId) == false)
+            {
+                UpdateSearchUrlRequests.Add(new()
+                {
+                    SearchUrlProgressId = searchUrlProgressId,
+                    StartedCrawling = true,
+                    LastPage = currentPage,
+                    SearchUrl = currentUrl,
+                    TotalSearchResults = totalResults,
+                    WindowHandleId = currentWindowHandle
+                });
+            }
+        }
+
+        private bool GoToTheNextPage(IWebDriver webDriver, string searchUrlProgressId, int currentPage, int totalResults)
+        {
+            bool succeeded = false;
+            if (CheckIfNextButtonIsDisabled(webDriver, currentPage, totalResults, searchUrlProgressId) == true)
+            {
+                succeeded = false;
+            }
+            else
+            {
+                if (NavigateToNextPage(webDriver) == false)
+                {
+                    succeeded = false;
+                }
+                else
+                {
+                    succeeded = true;
+                }
+            }
+
+            return succeeded;
+        }
+
+        private bool NavigateToNextPage(IWebDriver webDriver)
+        {
+            bool succeeded = false;
+            bool? goToNextPageOperation = _searchPageFooterService.GoToTheNextPage(webDriver);
+            if (goToNextPageOperation == null || goToNextPageOperation == false)
+            {
+                _logger.LogDebug("Navigation to the next page failed. Breaking out of this loop and updating search page url progress");
+                succeeded = false;
+            }
+            else
+            {
+                if (NoSearchResultsDisplayed(webDriver) == true)
+                {
+                    succeeded = false;
+                }
+                else
+                {
+                    succeeded = true;
+                }
+            }
+
+            return succeeded;
+        }
+
+        private bool CheckIfNextButtonIsDisabled(IWebDriver webDriver, int currentPage, int totalResults, string searchUrlProgressId)
+        {
+            bool disabled = false;
+            bool? isNextButtonClickable = _searchPageFooterService.IsNextButtonClickable(webDriver);
+            if (isNextButtonClickable == null)
+            {
+                _logger.LogInformation("Next button is null. Could not locate it. Checking if it is the last page");
+                if (IsLastPage(webDriver, currentPage, totalResults))
+                {
+                    _logger.LogInformation("This is the last page.");
+                }
+                disabled = true;
+            }
+            else if (isNextButtonClickable == false)
+            {
+                _logger.LogInformation("Next button is disabled. Checking if it is the last page");
+                if (IsLastPage(webDriver, currentPage, totalResults))
+                {
+                    _logger.LogInformation("This is the last page.");
+                }
+
+                disabled = true;
+            }
+            else
+            {
+                _logger.LogDebug("Next button is not disabled");
+                disabled = false;
+            }
+
+            return disabled;
+        }
+    }
+}

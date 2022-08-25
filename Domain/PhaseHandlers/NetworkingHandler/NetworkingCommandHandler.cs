@@ -1,4 +1,6 @@
-﻿using Domain.Facades.Interfaces;
+﻿using Domain.Executors;
+using Domain.Facades.Interfaces;
+using Domain.Models.Networking;
 using Domain.RabbitMQ;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
@@ -7,9 +9,6 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Domain.PhaseHandlers.NetworkingHandler
@@ -18,39 +17,32 @@ namespace Domain.PhaseHandlers.NetworkingHandler
     {
         public NetworkingCommandHandler(
             ILogger<NetworkingCommandHandler> logger,
-            ICampaignPhaseFacade campaignPhaseFacade
+            IMessageExecutorHandler<NetworkingMessageBody> messageExecutorHandler
             )
         {
-            _campaignPhaseFacade = campaignPhaseFacade;
             _logger = logger;
+            _messageExecutorHandler = messageExecutorHandler;
         }
 
         private readonly ILogger<NetworkingCommandHandler> _logger;
-        private readonly ICampaignPhaseFacade _campaignPhaseFacade;
+        private readonly IMessageExecutorHandler<NetworkingMessageBody> _messageExecutorHandler;
 
         public async Task HandleAsync(NetworkingCommand command)
         {
             IModel channel = command.Channel;
             BasicDeliverEventArgs eventArgs = command.EventArgs;
 
-            NetworkingMessageBody body = command.MessageBody as NetworkingMessageBody;
+            NetworkingMessageBody message = command.MessageBody as NetworkingMessageBody;
 
-            try
+            bool succeeded = await _messageExecutorHandler.ExecuteMessageAsync(message);
+            if (succeeded == true)
             {
-                HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecutePhaseAsync<IOperationResponse>(body);
-                if (operationResult.Succeeded == true)
-                {
-                    _logger.LogInformation("Networking phase executed successfully. Acknowledging message");
-                    channel.BasicAck(eventArgs.DeliveryTag, false);
-                }
-                else
-                {
-                    _logger.LogWarning("Networking phase did not successfully execute. Negatively acknowledging the message and re-queuing it");
-                    channel.BasicNackRetry(eventArgs);
-                }
+                _logger.LogInformation("Networking phase executed successfully. Acknowledging message");
+                channel.BasicAck(eventArgs.DeliveryTag, false);
             }
-            catch (Exception ex)
+            else
             {
+                _logger.LogWarning("Networking phase did not successfully execute. Negatively acknowledging the message. This message will not be re-queued");
                 channel.BasicNackRetry(eventArgs);
             }
         }

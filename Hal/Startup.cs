@@ -44,6 +44,9 @@ namespace Hal
                     .AddFacadesConfiguration()
                     .AddProvidersConfiguration()
                     .AddSerializersConfiguration()
+                    .AddMessageExecutorHandlers()
+                    .AddInteractionHandlers()
+                    .AddOrchestratorServices()
                     .AddServicesConfiguration()
                     .AddHostedService<ConsumingHostedService>()
                     .AddMemoryCache();

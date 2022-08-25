@@ -1,4 +1,5 @@
-﻿using Domain.Serializers.Interfaces;
+﻿using Domain.Models.Networking;
+using Domain.Serializers.Interfaces;
 using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;

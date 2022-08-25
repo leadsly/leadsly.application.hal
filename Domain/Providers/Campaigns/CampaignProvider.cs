@@ -1,4 +1,5 @@
-﻿using Domain.Providers.Campaigns.Interfaces;
+﻿using Domain.Models.Networking;
+using Domain.Providers.Campaigns.Interfaces;
 using Domain.Serializers.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;

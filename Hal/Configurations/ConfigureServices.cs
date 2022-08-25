@@ -1,7 +1,18 @@
 ﻿using Domain;
+using Domain.Executors;
+using Domain.Executors.Networking;
 using Domain.Facades;
 using Domain.Facades.Interfaces;
+using Domain.Interactions.Networking.ConnectWithProspect;
+using Domain.Interactions.Networking.ConnectWithProspect.Interfaces;
+using Domain.Interactions.Networking.Decorators;
+using Domain.Interactions.Networking.GatherProspects;
+using Domain.Interactions.Networking.GatherProspects.Interfaces;
+using Domain.Interactions.Networking.NoResultsFound;
+using Domain.Interactions.Networking.NoResultsFound.Interfaces;
 using Domain.OptionsJsonModels;
+using Domain.Orchestrators;
+using Domain.Orchestrators.Interfaces;
 using Domain.PhaseConsumers.FollowUpMessageHandlers;
 using Domain.PhaseConsumers.MonitorForNewConnectionsHandlers;
 using Domain.PhaseConsumers.NetworkingConnectionsHandlers;
@@ -29,10 +40,12 @@ using Domain.Repositories;
 using Domain.Serializers;
 using Domain.Serializers.Interfaces;
 using Domain.Services;
+using Domain.Services.Api;
 using Domain.Services.Interfaces;
-using Domain.Services.Interfaces.Networking;
-using Domain.Services.Interfaces.SendConnections;
-using Domain.Services.Networking;
+using Domain.Services.Interfaces.Api;
+using Domain.Services.Interfaces.POMs;
+using Domain.Services.Interfaces.SendConnectionsModals;
+using Domain.Services.POMs;
 using Domain.Services.SendConnectionsModals;
 using Domain.Supervisor;
 using Hal.OptionsJsonModels;
@@ -40,6 +53,7 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Infrastructure.Repositories;
 using Leadsly.Application.Model;
+using Leadsly.Application.Model.Campaigns;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
@@ -157,6 +171,83 @@ namespace Hal.Configurations
             services.AddScoped<ICrawlProspectsService, CrawlProspectsService>();
             services.AddScoped<ICampaignProspectsService, CampaignProspectsService>();
             services.AddScoped<IScreenHouseKeeperService, ScreenHouseKeeperService>();
+            services.AddScoped<ISearchPageFooterService, SearchPageFooterService>();
+            services.AddScoped<ICustomizeInvitationModalService, CustomizeInvitationModalService>();
+            services.AddScoped<IHowDoYouKnowModalService, HowDoYouKnowModalService>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddServicesConfiguration(this IServiceCollection services)
+        {
+            Log.Information("Registering services configuration.");
+
+            services.AddHttpClient<IPhaseDataProcessingService, PhaseDataProcessingService>(opt =>
+            {
+                opt.Timeout = TimeSpan.FromMinutes(5);
+            });
+
+            services.AddHttpClient<ICampaignService, CampaignService>(opt =>
+            {
+                opt.Timeout = TimeSpan.FromMinutes(5);
+            });
+
+            services.AddHttpClient<ITriggerPhaseService, TriggerPhaseService>(opt =>
+            {
+                opt.Timeout = TimeSpan.FromMinutes(5);
+            });
+
+            services.AddHttpClient<ILeadslyGridSidecartService, LeadslyGridSidecartService>(opt =>
+            {
+                opt.Timeout = TimeSpan.FromMinutes(5);
+            });
+
+            services.AddHttpClient<INetworkingServiceApi, NetworkingServiceApi>(opt =>
+            {
+                opt.Timeout = TimeSpan.FromMinutes(5);
+            });
+
+            services.AddScoped<IWebDriverService, WebDriverService>();
+            services.AddScoped<ITimestampService, TimestampService>();
+            services.AddScoped<IPhaseEventHandlerService, PhaseEventHandlerService>();
+            services.AddScoped<IRabbitMQManager, RabbitMQManager>();
+            services.AddScoped<IWebDriverUtilities, WebDriverUtilities>();
+            services.AddScoped<IHumanBehaviorService, HumanBehaviorService>();
+            services.AddSingleton<IConsumingService, ConsumingService>();
+            services.AddSingleton<Random>();
+            services.AddScoped<IUrlService, UrlService>();
+            services.AddScoped<INetworkingService, NetworkingService>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddOrchestratorServices(this IServiceCollection services)
+        {
+            Log.Information("Registering orchestrator services.");
+
+            services.AddScoped<INetworkingPhaseOrchestrator, NetworkingPhaseOrchestrator>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddInteractionHandlers(this IServiceCollection services)
+        {
+            Log.Information("Registering interaction handlers.");
+
+            services.AddScoped<RetryConnectWithProspectHandlerDecorator<ConnectWithProspectInteraction>>();
+            services.AddScoped<RetryGatherProspectsHandlerDecorator<GatherProspectsInteraction>>();
+
+            services.AddScoped<IConnectWithProspectInteractionHandler<ConnectWithProspectInteraction>, ConnectWithProspectInteractionHandler>();
+            services.AddScoped<IGatherProspectsInteractionHandler<GatherProspectsInteraction>, GatherProspectsInteractionHandler>();
+            services.AddScoped<INoResultsFoundInteractionHandler<NoResultsFoundInteraction>, NoResultsFoundInteractionHandler>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddMessageExecutorHandlers(this IServiceCollection services)
+        {
+            Log.Information("Registering message executor handler.");
+            services.AddScoped<IMessageExecutorHandler<NetworkingMessageBody>, NetworkingMessageExecutorHandler>();
 
             return services;
         }
@@ -167,6 +258,7 @@ namespace Hal.Configurations
 
             services.AddScoped<ICampaignPhaseFacade, CampaignPhaseFacade>();
             services.AddScoped<ILinkedInPageFacade, LinkedInPageFacade>();
+            services.AddScoped<INetworkingInteractionFacade, NetworkingInteractionFacade>();
 
             return services;
         }
@@ -242,47 +334,7 @@ namespace Hal.Configurations
             services.AddScoped<IDeepScanProspectsForRepliesProvider, DeepScanProspectsForRepliesProvider>();
             services.AddScoped<IPhaseDataProcessingProvider, PhaseDataProcessingProvider>();
             services.AddScoped<ITriggerPhaseProvider, TriggerPhaseProvider>();
-            services.AddScoped<INetworkingProvider, NetworkingProvider>();
-
-            return services;
-        }
-
-        public static IServiceCollection AddServicesConfiguration(this IServiceCollection services)
-        {
-            Log.Information("Registering services configuration.");
-
-            services.AddHttpClient<IPhaseDataProcessingService, PhaseDataProcessingService>(opt =>
-            {
-                opt.Timeout = TimeSpan.FromMinutes(5);
-            });
-
-            services.AddHttpClient<ICampaignService, CampaignService>(opt =>
-            {
-                opt.Timeout = TimeSpan.FromMinutes(5);
-            });
-
-            services.AddHttpClient<ITriggerPhaseService, TriggerPhaseService>(opt =>
-            {
-                opt.Timeout = TimeSpan.FromMinutes(5);
-            });
-
-            services.AddHttpClient<ILeadslyGridSidecartService, LeadslyGridSidecartService>(opt =>
-            {
-                opt.Timeout = TimeSpan.FromMinutes(5);
-            });
-
-            services.AddScoped<IWebDriverService, WebDriverService>();
-            services.AddScoped<ITimestampService, TimestampService>();
-            services.AddScoped<IPhaseEventHandlerService, PhaseEventHandlerService>();
-            services.AddScoped<IRabbitMQManager, RabbitMQManager>();
-            services.AddScoped<IWebDriverUtilities, WebDriverUtilities>();
-            services.AddScoped<IHumanBehaviorService, HumanBehaviorService>();
-            services.AddSingleton<IConsumingService, ConsumingService>();
-            services.AddSingleton<Random>();
-            services.AddScoped<IUrlService, UrlService>();
-            services.AddScoped<IHowDoYouKnowModalService, HowDoYouKnowModalService>();
-            services.AddScoped<ICustomizeInvitationModalService, CustomizeInvitationModalService>();
-            services.AddScoped<ISendConnectionsService, SendConnectionsService>();
+            services.AddScoped<INetworkingPhaseOrchestrator, NetworkingPhaseOrchestrator>();
 
             return services;
         }

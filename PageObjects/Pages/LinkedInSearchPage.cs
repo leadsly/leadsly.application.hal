@@ -139,6 +139,18 @@ namespace PageObjects.Pages
             return result;
         }
 
+        public IList<IWebElement>? GatherProspects(IWebDriver driver)
+        {
+            IList<IWebElement> prospects = _webDriverUtilities.WaitUntilNotNull(ProspectsAsWebElements, driver, 15);
+
+            if (prospects == null)
+            {
+                return null;
+            }
+
+            return prospects;
+        }
+
         public HalOperationResult<T> GetTotalSearchResults<T>(IWebDriver driver) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -169,6 +181,24 @@ namespace PageObjects.Pages
             result.Value = (T)numberOfResults;
             result.Succeeded = true;
             return result;
+        }
+
+        public int? GetTotalSearchResults(IWebDriver driver)
+        {
+            IWebElement numberOfPages = LastPage(driver);
+
+            if (numberOfPages == null)
+            {
+                _logger.LogWarning("Could not determine the number of pages in the hitlist");
+                return null;
+            }
+
+            if (int.TryParse(numberOfPages.Text, out int resultCount) == false)
+            {
+                return null;
+            }
+
+            return resultCount;
         }
 
         private IWebElement Footer(IWebDriver webDriver)
@@ -263,6 +293,31 @@ namespace PageObjects.Pages
 
             result.Succeeded = true;
             return result;
+        }
+
+        public bool? ClickNext(IWebDriver driver)
+        {
+            bool? succeeded = false;
+            IWebElement nextBtn = _webDriverUtilities.WaitUntilNotNull(NextButton, driver, 10);
+            if (nextBtn == null)
+            {
+                _logger.LogWarning("[ClickNext]: Next button could not be located");
+                succeeded = null;
+            }
+
+            try
+            {
+                _logger.LogTrace("Clicking next button");
+                nextBtn.Click();
+                succeeded = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[ClickNext]: Failed to click next button");
+                succeeded = false;
+            }
+
+            return succeeded;
         }
 
         public HalOperationResult<T> ClickPrevious<T>(IWebDriver driver) where T : IOperationResponse
@@ -391,6 +446,49 @@ namespace PageObjects.Pages
             return result;
         }
 
+        public bool? ClickRetrySearch(IWebDriver driver, int numberOfTries, int delayBetweenEachClick)
+        {
+            bool? succeeded = false;
+            IWebElement retryButton = RetrySearchButton(driver);
+            if (retryButton == null)
+            {
+                _logger.LogWarning("Failed to locate 'Retry Search' button");
+                succeeded = null;
+                return succeeded;
+            }
+
+            try
+            {
+                _logger.LogTrace("[ClickRetrySearch] Clicking retry search results because we've gotten an error page");
+                RandomWait(delayBetweenEachClick, delayBetweenEachClick);
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(30));
+                int counter = 0;
+                IWebElement searchResults = wait.Until<IWebElement>(webDriver =>
+                {
+                    _logger.LogTrace("[ClickRetrySearch] locating search results container");
+                    IWebElement searchResultContainer = SearchResultContainerQuery(webDriver);
+                    if (searchResultContainer == null)
+                    {
+                        if (counter <= numberOfTries)
+                        {
+                            _logger.LogTrace("[ClickRetrySearch] Failed to locate search results container. Attemping to click retry button again");
+                            retryButton.Click();
+                            counter++;
+                        }
+                    }
+                    return searchResultContainer;
+                });
+                succeeded = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to click on retry search button");
+                succeeded = false;
+            }
+
+            return succeeded;
+        }
+
         public HalOperationResult<T> SendConnectionRequest<T>(IWebElement prospect) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();
@@ -499,6 +597,21 @@ namespace PageObjects.Pages
             return result;
         }
 
+        public bool? IsNextButtonClickable(IWebDriver webDriver)
+        {
+            IWebElement nextButton = _webDriverUtilities.WaitUntilNotNull(NextButton, webDriver, 5);
+
+            if (nextButton == null)
+            {
+                return null;
+            }
+
+            string disabledAttribute = nextButton.GetAttribute("disabled");
+            bool.TryParse(disabledAttribute, out bool result);
+            // if the button does not contain disabled attribute, the return value will be null. out bool will produce false. So we want to flip the condition
+            return !result;
+        }
+
         private IWebElement ResultsHeaderH2(IWebDriver webDriver)
         {
             IWebElement resultsHeader = default;
@@ -560,7 +673,7 @@ namespace PageObjects.Pages
         {
             HalOperationResult<T> result = new();
 
-            IWebElement searchResultLoader = _webDriverUtilities.WaitUntilNull(SearchResultLoader, webDriver, 30);
+            IWebElement searchResultLoader = _webDriverUtilities.WaitUntilNull(SearchResultLoader, webDriver, 60);
 
             if (searchResultLoader != null)
             {
@@ -569,6 +682,21 @@ namespace PageObjects.Pages
 
             result.Succeeded = true;
             return result;
+        }
+
+        public bool WaitUntilSearchResultsFinishedLoading(IWebDriver webDriver)
+        {
+            bool succeeded = false;
+            IWebElement searchResultLoader = _webDriverUtilities.WaitUntilNull(SearchResultLoader, webDriver, 60);
+
+            if (searchResultLoader != null)
+            {
+                _logger.LogDebug("Search results loader was still present");
+                succeeded = false;
+            }
+
+            succeeded = true;
+            return succeeded;
         }
 
         private IWebElement LinkedInLogoFooter(IWebDriver webDriver)
@@ -632,6 +760,71 @@ namespace PageObjects.Pages
         public void ScrollTop(IWebDriver webDriver)
         {
             _webDriverUtilities.ScrollTop(webDriver);
+        }
+
+        public SearchResultsPageResult DetermineSearchResultsPage(IWebDriver webDriver)
+        {
+            _logger.LogInformation("Determining SignIn status. This is used to determine if user is already authenticated or not");
+            SearchResultsPageResult result = SearchResultsPageResult.None;
+            try
+            {
+                WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(30));
+                wait.Until(drv =>
+                {
+                    result = SearchResultsContainerResult(drv);
+                    return result != SearchResultsPageResult.Unknown;
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("WebDrivers wait method timedout. This means that the maximum allowed wait time elapsed and the element was not found. Wait time in seconds: ", 30);
+            }
+            return result;
+        }
+
+        private SearchResultsPageResult SearchResultsContainerResult(IWebDriver webDriver)
+        {
+            IWebElement searchResultsContainer = _webDriverUtilities.WaitUntilNotNull(SearchResultsDiv, webDriver, 3);
+            if (searchResultsContainer != null)
+            {
+                return SearchResultsPageResult.Results;
+            }
+
+            IWebElement noSearchResultsContainer = _webDriverUtilities.WaitUntilNotNull(NoSearchResultsDiv, webDriver, 3);
+            if (noSearchResultsContainer != null)
+            {
+                return SearchResultsPageResult.NoResults;
+            }
+
+            return SearchResultsPageResult.Unknown;
+        }
+
+        private IWebElement NoSearchResultsDiv(IWebDriver webDriver)
+        {
+            IWebElement noSearchResultsDiv = default;
+            try
+            {
+                noSearchResultsDiv = webDriver.FindElement(By.ClassName("reusable-search-filters__no-results"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("Tried looking for no search results div, but couldn't find it using '.reusable-search-filters__no-results'");
+            }
+            return noSearchResultsDiv;
+        }
+
+        private IWebElement SearchResultsDiv(IWebDriver webDriver)
+        {
+            IWebElement searchResultsDiv = default;
+            try
+            {
+                searchResultsDiv = webDriver.FindElement(By.ClassName("search-results-container"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("Tried looking for no search results div, but couldn't find it using '.search-results-container'");
+            }
+            return searchResultsDiv;
         }
     }
 }

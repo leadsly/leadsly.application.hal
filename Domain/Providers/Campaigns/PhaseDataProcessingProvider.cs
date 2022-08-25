@@ -1,4 +1,5 @@
-﻿using Domain.Providers.Campaigns.Interfaces;
+﻿using Domain.Models.Requests;
+using Domain.Providers.Campaigns.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
@@ -10,6 +11,8 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using CampaignProspectListRequest = Leadsly.Application.Model.Requests.FromHal.CampaignProspectListRequest;
+using CollectedProspectsRequest = Leadsly.Application.Model.Requests.FromHal.CollectedProspectsRequest;
 
 namespace Domain.Providers.Campaigns
 {

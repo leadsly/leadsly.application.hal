@@ -1,13 +1,6 @@
-﻿using Leadsly.Application.Model;
-using Leadsly.Application.Model.Requests;
+﻿using Leadsly.Application.Model.Requests;
 using Leadsly.Application.Model.Requests.FromHal;
-using Leadsly.Application.Model.Responses;
-using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,9 +9,9 @@ namespace Domain.Services.Interfaces
     public interface IPhaseDataProcessingService
     {
         Task<HttpResponseMessage> ProcessNewConnectionsAsync(NewProspectConnectionRequest request, CancellationToken ct = default);
-        Task<HttpResponseMessage> ProcessProspectListAsync(CollectedProspectsRequest request, CancellationToken ct = default);
+        Task<HttpResponseMessage> ProcessProspectListAsync(Leadsly.Application.Model.Requests.FromHal.CollectedProspectsRequest request, CancellationToken ct = default);
         Task<HttpResponseMessage> MarkProspectListCompleteAsync(MarkProspectListPhaseCompleteRequest request, CancellationToken ct = default);
-        Task<HttpResponseMessage> ProcessContactedCampaignProspectListAsync(CampaignProspectListRequest request, CancellationToken ct = default);        
+        Task<HttpResponseMessage> ProcessContactedCampaignProspectListAsync(Leadsly.Application.Model.Requests.FromHal.CampaignProspectListRequest request, CancellationToken ct = default);
         Task<HttpResponseMessage> ProcessNewlyAcceptedProspectsAsync(NewProspectsConnectionsAcceptedRequest request, CancellationToken ct = default);
 
         /// <summary>

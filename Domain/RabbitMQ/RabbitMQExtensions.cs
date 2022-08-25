@@ -26,8 +26,8 @@ namespace Domain.RabbitMQ
             //    }
             //}
 
-            // for now always requeue
-            channel.BasicNack(eventArgs.DeliveryTag, false, true);
+            // for now never requeue, because we could end up in an infinite loop situation.
+            channel.BasicNack(eventArgs.DeliveryTag, false, false);
         }
 
         public static int GetDeliveryCountHeaderValue(this BasicDeliverEventArgs eventArgs)

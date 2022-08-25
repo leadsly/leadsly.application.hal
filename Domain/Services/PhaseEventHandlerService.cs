@@ -1,4 +1,5 @@
-﻿using Domain.PhaseHandlers.FollowUpMessageHandlers;
+﻿using Domain.Models.Networking;
+using Domain.PhaseHandlers.FollowUpMessageHandlers;
 using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
 using Domain.PhaseHandlers.NetworkingHandler;
 using Domain.PhaseHandlers.ProspectListHandler;

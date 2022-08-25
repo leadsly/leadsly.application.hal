@@ -1,4 +1,5 @@
-﻿using Leadsly.Application.Model.Campaigns;
+﻿using Domain.Models.Networking;
+using Leadsly.Application.Model.Campaigns;
 using System;
 using System.Collections.Generic;
 using System.Linq;

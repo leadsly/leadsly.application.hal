@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using CollectedProspectsRequest = Leadsly.Application.Model.Requests.FromHal.CollectedProspectsRequest;
 
 namespace Domain.Services
 {
@@ -88,7 +89,7 @@ namespace Domain.Services
             return response;
         }
 
-        public async Task<HttpResponseMessage> ProcessContactedCampaignProspectListAsync(CampaignProspectListRequest request, CancellationToken ct = default)
+        public async Task<HttpResponseMessage> ProcessContactedCampaignProspectListAsync(Leadsly.Application.Model.Requests.FromHal.CampaignProspectListRequest request, CancellationToken ct = default)
         {
             string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 

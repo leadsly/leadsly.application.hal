@@ -1,4 +1,5 @@
-﻿using Leadsly.Application.Model;
+﻿using Domain.Models.Networking;
+using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Requests.FromHal;
 using Leadsly.Application.Model.Responses;

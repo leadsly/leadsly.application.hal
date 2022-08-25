@@ -1,12 +1,12 @@
 ﻿using Domain.POMs.Dialogs;
 using Domain.Services.Interfaces;
-using Domain.Services.Interfaces.SendConnections;
+using Domain.Services.Interfaces.SendConnectionsModals;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
 
-namespace Domain.Services.SendConnectionsModals
+namespace Domain.Services.POMs
 {
     public class HowDoYouKnowModalService : IHowDoYouKnowModalService
     {
