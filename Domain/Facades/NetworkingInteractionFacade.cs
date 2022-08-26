@@ -4,6 +4,8 @@ using Domain.Interactions.Networking.Decorators;
 using Domain.Interactions.Networking.GatherProspects;
 using Domain.Interactions.Networking.NoResultsFound;
 using Domain.Interactions.Networking.NoResultsFound.Interfaces;
+using Domain.Interactions.Networking.SearchResultsLimit;
+using Domain.Interactions.Networking.SearchResultsLimit.Interfaces;
 using Domain.Models.Requests;
 using OpenQA.Selenium;
 using System.Collections.Generic;
@@ -14,13 +16,16 @@ namespace Domain.Facades
     {
         public NetworkingInteractionFacade(RetryGatherProspectsHandlerDecorator<GatherProspectsInteraction> gatherProspectsInteractionHandler,
             RetryConnectWithProspectHandlerDecorator<ConnectWithProspectInteraction> connectWithProspectInteractionHandler,
+            ISearchResultsLimitInteractionHandler<SearchResultsLimitInteraction> searchResultsLimitHandler,
             INoResultsFoundInteractionHandler<NoResultsFoundInteraction> noSearchResultsHandler)
         {
+            _searchResultsLimitHandler = searchResultsLimitHandler;
             _noSearchResultsHandler = noSearchResultsHandler;
             _connectWithProspectInteractionHandler = connectWithProspectInteractionHandler;
             _gatherProspectsInteractionHandler = gatherProspectsInteractionHandler;
         }
 
+        private readonly ISearchResultsLimitInteractionHandler<SearchResultsLimitInteraction> _searchResultsLimitHandler;
         private readonly INoResultsFoundInteractionHandler<NoResultsFoundInteraction> _noSearchResultsHandler;
         private readonly RetryConnectWithProspectHandlerDecorator<ConnectWithProspectInteraction> _connectWithProspectInteractionHandler;
         private readonly RetryGatherProspectsHandlerDecorator<GatherProspectsInteraction> _gatherProspectsInteractionHandler;
@@ -44,6 +49,11 @@ namespace Domain.Facades
         public bool HandleInteraction(GatherProspectsInteraction interaction)
         {
             return _gatherProspectsInteractionHandler.HandleInteraction(interaction);
+        }
+
+        public bool HandleInteraction(SearchResultsLimitInteraction interaction)
+        {
+            return _searchResultsLimitHandler.HandleInteraction(interaction);
         }
     }
 }

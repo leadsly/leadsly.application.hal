@@ -1,14 +1,9 @@
 ﻿using Domain.Executors;
-using Domain.Facades.Interfaces;
-using Domain.Models.Networking;
 using Domain.RabbitMQ;
-using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System;
 using System.Threading.Tasks;
 
 namespace Domain.PhaseHandlers.NetworkingHandler
@@ -31,7 +26,6 @@ namespace Domain.PhaseHandlers.NetworkingHandler
         {
             IModel channel = command.Channel;
             BasicDeliverEventArgs eventArgs = command.EventArgs;
-
             NetworkingMessageBody message = command.MessageBody as NetworkingMessageBody;
 
             bool succeeded = await _messageExecutorHandler.ExecuteMessageAsync(message);

@@ -1,4 +1,5 @@
 ﻿using Domain.Facades.Interfaces;
+using Domain.POMs;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.LinkedInPages.SearchResultPage.Interfaces;
@@ -68,7 +69,7 @@ namespace Domain.Services
                 _humanBehaviorService.RandomWaitMilliSeconds(3000, 5000);
             }
 
-            _linkedInPageFacade.LinkedInSearchPage.ScrollTop(webDriver);
+            webDriver.ScrollTop(_humanBehaviorService);
             _humanBehaviorService.RandomWaitMilliSeconds(2000, 3000);
 
             _logger.LogTrace("Creating PrimaryProspects from IWebElements");

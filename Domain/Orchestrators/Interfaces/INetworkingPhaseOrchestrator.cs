@@ -9,6 +9,7 @@ namespace Domain.Orchestrators.Interfaces
         public IList<UpdateSearchUrlProgressRequest> GetUpdateSearchUrlRequests();
         public List<PersistPrimaryProspectRequest> GetPersistPrimaryProspectRequests();
         public IList<ConnectionSentRequest> GetConnectionSentRequests();
+        public bool GetMonthlySearchLimitReachedRequest();
         void Execute(Leadsly.Application.Model.Campaigns.NetworkingMessageBody message, IList<SearchUrlProgress> searchUrlsProgress);
     }
 }

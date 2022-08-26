@@ -79,6 +79,10 @@ namespace Domain.Executors.Networking
             {
                 await _networkingService.ProcessProspectListAsync(persistPrimaryProspectRequests, message);
             }
+
+            bool monthlyLimitReached = _phaseOrchestrator.GetMonthlySearchLimitReachedRequest();
+            await _networkingService.UpdateMonthlySearchLimitAsync(monthlyLimitReached, message);
+
         }
     }
 }

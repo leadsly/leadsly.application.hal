@@ -13,5 +13,6 @@ namespace Domain.Services.Interfaces.Api
 
         Task<HttpResponseMessage> UpdateSearchUrlAsync(UpdateSearchUrlProgressRequest request, CancellationToken ct = default);
         Task<HttpResponseMessage> ProcessProspectListAsync(CollectedProspectsRequest request, CancellationToken ct = default);
+        Task<HttpResponseMessage> UpdateMonthlySearchLimit(MonthlySearchLimitReachedRequest request, CancellationToken ct = default);
     }
 }

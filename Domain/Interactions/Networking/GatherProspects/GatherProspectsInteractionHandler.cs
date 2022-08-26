@@ -1,5 +1,6 @@
 ﻿using Domain.Interactions.Networking.GatherProspects.Interfaces;
 using Domain.Models.Requests;
+using Domain.POMs;
 using Domain.POMs.Pages;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model.Campaigns;
@@ -80,7 +81,7 @@ namespace Domain.Interactions.Networking.GatherProspects
             // filter down the list to only those prospects that we can connect with
             IList<IWebElement> connectableProspectsOnThisPage = CrawlProspects(webDriver, primaryProspectListId)?.Where(ConnectableProspects)?.ToList();
 
-            _linkedInSearchPage.ScrollTop(webDriver);
+            webDriver.ScrollTop(_humanBehaviorService);
             _humanBehaviorService.RandomWaitMilliSeconds(2000, 3000);
 
             IWebElement areResultsHelpfulText = _linkedInSearchPage.AreResultsHelpfulPTag(webDriver);

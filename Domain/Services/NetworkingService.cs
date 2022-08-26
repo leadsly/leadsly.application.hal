@@ -139,5 +139,30 @@ namespace Domain.Services
                 _logger.LogError("Response from application server was not a successfull status code. The request was responsible for saving primary prospects to the database");
             }
         }
+
+        public async Task UpdateMonthlySearchLimitAsync(bool limitReached, NetworkingMessageBody message, CancellationToken ct = default)
+        {
+            MonthlySearchLimitReachedRequest request = new()
+            {
+                HalId = message.HalId,
+                UserId = message.UserId,
+                CampaignId = message.CampaignId,
+                MonthlySearchLimitReached = limitReached,
+                RequestUrl = $"ProspectSearch/{message.UserId}/virtual-assistants/{message.HalId}",
+                NamespaceName = message.NamespaceName,
+                ServiceDiscoveryName = message.ServiceDiscoveryName
+            };
+
+            HttpResponseMessage response = await _networkingServiceApi.UpdateMonthlySearchLimit(request, ct);
+            if (response == null)
+            {
+                _logger.LogError("Response from application server was null. The request was responsible for updating users search limit.");
+            }
+
+            if (response.IsSuccessStatusCode == false)
+            {
+                _logger.LogError("Response from application server was not a successfull status code. The request was responsible for updating users search limit");
+            }
+        }
     }
 }

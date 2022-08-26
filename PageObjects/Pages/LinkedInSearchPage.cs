@@ -183,24 +183,6 @@ namespace PageObjects.Pages
             return result;
         }
 
-        public int? GetTotalSearchResults(IWebDriver driver)
-        {
-            IWebElement numberOfPages = LastPage(driver);
-
-            if (numberOfPages == null)
-            {
-                _logger.LogWarning("Could not determine the number of pages in the hitlist");
-                return null;
-            }
-
-            if (int.TryParse(numberOfPages.Text, out int resultCount) == false)
-            {
-                return null;
-            }
-
-            return resultCount;
-        }
-
         private IWebElement Footer(IWebDriver webDriver)
         {
             IWebElement footer = default;
@@ -215,6 +197,21 @@ namespace PageObjects.Pages
             }
 
             return footer;
+        }
+
+        private IWebElement PaginatorDiv(IWebDriver webDriver)
+        {
+            IWebElement paginationDiv = default;
+            try
+            {
+                paginationDiv = webDriver.FindElement(By.CssSelector(".artdeco-pagination"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("Failed to locate the pagination div");
+            }
+
+            return paginationDiv;
         }
 
         public HalOperationResult<T> ScrollFooterIntoView<T>(IWebDriver webDriver) where T : IOperationResponse
@@ -236,6 +233,25 @@ namespace PageObjects.Pages
 
             result.Succeeded = true;
             return result;
+        }
+
+        public bool ScrollFooterIntoView(IWebDriver webDriver)
+        {
+            bool succeeded = false;
+            IWebElement footer = _webDriverUtilities.WaitUntilNotNull(Footer, webDriver, 10);
+            if (footer == null)
+            {
+                _logger.LogTrace("Failed to locate the footer after waiting for 10 seconds");
+                return false;
+            }
+            else
+            {
+                _logger.LogTrace("Executing javascript 'scrollIntoView' to scroll footer into view");
+                IJavaScriptExecutor js = (IJavaScriptExecutor)webDriver;
+                js.ExecuteScript("arguments[0].scrollIntoView({ behavior: 'smooth' });", footer);
+            }
+
+            return true;
         }
 
         private IWebElement NextButton(IWebDriver webDriver)
@@ -288,58 +304,6 @@ namespace PageObjects.Pages
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "[ClickNext]: Failed to click next button");
-                return result;
-            }
-
-            result.Succeeded = true;
-            return result;
-        }
-
-        public bool? ClickNext(IWebDriver driver)
-        {
-            bool? succeeded = false;
-            IWebElement nextBtn = _webDriverUtilities.WaitUntilNotNull(NextButton, driver, 10);
-            if (nextBtn == null)
-            {
-                _logger.LogWarning("[ClickNext]: Next button could not be located");
-                succeeded = null;
-            }
-
-            try
-            {
-                _logger.LogTrace("Clicking next button");
-                nextBtn.Click();
-                succeeded = true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "[ClickNext]: Failed to click next button");
-                succeeded = false;
-            }
-
-            return succeeded;
-        }
-
-        public HalOperationResult<T> ClickPrevious<T>(IWebDriver driver) where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-
-            IWebElement previousBtn = _webDriverUtilities.WaitUntilNotNull(PreviousButton, driver, 10);
-
-            if (previousBtn == null)
-            {
-                _logger.LogWarning("[ClickPrevious]: Previous button could not be located");
-                return result;
-            }
-
-            try
-            {
-                _logger.LogTrace("Clicking previous button");
-                previousBtn.Click();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "[ClickPrevious]: Failed to click previous button");
                 return result;
             }
 
@@ -561,6 +525,23 @@ namespace PageObjects.Pages
             return GetProspectsActionBtn(prospect);
         }
 
+        public bool IsSearchResultsPaginationDisplayed(IWebDriver webDriver)
+        {
+            if (ScrollFooterIntoView(webDriver) == false)
+            {
+                return false;
+            }
+
+            IWebElement paginator = _webDriverUtilities.WaitUntilNotNull(PaginatorDiv, webDriver, 5);
+            // if paginator is null return false else return true
+            if (paginator == null)
+            {
+                return false;
+            }
+
+            return paginator.Displayed;
+        }
+
         public IWebElement GetSendInvitationModal(IWebDriver webDriver)
         {
             _logger.LogInformation("Finding 'Send Invite' modal");
@@ -597,16 +578,16 @@ namespace PageObjects.Pages
             return result;
         }
 
-        public bool? IsNextButtonClickable(IWebDriver webDriver)
+        public bool? IsPreviousButtonClickable(IWebDriver webDriver)
         {
-            IWebElement nextButton = _webDriverUtilities.WaitUntilNotNull(NextButton, webDriver, 5);
+            IWebElement previousButton = _webDriverUtilities.WaitUntilNotNull(PreviousButton, webDriver, 5);
 
-            if (nextButton == null)
+            if (previousButton == null)
             {
                 return null;
             }
 
-            string disabledAttribute = nextButton.GetAttribute("disabled");
+            string disabledAttribute = previousButton.GetAttribute("disabled");
             bool.TryParse(disabledAttribute, out bool result);
             // if the button does not contain disabled attribute, the return value will be null. out bool will produce false. So we want to flip the condition
             return !result;
@@ -699,27 +680,6 @@ namespace PageObjects.Pages
             return succeeded;
         }
 
-        private IWebElement LinkedInLogoFooter(IWebDriver webDriver)
-        {
-            IWebElement logo = default;
-            try
-            {
-                logo = webDriver.FindElement(By.CssSelector("footer li-icon[aria-label='LinkedIn']"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Failed to locate LinkedIn logo in the footer");
-            }
-            return logo;
-        }
-
-        public IWebElement LinkInFooterLogoIcon(IWebDriver webDriver)
-        {
-            IWebElement logo = _webDriverUtilities.WaitUntilNotNull(LinkedInLogoFooter, webDriver, 10);
-
-            return logo;
-        }
-
         public void ScrollIntoView(IWebElement webElement, IWebDriver webDriver)
         {
             try
@@ -755,11 +715,6 @@ namespace PageObjects.Pages
         {
             IWebElement searchLimitDiv = SearchLimitDiv(driver);
             return searchLimitDiv != null;
-        }
-
-        public void ScrollTop(IWebDriver webDriver)
-        {
-            _webDriverUtilities.ScrollTop(webDriver);
         }
 
         public SearchResultsPageResult DetermineSearchResultsPage(IWebDriver webDriver)

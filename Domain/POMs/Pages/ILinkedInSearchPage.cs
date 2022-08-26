@@ -10,8 +10,6 @@ namespace Domain.POMs.Pages
         HalOperationResult<T> GetTotalSearchResults<T>(IWebDriver driver)
             where T : IOperationResponse;
 
-        int? GetTotalSearchResults(IWebDriver driver);
-
         bool MonthlySearchLimitReached(IWebDriver driver);
 
         HalOperationResult<T> GatherProspects<T>(IWebDriver driver)
@@ -22,11 +20,6 @@ namespace Domain.POMs.Pages
         void ScrollIntoView(IWebElement webElement, IWebDriver driver);
 
         HalOperationResult<T> ClickNext<T>(IWebDriver driver)
-            where T : IOperationResponse;
-
-        bool? ClickNext(IWebDriver driver);
-
-        HalOperationResult<T> ClickPrevious<T>(IWebDriver driver)
             where T : IOperationResponse;
 
         bool IsNoSearchResultsContainerDisplayed(IWebDriver driver);
@@ -42,16 +35,16 @@ namespace Domain.POMs.Pages
         HalOperationResult<T> ScrollFooterIntoView<T>(IWebDriver webDriver)
             where T : IOperationResponse;
 
+        bool ScrollFooterIntoView(IWebDriver webDriver);
+
         IWebElement GetSendInvitationModal(IWebDriver webDriver);
 
         bool IsNextButtonDisabled(IWebDriver webDriver);
-        bool? IsNextButtonClickable(IWebDriver webDriver);
+        bool? IsPreviousButtonClickable(IWebDriver webDriver);
 
         IWebElement ResultsHeader(IWebDriver webDriver);
 
         IWebElement AreResultsHelpfulPTag(IWebDriver webDriver);
-
-        IWebElement LinkInFooterLogoIcon(IWebDriver webDriver);
 
         HalOperationResult<T> WaitUntilSearchResultsFinishedLoading<T>(IWebDriver webDriver)
             where T : IOperationResponse;
@@ -60,7 +53,7 @@ namespace Domain.POMs.Pages
 
         IWebElement GetProspectsActionButton(IWebElement prospect);
 
-        void ScrollTop(IWebDriver webDriver);
+        bool IsSearchResultsPaginationDisplayed(IWebDriver webDriver);
 
         SearchResultsPageResult DetermineSearchResultsPage(IWebDriver webDriver);
 

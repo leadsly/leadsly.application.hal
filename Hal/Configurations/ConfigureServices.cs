@@ -10,6 +10,8 @@ using Domain.Interactions.Networking.GatherProspects;
 using Domain.Interactions.Networking.GatherProspects.Interfaces;
 using Domain.Interactions.Networking.NoResultsFound;
 using Domain.Interactions.Networking.NoResultsFound.Interfaces;
+using Domain.Interactions.Networking.SearchResultsLimit;
+using Domain.Interactions.Networking.SearchResultsLimit.Interfaces;
 using Domain.OptionsJsonModels;
 using Domain.Orchestrators;
 using Domain.Orchestrators.Interfaces;
@@ -240,6 +242,7 @@ namespace Hal.Configurations
             services.AddScoped<IConnectWithProspectInteractionHandler<ConnectWithProspectInteraction>, ConnectWithProspectInteractionHandler>();
             services.AddScoped<IGatherProspectsInteractionHandler<GatherProspectsInteraction>, GatherProspectsInteractionHandler>();
             services.AddScoped<INoResultsFoundInteractionHandler<NoResultsFoundInteraction>, NoResultsFoundInteractionHandler>();
+            services.AddScoped<ISearchResultsLimitInteractionHandler<SearchResultsLimitInteraction>, SearchResultsLimitInteractionHandler>();
 
             return services;
         }
@@ -313,6 +316,7 @@ namespace Hal.Configurations
             services.AddScoped<ISearchPageDialogManager, SearchPageDialogManager>();
             services.AddScoped<IHowDoYouKnowDialog, HowDoYouKnowDialog>();
             services.AddScoped<ICustomizeYourInvitationDialog, CustomizeYourInvitationDialog>();
+            services.AddScoped<ISearchResultsFooter, SearchResultsFooter>();
 
             return services;
         }
