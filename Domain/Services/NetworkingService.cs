@@ -145,12 +145,10 @@ namespace Domain.Services
             MonthlySearchLimitReachedRequest request = new()
             {
                 HalId = message.HalId,
-                UserId = message.UserId,
-                CampaignId = message.CampaignId,
-                MonthlySearchLimitReached = limitReached,
-                RequestUrl = $"ProspectSearch/{message.UserId}/virtual-assistants/{message.HalId}",
                 NamespaceName = message.NamespaceName,
-                ServiceDiscoveryName = message.ServiceDiscoveryName
+                ServiceDiscoveryName = message.ServiceDiscoveryName,
+                MonthlySearchLimitReached = limitReached,
+                RequestUrl = $"SocialAccounts/{message.SocialAccountId}"
             };
 
             HttpResponseMessage response = await _networkingServiceApi.UpdateMonthlySearchLimit(request, ct);

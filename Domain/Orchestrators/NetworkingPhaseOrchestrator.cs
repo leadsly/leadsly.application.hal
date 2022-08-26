@@ -159,9 +159,11 @@ namespace Domain.Orchestrators
                         else
                         {
                             _logger.LogDebug("This is not the last page. Chcking if search result monthly limit has been reached.");
+                            string currentUrl = webDriver.Url;
                             if (IsMonthlySearchLimitReached(webDriver) == true)
                             {
                                 _logger.LogDebug("Monthl search limit has been reached. Setting monthly search limit request and breaking.");
+                                UpdateCurrentPage_SearchUrlProgress(searchUrlProgress.SearchUrlProgressId, currentPage, currentUrl);
                                 SetMonthlyLimitReachedRequest(true);
                                 break;
                             }
@@ -206,11 +208,12 @@ namespace Domain.Orchestrators
                     if (CheckIfNextButtonIsNullOrDisabled(webDriver) == true)
                     {
                         _logger.LogDebug("The next button of the search url is disabled. Checking if we have reached the monthly search limit");
+                        string currentUrl = webDriver.Url;
                         if (IsMonthlySearchLimitReached(webDriver) == true)
                         {
                             _logger.LogDebug("Monthly search limit has been reached. Setting MonthlySearchLimitReached request and breaking");
                             SetMonthlyLimitReachedRequest(true);
-                            UpdateCurrentPage_SearchUrlProgress(searchUrlProgress.SearchUrlProgressId, currentPage, webDriver.Url);
+                            UpdateCurrentPage_SearchUrlProgress(searchUrlProgress.SearchUrlProgressId, currentPage, currentUrl);
                             break;
                         }
 
@@ -269,11 +272,12 @@ namespace Domain.Orchestrators
                     if (CheckIfNextButtonIsNullOrDisabled(webDriver) == true)
                     {
                         _logger.LogDebug("Next button is disabled. Checking if we have reached our monthly search limit");
+                        string currentUrl = webDriver.Url;
                         if (IsMonthlySearchLimitReached(webDriver) == true)
                         {
                             _logger.LogDebug("Monthly search limit has been reached. Setting MonthlyLimitReached request and updating SearchUrlProgress");
                             SetMonthlyLimitReachedRequest(true);
-                            UpdateCurrentPage_SearchUrlProgress(searchUrlProgress.SearchUrlProgressId, currentPage, webDriver.Url);
+                            UpdateCurrentPage_SearchUrlProgress(searchUrlProgress.SearchUrlProgressId, currentPage, currentUrl);
                             break;
                         }
                         else

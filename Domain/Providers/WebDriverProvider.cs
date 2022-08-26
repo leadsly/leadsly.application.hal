@@ -390,6 +390,11 @@ namespace Domain.Providers
                 });
                 task.Wait();
                 HttpResponseMessage response = task.Result;
+                if (response.IsSuccessStatusCode == false)
+                {
+                    _logger.LogDebug("Failed to get successful status code from sidecart when cloning chrome profiles.");
+                    return null;
+                }
 
                 // _fileManager.CloneDefaultChromeProfile(newChromeProfile, webDriverOptions);
                 string newChromeProfilePath = defaultChromeProfileDir + "/" + newChromeProfile;

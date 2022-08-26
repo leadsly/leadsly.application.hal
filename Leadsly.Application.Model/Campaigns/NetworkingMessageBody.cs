@@ -27,6 +27,9 @@ namespace Leadsly.Application.Model.Campaigns
         public string StartTime { get; set; } = String.Empty;
 
         [DataMember]
+        public string SocialAccountId { get; set; } = String.Empty;
+
+        [DataMember]
         public int FailedDeliveryCount { get; set; }
 
 

@@ -94,8 +94,8 @@ namespace Domain.Services.Api
                         new
                         {
                             op = "replace",
-                            path = "/searchLimitReached",
-                            value = request.MonthlySearchLimitReached
+                            path = "/monthlySearchLimitReached",
+                            value = request.MonthlySearchLimitReached.ToString()
                         }
                     })
                 };
