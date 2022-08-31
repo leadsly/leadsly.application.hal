@@ -1,11 +1,7 @@
 ﻿using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
 using OpenQA.Selenium;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.POMs.Pages
 {
@@ -21,7 +17,7 @@ namespace Domain.POMs.Pages
             where T : IOperationResponse;
 
         HalOperationResult<T> ClickWriteAMessageBox<T>(IWebDriver webDriver)
-            where T : IOperationResponse;        
+            where T : IOperationResponse;
 
         HalOperationResult<T> EnterMessageContent<T>(IWebDriver webDriver, string messageContent)
             where T : IOperationResponse;
@@ -31,6 +27,8 @@ namespace Domain.POMs.Pages
 
         HalOperationResult<T> GetVisibleConversationListItems<T>(IWebDriver webDriver)
             where T : IOperationResponse;
+
+        IList<IWebElement> GetVisibleConversationListItems(IWebDriver webDriver);
 
         bool ConversationItemContainsNotificationBadge(IWebElement conversationListItem);
 
@@ -43,11 +41,17 @@ namespace Domain.POMs.Pages
 
         void ClickConverstaionListItem(IWebElement conversationListItem);
 
+        bool ClickConverstaionListItem(IWebElement element, IWebDriver webDriver);
+
+        IWebElement SearchMessagesInputField(IWebDriver webDriver);
+
         HalOperationResult<T> EnterSearchMessagesCriteria<T>(IWebDriver webDriver, string searchCriteria)
             where T : IOperationResponse;
 
         HalOperationResult<T> GetMessagesContent<T>(IWebDriver webDriver)
             where T : IOperationResponse;
+
+        IList<IWebElement> GetMessageContents(IWebDriver webDriver);
 
         string GetMessageContent(IWebElement message);
 
@@ -56,6 +60,8 @@ namespace Domain.POMs.Pages
 
         HalOperationResult<T> ClearMessagingSearchCriteria<T>(IWebDriver webDriver)
             where T : IOperationResponse;
+
+        bool ClearMessagingSearchCriteria(IWebDriver webDriver);
 
         bool HasNotification(IWebElement listItem);
 

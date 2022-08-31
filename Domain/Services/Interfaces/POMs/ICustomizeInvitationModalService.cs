@@ -1,6 +1,4 @@
-﻿using OpenQA.Selenium;
-
-namespace Domain.Services.Interfaces.SendConnectionsModals
+﻿namespace Domain.Services.Interfaces.POMs
 {
     public interface ICustomizeInvitationModalService
     {

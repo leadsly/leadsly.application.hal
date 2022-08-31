@@ -7,6 +7,12 @@
         public const string Classic = "classic";
         public const string QueueType = "x-queue-type";
 
+        public static class TriggerScanProspectsForReplies
+        {
+            public const string QueueName = "trigger-scan-prospects-for-replies";
+            public const string RoutingKey =
+        }
+
         public static class NetworkingConnections
         {
             public const string QueueName = "networking.connections";

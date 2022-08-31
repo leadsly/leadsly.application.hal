@@ -159,7 +159,8 @@ namespace Domain.Services
 
             if (response.IsSuccessStatusCode == false)
             {
-                _logger.LogError("Response from application server was not a successfull status code. The request was responsible for updating users search limit");
+                string content = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Response from application server was not a successfull status code. The request was responsible for updating users search limit. Content: {content}", content);
             }
         }
     }

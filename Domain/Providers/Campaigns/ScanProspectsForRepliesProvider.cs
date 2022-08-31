@@ -2,6 +2,7 @@
 using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
+using Domain.Services.Interfaces.POMs;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.LinkedInPages.Interface;

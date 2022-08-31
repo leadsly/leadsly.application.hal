@@ -1,9 +1,4 @@
 ﻿using OpenQA.Selenium;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Services.Interfaces
 {
@@ -18,5 +13,6 @@ namespace Domain.Services.Interfaces
         void RandomClickElement(IWebElement webElement);
 
         void EnterValues(IWebElement element, string value, int minMiliseconds, int maxMiliseconds);
+        void EnterValue(IWebElement element, char value, int minMiliseconds, int maxMiliseconds);
     }
 }

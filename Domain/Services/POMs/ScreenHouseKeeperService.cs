@@ -1,23 +1,26 @@
 ﻿using Domain.POMs.Controls;
 using Domain.Services.Interfaces;
+using Domain.Services.Interfaces.POMs;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Domain.Services
+namespace Domain.Services.POMs
 {
     public class ScreenHouseKeeperService : IScreenHouseKeeperService
     {
-        public ScreenHouseKeeperService(ILogger<ScreenHouseKeeperService> logger, IConversationCards conversationCards)
+        public ScreenHouseKeeperService(
+            ILogger<ScreenHouseKeeperService> logger,
+            IConversationCards conversationCards,
+            IHumanBehaviorService humanBehaviorService)
         {
             _logger = logger;
             _conversationCards = conversationCards;
+            _humanBehaviorService = humanBehaviorService;
         }
 
+        private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly ILogger<ScreenHouseKeeperService> _logger;
         private readonly IConversationCards _conversationCards;
 
@@ -26,6 +29,7 @@ namespace Domain.Services
             bool closedSuccessfully = false;
             try
             {
+                _humanBehaviorService.RandomWaitSeconds(1, 3);
                 closeButton.Click();
                 closedSuccessfully = true;
             }

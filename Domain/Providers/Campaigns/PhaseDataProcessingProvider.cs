@@ -151,7 +151,7 @@ namespace Domain.Providers.Campaigns
         {
             HalOperationResult<T> result = new();
 
-            ProspectsRepliedRequest request = new()
+            Leadsly.Application.Model.Requests.FromHal.ProspectsRepliedRequest request = new()
             {
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,

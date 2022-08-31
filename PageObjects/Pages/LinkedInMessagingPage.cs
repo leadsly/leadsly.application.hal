@@ -4,22 +4,19 @@ using Leadsly.Application.Model;
 using Leadsly.Application.Model.LinkedInPages;
 using Leadsly.Application.Model.LinkedInPages.Interface;
 using Leadsly.Application.Model.Responses;
-using Leadsly.Application.Model.Responses.Hal;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PageObjects.Pages
 {
     public class LinkedInMessagingPage : LeadslyBase, ILinkedInMessagingPage
     {
         public LinkedInMessagingPage(
-            ILogger<LinkedInMessagingPage> logger, 
+            ILogger<LinkedInMessagingPage> logger,
             IHumanBehaviorService humanBehaviorService,
             IWebDriverUtilities webDriverUtilities
             ) : base(logger)
@@ -46,7 +43,7 @@ namespace PageObjects.Pages
             }
             return composeNewMsgAnchor;
         }
-           
+
 
         public HalOperationResult<T> ClickCreateNewMessage<T>(IWebDriver webDriver) where T : IOperationResponse
         {
@@ -58,9 +55,9 @@ namespace PageObjects.Pages
             {
                 composeMsg = ComposeNewMessageAnchorTag(drv);
                 return composeMsg != null;
-            });            
+            });
 
-            if(composeMsg == null)
+            if (composeMsg == null)
             {
                 _logger.LogInformation("Compose new message button is null");
                 return result;
@@ -78,7 +75,7 @@ namespace PageObjects.Pages
             IWebElement btn = default;
             try
             {
-                btn = webDriver.FindElement(By.ClassName("msg-form__send-button"));                
+                btn = webDriver.FindElement(By.ClassName("msg-form__send-button"));
             }
             catch (Exception ex)
             {
@@ -111,7 +108,7 @@ namespace PageObjects.Pages
 
             WaitUntilSendButtonIsEnabled(webDriver);
             IWebElement sendButton = SendNewMessageButton(webDriver);
-            if(sendButton == null)
+            if (sendButton == null)
             {
                 return result;
             }
@@ -163,7 +160,7 @@ namespace PageObjects.Pages
             _humanBehaviorService.EnterValues(pTagInsideContent, messageContent, 100, 150);
 
             string enteredValue = pTagInsideContent.Text;
-            if(enteredValue != messageContent)
+            if (enteredValue != messageContent)
             {
                 _logger.LogError("The messaged entered into the p tag did not match exactly." +
                     "\r\nThe expected message {messageContent}" +
@@ -195,7 +192,7 @@ namespace PageObjects.Pages
             try
             {
                 IWebElement inputField = NewMessageNameInput(webDriver);
-                if(inputField == null)
+                if (inputField == null)
                 {
                     return result;
                 }
@@ -204,7 +201,7 @@ namespace PageObjects.Pages
 
                 // verify that the name was entered in correctly 
                 string enteredValue = inputField.GetAttribute("value");
-                if(enteredValue != name)
+                if (enteredValue != name)
                 {
                     _logger.LogError("Comparison between what value was entered into the new message input field and prospect's name was not exactly the same." +
                         "\r\nThis means some or all values were not correctly entered into the input field");
@@ -226,7 +223,7 @@ namespace PageObjects.Pages
             IWebElement container = default;
             try
             {
-                container = webDriver.FindElement(By.ClassName("msg-connections-typeahead__search-results--expanded"));                
+                container = webDriver.FindElement(By.ClassName("msg-connections-typeahead__search-results--expanded"));
             }
             catch (Exception ex)
             {
@@ -242,7 +239,7 @@ namespace PageObjects.Pages
             WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(10));
             try
             {
-                wait.Until(drv => 
+                wait.Until(drv =>
                 {
                     visibleTypeAhead = TypeAheadSearchResultsExpandedContainer(drv);
                     return visibleTypeAhead != null && visibleTypeAhead.Displayed;
@@ -250,7 +247,7 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                
+
             }
 
             return visibleTypeAhead;
@@ -281,7 +278,7 @@ namespace PageObjects.Pages
             // grab the expanded type ahead container
             IWebElement visibleTypeAheadResultsContainer = WaitUntilTypeAheadResultsIsVisible(webDriver);
 
-            if(visibleTypeAheadResultsContainer == null)
+            if (visibleTypeAheadResultsContainer == null)
             {
                 return result;
             }
@@ -334,7 +331,7 @@ namespace PageObjects.Pages
                     conversationsListItemContainer = drv.FindElement(By.CssSelector(".msg-conversations-container__conversations-list"));
                     return conversationsListItemContainer != null;
                 });
-                
+
             }
             catch (Exception ex)
             {
@@ -362,7 +359,7 @@ namespace PageObjects.Pages
             HalOperationResult<T> result = new();
 
             IReadOnlyCollection<IWebElement> conversationListItems = GetConversationListItems(webDriver);
-            if(conversationListItems == null)
+            if (conversationListItems == null)
             {
                 _logger.LogError("Failed ");
                 return result;
@@ -378,12 +375,24 @@ namespace PageObjects.Pages
             return result;
         }
 
+        public IList<IWebElement> GetVisibleConversationListItems(IWebDriver webDriver)
+        {
+            IReadOnlyCollection<IWebElement> conversationListItems = GetConversationListItems(webDriver);
+            if (conversationListItems == null)
+            {
+                _logger.LogError("Failed to locate conversation list items");
+                return null;
+            }
+
+            return conversationListItems.ToList();
+        }
+
         public bool ConversationItemContainsNotificationBadge(IWebElement conversationListItem)
         {
             IWebElement notificationBadge = default;
             try
             {
-                notificationBadge = conversationListItem.FindElement(By.CssSelector(".notification-badge--show"));                
+                notificationBadge = conversationListItem.FindElement(By.CssSelector(".notification-badge--show"));
             }
             catch
             {
@@ -415,7 +424,7 @@ namespace PageObjects.Pages
             {
                 pTag = ConversationsListItemContainer(webDriver).FindElement(By.XPath("//p[text()[contains(., 'No messages')]]"));
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogInformation("Couldn't find 'No messages' p tag element. This is probably OK, we could've been just checking if it was there or not.");
             }
@@ -445,7 +454,7 @@ namespace PageObjects.Pages
             string prospectProfileUrl = string.Empty;
             try
             {
-                
+
             }
             catch (Exception ex)
             {
@@ -484,23 +493,86 @@ namespace PageObjects.Pages
             }
         }
 
+        public bool ClickConverstaionListItem(IWebElement conversationListItem, IWebDriver webDriver)
+        {
+            bool succeeded = false;
+            try
+            {
+                _logger.LogInformation("Clicking conversation list item in the /messaging/ page to bring active conversation history in the right hand side view");
+                conversationListItem.Click();
+                if (WaitUntilConversationListItemIsActive(webDriver, conversationListItem) == false)
+                {
+                    _logger.LogDebug("Waited for conversation list item to become active, but it didn't");
+                    succeeded = false;
+                }
+                else
+                {
+                    _logger.LogDebug("Conversation list item became active");
+                    succeeded = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to click ConversationListItem");
+            }
+            return succeeded;
+        }
 
-        private IWebElement SearchMessagesInputField(IWebDriver webDriver)
+        private bool WaitUntilConversationListItemIsActive(IWebDriver webDriver, IWebElement prospectMessage)
+        {
+            bool active = false;
+            try
+            {
+                WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(5));
+                wait.Until(drv => IsConversationListItemActive(prospectMessage));
+                active = true;
+            }
+            catch (Exception ex)
+            {
+                int timeout = 5;
+                _logger.LogError(ex, "Waited for conversation list item to become active but it never did. Waited for {timeout}", timeout);
+            }
+            return active;
+        }
+
+
+        //private IWebElement SearchMessagesInputField(IWebDriver webDriver)
+        //{
+        //    IWebElement searchMessagesInput = default;
+        //    try
+        //    {
+        //        WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(10));
+        //        bool searchTermVisible = wait.Until((drv) =>
+        //        {
+        //            searchMessagesInput = drv.FindElement(By.CssSelector("input[name='searchTerm']"));
+        //            return searchMessagesInput != null;
+        //        });
+
+        //        if (searchTermVisible == false)
+        //        {
+        //            _logger.LogError("Unable to locate 'search messages' input field after the given wait time");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Failed to locate 'search messages' input field");
+        //    }
+        //    return searchMessagesInput;
+        //}
+
+        public IWebElement SearchMessagesInputField(IWebDriver webDriver)
+        {
+            IWebElement input = _webDriverUtilities.WaitUntilNotNull(SearchMsgsInputField, webDriver, 5);
+            return input;
+        }
+
+        private IWebElement SearchMsgsInputField(IWebDriver webDriver)
         {
             IWebElement searchMessagesInput = default;
             try
             {
-                WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(10));                
-                bool searchTermVisible = wait.Until((drv) => 
-                {
-                    searchMessagesInput = drv.FindElement(By.CssSelector("input[name='searchTerm']"));
-                    return searchMessagesInput != null;
-                });               
-
-                if(searchTermVisible == false)
-                {
-                    _logger.LogError("Unable to locate 'search messages' input field after the given wait time");
-                }
+                searchMessagesInput = webDriver.FindElement(By.CssSelector("input[name='searchTerm']"));
+                _logger.LogDebug("Found 'search messages' input field");
             }
             catch (Exception ex)
             {
@@ -515,7 +587,7 @@ namespace PageObjects.Pages
             HalOperationResult<T> result = new();
 
             IWebElement searchMessagesInputField = SearchMessagesInputField(webDriver);
-            if(SearchMessagesInputField == null)
+            if (SearchMessagesInputField == null)
             {
                 return result;
             }
@@ -526,7 +598,7 @@ namespace PageObjects.Pages
 
                 // verify that the entered string matches the search criteria
                 string enteredValue = searchMessagesInputField.GetAttribute("value");
-                if(enteredValue != searchCriteria)
+                if (enteredValue != searchCriteria)
                 {
                     _logger.LogError("WebDriver did not enter in search criteria value into the search input field correctly. Entered value did not match search criteria value. " +
                         "\r\nEntered value is {enteredValue}" +
@@ -538,7 +610,7 @@ namespace PageObjects.Pages
                 searchMessagesInputField.SendKeys(Keys.Enter);
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to enter in prospects name into the search input field or to press enter");
                 return result;
@@ -581,7 +653,7 @@ namespace PageObjects.Pages
             HalOperationResult<T> result = new();
 
             IReadOnlyCollection<IWebElement> messagesDivs = MessagesPs(webDriver);
-            if(messagesDivs == null)
+            if (messagesDivs == null)
             {
                 return result;
             }
@@ -594,6 +666,19 @@ namespace PageObjects.Pages
             result.Value = (T)elements;
             result.Succeeded = true;
             return result;
+        }
+
+        public IList<IWebElement> GetMessageContents(IWebDriver webDriver)
+        {
+            IList<IWebElement> messageContents = new List<IWebElement>();
+            IReadOnlyCollection<IWebElement> messagesDivs = MessagesPs(webDriver);
+            if (messagesDivs == null)
+            {
+                _logger.LogDebug("Failed to retrieve contents of the currently active message");
+                return messageContents;
+            }
+            _logger.LogDebug("Retrieved contents of the currently active message");
+            return messagesDivs.ToList();
         }
 
         public string GetMessageContent(IWebElement message)
@@ -628,19 +713,21 @@ namespace PageObjects.Pages
 
         public string GetProspectNameFromMessageContentPTag(IWebElement messagePTag)
         {
+            _logger.LogDebug("Extracting prospect name from the message content p tag");
             string prospectName = string.Empty;
             try
             {
                 IWebElement messageDetail = messagePTag.FindElement(By.XPath("./ancestor::div[contains(@class, 'msg-s-event-listitem')]"));
                 IWebElement span = messageDetail.FindElement(By.CssSelector(".msg-s-message-group__name"));
                 prospectName = span.Text;
+                _logger.LogDebug("Extracted prospect name from the message content p tag {prospectname}", prospectName);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to extract prospect name from the message div by class name '.msg-s-message-group__name'");
             }
             return prospectName;
-        }        
+        }
 
         public HalOperationResult<T> ClearMessagingSearchCriteria<T>(IWebDriver webDriver) where T : IOperationResponse
         {
@@ -649,7 +736,7 @@ namespace PageObjects.Pages
             try
             {
                 IWebElement searchResultCriteria = SearchMessagesInputField(webDriver);
-                if(searchResultCriteria == null)
+                if (searchResultCriteria == null)
                 {
                     return result;
                 }
@@ -668,6 +755,35 @@ namespace PageObjects.Pages
             return result;
         }
 
+        public bool ClearMessagingSearchCriteria(IWebDriver webDriver)
+        {
+            _logger.LogInformation("Clearing 'search term' input field");
+            bool succeeded = false;
+            try
+            {
+                IWebElement searchResultCriteria = SearchMessagesInputField(webDriver);
+                if (searchResultCriteria == null)
+                {
+                    _logger.LogDebug("Failed to locate search result criteria input field");
+                    succeeded = false;
+                }
+                else
+                {
+                    _logger.LogDebug("Located search result criteria input field");
+                    searchResultCriteria.Clear();
+                    searchResultCriteria.SendKeys(Keys.Enter);
+                    succeeded = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to clear messaging search criteria value");
+                succeeded = false;
+            }
+
+            return succeeded;
+        }
+
         public bool HasNotification(IWebElement listItem)
         {
             bool hasNotification = false;
@@ -678,7 +794,7 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                
+
             }
 
             return hasNotification;

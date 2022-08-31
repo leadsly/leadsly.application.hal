@@ -1,6 +1,6 @@
 ﻿using Domain;
 using Domain.POMs.Dialogs;
-using Domain.Services.Interfaces.SendConnectionsModals;
+using Domain.Services.Interfaces.POMs;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;

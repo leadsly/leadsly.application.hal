@@ -46,7 +46,6 @@ using Domain.Services.Api;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
 using Domain.Services.Interfaces.POMs;
-using Domain.Services.Interfaces.SendConnectionsModals;
 using Domain.Services.POMs;
 using Domain.Services.SendConnectionsModals;
 using Domain.Supervisor;

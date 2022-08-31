@@ -1,6 +1,6 @@
-﻿using Domain.Facades.Interfaces;
+﻿using Domain.Executors;
+using Domain.Facades.Interfaces;
 using Domain.RabbitMQ;
-using Domain.Serializers.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Responses;
@@ -8,9 +8,6 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
@@ -19,15 +16,18 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
     {
         public DeepScanProspectsForRepliesCommandHandler(
             ILogger<DeepScanProspectsForRepliesCommandHandler> logger,
+            IMessageExecutorHandler<DeepScanProspectsForRepliesBody> messageExecutorHandler,
             ICampaignPhaseFacade campaignPhaseFacade
             )
         {
-            _campaignPhaseFacade = campaignPhaseFacade;            
+            _messageExecutorHandler = messageExecutorHandler;
+            _campaignPhaseFacade = campaignPhaseFacade;
             _logger = logger;
         }
 
+        private IMessageExecutorHandler<DeepScanProspectsForRepliesBody> _messageExecutorHandler;
         private readonly ILogger<DeepScanProspectsForRepliesCommandHandler> _logger;
-        private readonly ICampaignPhaseFacade _campaignPhaseFacade;        
+        private readonly ICampaignPhaseFacade _campaignPhaseFacade;
 
         public async Task HandleAsync(DeepScanProspectsForRepliesCommand command)
         {
@@ -35,6 +35,9 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
             BasicDeliverEventArgs eventArgs = command.EventArgs;
 
             ScanProspectsForRepliesBody body = command.MessageBody as ScanProspectsForRepliesBody;
+            DeepScanProspectsForRepliesBody message = command.MessageBody as DeepScanProspectsForRepliesBody;
+
+            bool succeeded = await _messageExecutorHandler.ExecuteMessageAsync(message);
 
             try
             {
@@ -53,7 +56,7 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
             catch (Exception ex)
             {
                 channel.BasicNackRetry(eventArgs);
-            }            
+            }
 
             _logger.LogInformation("Successfully acknowledged DeepScanProspectsForReplies phase");
         }
@@ -61,7 +64,7 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
         private async Task<HalOperationResult<IOperationResponse>> StartDeepScanningProspectsForRepliesAsync(ScanProspectsForRepliesBody scanProspectsForRepliesBody)
         {
             HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecuteDeepScanPhaseAsync<IOperationResponse>(scanProspectsForRepliesBody);
-            
+
             return operationResult;
         }
     }

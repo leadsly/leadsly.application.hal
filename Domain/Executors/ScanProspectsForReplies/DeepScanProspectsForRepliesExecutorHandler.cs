@@ -1,0 +1,88 @@
+﻿using Domain.Models.RabbitMQMessages.AppServer;
+using Domain.Models.Responses;
+using Domain.Orchestrators.Interfaces;
+using Domain.RabbitMQ.Interfaces;
+using Domain.Services.Interfaces;
+using Leadsly.Application.Model.Campaigns;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Domain.Executors.ScanProspectsForReplies
+{
+    public class DeepScanProspectsForRepliesExecutorHandler : IMessageExecutorHandler<DeepScanProspectsForRepliesBody>
+    {
+        public DeepScanProspectsForRepliesExecutorHandler(
+            ILogger<DeepScanProspectsForRepliesExecutorHandler> logger,
+            IDeepScanProspectsForRepliesPhaseOrchestrator orchestrator,
+            IDeepScanProspectsForRepliesService service,
+            IRabbitMQManager rabbitMQ
+            )
+        {
+            _logger = logger;
+            _orchestrator = orchestrator;
+            _service = service;
+            _rabbitMQ = rabbitMQ;
+        }
+
+        private readonly IRabbitMQManager _rabbitMQ;
+        private readonly IDeepScanProspectsForRepliesService _service;
+        private readonly ILogger<DeepScanProspectsForRepliesExecutorHandler> _logger;
+        private readonly IDeepScanProspectsForRepliesPhaseOrchestrator _orchestrator;
+
+        public async Task<bool> ExecuteMessageAsync(DeepScanProspectsForRepliesBody message)
+        {
+            try
+            {
+                NetworkProspectsResponse networkProspects = await _service.GetAllProspectsFromActiveCampaignsAsync(message);
+                if (networkProspects == null || networkProspects.Items.Count == 0)
+                {
+                    _logger.LogDebug("No network prospects were retrieved. DeepScanProspectsPhase will not be triggered");
+                }
+                else
+                {
+                    _orchestrator.Execute(message, networkProspects.Items);
+                }
+            }
+            finally
+            {
+                await ProcessProspectsThatRepliedAsync(message);
+                PublishPhases(message);
+            }
+
+            return true;
+        }
+
+        private async Task ProcessProspectsThatRepliedAsync(DeepScanProspectsForRepliesBody message)
+        {
+            if (_orchestrator.Prospects.Count > 0)
+            {
+                await _service.ProcessCampaignProspectsThatRepliedAsync(_orchestrator.Prospects, message);
+            }
+        }
+
+        private void PublishPhases(DeepScanProspectsForRepliesBody message)
+        {
+            // publish scan prospects for replies phase here
+            TriggerScanProspectsForRepliesMessage messageBody1 = new()
+            {
+                HalId = message.HalId,
+                UserId = message.UserId
+            };
+            string msg1 = JsonConvert.SerializeObject(messageBody1);
+            byte[] rawMessage1 = Encoding.UTF8.GetBytes(msg1);
+            _rabbitMQ.PublishMessage(rawMessage1, "", "");
+
+            // publish trigger follow up messages phase here
+            TriggerSendFollowUpMessages messageBody2 = new()
+            {
+                HalId = message.HalId,
+                UserId = message.UserId
+            };
+            string msg2 = JsonConvert.SerializeObject(messageBody2);
+            byte[] rawMessage2 = Encoding.UTF8.GetBytes(msg2);
+            _rabbitMQ.PublishMessage(rawMessage2, "", "");
+        }
+    }
+}
