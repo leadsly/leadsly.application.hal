@@ -3,9 +3,11 @@ using Domain.Models.Responses;
 using Domain.Orchestrators.Interfaces;
 using Domain.RabbitMQ.Interfaces;
 using Domain.Services.Interfaces;
+using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -48,7 +50,8 @@ namespace Domain.Executors.ScanProspectsForReplies
             finally
             {
                 await ProcessProspectsThatRepliedAsync(message);
-                PublishPhases(message);
+                PublishTriggerScanProspectsForReplies(message);
+                PublishTriggerSendFollowUpMessages(message);
             }
 
             return true;
@@ -62,27 +65,46 @@ namespace Domain.Executors.ScanProspectsForReplies
             }
         }
 
-        private void PublishPhases(DeepScanProspectsForRepliesBody message)
+        private void PublishTriggerScanProspectsForReplies(DeepScanProspectsForRepliesBody message)
         {
-            // publish scan prospects for replies phase here
-            TriggerScanProspectsForRepliesMessage messageBody1 = new()
+            try
             {
-                HalId = message.HalId,
-                UserId = message.UserId
-            };
-            string msg1 = JsonConvert.SerializeObject(messageBody1);
-            byte[] rawMessage1 = Encoding.UTF8.GetBytes(msg1);
-            _rabbitMQ.PublishMessage(rawMessage1, "", "");
+                // publish scan prospects for replies phase here
+                TriggerScanProspectsForRepliesMessage messageBody = new()
+                {
+                    HalId = message.HalId,
+                    UserId = message.UserId
+                };
+                string msg = JsonConvert.SerializeObject(messageBody);
+                byte[] rawMessage = Encoding.UTF8.GetBytes(msg);
+                _rabbitMQ.PublishMessage(rawMessage, RabbitMQConstants.TriggerScanProspectsForReplies.QueueName, RabbitMQConstants.TriggerScanProspectsForReplies.RoutingKey);
+            }
+            catch (Exception ex)
+            {
+                string halId = message.HalId;
+                _logger.LogError(ex, "Failed to publish TriggerScanProspectsForReplies message for halId {halId}", halId);
+            }
+        }
 
-            // publish trigger follow up messages phase here
-            TriggerSendFollowUpMessages messageBody2 = new()
+        private void PublishTriggerSendFollowUpMessages(DeepScanProspectsForRepliesBody message)
+        {
+            try
             {
-                HalId = message.HalId,
-                UserId = message.UserId
-            };
-            string msg2 = JsonConvert.SerializeObject(messageBody2);
-            byte[] rawMessage2 = Encoding.UTF8.GetBytes(msg2);
-            _rabbitMQ.PublishMessage(rawMessage2, "", "");
+                // publish trigger follow up messages phase here
+                TriggerSendFollowUpMessages messageBody2 = new()
+                {
+                    HalId = message.HalId,
+                    UserId = message.UserId
+                };
+                string msg2 = JsonConvert.SerializeObject(messageBody2);
+                byte[] rawMessage2 = Encoding.UTF8.GetBytes(msg2);
+                _rabbitMQ.PublishMessage(rawMessage2, RabbitMQConstants.TriggerSendFollowUpMessages.QueueName, RabbitMQConstants.TriggerSendFollowUpMessages.RoutingKey);
+            }
+            catch (Exception ex)
+            {
+                string halId = message.HalId;
+                _logger.LogError(ex, "Failed to publish TriggerSendFollowUpMessages message for halId {halId}", halId);
+            }
         }
     }
 }

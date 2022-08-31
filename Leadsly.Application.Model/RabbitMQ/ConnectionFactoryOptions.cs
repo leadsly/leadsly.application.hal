@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Leadsly.Application.Model.RabbitMQ
+﻿namespace Leadsly.Application.Model.RabbitMQ
 {
     public class ConnectionFactoryOptions
     {
@@ -12,7 +6,13 @@ namespace Leadsly.Application.Model.RabbitMQ
         public string Password { get; set; }
         public string HostName { get; set; }
         public int Port { get; set; }
-        public string ClientProvidedName { get; set; }
+        public ClientProvidedNameOptions ClientProvidedName { get; set; }
         public string VirtualHost { get; set; }
+
+        public class ClientProvidedNameOptions
+        {
+            public string AppServer { get; set; }
+            public string Hal { get; set; }
+        }
     }
 }

@@ -9,7 +9,5 @@ namespace Domain.Services.Interfaces
     public interface IScanProspectsForRepliesService
     {
         Task ProcessNewMessagesAsync(IList<NewMessageRequest> newMessageRequests, ScanProspectsForRepliesBody message, CancellationToken ct = default);
-
-        Task<IList<ContactedCampaignProspect>> GetContactedCampaignProspectsAsync();
     }
 }

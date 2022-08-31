@@ -1,14 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Leadsly.Application.Model.RabbitMQ
+﻿namespace Leadsly.Application.Model.RabbitMQ
 {
     public class ExchangeOptions
     {
-        public string Name { get; set; }
-        public string ExchangeType { get; set; }
+        public AppServerOptions AppServer { get; set; }
+        public HalOptions Hal { get; set; }
+
+        public class AppServerOptions
+        {
+            public string Name { get; set; }
+            public string ExchangeType { get; set; }
+        }
+
+        public class HalOptions
+        {
+            public string Name { get; set; }
+            public string ExchangeType { get; set; }
+        }
     }
 }
