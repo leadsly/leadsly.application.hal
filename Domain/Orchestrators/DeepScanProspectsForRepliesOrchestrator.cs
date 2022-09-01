@@ -69,19 +69,21 @@ namespace Domain.Orchestrators
 
         private void ExecuteInternal(DeepScanProspectsForRepliesBody message, IWebDriver webDriver, IList<NetworkProspectResponse> prospects, int visibleMessagesCount)
         {
-            BeginDeepScanning(message, webDriver, prospects, visibleMessagesCount);
+            try
+            {
+                BeginDeepScanning(message, webDriver, prospects, visibleMessagesCount);
+            }
+            finally
+            {
+                ClearMessagingSearchCriteria(webDriver);
+            }
         }
 
         private void BeginDeepScanning(DeepScanProspectsForRepliesBody message, IWebDriver webDriver, IList<NetworkProspectResponse> prospects, int visibleMessagesCount)
         {
-            ClearMessagingSearchCrtieriaInteraction clearInteraction = new()
-            {
-                WebDriver = webDriver,
-            };
-
             foreach (NetworkProspectResponse networkProspect in prospects)
             {
-                if (_interactionsFacade.HandleInteraction(clearInteraction) == false)
+                if (ClearMessagingSearchCriteria(webDriver) == false)
                 {
                     _logger.LogError("ClearMessagingSearchCriteriaInteraction failed");
                     continue;
@@ -90,26 +92,39 @@ namespace Domain.Orchestrators
                 if (EnterSearchTerm(webDriver, networkProspect.Name) == false)
                 {
                     _logger.LogDebug("EnterSearchTerm failed. Clearing the current search term and moving on.");
-                    _interactionsFacade.HandleInteraction(clearInteraction);
+                    ClearMessagingSearchCriteria(webDriver);
                 }
 
                 if (LookForProspectMessages(webDriver, networkProspect.Name, visibleMessagesCount) == false)
                 {
                     _logger.LogDebug("No messages found for {0}. Moving onto the next search term", networkProspect.Name);
-                    _interactionsFacade.HandleInteraction(clearInteraction);
+                    ClearMessagingSearchCriteria(webDriver);
                     continue;
                 }
 
-                if (CheckMessageHistoryForRepliesToOurLastMessage(networkProspect, webDriver) == false)
+                foreach (IWebElement messageListItem in _interactionsFacade.ProspectMessageListItems)
                 {
-                    _logger.LogError("CheckMessagesHistoryInteraction failed");
-                    _interactionsFacade.HandleInteraction(clearInteraction);
-                    continue;
-                }
+                    if (CheckMessageHistoryForRepliesToOurLastMessage(message.LeadslyUserFullName, messageListItem, networkProspect, webDriver) == false)
+                    {
+                        _logger.LogError("CheckMessagesHistoryInteraction failed");
+                        continue;
+                    }
 
-                Prospects.Add(_interactionsFacade.ProspectReplied);
+                    Prospects.Add(_interactionsFacade.ProspectReplied);
+                }
             }
         }
+
+        private bool ClearMessagingSearchCriteria(IWebDriver webDriver)
+        {
+            ClearMessagingSearchCrtieriaInteraction clearInteraction = new()
+            {
+                WebDriver = webDriver,
+            };
+
+            return _interactionsFacade.HandleInteraction(clearInteraction);
+        }
+
 
         private bool EnterSearchTerm(IWebDriver webDriver, string searchCriteria)
         {
@@ -122,14 +137,16 @@ namespace Domain.Orchestrators
             return _interactionsFacade.HandleInteraction(interaction);
         }
 
-        private bool CheckMessageHistoryForRepliesToOurLastMessage(NetworkProspectResponse networkProspect, IWebDriver webDriver)
+        private bool CheckMessageHistoryForRepliesToOurLastMessage(string leadslyUserFullName, IWebElement messageListItem, NetworkProspectResponse networkProspect, IWebDriver webDriver)
         {
             CheckMessagesHistoryInteraction checkMessageContents = new()
             {
                 CampaignProspectId = networkProspect.CampaignProspectId,
                 ProspectName = networkProspect.Name,
                 TargetMessage = networkProspect.LastFollowUpMessageContent,
-                WebDriver = webDriver
+                WebDriver = webDriver,
+                LeadslyUserFullName = leadslyUserFullName,
+                MessageListItem = messageListItem
             };
 
             return _interactionsFacade.HandleInteraction(checkMessageContents);

@@ -73,7 +73,7 @@ namespace Domain.Services
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
                 RequestUrl = $"DeepScanProspectsForReplies/{message.HalId}",
-                Prospects = prospects
+                Items = prospects
             };
 
             HttpResponseMessage response = await _serviceApi.ProcessProspectsRepliedAsync(request, ct);

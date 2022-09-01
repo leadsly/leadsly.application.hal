@@ -1,13 +1,8 @@
-﻿using Domain.Models.Networking;
-using Domain.Serializers.Interfaces;
+﻿using Domain.Serializers.Interfaces;
 using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Serializers
 {
@@ -112,6 +107,24 @@ namespace Domain.Serializers
             }
 
             return scanProspectsForRepliesBody;
+        }
+
+        public DeepScanProspectsForRepliesBody DeserializeDeepScanProspectsForRepliesBody(string body)
+        {
+            _logger.LogInformation("Deserializing DeepScanProspectsForRepliesBody");
+            DeepScanProspectsForRepliesBody deepScanProspectsForRepliesBody = null;
+            try
+            {
+                deepScanProspectsForRepliesBody = JsonConvert.DeserializeObject<DeepScanProspectsForRepliesBody>(body);
+                _logger.LogDebug("Successfully deserialized DeepScanProspectsForRepliesBody");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to deserialize DeepScanProspectsForRepliesBody. Returning an explicit null");
+                return null;
+            }
+
+            return deepScanProspectsForRepliesBody;
         }
 
         public SendConnectionsBody DeserializeSendConnectionRequestsBody(string body)

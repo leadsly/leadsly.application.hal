@@ -1,5 +1,4 @@
-﻿using Domain.Models.Requests;
-using Domain.Providers.Campaigns.Interfaces;
+﻿using Domain.Providers.Campaigns.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
@@ -176,7 +175,7 @@ namespace Domain.Providers.Campaigns
         {
             HalOperationResult<T> result = new();
 
-            ProspectsRepliedRequest request = new()
+            Leadsly.Application.Model.Requests.FromHal.ProspectsRepliedRequest request = new()
             {
                 HalId = message.HalId,
                 NamespaceName = message.NamespaceName,

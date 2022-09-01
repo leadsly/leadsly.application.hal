@@ -800,6 +800,35 @@ namespace PageObjects.Pages
             return hasNotification;
         }
 
+        public bool IsActiveMessageItem(IWebElement listItem)
+        {
+            IWebElement activeMessage = default;
+            try
+            {
+                activeMessage = listItem.FindElement(By.CssSelector(".msg-conversations-container__convo-item-link.active"));
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return activeMessage != null;
+        }
+
+        public bool NewMessageLabel(IWebDriver webDriver)
+        {
+            IWebElement newMessageLabel = default;
+            try
+            {
+                IWebElement messageDetailsSection = MessagesDetailSection(webDriver);
+                newMessageLabel = messageDetailsSection.FindElement(By.ClassName("msg-s-message-list__new-message-heading"));
+
+            }
+            catch (Exception ex)
+            {
+            }
+
+            return newMessageLabel != null;
+        }
 
         private IWebElement MessagingH1Element(IWebDriver webDriver)
         {

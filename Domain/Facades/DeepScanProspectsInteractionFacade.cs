@@ -8,6 +8,8 @@ using Domain.Interactions.DeepScanProspectsForReplies.EnterSearchMessageCriteria
 using Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageItem;
 using Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageItem.Interfaces;
 using Domain.Models;
+using OpenQA.Selenium;
+using System.Collections.Generic;
 
 namespace Domain.Facades
 {
@@ -32,6 +34,8 @@ namespace Domain.Facades
 
         public ProspectReplied ProspectReplied { get; set; }
 
+        public IList<IWebElement> ProspectMessageListItems { get; set; }
+
         public bool HandleInteraction(ClearMessagingSearchCrtieriaInteraction interaction)
         {
             return _clearMessagingSearchCriteriaHandler.HandleInteraction(interaction);
@@ -44,13 +48,16 @@ namespace Domain.Facades
 
         public bool HandleInteraction(GetProspectsMessageItemInteraction interaction)
         {
-            return _getProspectsMesageItemHandler.HandleInteraction(interaction);
+            bool succeeded = _getProspectsMesageItemHandler.HandleInteraction(interaction);
+            ProspectMessageListItems = _getProspectsMesageItemHandler.GetProspectMessageItems();
+            return succeeded;
         }
 
         public bool HandleInteraction(CheckMessagesHistoryInteraction interaction)
         {
-            ProspectReplied = _checkMessagesHistoryInteractionHandler.Prospect;
-            return _checkMessagesHistoryInteractionHandler.HandleInteraction(interaction);
+            bool succeeded = _checkMessagesHistoryInteractionHandler.HandleInteraction(interaction);
+            ProspectReplied = _checkMessagesHistoryInteractionHandler.GetProspect();
+            return succeeded;
         }
     }
 }

@@ -50,16 +50,27 @@ namespace Domain.Services.POMs
                 return newMessages;
             }
 
-            newMessages = GrabNewMessagesListItems(visibleConversationListItems);
+            newMessages = GrabNewMessagesListItems(visibleConversationListItems, webDriver);
             return newMessages;
         }
 
-        private IList<IWebElement> GrabNewMessagesListItems(IList<IWebElement> listItems)
+        private IList<IWebElement> GrabNewMessagesListItems(IList<IWebElement> listItems, IWebDriver webDriver)
         {
             IList<IWebElement> newConversationListItem = new List<IWebElement>();
             foreach (IWebElement listItem in listItems)
             {
-                _humanBehaviorService.RandomWaitMilliSeconds(600, 900);
+                // if it is first message we are already on there are no notifications, so we need to check if new message label is visible
+                if (_linkedInMessagingPage.IsActiveMessageItem(listItem) == true)
+                {
+                    _logger.LogDebug("This message item is currently selected in the view. Checking for new messages label");
+                    if (_linkedInMessagingPage.NewMessageLabel(webDriver) == true)
+                    {
+                        _logger.LogInformation($"This ListItem [{listItem.Text}] does contain a new notification");
+                        newConversationListItem.Add(listItem);
+                        continue;
+                    }
+                }
+
                 if (_linkedInMessagingPage.HasNotification(listItem) == true)
                 {
                     _logger.LogInformation($"This ListItem [{listItem.Text}] does contain a new notification");

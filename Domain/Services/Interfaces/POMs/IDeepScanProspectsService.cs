@@ -11,7 +11,7 @@ namespace Domain.Services.Interfaces.POMs
 
         bool EnterSearchMessagesCriteria(IWebDriver webDriver, string searchCriteria);
 
-        IWebElement GetProspectsMessageItem(IWebDriver webDriver, string prospectName, int beforeSearchMessagesCount);
+        IList<IWebElement> GetProspectsMessageItems(IWebDriver webDriver, string prospectName, int beforeSearchMessagesCount);
         bool ClickNewMessage(IWebElement newMessage, IWebDriver webDriver);
         IList<IWebElement> GetMessageContents(IWebDriver webDriver);
         string GetProspectNameFromMessageContent(IWebElement messageContent);

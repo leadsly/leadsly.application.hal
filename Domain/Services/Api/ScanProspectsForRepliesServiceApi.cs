@@ -37,8 +37,7 @@ namespace Domain.Services.Api
                     RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
-                        HalId = request.HalId,
-                        ProspectsReplied = request.NewMessages
+                        Items = request.NewMessages
                     })
                 };
 

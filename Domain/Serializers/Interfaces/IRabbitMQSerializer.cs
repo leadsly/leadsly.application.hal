@@ -1,10 +1,4 @@
-﻿using Domain.Models.Networking;
-using Leadsly.Application.Model.Campaigns;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Leadsly.Application.Model.Campaigns;
 
 namespace Domain.Serializers.Interfaces
 {
@@ -13,6 +7,7 @@ namespace Domain.Serializers.Interfaces
         FollowUpMessageBody DeserializeFollowUpMessagesBody(string body);
 
         ScanProspectsForRepliesBody DeserializeScanProspectsForRepliesBody(string body);
+        DeepScanProspectsForRepliesBody DeserializeDeepScanProspectsForRepliesBody(string body);
 
         MonitorForNewAcceptedConnectionsBody DeserializeMonitorForNewAcceptedConnectionsBody(string body);
 

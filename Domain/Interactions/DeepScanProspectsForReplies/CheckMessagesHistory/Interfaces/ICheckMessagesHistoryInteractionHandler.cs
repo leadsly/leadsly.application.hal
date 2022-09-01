@@ -5,6 +5,6 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory.I
     public interface ICheckMessagesHistoryInteractionHandler<TInteraction> : IInteractionHandler<TInteraction>
         where TInteraction : IInteraction
     {
-        ProspectReplied Prospect { get; }
+        public ProspectReplied GetProspect();
     }
 }

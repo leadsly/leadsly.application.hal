@@ -34,13 +34,13 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
             IModel channel = command.Channel;
             BasicDeliverEventArgs eventArgs = command.EventArgs;
 
-            ScanProspectsForRepliesBody body = command.MessageBody as ScanProspectsForRepliesBody;
             DeepScanProspectsForRepliesBody message = command.MessageBody as DeepScanProspectsForRepliesBody;
 
             bool succeeded = await _messageExecutorHandler.ExecuteMessageAsync(message);
 
             try
             {
+                ScanProspectsForRepliesBody body = command.MessageBody as ScanProspectsForRepliesBody;
                 HalOperationResult<IOperationResponse> result = await StartDeepScanningProspectsForRepliesAsync(body);
                 if (result.Succeeded == true)
                 {

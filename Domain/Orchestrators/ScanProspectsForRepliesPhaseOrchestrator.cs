@@ -6,11 +6,13 @@ using Domain.Providers.Campaigns;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model.Campaigns;
+using Leadsly.Application.Model.Requests;
 using Leadsly.Application.Model.Responses;
 using Leadsly.Application.Model.WebDriver;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
+using System.Collections.Generic;
 
 namespace Domain.Orchestrators
 {
@@ -72,6 +74,8 @@ namespace Domain.Orchestrators
                 _webDriverProvider.CloseBrowser<IOperationResponse>(BrowserPurpose.ScanForReplies);
                 IsRunning = false;
                 this.EndOfWorkDayReached.Invoke(this, new EndOfWorkDayReachedEventArgs(message));
+                // in case an error occurs during the scan we want to make sure we send any responses to the server
+                OutputMessageResponses(message);
             }
         }
 
@@ -87,10 +91,18 @@ namespace Domain.Orchestrators
             {
                 _interactionHandler.HandleInteraction(interaction);
 
-                if (_interactionHandler.NewMessageRequests.Count > 0)
-                {
-                    this.NewMessagesReceived.Invoke(this, new NewMessagesReceivedEventArgs(message, _interactionHandler.NewMessageRequests));
-                }
+                OutputMessageResponses(message);
+
+                webDriver.Navigate().Refresh();
+            }
+        }
+
+        private void OutputMessageResponses(ScanProspectsForRepliesBody message)
+        {
+            IList<NewMessageRequest> newMessageRequests = _interactionHandler.GetNewMessageRequests();
+            if (newMessageRequests.Count > 0)
+            {
+                this.NewMessagesReceived.Invoke(this, new NewMessagesReceivedEventArgs(message, newMessageRequests));
             }
         }
     }

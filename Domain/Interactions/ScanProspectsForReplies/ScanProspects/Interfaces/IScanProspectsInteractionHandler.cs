@@ -6,6 +6,6 @@ namespace Domain.Interactions.ScanProspectsForReplies.ScanProspects.Interfaces
     public interface IScanProspectsInteractionHandler<TInteraction> : IInteractionHandler<TInteraction>
         where TInteraction : IInteraction
     {
-        public IList<NewMessageRequest> NewMessageRequests { get; }
+        public IList<NewMessageRequest> GetNewMessageRequests();
     }
 }

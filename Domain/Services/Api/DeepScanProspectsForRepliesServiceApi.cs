@@ -64,7 +64,7 @@ namespace Domain.Services.Api
                     Content = JsonContent.Create(new
                     {
                         HalId = request.HalId,
-                        ProspectsReplied = request.Prospects
+                        Items = request.Items
                     })
                 };
 

@@ -6,7 +6,6 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Domain.Services.POMs
 {
@@ -63,6 +62,8 @@ namespace Domain.Services.POMs
                 {
                     _humanBehaviorService.EnterValue(searchInput, character, 200, 300);
                 }
+
+                searchInput.SendKeys(Keys.Enter);
             }
             catch (Exception ex)
             {
@@ -87,7 +88,7 @@ namespace Domain.Services.POMs
         private bool VerifySearchTermWasEnteredCorrectly(IWebElement searchInput, string searchCriteria)
         {
             string enteredValue = searchInput.GetAttribute("value");
-            if (enteredValue != searchCriteria)
+            if (enteredValue.Contains(searchCriteria))
             {
                 _logger.LogDebug("Failed to correctly enter search term {searchCriteria}. The entered value was: {enteredValue}", searchCriteria, enteredValue);
                 return false;
@@ -102,7 +103,7 @@ namespace Domain.Services.POMs
             return _linkedInMessagingPage.GetMessageContents(webDriver);
         }
 
-        public IWebElement GetProspectsMessageItem(IWebDriver webDriver, string prospectName, int beforeSearchMessagesCount)
+        public IList<IWebElement> GetProspectsMessageItems(IWebDriver webDriver, string prospectName, int beforeSearchMessagesCount)
         {
             bool succeeded = WaitForSearchResultsToDiffer(webDriver, beforeSearchMessagesCount);
             if (succeeded == false)
@@ -123,41 +124,38 @@ namespace Domain.Services.POMs
                 _logger.LogDebug("No visible messages were found. Cannot proceed. Expected to find at least one message");
                 return null;
             }
-            if (visibleMessages.Count > 1)
-            {
-                _logger.LogDebug("More than one message found. This is not expected. Expected exactly one result. The search criteria was: {searchCriteria}", prospectName);
-                return null;
-            }
             if (visibleMessages.Count == 0)
             {
                 _logger.LogDebug("No messages found. This is not expected. Expected at least one result. The search criteria was: {searchCriteria}", prospectName);
                 return null;
             }
 
-            IWebElement prospectMessage = visibleMessages.FirstOrDefault();
-            string messageContent = prospectMessage.Text;
-            if (messageContent == null)
-            {
-                _logger.LogDebug("No message content found. This is not expected. Expected at least one result. The search criteria was: {searchCriteria}", prospectName);
-                return null;
-            }
+            return visibleMessages;
 
-            string prospectNameFromMessage = _linkedInMessagingPage.GetProspectNameFromConversationItem(prospectMessage);
-            if (prospectNameFromMessage == string.Empty)
-            {
-                _logger.LogDebug("Unable to determine prospect name from the message. Cannot process this message");
-                return null;
-            }
+            //IWebElement prospectMessageItems = visibleMessages.FirstOrDefault();
+            //string messageContent = prospectMessageItems.Text;
+            //if (messageContent == null)
+            //{
+            //    _logger.LogDebug("No message content found. This is not expected. Expected at least one result. The search criteria was: {searchCriteria}", prospectName);
+            //    return null;
+            //}
 
-            if (prospectNameFromMessage != prospectName)
-            {
-                _logger.LogDebug("The prospect name from the message {prospectNameFromMessage} did not match the prospect we were looking for {prospectName}.", prospectNameFromMessage, prospectName);
-                return null;
-            }
-            else
-            {
-                return prospectMessage;
-            }
+            //string prospectNameFromMessage = _linkedInMessagingPage.GetProspectNameFromConversationItem(prospectMessage);
+            //if (prospectNameFromMessage == string.Empty)
+            //{
+            //    _logger.LogDebug("Unable to determine prospect name from the message. Cannot process this message");
+            //    return null;
+            //}
+
+            //if (prospectNameFromMessage != prospectName)
+            //{
+            //    _logger.LogDebug("The prospect name from the message {prospectNameFromMessage} did not match the prospect we were looking for {prospectName}.", prospectNameFromMessage, prospectName);
+            //    return null;
+            //}
+            //else
+            //{
+            //    return prospectMessage;
+            //}
         }
 
         // this assumes there are more than one conversation

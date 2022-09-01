@@ -24,7 +24,7 @@ namespace Domain.Interactions.ScanProspectsForReplies.ScanProspects
         private readonly ITimestampService _timestampService;
         private readonly IScanProspectsService _scanProspectsService;
         private readonly ILogger<ScanProspectsInteractionHandler> _logger;
-        public IList<NewMessageRequest> NewMessageRequests { get; set; }
+        private IList<NewMessageRequest> NewMessageRequests { get; set; } = new List<NewMessageRequest>();
 
         public bool HandleInteraction(ScanProspectsInteraction interaction)
         {
@@ -59,6 +59,13 @@ namespace Domain.Interactions.ScanProspectsForReplies.ScanProspects
             }
 
             return true;
+        }
+
+        public IList<NewMessageRequest> GetNewMessageRequests()
+        {
+            IList<NewMessageRequest> requests = NewMessageRequests;
+            NewMessageRequests = new List<NewMessageRequest>();
+            return requests;
         }
     }
 }

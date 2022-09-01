@@ -1,5 +1,4 @@
-﻿using Domain.Models.Networking;
-using Domain.PhaseHandlers.FollowUpMessageHandlers;
+﻿using Domain.PhaseHandlers.FollowUpMessageHandlers;
 using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
 using Domain.PhaseHandlers.NetworkingHandler;
 using Domain.PhaseHandlers.ProspectListHandler;
@@ -260,15 +259,16 @@ namespace Domain.Services
 
             byte[] body = eventArgs.Body.ToArray();
             string message = Encoding.UTF8.GetString(body);
-            ScanProspectsForRepliesBody messageBody = _serializer.DeserializeScanProspectsForRepliesBody(message);
 
             if (networkType == RabbitMQConstants.ScanProspectsForReplies.ExecuteDeepScan)
             {
+                DeepScanProspectsForRepliesBody messageBody = _serializer.DeserializeDeepScanProspectsForRepliesBody(message);
                 DeepScanProspectsForRepliesCommand deepScanProspectsCommand = new DeepScanProspectsForRepliesCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);
                 await _deepScanHandler.HandleAsync(deepScanProspectsCommand);
             }
             else if (networkType == RabbitMQConstants.ScanProspectsForReplies.ExecutePhase)
             {
+                ScanProspectsForRepliesBody messageBody = _serializer.DeserializeScanProspectsForRepliesBody(message);
                 ScanProspectsForRepliesCommand scanProspectsCommand = new ScanProspectsForRepliesCommand(channel, eventArgs, messageBody, messageBody.StartOfWorkday, messageBody.EndOfWorkday, messageBody.TimeZoneId);
                 await _scanHandler.HandleAsync(scanProspectsCommand);
             }

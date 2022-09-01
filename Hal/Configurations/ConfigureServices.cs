@@ -223,6 +223,16 @@ namespace Hal.Configurations
                 opt.Timeout = TimeSpan.FromMinutes(5);
             });
 
+            services.AddHttpClient<IScanProspectsForRepliesServiceApi, ScanProspectsForRepliesServiceApi>(opt =>
+            {
+                opt.Timeout = TimeSpan.FromMinutes(5);
+            });
+
+            services.AddHttpClient<IDeepScanProspectsForRepliesServiceApi, DeepScanProspectsForRepliesServiceApi>(opt =>
+            {
+                opt.Timeout = TimeSpan.FromMinutes(5);
+            });
+
             services.AddScoped<IWebDriverService, WebDriverService>();
             services.AddScoped<ITimestampService, TimestampService>();
             services.AddScoped<IPhaseEventHandlerService, PhaseEventHandlerService>();
@@ -233,6 +243,8 @@ namespace Hal.Configurations
             services.AddSingleton<Random>();
             services.AddScoped<IUrlService, UrlService>();
             services.AddScoped<INetworkingService, NetworkingService>();
+            services.AddScoped<IScanProspectsForRepliesService, ScanProspectsForRepliesService>();
+            services.AddScoped<IDeepScanProspectsForRepliesService, DeepScanProspectsForRepliesService>();
 
             return services;
         }
@@ -284,6 +296,7 @@ namespace Hal.Configurations
             services.AddScoped<ICampaignPhaseFacade, CampaignPhaseFacade>();
             services.AddScoped<ILinkedInPageFacade, LinkedInPageFacade>();
             services.AddScoped<INetworkingInteractionFacade, NetworkingInteractionFacade>();
+            services.AddScoped<IDeepScanProspectsInteractionFacade, DeepScanProspectsInteractionFacade>();
 
             return services;
         }

@@ -25,10 +25,18 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory
         private readonly IDeepScanProspectsService _service;
         private readonly ILogger<CheckMessagesHistoryInteractionHandler> _logger;
 
-        public ProspectReplied Prospect { get; set; }
+        private ProspectReplied Prospect { get; set; }
 
         public bool HandleInteraction(CheckMessagesHistoryInteraction interaction)
         {
+            // click on the new message
+            bool clickSucceeded = _service.ClickNewMessage(interaction.MessageListItem, interaction.WebDriver);
+            if (clickSucceeded == false)
+            {
+                _logger.LogDebug("Failed to click on the new message");
+                return false;
+            }
+
             _logger.LogDebug("Executing CheckMessagesHistoryInteraction.");
             IList<IWebElement> messageContents = _service.GetMessageContents(interaction.WebDriver);
             IWebElement targetMessage = messageContents.Where(m => m.Text.Contains(interaction.TargetMessage)).FirstOrDefault();
@@ -44,28 +52,48 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory
             int nextMessageIndex = targetMessageIndex + 1;
 
             // check if any messages after targetMessageIndex are from the prospect
-            for (int i = nextMessageIndex; i < messageContents.Count; i++)
+            for (int i = targetMessageIndex; i < messageContents.Count; i++)
             {
                 IWebElement nextMessage = messageContents.ElementAt(i);
-                string prospectNameFromMessage = _service.GetProspectNameFromMessageContent(nextMessage);
-                _logger.LogDebug("Target prospect name {0}, prospect name found in the messages {1}", interaction.ProspectName, prospectNameFromMessage);
-                if (interaction.ProspectName == prospectNameFromMessage)
-                {
-                    _logger.LogDebug("Prospect {0} responded to our message", interaction.ProspectName);
-                    ProspectReplied prospect = new()
-                    {
-                        ResponseMessageTimestamp = _timestampService.TimestampNow(),
-                        CampaignProspectId = interaction.CampaignProspectId,
-                        ResponseMessage = nextMessage.Text,
-                        Name = interaction.ProspectName
-                    };
+                string nameFromMessage = _service.GetProspectNameFromMessageContent(nextMessage);
+                _logger.LogDebug("Target prospect name {0}, name found in the messages {1}", interaction.ProspectName, nameFromMessage);
 
-                    Prospect = prospect;
-                    break;
+                // this means the message was not from us
+                if (interaction.LeadslyUserFullName != nameFromMessage)
+                {
+                    if (interaction.ProspectName == nameFromMessage)
+                    {
+                        _logger.LogDebug("Prospect {0} responded to our message", interaction.ProspectName);
+                        ProspectReplied prospect = new()
+                        {
+                            ResponseMessageTimestamp = _timestampService.TimestampNow(),
+                            CampaignProspectId = interaction.CampaignProspectId,
+                            ResponseMessage = nextMessage.Text,
+                            Name = interaction.ProspectName
+                        };
+
+                        Prospect = prospect;
+                        break;
+                    }
+                    else
+                    {
+                        _logger.LogDebug("This message was not sent by leadsly user, however the name found in the message did not match prospects");
+                    }
+                }
+                else
+                {
+                    _logger.LogDebug("This message was sent by the user ignore it");
                 }
             }
 
             return true;
+        }
+
+        public ProspectReplied GetProspect()
+        {
+            ProspectReplied prospect = Prospect;
+            Prospect = null;
+            return prospect;
         }
     }
 }

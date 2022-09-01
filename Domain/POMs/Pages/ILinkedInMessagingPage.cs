@@ -65,6 +65,9 @@ namespace Domain.POMs.Pages
 
         bool HasNotification(IWebElement listItem);
 
+        bool IsActiveMessageItem(IWebElement listItem);
+        bool NewMessageLabel(IWebDriver webDriver);
+
         IWebElement MessagingHeader(IWebDriver webDriver);
     }
 }
