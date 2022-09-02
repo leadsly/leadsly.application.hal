@@ -104,7 +104,7 @@ namespace Domain.Orchestrators
 
                 foreach (IWebElement messageListItem in _interactionsFacade.ProspectMessageListItems)
                 {
-                    if (CheckMessageHistoryForRepliesToOurLastMessage(message.LeadslyUserFullName, messageListItem, networkProspect, webDriver) == false)
+                    if (CheckMessageHistoryForRepliesToOurLastMessage(messageListItem, networkProspect, webDriver) == false)
                     {
                         _logger.LogError("CheckMessagesHistoryInteraction failed");
                         continue;
@@ -137,7 +137,7 @@ namespace Domain.Orchestrators
             return _interactionsFacade.HandleInteraction(interaction);
         }
 
-        private bool CheckMessageHistoryForRepliesToOurLastMessage(string leadslyUserFullName, IWebElement messageListItem, NetworkProspectResponse networkProspect, IWebDriver webDriver)
+        private bool CheckMessageHistoryForRepliesToOurLastMessage(IWebElement messageListItem, NetworkProspectResponse networkProspect, IWebDriver webDriver)
         {
             CheckMessagesHistoryInteraction checkMessageContents = new()
             {
@@ -145,7 +145,6 @@ namespace Domain.Orchestrators
                 ProspectName = networkProspect.Name,
                 TargetMessage = networkProspect.LastFollowUpMessageContent,
                 WebDriver = webDriver,
-                LeadslyUserFullName = leadslyUserFullName,
                 MessageListItem = messageListItem
             };
 

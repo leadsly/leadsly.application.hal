@@ -46,11 +46,10 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory
                 return false;
             }
 
+            string leadslyUserFullName = _service.GetProspectNameFromMessageContent(targetMessage);
+
             // this is the message that we have sent to this prospect
             int targetMessageIndex = messageContents.IndexOf(targetMessage);
-            // this is the message right after ours, if prospect responded there should be a message from the prospect at this index
-            int nextMessageIndex = targetMessageIndex + 1;
-
             // check if any messages after targetMessageIndex are from the prospect
             for (int i = targetMessageIndex; i < messageContents.Count; i++)
             {
@@ -59,7 +58,7 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory
                 _logger.LogDebug("Target prospect name {0}, name found in the messages {1}", interaction.ProspectName, nameFromMessage);
 
                 // this means the message was not from us
-                if (interaction.LeadslyUserFullName != nameFromMessage)
+                if (leadslyUserFullName != nameFromMessage)
                 {
                     if (interaction.ProspectName == nameFromMessage)
                     {

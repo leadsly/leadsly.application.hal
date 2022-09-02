@@ -7,7 +7,5 @@ namespace Leadsly.Application.Model.Campaigns
     {
         [DataMember]
         public string PageUrl { get; set; } = string.Empty;
-        [DataMember]
-        public string LeadslyUserFullName { get; set; } = string.Empty;
     }
 }
