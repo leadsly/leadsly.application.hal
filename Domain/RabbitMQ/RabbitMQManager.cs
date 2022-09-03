@@ -80,8 +80,6 @@ namespace Domain.RabbitMQ
 
             channel.QueueDeclare(queue: queueNameIn, durable: true, exclusive: false, autoDelete: true, arguments: arguments);
 
-            string routingKey = options.RoutingKey.AppServer;
-
             channel.QueueBind(queueNameIn, exchangeName, routingKeyIn, null);
 
             _logger.LogInformation("The exchangeName is: {exchangeName} " +
@@ -89,7 +87,7 @@ namespace Domain.RabbitMQ
                             exchangeName,
                             exchangeType);
 
-            channel.BasicPublish(exchange: exchangeName, routingKey: routingKey, basicProperties: null, body: body);
+            channel.BasicPublish(exchange: exchangeName, routingKey: routingKeyIn, basicProperties: null, body: body);
 
             _pool.Return(channel);
         }

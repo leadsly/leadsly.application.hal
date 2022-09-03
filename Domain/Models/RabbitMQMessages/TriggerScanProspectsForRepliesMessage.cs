@@ -1,9 +1,9 @@
 ﻿using System.Runtime.Serialization;
 
-namespace Domain.Models.RabbitMQMessages.AppServer
+namespace Domain.Models.RabbitMQMessages
 {
     [DataContract]
-    public class TriggerSendFollowUpMessages
+    public class TriggerScanProspectsForRepliesMessage
     {
         [DataMember]
         public string UserId { get; set; }

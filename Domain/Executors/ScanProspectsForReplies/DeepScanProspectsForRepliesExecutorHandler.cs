@@ -1,4 +1,4 @@
-﻿using Domain.Models.RabbitMQMessages.AppServer;
+﻿using Domain.Models.RabbitMQMessages;
 using Domain.Models.Responses;
 using Domain.Orchestrators.Interfaces;
 using Domain.RabbitMQ.Interfaces;
@@ -91,14 +91,14 @@ namespace Domain.Executors.ScanProspectsForReplies
             try
             {
                 // publish trigger follow up messages phase here
-                TriggerSendFollowUpMessages messageBody2 = new()
+                TriggerSendFollowUpMessages messageBody = new()
                 {
                     HalId = message.HalId,
                     UserId = message.UserId
                 };
-                string msg2 = JsonConvert.SerializeObject(messageBody2);
-                byte[] rawMessage2 = Encoding.UTF8.GetBytes(msg2);
-                _rabbitMQ.PublishMessage(rawMessage2, RabbitMQConstants.TriggerSendFollowUpMessages.QueueName, RabbitMQConstants.TriggerSendFollowUpMessages.RoutingKey);
+                string msg = JsonConvert.SerializeObject(messageBody);
+                byte[] rawMessage = Encoding.UTF8.GetBytes(msg);
+                _rabbitMQ.PublishMessage(rawMessage, RabbitMQConstants.TriggerFollowUpMessages.QueueName, RabbitMQConstants.TriggerFollowUpMessages.RoutingKey);
             }
             catch (Exception ex)
             {
