@@ -2,7 +2,7 @@
 
 namespace Domain.Interactions.DeepScanProspectsForReplies.ClearMessagingSearchCriteria
 {
-    public class ClearMessagingSearchCrtieriaInteraction : IInteraction
+    public class ClearMessagingSearchCrtieriaInteraction : InteractionBase
     {
         public IWebDriver WebDriver { get; set; }
     }

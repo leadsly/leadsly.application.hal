@@ -1,5 +1,6 @@
 ﻿using Domain;
 using Domain.Executors;
+using Domain.Executors.FollowUpMessage;
 using Domain.Executors.Networking;
 using Domain.Executors.ScanProspectsForReplies;
 using Domain.Facades;
@@ -12,6 +13,12 @@ using Domain.Interactions.DeepScanProspectsForReplies.EnterSearchMessageCriteria
 using Domain.Interactions.DeepScanProspectsForReplies.EnterSearchMessageCriteria.Interfaces;
 using Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageItem;
 using Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageItem.Interfaces;
+using Domain.Interactions.FollowUpMessage.CreateNewMessage;
+using Domain.Interactions.FollowUpMessage.CreateNewMessage.Interfaces;
+using Domain.Interactions.FollowUpMessage.EnterMessage;
+using Domain.Interactions.FollowUpMessage.EnterMessage.Interfaces;
+using Domain.Interactions.FollowUpMessage.EnterProspectName;
+using Domain.Interactions.FollowUpMessage.EnterProspectName.Interfaces;
 using Domain.Interactions.Networking.ConnectWithProspect;
 using Domain.Interactions.Networking.ConnectWithProspect.Interfaces;
 using Domain.Interactions.Networking.Decorators;
@@ -190,6 +197,7 @@ namespace Hal.Configurations
             services.AddScoped<IHowDoYouKnowModalService, HowDoYouKnowModalService>();
             services.AddScoped<IDeepScanProspectsService, DeepScanProspectsService>();
             services.AddScoped<IScanProspectsService, ScanProspectsService>();
+            services.AddScoped<IFollowUpMessageService, FollowUpMessageService>();
 
             return services;
         }
@@ -233,6 +241,11 @@ namespace Hal.Configurations
                 opt.Timeout = TimeSpan.FromMinutes(5);
             });
 
+            services.AddHttpClient<ISendFollowUpMessageServiceApi, SendFollowUpMessageServiceApi>(opt =>
+            {
+                opt.Timeout = TimeSpan.FromMinutes(5);
+            });
+
             services.AddScoped<IWebDriverService, WebDriverService>();
             services.AddScoped<ITimestampService, TimestampService>();
             services.AddScoped<IPhaseEventHandlerService, PhaseEventHandlerService>();
@@ -245,6 +258,7 @@ namespace Hal.Configurations
             services.AddScoped<INetworkingService, NetworkingService>();
             services.AddScoped<IScanProspectsForRepliesService, ScanProspectsForRepliesService>();
             services.AddScoped<IDeepScanProspectsForRepliesService, DeepScanProspectsForRepliesService>();
+            services.AddScoped<ISendFollowUpMessageService, SendFollowUpMessageService>();
 
             return services;
         }
@@ -253,7 +267,10 @@ namespace Hal.Configurations
         {
             Log.Information("Registering orchestrator services.");
 
+            services.AddScoped<IFollowUpMessagePhaseOrchestrator, FollowUpMessagePhaseOrchestrator>();
             services.AddScoped<INetworkingPhaseOrchestrator, NetworkingPhaseOrchestrator>();
+            services.AddScoped<IDeepScanProspectsForRepliesPhaseOrchestrator, DeepScanProspectsForRepliesOrchestrator>();
+            services.AddScoped<IScanProspectsForRepliesPhaseOrchestrator, ScanProspectsForRepliesPhaseOrchestrator>();
 
             return services;
         }
@@ -262,19 +279,36 @@ namespace Hal.Configurations
         {
             Log.Information("Registering interaction handlers.");
 
-            services.AddScoped<RetryConnectWithProspectHandlerDecorator<ConnectWithProspectInteraction>>();
-            services.AddScoped<RetryGatherProspectsHandlerDecorator<GatherProspectsInteraction>>();
+            ////////////////////////////////////////////////////////////
+            /// DeepScanProspectsForReplies Interactions
+            ///////////////////////////////////////////////////////////
+            services.AddScoped<ICheckMessagesHistoryInteractionHandler, CheckMessagesHistoryInteractionHandler>();
+            services.AddScoped<IClearMessagingSearchCriteriaInteractionHandler, ClearMessagingSearchCriteriaInteractionHandler>();
+            services.AddScoped<IEnterSearchMessageCriteriaInteractionHandler, EnterSearchMessageCriteriaInteractionHandler>();
+            services.AddScoped<IGetProspectsMessageItemInteractionHandler, GetProspectsMessageItemInteractionHandler>();
 
-            services.AddScoped<IConnectWithProspectInteractionHandler<ConnectWithProspectInteraction>, ConnectWithProspectInteractionHandler>();
-            services.AddScoped<IGatherProspectsInteractionHandler<GatherProspectsInteraction>, GatherProspectsInteractionHandler>();
-            services.AddScoped<INoResultsFoundInteractionHandler<NoResultsFoundInteraction>, NoResultsFoundInteractionHandler>();
-            services.AddScoped<ISearchResultsLimitInteractionHandler<SearchResultsLimitInteraction>, SearchResultsLimitInteractionHandler>();
-            services.AddScoped<ICloseAllConversationsInteractionHandler<CloseAllConversationsInteraction>, CloseAllConversationsInteractionHandler>();
-            services.AddScoped<IScanProspectsInteractionHandler<ScanProspectsInteraction>, ScanProspectsInteractionHandler>();
-            services.AddScoped<ICheckMessagesHistoryInteractionHandler<CheckMessagesHistoryInteraction>, CheckMessagesHistoryInteractionHandler>();
-            services.AddScoped<IClearMessagingSearchCriteriaInteractionHandler<ClearMessagingSearchCrtieriaInteraction>, ClearMessagingSearchCriteriaInteractionHandler>();
-            services.AddScoped<IEnterSearchMessageCriteriaInteractionHandler<EnterSearchMessageCriteriaInteraction>, EnterSearchMessageCriteriaInteractionHandler>();
-            services.AddScoped<IGetProspectsMessageItemInteractionHandler<GetProspectsMessageItemInteraction>, GetProspectsMessageItemInteractionHandler>();
+            ////////////////////////////////////////////////////////////
+            /// FollowUpMessage Interactions
+            ///////////////////////////////////////////////////////////
+            services.AddScoped<ICreateNewMessageInteractionHandler, CreateNewMessageInteractionHandler>();
+            services.AddScoped<IEnterMessageInteractionHandler, EnterMessageInteractionHandler>();
+            services.AddScoped<IEnterProspectNameInteractionHandler, EnterProspectNameInteractionHandler>();
+
+            ////////////////////////////////////////////////////////////
+            /// Networking Interactions
+            ///////////////////////////////////////////////////////////
+            services.AddScoped<RetryConnectWithProspectHandlerDecorator>();
+            services.AddScoped<RetryGatherProspectsHandlerDecorator>();
+            services.AddScoped<IConnectWithProspectInteractionHandler, ConnectWithProspectInteractionHandler>();
+            services.AddScoped<IGatherProspectsInteractionHandler, GatherProspectsInteractionHandler>();
+            services.AddScoped<INoResultsFoundInteractionHandler, NoResultsFoundInteractionHandler>();
+            services.AddScoped<ISearchResultsLimitInteractionHandler, SearchResultsLimitInteractionHandler>();
+
+            ////////////////////////////////////////////////////////////
+            /// ScanProspectsForReplies Interactions
+            ///////////////////////////////////////////////////////////
+            services.AddScoped<ICloseAllConversationsInteractionHandler, CloseAllConversationsInteractionHandler>();
+            services.AddScoped<IScanProspectsInteractionHandler, ScanProspectsInteractionHandler>();
 
             return services;
         }
@@ -285,6 +319,7 @@ namespace Hal.Configurations
             services.AddScoped<IMessageExecutorHandler<NetworkingMessageBody>, NetworkingMessageExecutorHandler>();
             services.AddScoped<IMessageExecutorHandler<DeepScanProspectsForRepliesBody>, DeepScanProspectsForRepliesExecutorHandler>();
             services.AddScoped<IMessageExecutorHandler<ScanProspectsForRepliesBody>, ScanProspectsForRepliesExecutorHandler>();
+            services.AddScoped<IMessageExecutorHandler<FollowUpMessageBody>, FollowUpMessageExecutorHandler>();
 
             return services;
         }
@@ -297,6 +332,7 @@ namespace Hal.Configurations
             services.AddScoped<ILinkedInPageFacade, LinkedInPageFacade>();
             services.AddScoped<INetworkingInteractionFacade, NetworkingInteractionFacade>();
             services.AddScoped<IDeepScanProspectsInteractionFacade, DeepScanProspectsInteractionFacade>();
+            services.AddScoped<IFollowUpMessageInteractionFacade, FollowUpMessageInteractionFacade>();
 
             return services;
         }
@@ -373,9 +409,6 @@ namespace Hal.Configurations
             services.AddScoped<IDeepScanProspectsForRepliesProvider, DeepScanProspectsForRepliesProvider>();
             services.AddScoped<IPhaseDataProcessingProvider, PhaseDataProcessingProvider>();
             services.AddScoped<ITriggerPhaseProvider, TriggerPhaseProvider>();
-            services.AddScoped<INetworkingPhaseOrchestrator, NetworkingPhaseOrchestrator>();
-            services.AddScoped<IDeepScanProspectsForRepliesPhaseOrchestrator, DeepScanProspectsForRepliesOrchestrator>();
-            services.AddScoped<IScanProspectsForRepliesPhaseOrchestrator, ScanProspectsForRepliesPhaseOrchestrator>();
 
             return services;
         }

@@ -1,7 +1,5 @@
-﻿using Domain.Facades.Interfaces;
-using Leadsly.Application.Model;
+﻿using Domain.Executors;
 using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -12,40 +10,33 @@ namespace Domain.PhaseHandlers.FollowUpMessageHandlers
     public class FollowUpMessageCommandHandler : ICommandHandler<FollowUpMessageCommand>
     {
         public FollowUpMessageCommandHandler(
-            ICampaignPhaseFacade campaignPhaseFacade,
+            IMessageExecutorHandler<FollowUpMessageBody> messageExecutorHandler,
             ILogger<FollowUpMessageCommandHandler> logger)
         {
-            _campaignPhaseFacade = campaignPhaseFacade;
+            messageExecutorHandler = _messageExecutorHandler;
             _logger = logger;
         }
 
         private readonly ILogger<FollowUpMessageCommandHandler> _logger;
-        private readonly ICampaignPhaseFacade _campaignPhaseFacade;
+        private IMessageExecutorHandler<FollowUpMessageBody> _messageExecutorHandler;
 
         public async Task HandleAsync(FollowUpMessageCommand command)
         {
             IModel channel = command.Channel;
-            BasicDeliverEventArgs args = command.EventArgs;
+            BasicDeliverEventArgs eventArgs = command.EventArgs;
+            channel.BasicAck(eventArgs.DeliveryTag, false);
 
-            FollowUpMessageBody body = command.MessageBody as FollowUpMessageBody;
+            FollowUpMessageBody message = command.MessageBody as FollowUpMessageBody;
+            bool succeeded = await _messageExecutorHandler.ExecuteMessageAsync(message);
 
-            await StartFollowUpMessagesAsync(body);
-            channel.BasicAck(args.DeliveryTag, false);
-        }
-
-        private async Task StartFollowUpMessagesAsync(FollowUpMessageBody followUpMessages)
-        {
-            HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecutePhaseAsync<IOperationResponse>(followUpMessages);
-
-            if (operationResult.Succeeded == true)
+            if (succeeded == true)
             {
-                _logger.LogInformation("ExecuteFollowUpMessagesPhase executed successfully. Acknowledging message");
+                _logger.LogDebug($"DeepScanProspectsForReplies phase finishex executing successfully");
             }
             else
             {
-                _logger.LogWarning("Executing Follow Up Messages Phase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
+                _logger.LogDebug($"DeepScanProspectsForReplies phase finishex executing unsuccessfully");
             }
         }
-
     }
 }

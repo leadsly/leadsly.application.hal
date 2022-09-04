@@ -1,10 +1,7 @@
 ﻿using Domain.Facades.Interfaces;
-using Domain.Interactions.Networking.ConnectWithProspect;
+using Domain.Interactions;
 using Domain.Interactions.Networking.Decorators;
-using Domain.Interactions.Networking.GatherProspects;
-using Domain.Interactions.Networking.NoResultsFound;
 using Domain.Interactions.Networking.NoResultsFound.Interfaces;
-using Domain.Interactions.Networking.SearchResultsLimit;
 using Domain.Interactions.Networking.SearchResultsLimit.Interfaces;
 using Domain.Models.Requests;
 using OpenQA.Selenium;
@@ -14,10 +11,10 @@ namespace Domain.Facades
 {
     public class NetworkingInteractionFacade : INetworkingInteractionFacade
     {
-        public NetworkingInteractionFacade(RetryGatherProspectsHandlerDecorator<GatherProspectsInteraction> gatherProspectsInteractionHandler,
-            RetryConnectWithProspectHandlerDecorator<ConnectWithProspectInteraction> connectWithProspectInteractionHandler,
-            ISearchResultsLimitInteractionHandler<SearchResultsLimitInteraction> searchResultsLimitHandler,
-            INoResultsFoundInteractionHandler<NoResultsFoundInteraction> noSearchResultsHandler)
+        public NetworkingInteractionFacade(RetryGatherProspectsHandlerDecorator gatherProspectsInteractionHandler,
+            RetryConnectWithProspectHandlerDecorator connectWithProspectInteractionHandler,
+            ISearchResultsLimitInteractionHandler searchResultsLimitHandler,
+            INoResultsFoundInteractionHandler noSearchResultsHandler)
         {
             _searchResultsLimitHandler = searchResultsLimitHandler;
             _noSearchResultsHandler = noSearchResultsHandler;
@@ -25,10 +22,10 @@ namespace Domain.Facades
             _gatherProspectsInteractionHandler = gatherProspectsInteractionHandler;
         }
 
-        private readonly ISearchResultsLimitInteractionHandler<SearchResultsLimitInteraction> _searchResultsLimitHandler;
-        private readonly INoResultsFoundInteractionHandler<NoResultsFoundInteraction> _noSearchResultsHandler;
-        private readonly RetryConnectWithProspectHandlerDecorator<ConnectWithProspectInteraction> _connectWithProspectInteractionHandler;
-        private readonly RetryGatherProspectsHandlerDecorator<GatherProspectsInteraction> _gatherProspectsInteractionHandler;
+        private readonly ISearchResultsLimitInteractionHandler _searchResultsLimitHandler;
+        private readonly INoResultsFoundInteractionHandler _noSearchResultsHandler;
+        private readonly RetryConnectWithProspectHandlerDecorator _connectWithProspectInteractionHandler;
+        private readonly RetryGatherProspectsHandlerDecorator _gatherProspectsInteractionHandler;
 
         public List<PersistPrimaryProspectRequest> PersistPrimaryProspectRequests => _gatherProspectsInteractionHandler.PersistPrimaryProspectRequests;
 
@@ -36,22 +33,22 @@ namespace Domain.Facades
 
         public ConnectionSentRequest ConnectionSentRequest => _connectWithProspectInteractionHandler.ConnectionSentRequest;
 
-        public bool HandleInteraction(NoResultsFoundInteraction interaction)
+        public bool HandleNoResultsFoundInteraction(InteractionBase interaction)
         {
             return _noSearchResultsHandler.HandleInteraction(interaction);
         }
 
-        public bool HandleInteraction(ConnectWithProspectInteraction interaction)
+        public bool HandleConnectWithProspectsInteraction(InteractionBase interaction)
         {
             return _connectWithProspectInteractionHandler.HandleInteraction(interaction);
         }
 
-        public bool HandleInteraction(GatherProspectsInteraction interaction)
+        public bool HandleGatherProspectsInteraction(InteractionBase interaction)
         {
             return _gatherProspectsInteractionHandler.HandleInteraction(interaction);
         }
 
-        public bool HandleInteraction(SearchResultsLimitInteraction interaction)
+        public bool HandleSearchResultsLimitInteraction(InteractionBase interaction)
         {
             return _searchResultsLimitHandler.HandleInteraction(interaction);
         }

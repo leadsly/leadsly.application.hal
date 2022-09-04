@@ -1,7 +1,4 @@
-﻿using Domain.Interactions.Networking.ConnectWithProspect;
-using Domain.Interactions.Networking.GatherProspects;
-using Domain.Interactions.Networking.NoResultsFound;
-using Domain.Interactions.Networking.SearchResultsLimit;
+﻿using Domain.Interactions;
 using Domain.Models.Requests;
 using OpenQA.Selenium;
 using System.Collections.Generic;
@@ -13,9 +10,9 @@ namespace Domain.Facades.Interfaces
         public List<PersistPrimaryProspectRequest> PersistPrimaryProspectRequests { get; }
         public IList<IWebElement> Prospects { get; }
         public ConnectionSentRequest ConnectionSentRequest { get; }
-        bool HandleInteraction(NoResultsFoundInteraction interaction);
-        bool HandleInteraction(ConnectWithProspectInteraction interaction);
-        bool HandleInteraction(GatherProspectsInteraction interaction);
-        bool HandleInteraction(SearchResultsLimitInteraction interaction);
+        bool HandleNoResultsFoundInteraction(InteractionBase interaction);
+        bool HandleConnectWithProspectsInteraction(InteractionBase interaction);
+        bool HandleGatherProspectsInteraction(InteractionBase interaction);
+        bool HandleSearchResultsLimitInteraction(InteractionBase interaction);
     }
 }

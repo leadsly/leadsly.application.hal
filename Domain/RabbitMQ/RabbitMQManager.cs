@@ -94,8 +94,7 @@ namespace Domain.RabbitMQ
 
         private RabbitMQOptions GetRabbitMQOptions()
         {
-            RabbitMQOptions options = default;
-            if (_memoryCache.TryGetValue(CacheKeys.RabbitMQConfigOptions, out options) == false)
+            if (_memoryCache.TryGetValue(CacheKeys.RabbitMQConfigOptions, out RabbitMQOptions options) == false)
             {
                 options = _rabbitMQRepository.GetRabbitMQConfigOptions();
 

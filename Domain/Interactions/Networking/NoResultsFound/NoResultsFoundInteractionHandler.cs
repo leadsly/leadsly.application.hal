@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Domain.Interactions.Networking.NoResultsFound
 {
-    public class NoResultsFoundInteractionHandler : INoResultsFoundInteractionHandler<NoResultsFoundInteraction>
+    public class NoResultsFoundInteractionHandler : INoResultsFoundInteractionHandler
     {
         public NoResultsFoundInteractionHandler(ILogger<NoResultsFoundInteractionHandler> logger, ILinkedInSearchPage linkedInSearchPage, IHumanBehaviorService humanBehaviorService)
         {
@@ -23,12 +23,13 @@ namespace Domain.Interactions.Networking.NoResultsFound
         /// </summary>
         /// <param name="interaction"></param>
         /// <returns></returns>
-        public bool HandleInteraction(NoResultsFoundInteraction interaction)
+        public bool HandleInteraction(InteractionBase interaction)
         {
-            bool finishedLoading = _linkedInSearchPage.WaitUntilSearchResultsFinishedLoading(interaction.WebDriver);
+            NoResultsFoundInteraction noResultsFoundInteraction = interaction as NoResultsFoundInteraction;
+            bool finishedLoading = _linkedInSearchPage.WaitUntilSearchResultsFinishedLoading(noResultsFoundInteraction.WebDriver);
             if (finishedLoading == true)
             {
-                SearchResultsPageResult searchPageResult = _linkedInSearchPage.DetermineSearchResultsPage(interaction.WebDriver);
+                SearchResultsPageResult searchPageResult = _linkedInSearchPage.DetermineSearchResultsPage(noResultsFoundInteraction.WebDriver);
                 if (searchPageResult == SearchResultsPageResult.Results)
                 {
                     _logger.LogDebug("Search results found as expected");
@@ -38,9 +39,9 @@ namespace Domain.Interactions.Networking.NoResultsFound
                 {
                     _logger.LogDebug("No search results page was displayed. Waiting for a few (3 to 6 seconds) seconds then refreshing the page to see if results page is found");
                     _humanBehaviorService.RandomWaitSeconds(3, 6);
-                    interaction.WebDriver.Navigate().Refresh();
+                    noResultsFoundInteraction.WebDriver.Navigate().Refresh();
                     _logger.LogDebug("Finished refreshing the page");
-                    finishedLoading = _linkedInSearchPage.WaitUntilSearchResultsFinishedLoading(interaction.WebDriver);
+                    finishedLoading = _linkedInSearchPage.WaitUntilSearchResultsFinishedLoading(noResultsFoundInteraction.WebDriver);
                     _logger.LogDebug("Waiting until results finished loading");
                     if (finishedLoading == false)
                     {
@@ -48,7 +49,7 @@ namespace Domain.Interactions.Networking.NoResultsFound
                         return false;
                     }
 
-                    searchPageResult = _linkedInSearchPage.DetermineSearchResultsPage(interaction.WebDriver);
+                    searchPageResult = _linkedInSearchPage.DetermineSearchResultsPage(noResultsFoundInteraction.WebDriver);
                     if (searchPageResult == SearchResultsPageResult.NoResults)
                     {
                         _logger.LogDebug("Failed to view search results page");

@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace Domain.Interactions.ScanProspectsForReplies.ScanProspects
 {
-    public class ScanProspectsInteractionHandler : IScanProspectsInteractionHandler<ScanProspectsInteraction>
+    public class ScanProspectsInteractionHandler : IScanProspectsInteractionHandler
     {
         public ScanProspectsInteractionHandler(
             ILogger<ScanProspectsInteractionHandler> logger,
@@ -26,12 +26,13 @@ namespace Domain.Interactions.ScanProspectsForReplies.ScanProspects
         private readonly ILogger<ScanProspectsInteractionHandler> _logger;
         private IList<NewMessageRequest> NewMessageRequests { get; set; } = new List<NewMessageRequest>();
 
-        public bool HandleInteraction(ScanProspectsInteraction interaction)
+        public bool HandleInteraction(InteractionBase interaction)
         {
+            ScanProspectsInteraction scanProspectsInteraction = interaction as ScanProspectsInteraction;
             _scanProspectsService.WaitAndRelaxSome();
 
             _logger.LogInformation("Scanning prospects for replies interaction.");
-            IWebDriver webDriver = interaction.WebDriver;
+            IWebDriver webDriver = scanProspectsInteraction.WebDriver;
             IList<IWebElement> newMessages = _scanProspectsService.GetNewMessages(webDriver);
             foreach (IWebElement newMessage in newMessages)
             {

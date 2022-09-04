@@ -1,10 +1,9 @@
-﻿using Domain.Models.Networking;
-using Leadsly.Application.Model.Campaigns;
+﻿using Leadsly.Application.Model.Campaigns;
 using OpenQA.Selenium;
 
 namespace Domain.Interactions.Networking.ConnectWithProspect
 {
-    public class ConnectWithProspectInteraction : IInteraction
+    public class ConnectWithProspectInteraction : InteractionBase
     {
         public NetworkingMessageBody Message { get; set; }
         public IWebDriver WebDriver { get; set; }

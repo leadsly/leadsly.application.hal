@@ -2,7 +2,7 @@
 
 namespace Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageItem
 {
-    public class GetProspectsMessageItemInteraction : IInteraction
+    public class GetProspectsMessageItemInteraction : InteractionBase
     {
         public IWebDriver WebDriver { get; set; }
         public string ProspectName { get; set; }

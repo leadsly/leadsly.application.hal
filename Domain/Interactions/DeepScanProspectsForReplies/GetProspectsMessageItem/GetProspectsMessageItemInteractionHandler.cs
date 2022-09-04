@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageItem
 {
-    public class GetProspectsMessageItemInteractionHandler : IGetProspectsMessageItemInteractionHandler<GetProspectsMessageItemInteraction>
+    public class GetProspectsMessageItemInteractionHandler : IGetProspectsMessageItemInteractionHandler
     {
         public GetProspectsMessageItemInteractionHandler(
             ILogger<GetProspectsMessageItemInteractionHandler> logger,
@@ -21,10 +21,11 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageIte
 
         private IList<IWebElement> ProspectMessageItems { get; set; } = new List<IWebElement>();
 
-        public bool HandleInteraction(GetProspectsMessageItemInteraction interaction)
+        public bool HandleInteraction(InteractionBase interaction)
         {
+            GetProspectsMessageItemInteraction getProspectsMessageItemInteraction = interaction as GetProspectsMessageItemInteraction;
             // its possible to have multiple results for a search criteria so we want to scan all results
-            IList<IWebElement> prospectMessageItems = _service.GetProspectsMessageItems(interaction.WebDriver, interaction.ProspectName, interaction.MessagesCountBefore);
+            IList<IWebElement> prospectMessageItems = _service.GetProspectsMessageItems(getProspectsMessageItemInteraction.WebDriver, getProspectsMessageItemInteraction.ProspectName, getProspectsMessageItemInteraction.MessagesCountBefore);
             if (prospectMessageItems == null)
             {
                 _logger.LogDebug("Failed to locate prospect's message item");

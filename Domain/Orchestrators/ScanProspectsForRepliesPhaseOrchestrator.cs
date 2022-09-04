@@ -21,7 +21,7 @@ namespace Domain.Orchestrators
         public ScanProspectsForRepliesPhaseOrchestrator(
             ILogger<ScanProspectsForRepliesPhaseOrchestrator> logger,
             ITimestampService timestampService,
-            IScanProspectsInteractionHandler<ScanProspectsInteraction> interactionHandler,
+            IScanProspectsInteractionHandler interactionHandler,
             IWebDriverProvider webDriverProvider)
             : base(logger)
         {
@@ -31,7 +31,7 @@ namespace Domain.Orchestrators
             _webDriverProvider = webDriverProvider;
         }
 
-        private readonly IScanProspectsInteractionHandler<ScanProspectsInteraction> _interactionHandler;
+        private readonly IScanProspectsInteractionHandler _interactionHandler;
         private readonly ITimestampService _timestampService;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<ScanProspectsForRepliesPhaseOrchestrator> _logger;

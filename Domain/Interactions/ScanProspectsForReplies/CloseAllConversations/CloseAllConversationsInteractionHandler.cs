@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace Domain.Interactions.ScanProspectsForReplies.CloseAllConversations
 {
-    public class CloseAllConversationsInteractionHandler : ICloseAllConversationsInteractionHandler<CloseAllConversationsInteraction>
+    public class CloseAllConversationsInteractionHandler : ICloseAllConversationsInteractionHandler
     {
         public CloseAllConversationsInteractionHandler(
             ILogger<CloseAllConversationsInteractionHandler> logger,
@@ -20,11 +20,12 @@ namespace Domain.Interactions.ScanProspectsForReplies.CloseAllConversations
         private readonly IScreenHouseKeeperService _screenService;
         private readonly ILogger<CloseAllConversationsInteractionHandler> _logger;
 
-        public bool HandleInteraction(CloseAllConversationsInteraction interaction)
+        public bool HandleInteraction(InteractionBase interaction)
         {
+            CloseAllConversationsInteraction closeAllConversationsInteraction = interaction as CloseAllConversationsInteraction;
             _logger.LogInformation("Executing CloseAllConversationsInteraction.");
             IList<bool> succeeded = new List<bool>();
-            IReadOnlyCollection<IWebElement> closeButtons = _screenService.GetAllConversationCardsCloseButtons(interaction.WebDriver);
+            IReadOnlyCollection<IWebElement> closeButtons = _screenService.GetAllConversationCardsCloseButtons(closeAllConversationsInteraction.WebDriver);
             foreach (IWebElement closeButton in closeButtons)
             {
                 succeeded.Add(_screenService.CloseConversation(closeButton));

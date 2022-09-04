@@ -2,7 +2,7 @@
 
 namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory
 {
-    public class CheckMessagesHistoryInteraction : IInteraction
+    public class CheckMessagesHistoryInteraction : InteractionBase
     {
         public IWebDriver WebDriver { get; set; }
         public string TargetMessage { get; set; }

@@ -10,8 +10,12 @@ namespace Domain.POMs.Pages
         HalOperationResult<T> ClickCreateNewMessage<T>(IWebDriver webDriver)
             where T : IOperationResponse;
 
+        bool ClickCreateNewMessage(IWebDriver webDriver);
+
         HalOperationResult<T> EnterProspectsName<T>(IWebDriver webDriver, string name)
             where T : IOperationResponse;
+
+        IWebElement NewMessageNameInput(IWebDriver webDriver);
 
         HalOperationResult<T> ConfirmProspectName<T>(IWebDriver webDriver)
             where T : IOperationResponse;
@@ -19,11 +23,17 @@ namespace Domain.POMs.Pages
         HalOperationResult<T> ClickWriteAMessageBox<T>(IWebDriver webDriver)
             where T : IOperationResponse;
 
+        bool ClickWriteAMessageBox(IWebDriver webDriver);
+
         HalOperationResult<T> EnterMessageContent<T>(IWebDriver webDriver, string messageContent)
             where T : IOperationResponse;
 
+        IWebElement GetWriteAMessagePTag(IWebDriver webDriver);
+
         HalOperationResult<T> ClickSend<T>(IWebDriver webDriver)
             where T : IOperationResponse;
+
+        bool ClickSendMessage(IWebDriver webDriver);
 
         HalOperationResult<T> GetVisibleConversationListItems<T>(IWebDriver webDriver)
             where T : IOperationResponse;

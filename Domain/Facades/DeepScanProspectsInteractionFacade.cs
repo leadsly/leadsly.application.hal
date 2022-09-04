@@ -1,11 +1,8 @@
 ﻿using Domain.Facades.Interfaces;
-using Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory;
+using Domain.Interactions;
 using Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory.Interfaces;
-using Domain.Interactions.DeepScanProspectsForReplies.ClearMessagingSearchCriteria;
 using Domain.Interactions.DeepScanProspectsForReplies.ClearMessagingSearchCriteria.Interfaces;
-using Domain.Interactions.DeepScanProspectsForReplies.EnterSearchMessageCriteria;
 using Domain.Interactions.DeepScanProspectsForReplies.EnterSearchMessageCriteria.Interfaces;
-using Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageItem;
 using Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageItem.Interfaces;
 using Domain.Models;
 using OpenQA.Selenium;
@@ -16,10 +13,10 @@ namespace Domain.Facades
     public class DeepScanProspectsInteractionFacade : IDeepScanProspectsInteractionFacade
     {
         public DeepScanProspectsInteractionFacade(
-            IClearMessagingSearchCriteriaInteractionHandler<ClearMessagingSearchCrtieriaInteraction> clearMessagingSearchCriteriaHandler,
-            IEnterSearchMessageCriteriaInteractionHandler<EnterSearchMessageCriteriaInteraction> enterSearchMessageCriteriaHandler,
-            ICheckMessagesHistoryInteractionHandler<CheckMessagesHistoryInteraction> checkMessagesHistoryInteractionHandler,
-            IGetProspectsMessageItemInteractionHandler<GetProspectsMessageItemInteraction> getProspectsMesageItemHandler)
+            IClearMessagingSearchCriteriaInteractionHandler clearMessagingSearchCriteriaHandler,
+            IEnterSearchMessageCriteriaInteractionHandler enterSearchMessageCriteriaHandler,
+            ICheckMessagesHistoryInteractionHandler checkMessagesHistoryInteractionHandler,
+            IGetProspectsMessageItemInteractionHandler getProspectsMesageItemHandler)
         {
             _clearMessagingSearchCriteriaHandler = clearMessagingSearchCriteriaHandler;
             _enterSearchMessageCriteriaHandler = enterSearchMessageCriteriaHandler;
@@ -27,33 +24,33 @@ namespace Domain.Facades
             _checkMessagesHistoryInteractionHandler = checkMessagesHistoryInteractionHandler;
         }
 
-        private readonly ICheckMessagesHistoryInteractionHandler<CheckMessagesHistoryInteraction> _checkMessagesHistoryInteractionHandler;
-        private readonly IClearMessagingSearchCriteriaInteractionHandler<ClearMessagingSearchCrtieriaInteraction> _clearMessagingSearchCriteriaHandler;
-        private readonly IEnterSearchMessageCriteriaInteractionHandler<EnterSearchMessageCriteriaInteraction> _enterSearchMessageCriteriaHandler;
-        private readonly IGetProspectsMessageItemInteractionHandler<GetProspectsMessageItemInteraction> _getProspectsMesageItemHandler;
+        private readonly ICheckMessagesHistoryInteractionHandler _checkMessagesHistoryInteractionHandler;
+        private readonly IClearMessagingSearchCriteriaInteractionHandler _clearMessagingSearchCriteriaHandler;
+        private readonly IEnterSearchMessageCriteriaInteractionHandler _enterSearchMessageCriteriaHandler;
+        private readonly IGetProspectsMessageItemInteractionHandler _getProspectsMesageItemHandler;
 
         public ProspectReplied ProspectReplied { get; set; }
 
         public IList<IWebElement> ProspectMessageListItems { get; set; }
 
-        public bool HandleInteraction(ClearMessagingSearchCrtieriaInteraction interaction)
+        public bool HandleClearMessagingCriteriaInteraction(InteractionBase interaction)
         {
             return _clearMessagingSearchCriteriaHandler.HandleInteraction(interaction);
         }
 
-        public bool HandleInteraction(EnterSearchMessageCriteriaInteraction interaction)
+        public bool HandleEnterSearchmessageCriteriaInteraction(InteractionBase interaction)
         {
             return _enterSearchMessageCriteriaHandler.HandleInteraction(interaction);
         }
 
-        public bool HandleInteraction(GetProspectsMessageItemInteraction interaction)
+        public bool HandleGetProspectsMessageItemInteraction(InteractionBase interaction)
         {
             bool succeeded = _getProspectsMesageItemHandler.HandleInteraction(interaction);
             ProspectMessageListItems = _getProspectsMesageItemHandler.GetProspectMessageItems();
             return succeeded;
         }
 
-        public bool HandleInteraction(CheckMessagesHistoryInteraction interaction)
+        public bool HandleCheckMessagesHistoryInteraction(InteractionBase interaction)
         {
             bool succeeded = _checkMessagesHistoryInteractionHandler.HandleInteraction(interaction);
             ProspectReplied = _checkMessagesHistoryInteractionHandler.GetProspect();

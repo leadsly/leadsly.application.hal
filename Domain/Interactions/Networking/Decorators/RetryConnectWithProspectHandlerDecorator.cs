@@ -1,24 +1,22 @@
-﻿using Domain.Interactions.Networking.ConnectWithProspect;
-using Domain.Interactions.Networking.ConnectWithProspect.Interfaces;
+﻿using Domain.Interactions.Networking.ConnectWithProspect.Interfaces;
 using Domain.Models.Requests;
 using Microsoft.Extensions.Logging;
 
 namespace Domain.Interactions.Networking.Decorators
 {
-    public class RetryConnectWithProspectHandlerDecorator<TInteraction> : IConnectWithProspectInteractionHandler<TInteraction>
-        where TInteraction : ConnectWithProspectInteraction
+    public class RetryConnectWithProspectHandlerDecorator : IConnectWithProspectInteractionHandler
     {
-        public RetryConnectWithProspectHandlerDecorator(ILogger<RetryConnectWithProspectHandlerDecorator<TInteraction>> logger, IConnectWithProspectInteractionHandler<TInteraction> decorated)
+        public RetryConnectWithProspectHandlerDecorator(ILogger<RetryConnectWithProspectHandlerDecorator> logger, IConnectWithProspectInteractionHandler decorated)
         {
             _logger = logger;
             _decorated = decorated;
         }
 
         public ConnectionSentRequest ConnectionSentRequest => _decorated.ConnectionSentRequest;
-        private readonly ILogger<RetryConnectWithProspectHandlerDecorator<TInteraction>> _logger;
-        private readonly IConnectWithProspectInteractionHandler<TInteraction> _decorated;
+        private readonly ILogger<RetryConnectWithProspectHandlerDecorator> _logger;
+        private readonly IConnectWithProspectInteractionHandler _decorated;
 
-        public bool HandleInteraction(TInteraction interaction)
+        public bool HandleInteraction(InteractionBase interaction)
         {
             bool succeeded = _decorated.HandleInteraction(interaction);
             if (succeeded == false)

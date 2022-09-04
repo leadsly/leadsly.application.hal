@@ -12,7 +12,7 @@ using System.Linq;
 
 namespace Domain.Interactions.Networking.ConnectWithProspect
 {
-    public class ConnectWithProspectInteractionHandler : IConnectWithProspectInteractionHandler<ConnectWithProspectInteraction>
+    public class ConnectWithProspectInteractionHandler : IConnectWithProspectInteractionHandler
     {
         public ConnectWithProspectInteractionHandler(
             ILogger<ConnectWithProspectInteractionHandler> logger,
@@ -33,23 +33,24 @@ namespace Domain.Interactions.Networking.ConnectWithProspect
         private readonly ISearchPageDialogManager _searchPageDialogManager;
         private readonly ILogger<ConnectWithProspectInteractionHandler> _logger;
 
-        public bool HandleInteraction(ConnectWithProspectInteraction interaction)
+        public bool HandleInteraction(InteractionBase interaction)
         {
+            ConnectWithProspectInteraction connectWithProspectInteraction = interaction as ConnectWithProspectInteraction;
             _logger.LogTrace("Preparing to connect with prospect.");
 
             // send connection
-            bool sendConnectionSuccess = SendConnection(interaction.WebDriver, interaction.Prospect);
+            bool sendConnectionSuccess = SendConnection(connectWithProspectInteraction.WebDriver, connectWithProspectInteraction.Prospect);
             if (sendConnectionSuccess == false)
             {
                 _logger.LogDebug("Sending connection to the given prospect failed.");
                 // if there was a failure attempt to close modal dialog if it is open
                 _humanBehaviorService.RandomWaitMilliSeconds(850, 2000);
-                _searchPageDialogManager.TryCloseModal(interaction.WebDriver);
+                _searchPageDialogManager.TryCloseModal(connectWithProspectInteraction.WebDriver);
 
                 return false;
             }
 
-            ConnectionSentRequest = CreateCampaignProspects(interaction.Prospect, interaction.Message.CampaignId);
+            ConnectionSentRequest = CreateCampaignProspects(connectWithProspectInteraction.Prospect, connectWithProspectInteraction.Message.CampaignId);
 
             return true;
         }

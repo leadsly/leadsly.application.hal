@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory
 {
-    public class CheckMessagesHistoryInteractionHandler : ICheckMessagesHistoryInteractionHandler<CheckMessagesHistoryInteraction>
+    public class CheckMessagesHistoryInteractionHandler : ICheckMessagesHistoryInteractionHandler
     {
         public CheckMessagesHistoryInteractionHandler(
             ILogger<CheckMessagesHistoryInteractionHandler> logger,
@@ -27,10 +27,11 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory
 
         private ProspectReplied Prospect { get; set; }
 
-        public bool HandleInteraction(CheckMessagesHistoryInteraction interaction)
+        public bool HandleInteraction(InteractionBase interaction)
         {
+            CheckMessagesHistoryInteraction checkMessageHistoryInteraction = interaction as CheckMessagesHistoryInteraction;
             // click on the new message
-            bool clickSucceeded = _service.ClickNewMessage(interaction.MessageListItem, interaction.WebDriver);
+            bool clickSucceeded = _service.ClickNewMessage(checkMessageHistoryInteraction.MessageListItem, checkMessageHistoryInteraction.WebDriver);
             if (clickSucceeded == false)
             {
                 _logger.LogDebug("Failed to click on the new message");
@@ -38,8 +39,8 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory
             }
 
             _logger.LogDebug("Executing CheckMessagesHistoryInteraction.");
-            IList<IWebElement> messageContents = _service.GetMessageContents(interaction.WebDriver);
-            IWebElement targetMessage = messageContents.Where(m => m.Text.Contains(interaction.TargetMessage)).FirstOrDefault();
+            IList<IWebElement> messageContents = _service.GetMessageContents(checkMessageHistoryInteraction.WebDriver);
+            IWebElement targetMessage = messageContents.Where(m => m.Text.Contains(checkMessageHistoryInteraction.TargetMessage)).FirstOrDefault();
             if (targetMessage == null)
             {
                 _logger.LogError("Target message not found");
@@ -55,20 +56,20 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory
             {
                 IWebElement nextMessage = messageContents.ElementAt(i);
                 string nameFromMessage = _service.GetProspectNameFromMessageContent(nextMessage);
-                _logger.LogDebug("Target prospect name {0}, name found in the messages {1}", interaction.ProspectName, nameFromMessage);
+                _logger.LogDebug("Target prospect name {0}, name found in the messages {1}", checkMessageHistoryInteraction.ProspectName, nameFromMessage);
 
                 // this means the message was not from us
                 if (leadslyUserFullName != nameFromMessage)
                 {
-                    if (interaction.ProspectName == nameFromMessage)
+                    if (checkMessageHistoryInteraction.ProspectName == nameFromMessage)
                     {
-                        _logger.LogDebug("Prospect {0} responded to our message", interaction.ProspectName);
+                        _logger.LogDebug("Prospect {0} responded to our message", checkMessageHistoryInteraction.ProspectName);
                         ProspectReplied prospect = new()
                         {
                             ResponseMessageTimestamp = _timestampService.TimestampNow(),
-                            CampaignProspectId = interaction.CampaignProspectId,
+                            CampaignProspectId = checkMessageHistoryInteraction.CampaignProspectId,
                             ResponseMessage = nextMessage.Text,
-                            Name = interaction.ProspectName
+                            Name = checkMessageHistoryInteraction.ProspectName
                         };
 
                         Prospect = prospect;

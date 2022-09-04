@@ -4,10 +4,9 @@ using System.Collections.Generic;
 
 namespace Domain.Interactions.Networking.GatherProspects.Interfaces
 {
-    public interface IGatherProspectsInteractionHandler<TInteraction> : IInteractionHandler<TInteraction> 
-        where TInteraction : IInteraction
+    public interface IGatherProspectsInteractionHandler : IInteractionHandler
     {
         public List<PersistPrimaryProspectRequest> PersistPrimaryProspectRequests { get; }
-        public IList<IWebElement> Prospects { get; }        
+        public IList<IWebElement> Prospects { get; }
     }
 }

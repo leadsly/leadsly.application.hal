@@ -39,7 +39,7 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to locate new message compose button by class name 'msg-conversations-container__compose-btn'");
+                _logger.LogError("Failed to locate new message compose button by class name 'msg-conversations-container__compose-btn'");
             }
             return composeNewMsgAnchor;
         }
@@ -69,6 +69,18 @@ namespace PageObjects.Pages
             result.Succeeded = true;
             return result;
         }
+
+        public bool ClickCreateNewMessage(IWebDriver webDriver)
+        {
+            IWebElement composeMessage = _webDriverUtilities.WaitUntilNotNull(ComposeNewMessageAnchorTag, webDriver, 30);
+            if (composeMessage == null)
+            {
+                return false;
+            }
+
+            return _webDriverUtilities.HandleClickElement(composeMessage);
+        }
+
 
         private IWebElement SendNewMessageButton(IWebDriver webDriver)
         {
@@ -119,6 +131,20 @@ namespace PageObjects.Pages
             return result;
         }
 
+        public bool ClickSendMessage(IWebDriver webDriver)
+        {
+            bool succeeded = false;
+            IWebElement sendButton = _webDriverUtilities.WaitUntilNotNull(SendNewMessageButton, webDriver, 30);
+            if (sendButton == null)
+            {
+                _logger.LogDebug("Send button was not located");
+                return succeeded;
+            }
+
+            return _webDriverUtilities.HandleClickElement(sendButton);
+
+        }
+
         private IWebElement ContentEditableDiv(IWebDriver webDriver)
         {
             IWebElement contentEditableDiv = default;
@@ -133,16 +159,22 @@ namespace PageObjects.Pages
             return contentEditableDiv;
         }
 
-        private IWebElement GetWriteAMessagePTag(IWebDriver webDriver)
+        public IWebElement GetWriteAMessagePTag(IWebDriver webDriver)
         {
             IWebElement pTag = default;
             try
             {
-                pTag = ContentEditableDiv(webDriver).FindElement(By.TagName("p"));
+                IWebElement contentEditableDiv = _webDriverUtilities.WaitUntilNull(ContentEditableDiv, webDriver, 30);
+                if (contentEditableDiv == null)
+                {
+                    return null;
+                }
+
+                pTag = contentEditableDiv.FindElement(By.TagName("p"));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unable to find p tag with 'Write a message' text");
+                _logger.LogWarning("Unable to find p tag with 'Write a message' text");
             }
             return pTag;
         }
@@ -171,7 +203,7 @@ namespace PageObjects.Pages
             return result;
         }
 
-        private IWebElement NewMessageNameInput(IWebDriver webDriver)
+        public IWebElement NewMessageNameInput(IWebDriver webDriver)
         {
             IWebElement inputField = default;
             try
@@ -180,7 +212,7 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to locate new message input field");
+                _logger.LogWarning("Failed to locate new message input field");
             }
 
             return inputField;
@@ -216,6 +248,11 @@ namespace PageObjects.Pages
 
             result.Succeeded = true;
             return result;
+        }
+
+        public bool EnterProspectName(IWebDriver webDriver, string name)
+        {
+
         }
 
         private IWebElement TypeAheadSearchResultsExpandedContainer(IWebDriver webDriver)
@@ -318,6 +355,17 @@ namespace PageObjects.Pages
 
             result.Succeeded = true;
             return result;
+        }
+
+        public bool ClickWriteAMessageBox(IWebDriver webDriver)
+        {
+            IWebElement writeMessageElement = GetWriteAMessagePTag(webDriver);
+            if (writeMessageElement == null)
+            {
+                return false;
+            }
+
+            return _webDriverUtilities.HandleClickElement(writeMessageElement);
         }
 
         private IWebElement ConversationsListItemContainer(IWebDriver webDriver)

@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Domain.Interactions
+﻿namespace Domain.Interactions
 {
-    public interface IInteractionHandler<TInteraction> where TInteraction : IInteraction
+    public interface IInteractionHandler
     {
-        bool HandleInteraction(TInteraction interaction);
+        bool HandleInteraction(InteractionBase interaction);
     }
 }

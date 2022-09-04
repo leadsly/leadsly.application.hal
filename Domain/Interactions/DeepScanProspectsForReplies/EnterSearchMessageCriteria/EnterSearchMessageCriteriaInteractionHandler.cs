@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Domain.Interactions.DeepScanProspectsForReplies.EnterSearchMessageCriteria
 {
-    public class EnterSearchMessageCriteriaInteractionHandler : IEnterSearchMessageCriteriaInteractionHandler<EnterSearchMessageCriteriaInteraction>
+    public class EnterSearchMessageCriteriaInteractionHandler : IEnterSearchMessageCriteriaInteractionHandler
     {
         public EnterSearchMessageCriteriaInteractionHandler(
             ILogger<EnterSearchMessageCriteriaInteractionHandler> logger,
@@ -17,9 +17,10 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.EnterSearchMessageCrit
         private readonly IDeepScanProspectsService _service;
         private readonly ILogger<EnterSearchMessageCriteriaInteractionHandler> _logger;
 
-        public bool HandleInteraction(EnterSearchMessageCriteriaInteraction interaction)
+        public bool HandleInteraction(InteractionBase interaction)
         {
-            bool succeeded = _service.EnterSearchMessagesCriteria(interaction.WebDriver, interaction.SearchCriteria);
+            EnterSearchMessageCriteriaInteraction enterSearchMessageCriteriaInteraction = interaction as EnterSearchMessageCriteriaInteraction;
+            bool succeeded = _service.EnterSearchMessagesCriteria(enterSearchMessageCriteriaInteraction.WebDriver, enterSearchMessageCriteriaInteraction.SearchCriteria);
             if (succeeded == false)
             {
                 // repeat here if we wanted to                

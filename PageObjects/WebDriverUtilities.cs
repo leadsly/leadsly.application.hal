@@ -89,5 +89,28 @@ namespace PageObjects
             }
             return elementToFind;
         }
+
+        public bool HandleClickElement(IWebElement element)
+        {
+            bool succeeded = false;
+            if (element == null)
+            {
+                _logger.LogDebug("Passed in element was null. Handle click element cannot proceed");
+                return succeeded;
+            }
+
+            try
+            {
+                element.Click();
+                succeeded = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to click passed in element");
+                succeeded = false;
+            }
+
+            return succeeded;
+        }
     }
 }

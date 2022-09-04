@@ -7,7 +7,7 @@ using System;
 
 namespace Domain.Interactions.Networking.SearchResultsLimit
 {
-    public class SearchResultsLimitInteractionHandler : ISearchResultsLimitInteractionHandler<SearchResultsLimitInteraction>
+    public class SearchResultsLimitInteractionHandler : ISearchResultsLimitInteractionHandler
     {
         public SearchResultsLimitInteractionHandler(ILogger<SearchResultsLimitInteractionHandler> logger, ILinkedInSearchPage linkedInSearchPage, ISearchPageFooterService searchPageFooterService, IHumanBehaviorService humanBehaviorService)
         {
@@ -33,22 +33,23 @@ namespace Domain.Interactions.Networking.SearchResultsLimit
         /// <param name="interaction"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public bool HandleInteraction(SearchResultsLimitInteraction interaction)
+        public bool HandleInteraction(InteractionBase interaction)
         {
+            SearchResultsLimitInteraction searchResultsLimitInteraction = interaction as SearchResultsLimitInteraction;
             // if search results paginator is not displayed we're on page one and we've reached monthly limit
-            if (_linkedInSearchPage.IsSearchResultsPaginationDisplayed(interaction.WebDriver) == false)
+            if (_linkedInSearchPage.IsSearchResultsPaginationDisplayed(searchResultsLimitInteraction.WebDriver) == false)
             {
                 _logger.LogDebug("Monthly search limit has been reached");
                 return true;
             }
 
-            int? totalResults = _searchPageFooterService.GetTotalResults(interaction.WebDriver);
+            int? totalResults = _searchPageFooterService.GetTotalResults(searchResultsLimitInteraction.WebDriver);
             if (totalResults.HasValue)
             {
                 int previousTotalResults = totalResults.Value;
-                if (_linkedInSearchPage.IsPreviousButtonClickable(interaction.WebDriver) == true)
+                if (_linkedInSearchPage.IsPreviousButtonClickable(searchResultsLimitInteraction.WebDriver) == true)
                 {
-                    bool? goToPreviousPageOperation = _searchPageFooterService.GoToThePreviousPage(interaction.WebDriver);
+                    bool? goToPreviousPageOperation = _searchPageFooterService.GoToThePreviousPage(searchResultsLimitInteraction.WebDriver);
                     if (goToPreviousPageOperation == null || goToPreviousPageOperation == false)
                     {
                         _logger.LogDebug("Failed to navigate to the previous page");
@@ -56,13 +57,13 @@ namespace Domain.Interactions.Networking.SearchResultsLimit
                         return false;
                     }
 
-                    if (_linkedInSearchPage.IsSearchResultsPaginationDisplayed(interaction.WebDriver) == false)
+                    if (_linkedInSearchPage.IsSearchResultsPaginationDisplayed(searchResultsLimitInteraction.WebDriver) == false)
                     {
                         _logger.LogDebug("Monthly search limit has been reached");
                         return true;
                     }
 
-                    totalResults = _searchPageFooterService.GetTotalResults(interaction.WebDriver);
+                    totalResults = _searchPageFooterService.GetTotalResults(searchResultsLimitInteraction.WebDriver);
                     if (totalResults.HasValue)
                     {
                         if (totalResults.Value < previousTotalResults)
@@ -74,7 +75,7 @@ namespace Domain.Interactions.Networking.SearchResultsLimit
                         {
                             _logger.LogDebug("Monthly search limit has not been reached. Navigating back forward to be on the current page.");
                             // bring back webdriver to the current page
-                            _searchPageFooterService.GoToTheNextPage(interaction.WebDriver);
+                            _searchPageFooterService.GoToTheNextPage(searchResultsLimitInteraction.WebDriver);
                         }
                     }
                     else

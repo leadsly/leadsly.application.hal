@@ -12,7 +12,7 @@ using System.Linq;
 
 namespace Domain.Interactions.Networking.GatherProspects
 {
-    public class GatherProspectsInteractionHandler : IGatherProspectsInteractionHandler<GatherProspectsInteraction>
+    public class GatherProspectsInteractionHandler : IGatherProspectsInteractionHandler
     {
         public GatherProspectsInteractionHandler(ILogger<GatherProspectsInteractionHandler> logger, IHumanBehaviorService humanBehaviorService, ILinkedInSearchPage linkedInSearchPage)
         {
@@ -58,10 +58,11 @@ namespace Domain.Interactions.Networking.GatherProspects
             }
         }
 
-        public bool HandleInteraction(GatherProspectsInteraction interaction)
+        public bool HandleInteraction(InteractionBase interaction)
         {
-            NetworkingMessageBody message = interaction.Message as NetworkingMessageBody;
-            IList<IWebElement> connectableProspects = GetConnectableProspects(interaction.WebDriver, message.PrimaryProspectListId);
+            GatherProspectsInteraction gatherProspectsInteraction = interaction as GatherProspectsInteraction;
+            NetworkingMessageBody message = gatherProspectsInteraction.Message as NetworkingMessageBody;
+            IList<IWebElement> connectableProspects = GetConnectableProspects(gatherProspectsInteraction.WebDriver, message.PrimaryProspectListId);
             if (connectableProspects == null)
             {
                 return false;
@@ -69,7 +70,7 @@ namespace Domain.Interactions.Networking.GatherProspects
             else
             {
                 Prospects = connectableProspects;
-                ProspectList(interaction.WebDriver, message);
+                ProspectList(gatherProspectsInteraction.WebDriver, message);
             }
 
             return true;

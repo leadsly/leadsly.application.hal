@@ -2,7 +2,7 @@
 
 namespace Domain.Interactions.ScanProspectsForReplies.ScanProspects
 {
-    public class ScanProspectsInteraction : IInteraction
+    public class ScanProspectsInteraction : InteractionBase
     {
         public IWebDriver WebDriver { get; set; }
     }

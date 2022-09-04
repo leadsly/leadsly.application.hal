@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Domain.Interactions.DeepScanProspectsForReplies.ClearMessagingSearchCriteria
 {
-    public class ClearMessagingSearchCriteriaInteractionHandler : IClearMessagingSearchCriteriaInteractionHandler<ClearMessagingSearchCrtieriaInteraction>
+    public class ClearMessagingSearchCriteriaInteractionHandler : IClearMessagingSearchCriteriaInteractionHandler
     {
         public ClearMessagingSearchCriteriaInteractionHandler(
             ILogger<ClearMessagingSearchCriteriaInteractionHandler> logger,
@@ -16,9 +16,10 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.ClearMessagingSearchCr
 
         private readonly IDeepScanProspectsService _service;
         private readonly ILogger<ClearMessagingSearchCriteriaInteractionHandler> _logger;
-        public bool HandleInteraction(ClearMessagingSearchCrtieriaInteraction interaction)
+        public bool HandleInteraction(InteractionBase interaction)
         {
-            bool succeeded = _service.ClearMessagingSearchCriteria(interaction.WebDriver);
+            ClearMessagingSearchCrtieriaInteraction clearMessagingSearchCrtieriaInteraction = interaction as ClearMessagingSearchCrtieriaInteraction;
+            bool succeeded = _service.ClearMessagingSearchCriteria(clearMessagingSearchCrtieriaInteraction.WebDriver);
             if (succeeded == false)
             {
                 // we can try to retry here

@@ -122,7 +122,7 @@ namespace Domain.Orchestrators
                 WebDriver = webDriver,
             };
 
-            return _interactionsFacade.HandleInteraction(clearInteraction);
+            return _interactionsFacade.HandleClearMessagingCriteriaInteraction(clearInteraction);
         }
 
 
@@ -134,7 +134,7 @@ namespace Domain.Orchestrators
                 WebDriver = webDriver
             };
 
-            return _interactionsFacade.HandleInteraction(interaction);
+            return _interactionsFacade.HandleEnterSearchmessageCriteriaInteraction(interaction);
         }
 
         private bool CheckMessageHistoryForRepliesToOurLastMessage(IWebElement messageListItem, NetworkProspectResponse networkProspect, IWebDriver webDriver)
@@ -148,7 +148,7 @@ namespace Domain.Orchestrators
                 MessageListItem = messageListItem
             };
 
-            return _interactionsFacade.HandleInteraction(checkMessageContents);
+            return _interactionsFacade.HandleCheckMessagesHistoryInteraction(checkMessageContents);
         }
 
         private bool LookForProspectMessages(IWebDriver webDriver, string prospectName, int messagesCountBefore)
@@ -160,7 +160,7 @@ namespace Domain.Orchestrators
                 WebDriver = webDriver
             };
 
-            return _interactionsFacade.HandleInteraction(interaction);
+            return _interactionsFacade.HandleGetProspectsMessageItemInteraction(interaction);
         }
     }
 }

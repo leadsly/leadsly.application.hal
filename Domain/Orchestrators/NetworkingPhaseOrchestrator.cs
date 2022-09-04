@@ -314,7 +314,7 @@ namespace Domain.Orchestrators
                 WebDriver = webDriver
             };
 
-            return _interactionFacade.HandleInteraction(interaction);
+            return _interactionFacade.HandleSearchResultsLimitInteraction(interaction);
         }
 
         private bool GatherProspectsInteractions(IWebDriver webDriver, NetworkingMessageBody message)
@@ -325,7 +325,7 @@ namespace Domain.Orchestrators
                 Message = message,
             };
 
-            return _interactionFacade.HandleInteraction(gatherProspectsInteraction);
+            return _interactionFacade.HandleGatherProspectsInteraction(gatherProspectsInteraction);
         }
 
         private void ConnectWithProspectsOnCurrentPage(IWebDriver webDriver, NetworkingMessageBody message, int currentPage, int totalResults, string searchUrlProgressId)
@@ -349,7 +349,7 @@ namespace Domain.Orchestrators
                 }
 
                 interaction.Prospect = prospect;
-                bool succeeded = _interactionFacade.HandleInteraction(interaction);
+                bool succeeded = _interactionFacade.HandleConnectWithProspectsInteraction(interaction);
                 if (succeeded == true)
                 {
                     NumberOfConnectionsSent += 1;
@@ -394,7 +394,7 @@ namespace Domain.Orchestrators
                 WebDriver = webDriver
             };
 
-            if (_interactionFacade.HandleInteraction(interaction))
+            if (_interactionFacade.HandleNoResultsFoundInteraction(interaction))
             {
                 _logger.LogError("No search results page displayed again. This means we've tried refreshing and waiting for results page to be displayed, but it wasn't.");
                 return true;
@@ -473,22 +473,6 @@ namespace Domain.Orchestrators
         private bool GoToTheNextPage(IWebDriver webDriver, string searchUrlProgressId, int currentPage, int totalResults)
         {
             bool succeeded = false;
-            //if (CheckIfNextButtonIsDisabled(webDriver, currentPage, totalResults, searchUrlProgressId) == true)
-            //{
-            //    // sometimes when it is not last page, linkedin will truncate results from 100 to 80. After refreshing it is still showing as 80 results. This means we've reached our search results limit for the month
-            //    succeeded = false;
-            //}
-            //else
-            //{
-            //    if (NavigateToNextPage(webDriver) == false)
-            //    {
-            //        succeeded = false;
-            //    }
-            //    else
-            //    {
-            //        succeeded = true;
-            //    }
-            //}
             if (NavigateToNextPage(webDriver) == false)
             {
                 succeeded = false;

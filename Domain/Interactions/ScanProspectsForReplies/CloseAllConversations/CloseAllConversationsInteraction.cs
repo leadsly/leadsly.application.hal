@@ -2,7 +2,7 @@
 
 namespace Domain.Interactions.ScanProspectsForReplies.CloseAllConversations
 {
-    public class CloseAllConversationsInteraction : IInteraction
+    public class CloseAllConversationsInteraction : InteractionBase
     {
         public IWebDriver WebDriver { get; set; }
     }
