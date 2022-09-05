@@ -32,11 +32,11 @@ namespace Domain.PhaseHandlers.ScanProspectsForRepliesHandler
 
             if (succeeded == true)
             {
-                _logger.LogDebug($"DeepScanProspectsForReplies phase finishex executing successfully");
+                _logger.LogDebug($"{nameof(DeepScanProspectsForRepliesBody)} phase finished executing successfully");
             }
             else
             {
-                _logger.LogDebug($"DeepScanProspectsForReplies phase finishex executing unsuccessfully");
+                _logger.LogDebug($"{nameof(DeepScanProspectsForRepliesBody)} phase finished executing unsuccessfully");
             }
         }
     }

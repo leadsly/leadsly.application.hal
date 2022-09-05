@@ -12,11 +12,11 @@ using System.Threading;
 
 namespace PageObjects.Pages
 {
-    public class LinkedInLoginPage : LeadslyBase, ILinkedInLoginPage
+    public class LinkedInLoginPage : ILinkedInLoginPage
     {
         private const string BaseUrl = "https://www.linkedin.com";
 
-        public LinkedInLoginPage(ILogger<LinkedInLoginPage> logger, IWebDriverUtilities webDriverUtilities, IHumanBehaviorService humanBehaviorService) : base(logger)
+        public LinkedInLoginPage(ILogger<LinkedInLoginPage> logger, IWebDriverUtilities webDriverUtilities, IHumanBehaviorService humanBehaviorService)
         {
             this._logger = logger;
 
@@ -30,46 +30,6 @@ namespace PageObjects.Pages
         public TwoFactorAuthType TwoFactorAuthenticationType(IWebDriver webDriver)
         {
             return _authType ??= (TwoFactorAuthAppView(webDriver) != null ? TwoFactorAuthType.AuthenticatorApp : TwoFactorAuthType.SMS);
-        }
-
-        public bool SomethingUnexpectedHappenedToastDisplayed(IWebDriver webDriver)
-        {
-            IWebElement somethingUnexpectedToast = _webDriverUtilities.WaitUntilNotNull(SomethingUnexpectedHappenedToast, webDriver, 5);
-            return somethingUnexpectedToast != null;
-        }
-
-        public IWebElement SomethingUnexpectedHappenedToast(IWebDriver webDriver)
-        {
-
-            IWebElement toast = null;
-            try
-            {
-                toast = webDriver.FindElement(By.CssSelector("artdeco-toasts"));
-                if (toast.GetAttribute("type") == "error")
-                {
-                    return toast;
-                }
-                return null;
-            }
-            catch (Exception ex)
-            {
-
-            }
-            return toast;
-
-        }
-
-        public bool CheckIfUnexpectedViewRendered(IWebDriver webDriver)
-        {
-            if (HomePageView(webDriver) == null)
-            {
-                if (TwoFactorAuthAppView(webDriver) == null && TwoFactorAuthSMSView(webDriver) == null)
-                {
-                    return true;
-                }
-            }
-            return false;
-
         }
 
         public IWebElement HomePageView(IWebDriver webDriver)
@@ -86,22 +46,6 @@ namespace PageObjects.Pages
             }
             return homePageView;
 
-        }
-
-        public bool IsTwoFactorAuthRequired(IWebDriver webDriver)
-        {
-            if (TwoFactorAuthAppView(webDriver) != null)
-            {
-                _authType = TwoFactorAuthType.AuthenticatorApp;
-                return true;
-            }
-            else if (TwoFactorAuthSMSView(webDriver) != null)
-            {
-                _authType = TwoFactorAuthType.SMS;
-                return true;
-            }
-            _authType = TwoFactorAuthType.None;
-            return false;
         }
 
         private IWebElement TwoFactorAuthenticationCodeInput(IWebDriver webDriver)
@@ -255,12 +199,6 @@ namespace PageObjects.Pages
             return false;
         }
 
-        public bool DidVerificationCodeFailed(IWebDriver webDriver)
-        {
-            return VerificationCodeFailureBanner(webDriver) != null;
-
-        }
-
         private IWebElement VerificationCodeFailureBanner(IWebDriver webDriver)
         {
             IWebElement verificationCodeFailureBanner = null;
@@ -273,42 +211,6 @@ namespace PageObjects.Pages
                 _logger.LogWarning("[LinkedInLoginPage]: Failed to locate two factor authentication error banner. This is most likely desired behavior.");
             }
             return verificationCodeFailureBanner;
-        }
-
-        public bool SMSVerificationCodeErrorDisplayed(IWebDriver webDriver)
-        {
-            return SMSVerificationCodeError(webDriver) != null;
-        }
-
-        private IWebElement SMSVerificationCodeError(IWebDriver webDriver)
-        {
-
-            IWebElement smsVerificationCodeError = default;
-            try
-            {
-                smsVerificationCodeError = webDriver.FindElement(By.CssSelector(".app__content .body__banner-wrapper .body__banner--error span"));
-                if (smsVerificationCodeError.GetAttribute("role") == "alert")
-                {
-                    if (smsVerificationCodeError.Displayed == false)
-                    {
-                        smsVerificationCodeError = null;
-                    }
-                    else
-                    {
-                        if (smsVerificationCodeError.Text.Contains("verification code") == false)
-                        {
-                            smsVerificationCodeError = null;
-                        }
-                    }
-
-                }
-            }
-            catch (Exception ex)
-            {
-
-            }
-            return smsVerificationCodeError;
-
         }
 
         private IWebElement SkipButton(IWebDriver webDriver)
@@ -582,18 +484,6 @@ namespace PageObjects.Pages
                     return result;
                 }
             }
-
-            result.Succeeded = true;
-            return result;
-        }
-
-        public HalOperationResult<T> SkipAccountInfoConfirmation<T>(IWebDriver webDriver)
-            where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-
-            _humanBehaviorService.RandomWaitMilliSeconds(500, 1000);
-            this.SkipButton(webDriver).Click();
 
             result.Succeeded = true;
             return result;

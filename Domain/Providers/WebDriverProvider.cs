@@ -550,6 +550,22 @@ namespace Domain.Providers
             return result;
         }
 
+        public bool Refresh(IWebDriver webDriver)
+        {
+            try
+            {
+                webDriver.Navigate().Refresh();
+                _logger.LogInformation("Successfully refresh web driver");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to successfully refresh the page");
+                return false;
+            }
+
+            return true;
+        }
+
         public bool WebDriverExists(BrowserPurpose browserPurpose)
         {
             try

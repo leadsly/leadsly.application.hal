@@ -39,6 +39,12 @@ namespace Domain.Services
 
             HttpResponseMessage rawResponse = await _networkingServiceApi.GetSearchUrlProgressAsync(request, ct);
 
+            if (rawResponse == null)
+            {
+                _logger.LogError("Response from application server was null. The request was responsible for fetching search url progress");
+                return null;
+            }
+
             if (rawResponse.IsSuccessStatusCode == false)
             {
                 string content = await rawResponse.Content.ReadAsStringAsync();
@@ -54,7 +60,7 @@ namespace Domain.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError("Failed to deserialize response from application server. The request was responsible for getting search url progress. {response.Content.ToString()}");
+                _logger.LogError("Failed to deserialize response from application server. The request was responsible for getting search url progress");
             }
 
             return response;
@@ -73,15 +79,16 @@ namespace Domain.Services
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
             };
 
-            HttpResponseMessage responseMessage = await _networkingServiceApi.ProcessContactedCampaignProspectListAsync(req, ct);
-            if (responseMessage == null)
+            HttpResponseMessage response = await _networkingServiceApi.ProcessContactedCampaignProspectListAsync(req, ct);
+            if (response == null)
             {
                 _logger.LogError("Response from application server was null. The request was responsible for saving primary prospects to the database");
             }
 
-            if (responseMessage.IsSuccessStatusCode == false)
+            if (response.IsSuccessStatusCode == false)
             {
-                _logger.LogError("Response from application server was not a successfull status code. The request was responsible for saving primary prospects to the database");
+                string content = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Response from application server was not a successfull status code. The request was responsible for saving primary prospects to the database. Response content {content}", content);
             }
         }
 
@@ -105,6 +112,11 @@ namespace Domain.Services
 
             foreach (HttpResponseMessage response in responses)
             {
+                if (response == null)
+                {
+                    _logger.LogError("Response from application server was null. The request was responsible for updating SearchUrlProgress");
+                }
+
                 if (response.IsSuccessStatusCode == false)
                 {
                     string content = await response.Content.ReadAsStringAsync();
@@ -128,15 +140,16 @@ namespace Domain.Services
                 ServiceDiscoveryName = message.ServiceDiscoveryName
             };
 
-            HttpResponseMessage responseMessage = await _networkingServiceApi.ProcessProspectListAsync(request, ct);
-            if (responseMessage == null)
+            HttpResponseMessage response = await _networkingServiceApi.ProcessProspectListAsync(request, ct);
+            if (response == null)
             {
                 _logger.LogError("Response from application server was null. The request was responsible for saving primary prospects to the database");
             }
 
-            if (responseMessage.IsSuccessStatusCode == false)
+            if (response.IsSuccessStatusCode == false)
             {
-                _logger.LogError("Response from application server was not a successfull status code. The request was responsible for saving primary prospects to the database");
+                string content = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Response from application server was not a successfull status code. The request was responsible for saving primary prospects to the database. Content was {content}", content);
             }
         }
 

@@ -18,7 +18,7 @@ namespace Domain.Executors.ScanProspectsForReplies
         public DeepScanProspectsForRepliesExecutorHandler(
             ILogger<DeepScanProspectsForRepliesExecutorHandler> logger,
             IDeepScanProspectsForRepliesPhaseOrchestrator orchestrator,
-            IDeepScanProspectsForRepliesService service,
+            IDeepScanProspectsService service,
             IRabbitMQManager rabbitMQ
             )
         {
@@ -29,7 +29,7 @@ namespace Domain.Executors.ScanProspectsForReplies
         }
 
         private readonly IRabbitMQManager _rabbitMQ;
-        private readonly IDeepScanProspectsForRepliesService _service;
+        private readonly IDeepScanProspectsService _service;
         private readonly ILogger<DeepScanProspectsForRepliesExecutorHandler> _logger;
         private readonly IDeepScanProspectsForRepliesPhaseOrchestrator _orchestrator;
 

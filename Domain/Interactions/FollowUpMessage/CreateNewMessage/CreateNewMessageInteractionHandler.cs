@@ -7,7 +7,7 @@ namespace Domain.Interactions.FollowUpMessage.CreateNewMessage
     public class CreateNewMessageInteractionHandler : ICreateNewMessageInteractionHandler
     {
         public CreateNewMessageInteractionHandler(
-            IFollowUpMessageService service,
+            IFollowUpMessageServicePOM service,
             ILogger<CreateNewMessageInteractionHandler> logger
             )
         {
@@ -16,7 +16,7 @@ namespace Domain.Interactions.FollowUpMessage.CreateNewMessage
         }
 
         private readonly ILogger<CreateNewMessageInteractionHandler> _logger;
-        private readonly IFollowUpMessageService _service;
+        private readonly IFollowUpMessageServicePOM _service;
 
         public bool HandleInteraction(InteractionBase interaction)
         {

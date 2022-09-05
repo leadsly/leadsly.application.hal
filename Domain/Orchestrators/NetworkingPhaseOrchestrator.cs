@@ -6,7 +6,6 @@ using Domain.Interactions.Networking.SearchResultsLimit;
 using Domain.Models.Networking;
 using Domain.Models.Requests;
 using Domain.Orchestrators.Interfaces;
-using Domain.Providers.Campaigns;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces.POMs;
 using Leadsly.Application.Model;
@@ -25,7 +24,7 @@ namespace Domain.Orchestrators
         public NetworkingPhaseOrchestrator(
             ILogger<NetworkingPhaseOrchestrator> logger,
             INetworkingInteractionFacade interactionFacade,
-            ISearchPageFooterService searchPageFooterService,
+            ISearchPageFooterServicePOM searchPageFooterService,
             IWebDriverProvider webDriverProvider
             ) : base(logger)
         {
@@ -37,7 +36,7 @@ namespace Domain.Orchestrators
         }
 
         private readonly INetworkingInteractionFacade _interactionFacade;
-        private readonly ISearchPageFooterService _searchPageFooterService;
+        private readonly ISearchPageFooterServicePOM _searchPageFooterService;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<NetworkingPhaseOrchestrator> _logger;
 

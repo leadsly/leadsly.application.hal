@@ -2,28 +2,11 @@
 using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PageObjects.Controls
 {
     public class ConversationCards : IConversationCards
     {
-        private IReadOnlyCollection<IWebElement> ViewableConversationCards(IWebDriver webDriver)
-        {
-            IReadOnlyCollection<IWebElement> conversationCards = default;
-            try
-            {
-                conversationCards = webDriver.FindElements(By.CssSelector("div[role='dialog']"));
-            }
-            catch (Exception ex)
-            {
-
-            }
-            return conversationCards;
-        }
-
         private IReadOnlyCollection<IWebElement> ConversationCardsCloseButtons(IWebDriver webDriver)
         {
             IReadOnlyCollection<IWebElement> conversationCardsCloseButtons = default;
@@ -36,11 +19,6 @@ namespace PageObjects.Controls
 
             }
             return conversationCardsCloseButtons;
-        }
-
-        public IReadOnlyCollection<IWebElement> GetConversationCards(IWebDriver webDriver)
-        {
-            return ViewableConversationCards(webDriver);
         }
 
         public IReadOnlyCollection<IWebElement> GetAllConversationCloseButtons(IWebDriver webDriver)

@@ -13,15 +13,15 @@ namespace Domain.Executors.ScanProspectsForReplies
         public ScanProspectsForRepliesExecutorHandler(
             ILogger<ScanProspectsForRepliesExecutorHandler> logger,
             IScanProspectsForRepliesPhaseOrchestrator phaseOrchestrator,
-            IScanProspectsForRepliesService scanProspectsForRepliesService
+            IScanProspectsService service
             )
         {
             _logger = logger;
             _phaseOrchestrator = phaseOrchestrator;
-            _scanProspectsForRepliesService = scanProspectsForRepliesService;
+            _service = service;
         }
 
-        private readonly IScanProspectsForRepliesService _scanProspectsForRepliesService;
+        private readonly IScanProspectsService _service;
         private readonly ILogger<ScanProspectsForRepliesExecutorHandler> _logger;
         private readonly IScanProspectsForRepliesPhaseOrchestrator _phaseOrchestrator;
 
@@ -62,7 +62,7 @@ namespace Domain.Executors.ScanProspectsForReplies
             // do not unsubscribe from the event here because we need to respond to it each time it is received
             ScanProspectsForRepliesBody message = e.Message as ScanProspectsForRepliesBody;
 
-            await _scanProspectsForRepliesService.ProcessNewMessagesAsync(e.NewMessages, message);
+            await _service.ProcessNewMessagesAsync(e.NewMessages, message);
         }
     }
 }

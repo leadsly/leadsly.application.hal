@@ -1,30 +1,25 @@
 ﻿using Leadsly.Application.Model.Campaigns;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
 {
     public class CheckOffHoursNewConnectionsCommand : ICommand
     {
-        public CheckOffHoursNewConnectionsCommand(IModel channel, BasicDeliverEventArgs eventArgs, PublishMessageBody messageBody, string startOfDay, string endOfDay, string timeZoneId)
+        public CheckOffHoursNewConnectionsCommand(IModel channel, BasicDeliverEventArgs eventArgs, PublishMessageBody messageBody)
         {
             Channel = channel;
             EventArgs = eventArgs;
             MessageBody = messageBody;
-            StartOfWorkDay = startOfDay;
-            EndOfWorkDay = endOfDay;
-            TimeZoneId = timeZoneId;
         }
         public IModel Channel { get; set; }
         public BasicDeliverEventArgs EventArgs { get; set; }
         public PublishMessageBody MessageBody { get; private set; }
-        public string StartOfWorkDay { get; set; }
-        public string EndOfWorkDay { get; set; }
-        public string TimeZoneId { get; set; }
+
+        public string StartOfWorkDay => throw new System.NotImplementedException();
+
+        public string EndOfWorkDay => throw new System.NotImplementedException();
+
+        public string TimeZoneId => throw new System.NotImplementedException();
     }
 }

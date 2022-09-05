@@ -8,13 +8,13 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.ClearMessagingSearchCr
     {
         public ClearMessagingSearchCriteriaInteractionHandler(
             ILogger<ClearMessagingSearchCriteriaInteractionHandler> logger,
-            IDeepScanProspectsService service)
+            IDeepScanProspectsServicePOM service)
         {
             _logger = logger;
             _service = service;
         }
 
-        private readonly IDeepScanProspectsService _service;
+        private readonly IDeepScanProspectsServicePOM _service;
         private readonly ILogger<ClearMessagingSearchCriteriaInteractionHandler> _logger;
         public bool HandleInteraction(InteractionBase interaction)
         {

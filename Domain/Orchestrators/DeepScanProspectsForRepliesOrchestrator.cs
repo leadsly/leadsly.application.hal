@@ -6,7 +6,6 @@ using Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageItem;
 using Domain.Models;
 using Domain.Models.Responses;
 using Domain.Orchestrators.Interfaces;
-using Domain.Providers.Campaigns;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces.POMs;
 using Leadsly.Application.Model.Campaigns;
@@ -22,7 +21,7 @@ namespace Domain.Orchestrators
         public DeepScanProspectsForRepliesOrchestrator(
             ILogger<DeepScanProspectsForRepliesOrchestrator> logger,
             IDeepScanProspectsInteractionFacade interactionsFacade,
-            IDeepScanProspectsService pomService,
+            IDeepScanProspectsServicePOM pomService,
             IWebDriverProvider webDriverProvider)
             : base(logger)
         {
@@ -32,7 +31,7 @@ namespace Domain.Orchestrators
             _interactionsFacade = interactionsFacade;
         }
 
-        private readonly IDeepScanProspectsService _pomService;
+        private readonly IDeepScanProspectsServicePOM _pomService;
         private readonly IDeepScanProspectsInteractionFacade _interactionsFacade;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<DeepScanProspectsForRepliesOrchestrator> _logger;

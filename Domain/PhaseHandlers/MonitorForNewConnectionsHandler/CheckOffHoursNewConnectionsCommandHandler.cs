@@ -1,16 +1,9 @@
-﻿using Domain.Facades.Interfaces;
+﻿using Domain.Executors;
 using Domain.RabbitMQ;
-using Domain.Serializers.Interfaces;
-using Leadsly.Application.Model;
 using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
@@ -19,39 +12,34 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
     {
         public CheckOffHoursNewConnectionsCommandHandler(
             ILogger<CheckOffHoursNewConnectionsCommandHandler> logger,
-            ICampaignPhaseFacade campaignPhaseFacade
+            IMessageExecutorHandler<CheckOffHoursNewConnectionsBody> messageExecutorHandler
             )
         {
-            _campaignPhaseFacade = campaignPhaseFacade;
+            _messageExecutorHandler = messageExecutorHandler;
             _logger = logger;
         }
 
         private readonly ILogger<CheckOffHoursNewConnectionsCommandHandler> _logger;
-        private readonly ICampaignPhaseFacade _campaignPhaseFacade;        
+        private readonly IMessageExecutorHandler<CheckOffHoursNewConnectionsBody> _messageExecutorHandler;
 
         public async Task HandleAsync(CheckOffHoursNewConnectionsCommand command)
         {
             IModel channel = command.Channel;
             BasicDeliverEventArgs eventArgs = command.EventArgs;
 
-            MonitorForNewAcceptedConnectionsBody body = command.MessageBody as MonitorForNewAcceptedConnectionsBody;
+            CheckOffHoursNewConnectionsBody message = command.MessageBody as CheckOffHoursNewConnectionsBody;
 
-            try
+            bool succeeded = await _messageExecutorHandler.ExecuteMessageAsync(message);
+            if (succeeded == true)
             {
-                HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecuteOffHoursScanPhaseAsync<IOperationResponse>(body);
-                if (operationResult.Succeeded == true)
-                {
-                    channel.BasicAck(eventArgs.DeliveryTag, false);
-                }
-                else
-                {
-                    channel.BasicNackRetry(eventArgs);
-                }
+                _logger.LogInformation($"Positively acknowledging {nameof(CheckOffHoursNewConnectionsBody)}");
+                channel.BasicAck(eventArgs.DeliveryTag, false);
             }
-            catch (Exception ex)
+            else
             {
+                _logger.LogInformation($"Negatively acknowledging {nameof(CheckOffHoursNewConnectionsBody)}");
                 channel.BasicNackRetry(eventArgs);
-            }            
+            }
         }
     }
 }

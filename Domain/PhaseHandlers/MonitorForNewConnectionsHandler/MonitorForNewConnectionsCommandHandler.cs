@@ -1,18 +1,8 @@
-﻿using Domain.Facades.Interfaces;
-using Domain.Providers.Campaigns;
-using Domain.Serializers.Interfaces;
-using Hangfire;
-using Leadsly.Application.Model;
+﻿using Domain.Executors;
 using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
@@ -21,15 +11,15 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
     {
         public MonitorForNewConnectionsCommandHandler(
             ILogger<MonitorForNewConnectionsCommandHandler> logger,
-            ICampaignPhaseFacade campaignPhaseFacade
+            IMessageExecutorHandler<MonitorForNewAcceptedConnectionsBody> messageExecutorHandler
             )
         {
-            _campaignPhaseFacade = campaignPhaseFacade;
+            _messageExecutorHandler = messageExecutorHandler;
             _logger = logger;
         }
 
         private readonly ILogger<MonitorForNewConnectionsCommandHandler> _logger;
-        private readonly ICampaignPhaseFacade _campaignPhaseFacade;        
+        private readonly IMessageExecutorHandler<MonitorForNewAcceptedConnectionsBody> _messageExecutorHandler;
 
         public async Task HandleAsync(MonitorForNewConnectionsCommand command)
         {
@@ -37,40 +27,17 @@ namespace Domain.PhaseHandlers.MonitorForNewConnectionsHandler
             BasicDeliverEventArgs eventArgs = command.EventArgs;
             channel.BasicAck(eventArgs.DeliveryTag, false);
 
-            MonitorForNewAcceptedConnectionsBody body = command.MessageBody as MonitorForNewAcceptedConnectionsBody;
+            MonitorForNewAcceptedConnectionsBody message = command.MessageBody as MonitorForNewAcceptedConnectionsBody;
+            bool succeeded = await _messageExecutorHandler.ExecuteMessageAsync(message);
 
-            if (MonitorForNewProspectsProvider.IsRunning == false)
+            if (succeeded == true)
             {
-                _logger.LogInformation("MonitorForNewProspects phase is currently NOT running. Executing the phase until the end of work day");
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                // this is required because this task can run for 8 - 10 hours a day. The AppServer does not know IF this task/phase is already
-                // running on Hal thus it will trigger messages blindly. Otherwise if we await this here, then none of the blindly triggered
-                // messages make it here, thus clugg up the queue
-                Task cacheTask = Task.Run(() =>
-                {
-                    StartMonitorForNewConnectionsAsync(command, body);
-                });
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-
+                _logger.LogDebug($"{nameof(MonitorForNewAcceptedConnectionsBody)} phase finished executing successfully");
             }
             else
             {
-                _logger.LogInformation("MonitorForNewProspects phase is currently running.");
+                _logger.LogDebug($"{nameof(MonitorForNewAcceptedConnectionsBody)} phase finished executing unsuccessfully");
             }
-        }
-
-        public async Task StartMonitorForNewConnectionsAsync(MonitorForNewConnectionsCommand command, MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnections)
-        {
-            HalOperationResult<IOperationResponse> operationResult = await _campaignPhaseFacade.ExecutePhase<IOperationResponse>(monitorForNewAcceptedConnections);
-
-            if (operationResult.Succeeded == true)
-            {
-                _logger.LogInformation("ExecuteFollowUpMessagesPhase executed successfully. Acknowledging message");
-            }
-            else
-            {
-                _logger.LogWarning("Executing Follow Up Messages Phase did not successfully succeeded. Negatively acknowledging the message and re-queuing it");
-            }            
         }
     }
 }

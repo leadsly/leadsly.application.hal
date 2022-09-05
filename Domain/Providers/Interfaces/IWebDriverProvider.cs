@@ -38,6 +38,8 @@ namespace Domain.Providers.Interfaces
         HalOperationResult<T> Refresh<T>(IWebDriver webDriver)
             where T : IOperationResponse;
 
+        bool Refresh(IWebDriver webDriver);
+
         bool WebDriverExists(BrowserPurpose browserPurpose);
     }
 }

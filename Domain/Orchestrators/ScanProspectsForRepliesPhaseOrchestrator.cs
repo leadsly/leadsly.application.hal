@@ -1,8 +1,10 @@
 ﻿using Domain.Executors.ScanProspectsForReplies.Events;
-using Domain.Interactions.ScanProspectsForReplies.ScanProspects;
-using Domain.Interactions.ScanProspectsForReplies.ScanProspects.Interfaces;
+using Domain.Facades.Interfaces;
+using Domain.Interactions;
+using Domain.Interactions.ScanProspectsForReplies.GetMessageContent;
+using Domain.Interactions.ScanProspectsForReplies.GetNewMessages;
+using Domain.Interactions.Shared.CloseAllConversations;
 using Domain.Orchestrators.Interfaces;
-using Domain.Providers.Campaigns;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model.Campaigns;
@@ -21,21 +23,21 @@ namespace Domain.Orchestrators
         public ScanProspectsForRepliesPhaseOrchestrator(
             ILogger<ScanProspectsForRepliesPhaseOrchestrator> logger,
             ITimestampService timestampService,
-            IScanProspectsInteractionHandler interactionHandler,
+            IScanProspectsForRepliesInteractionFacade interactionsFacade,
             IWebDriverProvider webDriverProvider)
             : base(logger)
         {
-            _interactionHandler = interactionHandler;
+            _interactionsFacade = interactionsFacade;
             _logger = logger;
             _timestampService = timestampService;
             _webDriverProvider = webDriverProvider;
         }
 
-        private readonly IScanProspectsInteractionHandler _interactionHandler;
+        private readonly IScanProspectsForRepliesInteractionFacade _interactionsFacade;
         private readonly ITimestampService _timestampService;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<ScanProspectsForRepliesPhaseOrchestrator> _logger;
-
+        private IList<NewMessageRequest> NewMessageRequests { get; set; } = new List<NewMessageRequest>();
         public static bool IsRunning { get; set; } = false;
 
         public event EndOfWorkDayReachedEventHandler EndOfWorkDayReached;
@@ -81,28 +83,77 @@ namespace Domain.Orchestrators
 
         private void BeginScanning(ScanProspectsForRepliesBody message, IWebDriver webDriver)
         {
-            ScanProspectsInteraction interaction = new()
+            DateTimeOffset endOfWorkDayLocal = _timestampService.ParseDateTimeOffsetLocalized(message.TimeZoneId, message.EndOfWorkday);
+            while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayLocal)
+            {
+                bool getNewMessagesSucceeded = GetNewMessages(webDriver);
+                if (getNewMessagesSucceeded == false)
+                {
+                    continue;
+                }
+
+                bool closeAllConversationsSucceeded = CloseAllConversations(webDriver);
+                if (closeAllConversationsSucceeded == false)
+                {
+                    _logger.LogDebug("An error occured when attempting to close all of the active conversations on the screen. It is ok, just logging and continuing on.");
+                }
+
+                IList<IWebElement> newMessages = _interactionsFacade.NewMessages;
+                foreach (IWebElement newMessage in newMessages)
+                {
+                    bool getMessageContentSucceeded = GetMessageContent(webDriver, newMessage);
+                    if (getMessageContentSucceeded == false)
+                    {
+                        continue;
+                    }
+
+                    NewMessageRequest newMessageRequest = _interactionsFacade.NewMessageRequest;
+                    if (newMessageRequest != null)
+                    {
+                        NewMessageRequests.Add(newMessageRequest);
+                    }
+                }
+
+                OutputMessageResponses(message);
+            }
+        }
+
+        private bool GetNewMessages(IWebDriver webDriver)
+        {
+            InteractionBase interaction = new GetNewMessagesInteraction
             {
                 WebDriver = webDriver
             };
 
-            DateTimeOffset endOfWorkDayLocal = _timestampService.ParseDateTimeOffsetLocalized(message.TimeZoneId, message.EndOfWorkday);
-            while (_timestampService.GetNowLocalized(message.TimeZoneId) < endOfWorkDayLocal)
+            return _interactionsFacade.HandleGetNewMessagesInteraction(interaction);
+        }
+
+        private bool GetMessageContent(IWebDriver webDriver, IWebElement message)
+        {
+            InteractionBase interaction = new GetMessageContentInteraction
             {
-                _interactionHandler.HandleInteraction(interaction);
+                WebDriver = webDriver,
+                Message = message
+            };
 
-                OutputMessageResponses(message);
+            return _interactionsFacade.HandleGetMessageContentInteraction(interaction);
+        }
 
-                webDriver.Navigate().Refresh();
-            }
+        private bool CloseAllConversations(IWebDriver webDriver)
+        {
+            InteractionBase interaction = new CloseAllConversationsInteraction
+            {
+                WebDriver = webDriver
+            };
+
+            return _interactionsFacade.HandleCloseConversationsInteraction(interaction);
         }
 
         private void OutputMessageResponses(ScanProspectsForRepliesBody message)
         {
-            IList<NewMessageRequest> newMessageRequests = _interactionHandler.GetNewMessageRequests();
-            if (newMessageRequests.Count > 0)
+            if (NewMessageRequests.Count > 0)
             {
-                this.NewMessagesReceived.Invoke(this, new NewMessagesReceivedEventArgs(message, newMessageRequests));
+                this.NewMessagesReceived.Invoke(this, new NewMessagesReceivedEventArgs(message, NewMessageRequests));
             }
         }
     }

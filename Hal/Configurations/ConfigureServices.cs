@@ -1,10 +1,13 @@
 ﻿using Domain;
 using Domain.Executors;
 using Domain.Executors.FollowUpMessage;
+using Domain.Executors.MonitorForNewConnections;
 using Domain.Executors.Networking;
 using Domain.Executors.ScanProspectsForReplies;
 using Domain.Facades;
 using Domain.Facades.Interfaces;
+using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince;
+using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince.Interfaces;
 using Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory;
 using Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory.Interfaces;
 using Domain.Interactions.DeepScanProspectsForReplies.ClearMessagingSearchCriteria;
@@ -19,6 +22,10 @@ using Domain.Interactions.FollowUpMessage.EnterMessage;
 using Domain.Interactions.FollowUpMessage.EnterMessage.Interfaces;
 using Domain.Interactions.FollowUpMessage.EnterProspectName;
 using Domain.Interactions.FollowUpMessage.EnterProspectName.Interfaces;
+using Domain.Interactions.MonitorForNewConnections.GetAllRecentlyAdded;
+using Domain.Interactions.MonitorForNewConnections.GetAllRecentlyAdded.Interfaces;
+using Domain.Interactions.MonitorForNewConnections.GetConnectionsCount;
+using Domain.Interactions.MonitorForNewConnections.GetConnectionsCount.Interfaces;
 using Domain.Interactions.Networking.ConnectWithProspect;
 using Domain.Interactions.Networking.ConnectWithProspect.Interfaces;
 using Domain.Interactions.Networking.Decorators;
@@ -28,35 +35,36 @@ using Domain.Interactions.Networking.NoResultsFound;
 using Domain.Interactions.Networking.NoResultsFound.Interfaces;
 using Domain.Interactions.Networking.SearchResultsLimit;
 using Domain.Interactions.Networking.SearchResultsLimit.Interfaces;
-using Domain.Interactions.ScanProspectsForReplies.CloseAllConversations;
-using Domain.Interactions.ScanProspectsForReplies.CloseAllConversations.Interfaces;
-using Domain.Interactions.ScanProspectsForReplies.ScanProspects;
-using Domain.Interactions.ScanProspectsForReplies.ScanProspects.Interfaces;
+using Domain.Interactions.ScanProspectsForReplies.GetMessageContent;
+using Domain.Interactions.ScanProspectsForReplies.GetMessageContent.Interfaces;
+using Domain.Interactions.ScanProspectsForReplies.GetNewMessages;
+using Domain.Interactions.ScanProspectsForReplies.GetNewMessages.Interfaces;
+using Domain.Interactions.Shared.CloseAllConversations;
+using Domain.Interactions.Shared.CloseAllConversations.Interfaces;
+using Domain.Interactions.Shared.RefreshBrowser;
+using Domain.Interactions.Shared.RefreshBrowser.Interfaces;
 using Domain.OptionsJsonModels;
 using Domain.Orchestrators;
 using Domain.Orchestrators.Interfaces;
 using Domain.PhaseConsumers.FollowUpMessageHandlers;
 using Domain.PhaseConsumers.MonitorForNewConnectionsHandlers;
-using Domain.PhaseConsumers.NetworkingConnectionsHandlers;
 using Domain.PhaseConsumers.NetworkingHandler;
 using Domain.PhaseConsumers.RestartApplicationHandler;
 using Domain.PhaseConsumers.ScanProspectsForRepliesHandlers;
 using Domain.PhaseHandlers.FollowUpMessageHandlers;
 using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
 using Domain.PhaseHandlers.NetworkingHandler;
-using Domain.PhaseHandlers.ProspectListHandler;
 using Domain.PhaseHandlers.RestartApplicationHandler;
 using Domain.PhaseHandlers.ScanProspectsForRepliesHandler;
-using Domain.PhaseHandlers.SendConnectionsHandler;
 using Domain.POMs;
 using Domain.POMs.Controls;
 using Domain.POMs.Dialogs;
 using Domain.POMs.Pages;
 using Domain.Providers;
-using Domain.Providers.Campaigns;
-using Domain.Providers.Campaigns.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.RabbitMQ;
+using Domain.RabbitMQ.EventHandlers;
+using Domain.RabbitMQ.EventHandlers.Interfaces;
 using Domain.RabbitMQ.Interfaces;
 using Domain.Repositories;
 using Domain.Serializers;
@@ -67,7 +75,6 @@ using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
 using Domain.Services.Interfaces.POMs;
 using Domain.Services.POMs;
-using Domain.Services.SendConnectionsModals;
 using Domain.Supervisor;
 using Hal.OptionsJsonModels;
 using Hangfire;
@@ -127,7 +134,6 @@ namespace Hal.Configurations
             services.AddScoped<HalConsumingCommandHandlerDecorator<RestartApplicationConsumerCommand>>();
             services.AddScoped<HalConsumingCommandHandlerDecorator<FollowUpMessageConsumerCommand>>();
             services.AddScoped<HalConsumingCommandHandlerDecorator<MonitorForNewConnectionsConsumerCommand>>();
-            services.AddScoped<HalConsumingCommandHandlerDecorator<NetworkingConnectionsConsumerCommand>>();
             services.AddScoped<HalConsumingCommandHandlerDecorator<NetworkingConsumerCommand>>();
             services.AddScoped<HalConsumingCommandHandlerDecorator<ScanProspectsForRepliesConsumerCommand>>();
 
@@ -135,10 +141,8 @@ namespace Hal.Configurations
             services.AddScoped<HalWorkCommandHandlerDecorator<RestartApplicationCommand>>();
             services.AddScoped<HalWorkCommandHandlerDecorator<FollowUpMessageCommand>>();
             services.AddScoped<HalWorkCommandHandlerDecorator<MonitorForNewConnectionsCommand>>();
-            services.AddScoped<HalWorkCommandHandlerDecorator<ProspectListCommand>>();
             services.AddScoped<HalWorkCommandHandlerDecorator<DeepScanProspectsForRepliesCommand>>();
             services.AddScoped<HalWorkCommandHandlerDecorator<ScanProspectsForRepliesCommand>>();
-            services.AddScoped<HalWorkCommandHandlerDecorator<SendConnectionsCommand>>();
             services.AddScoped<HalWorkCommandHandlerDecorator<CheckOffHoursNewConnectionsCommand>>();
             services.AddScoped<HalWorkCommandHandlerDecorator<NetworkingCommand>>();
 
@@ -146,7 +150,6 @@ namespace Hal.Configurations
             services.AddScoped<IConsumeCommandHandler<RestartApplicationConsumerCommand>, RestartApplicationConsumerCommandHandler>();
             services.AddScoped<IConsumeCommandHandler<FollowUpMessageConsumerCommand>, FollowUpMessageConsumerCommandHandler>();
             services.AddScoped<IConsumeCommandHandler<MonitorForNewConnectionsConsumerCommand>, MonitorForNewConnectionsConsumerCommandHandler>();
-            services.AddScoped<IConsumeCommandHandler<NetworkingConnectionsConsumerCommand>, NetworkingConnectionsConsumerCommandHandler>();
             services.AddScoped<IConsumeCommandHandler<ScanProspectsForRepliesConsumerCommand>, ScanProspectsForRepliesConsumerCommandHandler>();
             services.AddScoped<IConsumeCommandHandler<NetworkingConsumerCommand>, NetworkingConsumerCommandHandler>();
 
@@ -154,10 +157,8 @@ namespace Hal.Configurations
             services.AddScoped<ICommandHandler<RestartApplicationCommand>, RestartApplicationCommandHandler>();
             services.AddScoped<ICommandHandler<FollowUpMessageCommand>, FollowUpMessageCommandHandler>();
             services.AddScoped<ICommandHandler<MonitorForNewConnectionsCommand>, MonitorForNewConnectionsCommandHandler>();
-            services.AddScoped<ICommandHandler<ProspectListCommand>, ProspectListCommandHandler>();
             services.AddScoped<ICommandHandler<DeepScanProspectsForRepliesCommand>, DeepScanProspectsForRepliesCommandHandler>();
             services.AddScoped<ICommandHandler<ScanProspectsForRepliesCommand>, ScanProspectsForRepliesCommandHandler>();
-            services.AddScoped<ICommandHandler<SendConnectionsCommand>, SendConnectionsCommandHandler>();
             services.AddScoped<ICommandHandler<CheckOffHoursNewConnectionsCommand>, CheckOffHoursNewConnectionsCommandHandler>();
             services.AddScoped<ICommandHandler<NetworkingCommand>, NetworkingCommandHandler>();
 
@@ -189,15 +190,15 @@ namespace Hal.Configurations
                 return new HalIdentity(halId);
             });
 
-            services.AddScoped<ICrawlProspectsService, CrawlProspectsService>();
-            services.AddScoped<ICampaignProspectsService, CampaignProspectsService>();
-            services.AddScoped<IScreenHouseKeeperService, ScreenHouseKeeperService>();
-            services.AddScoped<ISearchPageFooterService, SearchPageFooterService>();
-            services.AddScoped<ICustomizeInvitationModalService, CustomizeInvitationModalService>();
-            services.AddScoped<IHowDoYouKnowModalService, HowDoYouKnowModalService>();
-            services.AddScoped<IDeepScanProspectsService, DeepScanProspectsService>();
-            services.AddScoped<IScanProspectsService, ScanProspectsService>();
-            services.AddScoped<IFollowUpMessageService, FollowUpMessageService>();
+            services.AddScoped<IScreenHouseKeeperServicePOM, ScreenHouseKeeperServicePOM>();
+            services.AddScoped<ISearchPageFooterServicePOM, SearchPageFooterServicePOM>();
+            services.AddScoped<ICustomizeInvitationModalServicePOM, CustomizeInvitationModalServicePOM>();
+            services.AddScoped<IHowDoYouKnowModalServicePOM, HowDoYouKnowModalServicePOM>();
+            services.AddScoped<IDeepScanProspectsServicePOM, DeepScanProspectsServicePOM>();
+            services.AddScoped<IScanProspectsServicePOM, ScanProspectsServicePOM>();
+            services.AddScoped<IFollowUpMessageServicePOM, FollowUpMessageServicePOM>();
+            services.AddScoped<ICheckOffHoursNewConnectionsServicePOM, CheckOffHoursNewConnectionsServicePOM>();
+            services.AddScoped<IMonitorForNewConnectionsServicePOM, MonitorForNewConnectionsServicePOM>();
 
             return services;
         }
@@ -205,16 +206,6 @@ namespace Hal.Configurations
         public static IServiceCollection AddServicesConfiguration(this IServiceCollection services)
         {
             Log.Information("Registering services configuration.");
-
-            services.AddHttpClient<IPhaseDataProcessingService, PhaseDataProcessingService>(opt =>
-            {
-                opt.Timeout = TimeSpan.FromMinutes(5);
-            });
-
-            services.AddHttpClient<ICampaignService, CampaignService>(opt =>
-            {
-                opt.Timeout = TimeSpan.FromMinutes(5);
-            });
 
             services.AddHttpClient<ITriggerPhaseService, TriggerPhaseService>(opt =>
             {
@@ -246,9 +237,13 @@ namespace Hal.Configurations
                 opt.Timeout = TimeSpan.FromMinutes(5);
             });
 
+            services.AddHttpClient<IMonitorProspectsForNewConnectionsServiceApi, MonitorProspectsForNewConnectionsServiceApi>(opt =>
+            {
+                opt.Timeout = TimeSpan.FromMinutes(5);
+            });
+
             services.AddScoped<IWebDriverService, WebDriverService>();
             services.AddScoped<ITimestampService, TimestampService>();
-            services.AddScoped<IPhaseEventHandlerService, PhaseEventHandlerService>();
             services.AddScoped<IRabbitMQManager, RabbitMQManager>();
             services.AddScoped<IWebDriverUtilities, WebDriverUtilities>();
             services.AddScoped<IHumanBehaviorService, HumanBehaviorService>();
@@ -256,9 +251,23 @@ namespace Hal.Configurations
             services.AddSingleton<Random>();
             services.AddScoped<IUrlService, UrlService>();
             services.AddScoped<INetworkingService, NetworkingService>();
-            services.AddScoped<IScanProspectsForRepliesService, ScanProspectsForRepliesService>();
-            services.AddScoped<IDeepScanProspectsForRepliesService, DeepScanProspectsForRepliesService>();
-            services.AddScoped<ISendFollowUpMessageService, SendFollowUpMessageService>();
+            services.AddScoped<IScanProspectsService, ScanProspectsService>();
+            services.AddScoped<IDeepScanProspectsService, DeepScanProspectsService>();
+            services.AddScoped<IFollowUpMessageService, FollowUpMessageService>();
+            services.AddScoped<IMonitorForNewConnectionsService, IMonitorForNewConnectionsService>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddRabbitMQEventHandlers(this IServiceCollection services)
+        {
+            Log.Information("Registering RabbitMQ event handlers.");
+
+            services.AddScoped<IFollowUpMessageEventHandler, FollowUpMessageEventHandler>();
+            services.AddScoped<IMonitorForNewAcceptedConnectionsEventHandler, MonitorForNewAcceptedConnectionsEventHandler>();
+            services.AddScoped<INetworkingEventHandler, NetworkingEventHandler>();
+            services.AddScoped<IRestartApplicationEventHandler, RestartApplicationEventHandler>();
+            services.AddScoped<IScanProspectsForRepliesEventHandler, ScanProspectsForRepliesEventHandler>();
 
             return services;
         }
@@ -271,6 +280,8 @@ namespace Hal.Configurations
             services.AddScoped<INetworkingPhaseOrchestrator, NetworkingPhaseOrchestrator>();
             services.AddScoped<IDeepScanProspectsForRepliesPhaseOrchestrator, DeepScanProspectsForRepliesOrchestrator>();
             services.AddScoped<IScanProspectsForRepliesPhaseOrchestrator, ScanProspectsForRepliesPhaseOrchestrator>();
+            services.AddScoped<ICheckOffHoursNewConnectionsPhaseOrchestrator, CheckOffHoursNewConnectionsPhaseOrchestrator>();
+            services.AddScoped<IMonitorForNewConnectionsPhaseOrchestrator, MonitorForNewConnectionsPhaseOrchestrator>();
 
             return services;
         }
@@ -307,8 +318,25 @@ namespace Hal.Configurations
             ////////////////////////////////////////////////////////////
             /// ScanProspectsForReplies Interactions
             ///////////////////////////////////////////////////////////
+            services.AddScoped<IGetMessageContentInteractionHandler, GetMessageContentInteractionHandler>();
+            services.AddScoped<IGetNewMessagesInteractionHandler, GetNewMessagesInteractionHandler>();
+
+            ////////////////////////////////////////////////////////////
+            /// CheckOffHoursNewConnections Interactions
+            ///////////////////////////////////////////////////////////            
+            services.AddScoped<IGetAllRecentlyAddedSinceInteractionHandler, GetAllRecentlyAddedSinceInteractionHandler>();
+
+            ////////////////////////////////////////////////////////////
+            /// MonitorForNewConnections Interactions
+            ///////////////////////////////////////////////////////////
+            services.AddScoped<IGetAllRecentlyAddedInteractionHandler, GetAllRecentlyAddedInteractionHandler>();
+            services.AddScoped<IGetConnectionsCountInteractionHandler, GetConnectionsCountInteractionHandler>();
+
+            ////////////////////////////////////////////////////////////
+            /// Shared Interactions
+            ///////////////////////////////////////////////////////////
             services.AddScoped<ICloseAllConversationsInteractionHandler, CloseAllConversationsInteractionHandler>();
-            services.AddScoped<IScanProspectsInteractionHandler, ScanProspectsInteractionHandler>();
+            services.AddScoped<IRefreshBrowserInteractionHandler, RefreshBrowserInteractionHandler>();
 
             return services;
         }
@@ -320,6 +348,8 @@ namespace Hal.Configurations
             services.AddScoped<IMessageExecutorHandler<DeepScanProspectsForRepliesBody>, DeepScanProspectsForRepliesExecutorHandler>();
             services.AddScoped<IMessageExecutorHandler<ScanProspectsForRepliesBody>, ScanProspectsForRepliesExecutorHandler>();
             services.AddScoped<IMessageExecutorHandler<FollowUpMessageBody>, FollowUpMessageExecutorHandler>();
+            services.AddScoped<IMessageExecutorHandler<MonitorForNewAcceptedConnectionsBody>, MonitorForNewConnectionsExecutorHandler>();
+            services.AddScoped<IMessageExecutorHandler<CheckOffHoursNewConnectionsBody>, CheckOffHoursNewConnectionsExecutorHandler>();
 
             return services;
         }
@@ -328,11 +358,12 @@ namespace Hal.Configurations
         {
             Log.Information("Registering facades configuration.");
 
-            services.AddScoped<ICampaignPhaseFacade, CampaignPhaseFacade>();
             services.AddScoped<ILinkedInPageFacade, LinkedInPageFacade>();
             services.AddScoped<INetworkingInteractionFacade, NetworkingInteractionFacade>();
             services.AddScoped<IDeepScanProspectsInteractionFacade, DeepScanProspectsInteractionFacade>();
             services.AddScoped<IFollowUpMessageInteractionFacade, FollowUpMessageInteractionFacade>();
+            services.AddScoped<IMonitorForConnectionsInteractionFacade, MonitorForConnectionsInteractionFacade>();
+            services.AddScoped<IScanProspectsForRepliesInteractionFacade, ScanProspectsForRepliesInteractionFacade>();
 
             return services;
         }
@@ -377,11 +408,7 @@ namespace Hal.Configurations
             services.AddScoped<ILinkedInPage, LinkedInPage>();
             services.AddScoped<ILinkedInHomePage, LinkedInHomePage>();
             services.AddScoped<ILinkedInMessagingPage, LinkedInMessagingPage>();
-            services.AddScoped<ILinkedInMyNetworkPage, LinkedInMyNetworkPage>();
-            services.AddScoped<ILinkedInNavBar, LinkedInNavBar>();
             services.AddScoped<ILinkedInSearchPage, LinkedInSearchPage>();
-            services.AddScoped<ILinkedInNotificationsPage, LinkedInNotificationsPage>();
-            services.AddScoped<IAcceptedInvitiationsView, AcceptedInvitationsView>();
             services.AddScoped<IConnectionsView, ConnectionsView>();
             services.AddScoped<IConversationCards, ConversationCards>();
             services.AddScoped<ISearchPageDialogManager, SearchPageDialogManager>();
@@ -396,19 +423,8 @@ namespace Hal.Configurations
         {
             Log.Information("Registering providers configuration.");
 
-            services.AddScoped<IHalAuthProvider, HalAuthProvider>();
             services.AddScoped<IWebDriverProvider, WebDriverProvider>();
-            services.AddScoped<IWebDriverManagerProvider, WebDriverManagerProvider>();
-            services.AddScoped<IFollowUpMessagesProvider, FollowUpMessagesProvider>();
-            services.AddScoped<IMonitorForNewProspectsProvider, MonitorForNewProspectsProvider>();
             services.AddScoped<IHalOperationConfigurationProvider, HalOperationConfigurationProvider>();
-            services.AddScoped<IProspectListProvider, ProspectListProvider>();
-            services.AddScoped<ICampaignProvider, CampaignProvider>();
-            services.AddScoped<ISendConnectionsProvider, SendConnectionsProvider>();
-            services.AddScoped<IScanProspectsForRepliesProvider, ScanProspectsForRepliesProvider>();
-            services.AddScoped<IDeepScanProspectsForRepliesProvider, DeepScanProspectsForRepliesProvider>();
-            services.AddScoped<IPhaseDataProcessingProvider, PhaseDataProcessingProvider>();
-            services.AddScoped<ITriggerPhaseProvider, TriggerPhaseProvider>();
 
             return services;
         }

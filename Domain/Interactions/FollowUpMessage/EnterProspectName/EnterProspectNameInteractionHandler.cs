@@ -7,7 +7,7 @@ namespace Domain.Interactions.FollowUpMessage.EnterProspectName
     public class EnterProspectNameInteractionHandler : IEnterProspectNameInteractionHandler
     {
         public EnterProspectNameInteractionHandler(
-            IFollowUpMessageService service,
+            IFollowUpMessageServicePOM service,
             ILogger<EnterProspectNameInteractionHandler> logger
             )
         {
@@ -16,7 +16,7 @@ namespace Domain.Interactions.FollowUpMessage.EnterProspectName
         }
 
         private readonly ILogger<EnterProspectNameInteractionHandler> _logger;
-        private readonly IFollowUpMessageService _service;
+        private readonly IFollowUpMessageServicePOM _service;
 
         public bool HandleInteraction(InteractionBase interaction)
         {

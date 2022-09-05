@@ -9,7 +9,7 @@ namespace Domain.Interactions.Networking.SearchResultsLimit
 {
     public class SearchResultsLimitInteractionHandler : ISearchResultsLimitInteractionHandler
     {
-        public SearchResultsLimitInteractionHandler(ILogger<SearchResultsLimitInteractionHandler> logger, ILinkedInSearchPage linkedInSearchPage, ISearchPageFooterService searchPageFooterService, IHumanBehaviorService humanBehaviorService)
+        public SearchResultsLimitInteractionHandler(ILogger<SearchResultsLimitInteractionHandler> logger, ILinkedInSearchPage linkedInSearchPage, ISearchPageFooterServicePOM searchPageFooterService, IHumanBehaviorService humanBehaviorService)
         {
             _logger = logger;
             _searchPageFooterService = searchPageFooterService;
@@ -17,7 +17,7 @@ namespace Domain.Interactions.Networking.SearchResultsLimit
             _humanBehaviorService = humanBehaviorService;
         }
 
-        private readonly ISearchPageFooterService _searchPageFooterService;
+        private readonly ISearchPageFooterServicePOM _searchPageFooterService;
         private readonly ILinkedInSearchPage _linkedInSearchPage;
         private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly ILogger<SearchResultsLimitInteractionHandler> _logger;

@@ -12,13 +12,15 @@ namespace PageObjects
 {
     public class ConnectionsView : IConnectionsView
     {
-        public ConnectionsView(ILogger<ConnectionsView> logger, IConversationCards conversationCards)
+        public ConnectionsView(ILogger<ConnectionsView> logger, IConversationCards conversationCards, IWebDriverUtilities webDriverUtilities)
         {
             _logger = logger;
+            _webDriverUtilities = webDriverUtilities;
             _conversationCards = conversationCards;
         }
 
         private readonly ILogger<ConnectionsView> _logger;
+        private readonly IWebDriverUtilities _webDriverUtilities;
         private readonly IConversationCards _conversationCards;
 
         private void WaitUntilUlTagIsVisible(IWebDriver webDriver)
@@ -52,9 +54,9 @@ namespace PageObjects
         }
 
 
-        private IReadOnlyCollection<IWebElement> RecentlyAddedLis(IWebDriver webDriver)
+        private IList<IWebElement> RecentlyAddedLis(IWebDriver webDriver)
         {
-            IReadOnlyCollection<IWebElement> recentlyAddedProspects = default;
+            IList<IWebElement> recentlyAddedProspects = default;
             try
             {
                 WaitUntilUlTagIsVisible(webDriver);
@@ -67,7 +69,7 @@ namespace PageObjects
             return recentlyAddedProspects;
         }
 
-        private string GetNameFromLiTag(IWebElement liTag)
+        public string GetNameFromLiTag(IWebElement liTag)
         {
             string prospectName = string.Empty;
             try
@@ -86,7 +88,7 @@ namespace PageObjects
             return prospectName;
         }
 
-        private string GetProfileUrlFromLiTag(IWebElement liTag)
+        public string GetProfileUrlFromLiTag(IWebElement liTag)
         {
             string prospectProfileUrl = string.Empty;
             try
@@ -107,10 +109,16 @@ namespace PageObjects
 
         public IList<RecentlyAddedProspect> GetAllRecentlyAdded(IWebDriver webDriver)
         {
-            IReadOnlyCollection<IWebElement> recentlyAdded = RecentlyAddedLis(webDriver);
+            IList<IWebElement> recentlyAdded = RecentlyAddedLis(webDriver);
             IList<RecentlyAddedProspect> prospects = CreateRecentlyAddedFromElements(recentlyAdded.ToList());
 
             return prospects;
+        }
+
+        public IList<IWebElement> GetRecentlyAdded(IWebDriver webDriver)
+        {
+            IList<IWebElement> recentlyAdded = _webDriverUtilities.WaitUntilNotNull(RecentlyAddedLis, webDriver, 30);
+            return recentlyAdded;
         }
 
         private RecentlyAddedProspect CreateRecentlyAddedFromElement(IWebElement recentlyAdded, int addedNumberOfHoursAgo)
@@ -162,7 +170,7 @@ namespace PageObjects
 
         private bool AddedBeforeDesiredHoursAgo(IWebElement recentlyAdded, int fromMaxHoursAgo, out int numOfHoursAgo)
         {
-            IWebElement timeElement = TimeTag(recentlyAdded);
+            IWebElement timeElement = GetTimeTag(recentlyAdded);
             numOfHoursAgo = 0;
 
             if (timeElement == null)
@@ -220,7 +228,7 @@ namespace PageObjects
             }
         }
 
-        private IWebElement TimeTag(IWebElement webElement)
+        public IWebElement GetTimeTag(IWebElement webElement)
         {
             IWebElement timeTag = default;
             try
@@ -263,6 +271,12 @@ namespace PageObjects
             {
                 _logger.LogError(ex, "Failed to locate connection header after waiting for 30 seconds by class name 'mn-connections__header'");
             }
+        }
+
+        public IWebElement GetConnectionsHeader(IWebDriver webDriver)
+        {
+            IWebElement connectionHeader = _webDriverUtilities.WaitUntilNotNull(ConnectionsHeader, webDriver, 30);
+            return connectionHeader;
         }
 
         public int GetConnectionsCount(IWebDriver webDriver)

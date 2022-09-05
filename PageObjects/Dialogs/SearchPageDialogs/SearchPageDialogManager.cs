@@ -13,8 +13,8 @@ namespace PageObjects.Dialogs.SearchPageDialogs
         public SearchPageDialogManager(
             ILogger<SearchPageDialogManager> logger,
             IWebDriverUtilities webDriverUtilities,
-            IHowDoYouKnowModalService howDoYouKnowModalService,
-            ICustomizeInvitationModalService customizeInvitationModalService
+            IHowDoYouKnowModalServicePOM howDoYouKnowModalService,
+            ICustomizeInvitationModalServicePOM customizeInvitationModalService
             )
         {
             _logger = logger;
@@ -23,8 +23,8 @@ namespace PageObjects.Dialogs.SearchPageDialogs
             _customizeInvitationModalService = customizeInvitationModalService;
         }
 
-        private readonly ICustomizeInvitationModalService _customizeInvitationModalService;
-        private readonly IHowDoYouKnowModalService _howDoYouKnowModalService;
+        private readonly ICustomizeInvitationModalServicePOM _customizeInvitationModalService;
+        private readonly IHowDoYouKnowModalServicePOM _howDoYouKnowModalService;
         private readonly IWebDriverUtilities _webDriverUtilities;
         private readonly ILogger<SearchPageDialogManager> _logger;
 

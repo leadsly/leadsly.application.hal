@@ -48,6 +48,7 @@ namespace Hal
                     .AddInteractionHandlers()
                     .AddOrchestratorServices()
                     .AddServicesConfiguration()
+                    .AddRabbitMQEventHandlers()
                     .AddHostedService<ConsumingHostedService>()
                     .AddMemoryCache();
 

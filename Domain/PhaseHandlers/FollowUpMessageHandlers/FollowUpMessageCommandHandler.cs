@@ -13,12 +13,12 @@ namespace Domain.PhaseHandlers.FollowUpMessageHandlers
             IMessageExecutorHandler<FollowUpMessageBody> messageExecutorHandler,
             ILogger<FollowUpMessageCommandHandler> logger)
         {
-            messageExecutorHandler = _messageExecutorHandler;
+            _messageExecutorHandler = messageExecutorHandler;
             _logger = logger;
         }
 
         private readonly ILogger<FollowUpMessageCommandHandler> _logger;
-        private IMessageExecutorHandler<FollowUpMessageBody> _messageExecutorHandler;
+        private readonly IMessageExecutorHandler<FollowUpMessageBody> _messageExecutorHandler;
 
         public async Task HandleAsync(FollowUpMessageCommand command)
         {
@@ -31,11 +31,11 @@ namespace Domain.PhaseHandlers.FollowUpMessageHandlers
 
             if (succeeded == true)
             {
-                _logger.LogDebug($"DeepScanProspectsForReplies phase finishex executing successfully");
+                _logger.LogDebug($"{nameof(FollowUpMessageBody)} phase finished executing successfully");
             }
             else
             {
-                _logger.LogDebug($"DeepScanProspectsForReplies phase finishex executing unsuccessfully");
+                _logger.LogDebug($"{nameof(FollowUpMessageBody)} phase finished executing unsuccessfully");
             }
         }
     }

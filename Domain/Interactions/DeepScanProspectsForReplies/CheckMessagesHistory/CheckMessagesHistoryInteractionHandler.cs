@@ -14,7 +14,7 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory
         public CheckMessagesHistoryInteractionHandler(
             ILogger<CheckMessagesHistoryInteractionHandler> logger,
             ITimestampService timestampService,
-            IDeepScanProspectsService service)
+            IDeepScanProspectsServicePOM service)
         {
             _logger = logger;
             _service = service;
@@ -22,7 +22,7 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory
         }
 
         private readonly ITimestampService _timestampService;
-        private readonly IDeepScanProspectsService _service;
+        private readonly IDeepScanProspectsServicePOM _service;
         private readonly ILogger<CheckMessagesHistoryInteractionHandler> _logger;
 
         private ProspectReplied Prospect { get; set; }

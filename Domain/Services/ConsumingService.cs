@@ -1,6 +1,5 @@
 ﻿using Domain.PhaseConsumers.FollowUpMessageHandlers;
 using Domain.PhaseConsumers.MonitorForNewConnectionsHandlers;
-using Domain.PhaseConsumers.NetworkingConnectionsHandlers;
 using Domain.PhaseConsumers.NetworkingHandler;
 using Domain.PhaseConsumers.RestartApplicationHandler;
 using Domain.PhaseConsumers.ScanProspectsForRepliesHandlers;
@@ -58,13 +57,6 @@ namespace Domain.Services
                 FollowUpMessageConsumerCommand followUpCommand = new FollowUpMessageConsumerCommand(halIdentity.Id);
                 await followUpHandler.ConsumeAsync(followUpCommand);
 
-
-                ////////////////////////////////////////////////////////////////////////////////////
-                /// Consume NetworkingConnections [ ProspectListPhase OR SendConnectionsPhase ] messages
-                ////////////////////////////////////////////////////////////////////////////////////
-                HalConsumingCommandHandlerDecorator<NetworkingConnectionsConsumerCommand> networkingConnectionsHandler = scope.ServiceProvider.GetRequiredService<HalConsumingCommandHandlerDecorator<NetworkingConnectionsConsumerCommand>>();
-                NetworkingConnectionsConsumerCommand networkingConnectionCommand = new NetworkingConnectionsConsumerCommand(halIdentity.Id);
-                await networkingConnectionsHandler.ConsumeAsync(networkingConnectionCommand);
 
                 ////////////////////////////////////////////////////////////////////////////////////
                 /// Consume Networking [ ProspectListPhase AND SendConnectionsPhase ]

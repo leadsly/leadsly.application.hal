@@ -13,7 +13,7 @@ namespace Domain.Executors.FollowUpMessage
         public FollowUpMessageExecutorHandler(
             ILogger<FollowUpMessageExecutorHandler> logger,
             IFollowUpMessagePhaseOrchestrator orchestrator,
-            ISendFollowUpMessageService service
+            IFollowUpMessageService service
             )
         {
             _logger = logger;
@@ -22,7 +22,7 @@ namespace Domain.Executors.FollowUpMessage
         }
 
         private readonly ILogger<FollowUpMessageExecutorHandler> _logger;
-        private readonly ISendFollowUpMessageService _service;
+        private readonly IFollowUpMessageService _service;
         private readonly IFollowUpMessagePhaseOrchestrator _orchestrator;
 
         public async Task<bool> ExecuteMessageAsync(FollowUpMessageBody message)

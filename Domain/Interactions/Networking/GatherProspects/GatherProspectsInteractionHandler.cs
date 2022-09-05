@@ -129,6 +129,7 @@ namespace Domain.Interactions.Networking.GatherProspects
             bool isNoSearchResultsContainerDisplayed = _linkedInSearchPage.IsNoSearchResultsContainerDisplayed(webDriver);
             if (isNoSearchResultsContainerDisplayed == true)
             {
+                _humanBehaviorService.RandomWaitSeconds(2, 5);
                 bool? retrySearchOperationResult = _linkedInSearchPage.ClickRetrySearch(webDriver, 2, 5);
                 if (retrySearchOperationResult == null)
                 {

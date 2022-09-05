@@ -1,7 +1,5 @@
 ﻿using Domain;
 using Domain.POMs.Pages;
-using Leadsly.Application.Model;
-using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
@@ -9,9 +7,9 @@ using System;
 
 namespace PageObjects.Pages
 {
-    public class LinkedInPage : LeadslyBase, ILinkedInPage
+    public class LinkedInPage : ILinkedInPage
     {
-        public LinkedInPage(ILogger<LinkedInPage> logger, IWebDriverUtilities webDriverUtilities) : base(logger)
+        public LinkedInPage(ILogger<LinkedInPage> logger, IWebDriverUtilities webDriverUtilities)
         {
             this._logger = logger;
             _webDriverUtilities = webDriverUtilities;
@@ -19,19 +17,6 @@ namespace PageObjects.Pages
 
         private readonly ILogger<LinkedInPage> _logger;
         private readonly IWebDriverUtilities _webDriverUtilities;
-
-        public bool IsAuthenticationRequired(IWebDriver webDriver)
-        {
-            return SignInContainer(webDriver) != null;
-        }
-
-        public bool IsSignInContainerDisplayed(IWebDriver webDriver)
-        {
-            _logger.LogDebug("Checking if the sign in container is displayed, waiting for 3 seconds");
-            IWebElement signInContainer = _webDriverUtilities.WaitUntilNotNull(SignInContainer, webDriver, 3);
-
-            return signInContainer != null;
-        }
 
         public SignInOperationResult DetermineSignInStatus(IWebDriver webDriver)
         {
@@ -333,7 +318,6 @@ namespace PageObjects.Pages
             return emailPinChallengeForm;
         }
 
-
         private IWebElement SignInContainer(IWebDriver webDriver)
         {
             IWebElement signInContainer = null;
@@ -363,15 +347,22 @@ namespace PageObjects.Pages
             return newsFeed;
         }
 
-        public HalOperationResult<T> GoToPage<T>(IWebDriver webDriver, string pageUrl) where T : IOperationResponse
-        {
-            return base.GoToPageUrl<T>(webDriver, pageUrl);
-        }
-
         public void NavigateToPage(IWebDriver webDriver, string pageUrl)
         {
 
-            base.NavigateToPage(webDriver, pageUrl);
+            try
+            {
+                webDriver.Navigate().GoToUrl(new Uri(pageUrl));
+            }
+            catch (WebDriverTimeoutException timeoutEx)
+            {
+                throw timeoutEx;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Failed to navigate to page {pageUrl}");
+                throw ex;
+            }
         }
     }
 }

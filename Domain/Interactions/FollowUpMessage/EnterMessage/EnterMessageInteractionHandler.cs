@@ -7,7 +7,7 @@ namespace Domain.Interactions.FollowUpMessage.EnterMessage
     public class EnterMessageInteractionHandler : IEnterMessageInteractionHandler
     {
         public EnterMessageInteractionHandler(
-            IFollowUpMessageService service,
+            IFollowUpMessageServicePOM service,
             ILogger<EnterMessageInteractionHandler> logger
             )
         {
@@ -16,7 +16,7 @@ namespace Domain.Interactions.FollowUpMessage.EnterMessage
         }
 
         private readonly ILogger<EnterMessageInteractionHandler> _logger;
-        private readonly IFollowUpMessageService _service;
+        private readonly IFollowUpMessageServicePOM _service;
 
         public bool HandleInteraction(InteractionBase interaction)
         {

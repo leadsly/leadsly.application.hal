@@ -17,10 +17,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Converters\" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\Leadsly.Application.Model\Leadsly.Application.Model.csproj" />
 	</ItemGroup>
 

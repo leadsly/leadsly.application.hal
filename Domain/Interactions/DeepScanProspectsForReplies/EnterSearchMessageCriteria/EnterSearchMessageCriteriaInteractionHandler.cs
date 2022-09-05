@@ -8,13 +8,13 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.EnterSearchMessageCrit
     {
         public EnterSearchMessageCriteriaInteractionHandler(
             ILogger<EnterSearchMessageCriteriaInteractionHandler> logger,
-            IDeepScanProspectsService service)
+            IDeepScanProspectsServicePOM service)
         {
             _logger = logger;
             _service = service;
         }
 
-        private readonly IDeepScanProspectsService _service;
+        private readonly IDeepScanProspectsServicePOM _service;
         private readonly ILogger<EnterSearchMessageCriteriaInteractionHandler> _logger;
 
         public bool HandleInteraction(InteractionBase interaction)

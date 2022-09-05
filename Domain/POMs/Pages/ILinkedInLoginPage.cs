@@ -7,14 +7,9 @@ namespace Domain.POMs.Pages
     public interface ILinkedInLoginPage
     {
         public bool ConfirmAccountDisplayed(IWebDriver webDriver);
-        public bool SomethingUnexpectedHappenedToastDisplayed(IWebDriver webDriver);
-        public bool CheckIfUnexpectedViewRendered(IWebDriver webDriver);
-        public bool SMSVerificationCodeErrorDisplayed(IWebDriver webDriver);
-        public bool IsTwoFactorAuthRequired(IWebDriver webDriver);
         public TwoFactorAuthType TwoFactorAuthenticationType(IWebDriver webDriver);
         public TwoFactorAuthResult DetermineTwoFactorAuthStatus(IWebDriver webDriver);
         public EmailChallengePinResult DetermineEmailChallengeStatus(IWebDriver webDriver);
-        public IWebElement SomethingUnexpectedHappenedToast(IWebDriver webdriver);
 
         HalOperationResult<T> EnterEmail<T>(IWebDriver driver, string email)
             where T : IOperationResponse;

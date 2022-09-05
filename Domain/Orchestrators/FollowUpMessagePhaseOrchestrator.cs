@@ -5,7 +5,6 @@ using Domain.Interactions.FollowUpMessage.EnterMessage;
 using Domain.Interactions.FollowUpMessage.EnterProspectName;
 using Domain.Models.Requests;
 using Domain.Orchestrators.Interfaces;
-using Domain.Providers.Campaigns;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model.Campaigns;
@@ -101,7 +100,6 @@ namespace Domain.Orchestrators
             {
                 MessageOrderNum = message.OrderNum,
                 CampaignProspectId = message.CampaignProspectId,
-                ProspectName = message.ProspectName,
                 ActualDeliveryDateTimeStamp = _timestampService.TimestampNow()
             };
         }

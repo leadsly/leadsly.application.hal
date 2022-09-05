@@ -1,5 +1,5 @@
-﻿using Domain.RabbitMQ.Interfaces;
-using Domain.Services.Interfaces;
+﻿using Domain.RabbitMQ.EventHandlers.Interfaces;
+using Domain.RabbitMQ.Interfaces;
 using Leadsly.Application.Model;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client.Events;
@@ -9,15 +9,18 @@ namespace Domain.PhaseConsumers.RestartApplicationHandler
 {
     public class RestartApplicationConsumerCommandHandler : IConsumeCommandHandler<RestartApplicationConsumerCommand>
     {
-        public RestartApplicationConsumerCommandHandler(ILogger<RestartApplicationConsumerCommandHandler> logger, IRabbitMQManager rabbitMQManager, IPhaseEventHandlerService phaseEventHandlerService)
+        public RestartApplicationConsumerCommandHandler(
+            ILogger<RestartApplicationConsumerCommandHandler> logger,
+            IRabbitMQManager rabbitMQManager,
+            IRestartApplicationEventHandler handler)
         {
             _logger = logger;
             _rabbitMQManager = rabbitMQManager;
-            _phaseEventHandlerService = phaseEventHandlerService;
+            _handler = handler;
         }
 
         private readonly ILogger<RestartApplicationConsumerCommandHandler> _logger;
-        private readonly IPhaseEventHandlerService _phaseEventHandlerService;
+        private readonly IRestartApplicationEventHandler _handler;
         private readonly IRabbitMQManager _rabbitMQManager;
 
         public Task ConsumeAsync(RestartApplicationConsumerCommand command)
@@ -25,7 +28,7 @@ namespace Domain.PhaseConsumers.RestartApplicationHandler
             string queueNameIn = RabbitMQConstants.RestartApplication.QueueName;
             string routingKeyIn = RabbitMQConstants.RestartApplication.RoutingKey;
             string halId = command.HalId;
-            AsyncEventHandler<BasicDeliverEventArgs> onEventFiredHandlerAsync = _phaseEventHandlerService.OnRestartApplicationEventReceivedAsync;
+            AsyncEventHandler<BasicDeliverEventArgs> onEventFiredHandlerAsync = _handler.OnRestartApplicationEventReceivedAsync;
 
             _rabbitMQManager.StartConsuming(queueNameIn, routingKeyIn, halId, onEventFiredHandlerAsync);
 

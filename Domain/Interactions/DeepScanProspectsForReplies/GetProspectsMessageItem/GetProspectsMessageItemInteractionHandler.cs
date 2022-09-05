@@ -10,13 +10,13 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageIte
     {
         public GetProspectsMessageItemInteractionHandler(
             ILogger<GetProspectsMessageItemInteractionHandler> logger,
-            IDeepScanProspectsService service)
+            IDeepScanProspectsServicePOM service)
         {
             _logger = logger;
             _service = service;
         }
 
-        private readonly IDeepScanProspectsService _service;
+        private readonly IDeepScanProspectsServicePOM _service;
         private readonly ILogger<GetProspectsMessageItemInteractionHandler> _logger;
 
         private IList<IWebElement> ProspectMessageItems { get; set; } = new List<IWebElement>();

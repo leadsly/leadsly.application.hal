@@ -31,12 +31,12 @@ namespace Domain.PhaseHandlers.NetworkingHandler
             bool succeeded = await _messageExecutorHandler.ExecuteMessageAsync(message);
             if (succeeded == true)
             {
-                _logger.LogInformation("Networking phase executed successfully. Acknowledging message");
+                _logger.LogInformation($"Positively acknowledging {nameof(NetworkingMessageBody)}");
                 channel.BasicAck(eventArgs.DeliveryTag, false);
             }
             else
             {
-                _logger.LogWarning("Networking phase did not successfully execute. Negatively acknowledging the message. This message will not be re-queued");
+                _logger.LogInformation($"Negatively acknowledging {nameof(NetworkingMessageBody)}");
                 channel.BasicNackRetry(eventArgs);
             }
         }
