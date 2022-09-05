@@ -1,9 +1,9 @@
 ﻿using Domain.Interactions.Networking.GatherProspects.Interfaces;
-using Domain.Models.Requests;
+using Domain.Models.ProspectList;
+using Domain.Models.RabbitMQMessages;
 using Domain.POMs;
 using Domain.POMs.Pages;
 using Domain.Services.Interfaces;
-using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
@@ -21,13 +21,13 @@ namespace Domain.Interactions.Networking.GatherProspects
             _linkedInSearchPage = linkedInSearchPage;
         }
 
-        public List<PersistPrimaryProspectRequest> PersistPrimaryProspectRequests
+        public List<PersistPrimaryProspect> PersistPrimaryProspects
         {
             get
             {
                 // anytime we get values from this property, reset it back to zero
-                List<PersistPrimaryProspectRequest> requests = _persistPrimaryProspectRequests;
-                _persistPrimaryProspectRequests = new List<PersistPrimaryProspectRequest>();
+                List<PersistPrimaryProspect> requests = _persistPrimaryProspectRequests;
+                _persistPrimaryProspectRequests = new List<PersistPrimaryProspect>();
                 return requests;
             }
             set
@@ -37,7 +37,7 @@ namespace Domain.Interactions.Networking.GatherProspects
 
         }
 
-        private List<PersistPrimaryProspectRequest> _persistPrimaryProspectRequests = new List<PersistPrimaryProspectRequest>();
+        private List<PersistPrimaryProspect> _persistPrimaryProspectRequests = new List<PersistPrimaryProspect>();
         public IList<IWebElement> Prospects { get; set; }
         private readonly ILinkedInSearchPage _linkedInSearchPage;
         private readonly ILogger<GatherProspectsInteractionHandler> _logger;
@@ -153,16 +153,16 @@ namespace Domain.Interactions.Networking.GatherProspects
         private void ProspectList(IWebDriver webDriver, NetworkingMessageBody message)
         {
             _logger.LogDebug($"Persisting {Prospects.Count} prospects as part of the ProspectListPhase.");
-            List<PersistPrimaryProspectRequest> collectedProspects = CreatePrimaryProspects(Prospects, message.PrimaryProspectListId);
+            List<PersistPrimaryProspect> collectedProspects = CreatePrimaryProspects(Prospects, message.PrimaryProspectListId);
             if (collectedProspects.Count > 0)
             {
-                PersistPrimaryProspectRequests = collectedProspects;
+                PersistPrimaryProspects = collectedProspects;
             }
         }
 
-        private List<PersistPrimaryProspectRequest> CreatePrimaryProspects(IList<IWebElement> prospects, string primaryProspectListId)
+        private List<PersistPrimaryProspect> CreatePrimaryProspects(IList<IWebElement> prospects, string primaryProspectListId)
         {
-            List<PersistPrimaryProspectRequest> primaryProspects = new List<PersistPrimaryProspectRequest>();
+            List<PersistPrimaryProspect> primaryProspects = new List<PersistPrimaryProspect>();
             foreach (IWebElement webElement in prospects)
             {
                 primaryProspects.Add(new()

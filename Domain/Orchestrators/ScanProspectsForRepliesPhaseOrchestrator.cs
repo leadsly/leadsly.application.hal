@@ -4,13 +4,13 @@ using Domain.Interactions;
 using Domain.Interactions.ScanProspectsForReplies.GetMessageContent;
 using Domain.Interactions.ScanProspectsForReplies.GetNewMessages;
 using Domain.Interactions.Shared.CloseAllConversations;
+using Domain.Models.RabbitMQMessages;
+using Domain.Models.ScanProspectsForReplies;
 using Domain.Orchestrators.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
-using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.Requests;
+using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
-using Leadsly.Application.Model.WebDriver;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
@@ -37,7 +37,7 @@ namespace Domain.Orchestrators
         private readonly ITimestampService _timestampService;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<ScanProspectsForRepliesPhaseOrchestrator> _logger;
-        private IList<NewMessageRequest> NewMessageRequests { get; set; } = new List<NewMessageRequest>();
+        private IList<NewMessage> NewMessages { get; set; } = new List<NewMessage>();
         public static bool IsRunning { get; set; } = false;
 
         public event EndOfWorkDayReachedEventHandler EndOfWorkDayReached;
@@ -98,19 +98,19 @@ namespace Domain.Orchestrators
                     _logger.LogDebug("An error occured when attempting to close all of the active conversations on the screen. It is ok, just logging and continuing on.");
                 }
 
-                IList<IWebElement> newMessages = _interactionsFacade.NewMessages;
-                foreach (IWebElement newMessage in newMessages)
+                IList<IWebElement> newMessagesElement = _interactionsFacade.NewMessageElements;
+                foreach (IWebElement newMessageElement in newMessagesElement)
                 {
-                    bool getMessageContentSucceeded = GetMessageContent(webDriver, newMessage);
+                    bool getMessageContentSucceeded = GetMessageContent(webDriver, newMessageElement);
                     if (getMessageContentSucceeded == false)
                     {
                         continue;
                     }
 
-                    NewMessageRequest newMessageRequest = _interactionsFacade.NewMessageRequest;
-                    if (newMessageRequest != null)
+                    NewMessage newMessage = _interactionsFacade.NewMessage;
+                    if (newMessage != null)
                     {
-                        NewMessageRequests.Add(newMessageRequest);
+                        NewMessages.Add(newMessage);
                     }
                 }
 
@@ -151,9 +151,9 @@ namespace Domain.Orchestrators
 
         private void OutputMessageResponses(ScanProspectsForRepliesBody message)
         {
-            if (NewMessageRequests.Count > 0)
+            if (NewMessages.Count > 0)
             {
-                this.NewMessagesReceived.Invoke(this, new NewMessagesReceivedEventArgs(message, NewMessageRequests));
+                this.NewMessagesReceived.Invoke(this, new NewMessagesReceivedEventArgs(message, NewMessages));
             }
         }
     }

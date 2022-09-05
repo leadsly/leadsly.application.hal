@@ -1,8 +1,8 @@
 ﻿using Domain.Interactions.ScanProspectsForReplies.GetMessageContent.Interfaces;
 using Domain.Interactions.ScanProspectsForReplies.GetNewMessages;
+using Domain.Models.ScanProspectsForReplies;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.POMs;
-using Leadsly.Application.Model.Requests;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System.Collections.Generic;
@@ -22,7 +22,7 @@ namespace Domain.Interactions.ScanProspectsForReplies.GetMessageContent
         private readonly ILogger<GetNewMessagesInteractionHandler> _logger;
         private readonly ITimestampService _timestampService;
         private readonly IScanProspectsServicePOM _service;
-        private NewMessageRequest NewMessageRequest { get; set; }
+        private NewMessage NewMessage { get; set; }
         public bool HandleInteraction(InteractionBase interaction)
         {
             GetMessageContentInteraction getMessageContentInteraction = interaction as GetMessageContentInteraction;
@@ -39,24 +39,24 @@ namespace Domain.Interactions.ScanProspectsForReplies.GetMessageContent
             if (messageContent != null)
             {
                 _logger.LogDebug("Message content was found");
-                NewMessageRequest request = new()
+                NewMessage newMessage = new()
                 {
                     ProspectName = _service.ProspectNameFromMessage(getMessageContentInteraction.Message),
                     ResponseMessage = messageContent.Text,
                     ResponseMessageTimestamp = _timestampService.TimestampNow()
                 };
 
-                NewMessageRequest = request;
+                NewMessage = newMessage;
             }
 
             return true;
         }
 
-        public NewMessageRequest GetNewMessageRequest()
+        public NewMessage GetNewMessage()
         {
-            NewMessageRequest request = NewMessageRequest;
-            NewMessageRequest = null;
-            return request;
+            NewMessage newMessage = NewMessage;
+            NewMessage = null;
+            return newMessage;
         }
     }
 }

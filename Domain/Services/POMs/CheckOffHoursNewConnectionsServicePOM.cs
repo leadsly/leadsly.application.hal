@@ -1,4 +1,4 @@
-﻿using Domain.Models;
+﻿using Domain.Models.MonitorForNewProspects;
 using Domain.POMs;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.POMs;

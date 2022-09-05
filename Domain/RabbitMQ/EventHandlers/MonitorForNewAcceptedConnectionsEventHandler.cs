@@ -1,7 +1,7 @@
-﻿using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
+﻿using Domain.Models.RabbitMQMessages;
+using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
 using Domain.RabbitMQ.EventHandlers.Interfaces;
 using Leadsly.Application.Model;
-using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RabbitMQ.Client;

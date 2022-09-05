@@ -1,4 +1,5 @@
 ﻿using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince.Interfaces;
+using Domain.Models.MonitorForNewProspects;
 using Domain.Services.Interfaces.POMs;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
@@ -17,12 +18,12 @@ namespace Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSin
 
         private readonly ILogger<GetAllRecentlyAddedSinceInteractionHandler> _logger;
         private readonly ICheckOffHoursNewConnectionsServicePOM _service;
-        private IList<Models.RecentlyAddedProspect> RecentlyAddedProspects { get; set; } = new List<Models.RecentlyAddedProspect>();
+        private IList<RecentlyAddedProspect> RecentlyAddedProspects { get; set; } = new List<RecentlyAddedProspect>();
 
         public bool HandleInteraction(InteractionBase interaction)
         {
             GetAllRecentlyAddedSinceInteraction getAllRecentlyInteraction = interaction as GetAllRecentlyAddedSinceInteraction;
-            IList<Models.RecentlyAddedProspect> recentlyAdded = _service.GetAllRecentlyAddedSince(getAllRecentlyInteraction.WebDriver, getAllRecentlyInteraction.NumOfHoursAgo, getAllRecentlyInteraction.TimezoneId);
+            IList<RecentlyAddedProspect> recentlyAdded = _service.GetAllRecentlyAddedSince(getAllRecentlyInteraction.WebDriver, getAllRecentlyInteraction.NumOfHoursAgo, getAllRecentlyInteraction.TimezoneId);
             if (recentlyAdded == null)
             {
                 // handle failures or retries here
@@ -33,10 +34,10 @@ namespace Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSin
             return true;
         }
 
-        public IList<Models.RecentlyAddedProspect> GetRecentlyAddedProspects()
+        public IList<RecentlyAddedProspect> GetRecentlyAddedProspects()
         {
-            IList<Models.RecentlyAddedProspect> prospects = RecentlyAddedProspects;
-            RecentlyAddedProspects = new List<Models.RecentlyAddedProspect>();
+            IList<RecentlyAddedProspect> prospects = RecentlyAddedProspects;
+            RecentlyAddedProspects = new List<RecentlyAddedProspect>();
             return prospects;
         }
     }

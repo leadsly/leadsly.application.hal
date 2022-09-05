@@ -1,5 +1,5 @@
 ﻿using Domain.Executors;
-using Leadsly.Application.Model.Campaigns;
+using Domain.Models.RabbitMQMessages;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;

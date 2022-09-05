@@ -1,9 +1,9 @@
-﻿using Leadsly.Application.Model.Requests;
+﻿using Domain.Models.ScanProspectsForReplies;
 
 namespace Domain.Interactions.ScanProspectsForReplies.GetMessageContent.Interfaces
 {
     public interface IGetMessageContentInteractionHandler : IInteractionHandler
     {
-        public NewMessageRequest GetNewMessageRequest();
+        public NewMessage GetNewMessage();
     }
 }

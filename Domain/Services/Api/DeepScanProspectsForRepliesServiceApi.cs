@@ -1,5 +1,4 @@
-﻿using Domain.Models;
-using Domain.Models.Requests;
+﻿using Domain.Models.Requests.DeepScanProspectsForReplies;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
 using Microsoft.Extensions.Logging;
@@ -63,7 +62,6 @@ namespace Domain.Services.Api
                     RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
-                        HalId = request.HalId,
                         Items = request.Items
                     })
                 };

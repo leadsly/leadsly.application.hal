@@ -1,4 +1,7 @@
 ﻿using Domain.Models.Requests;
+using Domain.Models.Requests.Networking;
+using Domain.Models.Requests.ProspectList;
+using Domain.Models.Requests.SendConnections;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
 using Microsoft.Extensions.Logging;
@@ -47,7 +50,7 @@ namespace Domain.Services.Api
             return response;
         }
 
-        public async Task<HttpResponseMessage> ProcessContactedCampaignProspectListAsync(CampaignProspectListRequest request, CancellationToken ct = default)
+        public async Task<HttpResponseMessage> ProcessSentConnectionsAsync(ConnectionsSentRequest request, CancellationToken ct = default)
         {
             string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 
@@ -60,10 +63,7 @@ namespace Domain.Services.Api
                     RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
-                        request.UserId,
-                        request.HalId,
-                        request.CampaignId,
-                        request.CampaignProspects
+                        Items = request.Items
                     })
                 };
 
@@ -129,49 +129,49 @@ namespace Domain.Services.Api
                         {
                             op = "replace",
                             path = "/windowHandleId",
-                            value = request.WindowHandleId
+                            value = request.Item.WindowHandleId
                         },
                         new
                         {
                             op = "replace",
                             path = "/lastPage",
-                            value = request.LastPage.ToString()
+                            value = request.Item.LastPage.ToString()
                         },
                         new
                         {
                             op = "replace",
                             path = "/lastProcessedProspect",
-                            value = request.LastProcessedProspect.ToString()
+                            value = request.Item.LastProcessedProspect.ToString()
                         },
                         new
                         {
                             op = "replace",
                             path = "/searchUrl",
-                            value = request.SearchUrl
+                            value = request.Item.SearchUrl
                         },
                         new
                         {
                             op = "replace",
                             path = "/startedCrawling",
-                            value = request.StartedCrawling.ToString()
+                            value = request.Item.StartedCrawling.ToString()
                         },
                         new
                         {
                             op = "replace",
                             path = "/exhausted",
-                            value = request.Exhausted.ToString()
+                            value = request.Item.Exhausted.ToString()
                         },
                         new
                         {
                             op = "replace",
                             path = "/lastActivityTimestamp",
-                            value = request.LastActivityTimestamp.ToString()
+                            value = request.Item.LastActivityTimestamp.ToString()
                         },
                         new
                         {
                             op = "replace",
                             path = "/totalSearchResults",
-                            value = request.TotalSearchResults.ToString()
+                            value = request.Item.TotalSearchResults.ToString()
                         }
                     })
                 };
@@ -200,13 +200,8 @@ namespace Domain.Services.Api
                     RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
-                        request.PrimaryProspectListId,
                         request.CampaignProspectListId,
-                        request.UserId,
-                        request.HalId,
-                        request.CampaignId,
-                        request.Prospects,
-
+                        request.Items
                     })
                 };
 

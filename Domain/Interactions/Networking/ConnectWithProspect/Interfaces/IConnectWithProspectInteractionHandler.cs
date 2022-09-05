@@ -1,9 +1,9 @@
-﻿using Domain.Models.Requests;
+﻿using Domain.Models.SendConnections;
 
 namespace Domain.Interactions.Networking.ConnectWithProspect.Interfaces
 {
     public interface IConnectWithProspectInteractionHandler : IInteractionHandler
     {
-        public ConnectionSentRequest ConnectionSentRequest { get; }
+        public ConnectionSent ConnectionSent { get; }
     }
 }

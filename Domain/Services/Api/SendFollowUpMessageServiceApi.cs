@@ -1,4 +1,4 @@
-﻿using Domain.Models.Requests;
+﻿using Domain.Models.Requests.FollowUpMessage;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
 using Microsoft.Extensions.Logging;
@@ -37,18 +37,17 @@ namespace Domain.Services.Api
                     RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
-                        CampaignProspectId = request.CampaignProspectId,
-                        MessageOrderNum = request.MessageOrderNum,
-                        MessageSentTimeStamp = request.ActualDeliveryDateTimeStamp
+                        MessageOrderNum = request.Item.MessageOrderNum,
+                        ActualDeliveryDateTimeStamp = request.Item.ActualDeliveryDateTimeStamp
                     })
                 };
 
-                _logger.LogInformation("Sending request to process campaign prospect {0} because we just sent them a follow up message", request.CampaignProspectId);
+                _logger.LogInformation("Sending request to process campaign prospect because we just sent them a follow up message");
                 response = await _httpClient.SendAsync(req, ct);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send request to update process campaign prospect {0} with sent follow up message", request.CampaignProspectId);
+                _logger.LogError(ex, "Failed to send request to update process campaign prospect with sent follow up message");
             }
 
             return response;

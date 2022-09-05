@@ -1,5 +1,5 @@
 ﻿using Domain.Interactions;
-using Domain.Models;
+using Domain.Models.DeepScanProspectsForReplies;
 using OpenQA.Selenium;
 using System.Collections.Generic;
 

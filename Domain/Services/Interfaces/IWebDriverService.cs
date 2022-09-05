@@ -1,7 +1,6 @@
 ﻿using Domain.Models;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
-using Leadsly.Application.Model.WebDriver;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using System.Collections.Generic;

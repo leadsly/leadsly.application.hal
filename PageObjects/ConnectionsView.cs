@@ -1,6 +1,5 @@
 ﻿using Domain.POMs;
 using Domain.POMs.Controls;
-using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
@@ -107,125 +106,10 @@ namespace PageObjects
             return prospectProfileUrl;
         }
 
-        public IList<RecentlyAddedProspect> GetAllRecentlyAdded(IWebDriver webDriver)
-        {
-            IList<IWebElement> recentlyAdded = RecentlyAddedLis(webDriver);
-            IList<RecentlyAddedProspect> prospects = CreateRecentlyAddedFromElements(recentlyAdded.ToList());
-
-            return prospects;
-        }
-
         public IList<IWebElement> GetRecentlyAdded(IWebDriver webDriver)
         {
             IList<IWebElement> recentlyAdded = _webDriverUtilities.WaitUntilNotNull(RecentlyAddedLis, webDriver, 30);
             return recentlyAdded;
-        }
-
-        private RecentlyAddedProspect CreateRecentlyAddedFromElement(IWebElement recentlyAdded, int addedNumberOfHoursAgo)
-        {
-            string prospectName = GetNameFromLiTag(recentlyAdded);
-            string prospectProfileUrl = GetProfileUrlFromLiTag(recentlyAdded);
-            return new RecentlyAddedProspect
-            {
-                Name = prospectName,
-                NumberOfHoursAgo = addedNumberOfHoursAgo,
-                ProfileUrl = prospectProfileUrl
-            };
-        }
-
-        private IList<RecentlyAddedProspect> CreateRecentlyAddedFromElements(IList<IWebElement> recentlyAdded)
-        {
-            IList<RecentlyAddedProspect> prospects = new List<RecentlyAddedProspect>();
-            foreach (IWebElement li in recentlyAdded)
-            {
-                string prospectName = GetNameFromLiTag(li);
-                string prospectProfileUrl = GetProfileUrlFromLiTag(li);
-                RecentlyAddedProspect potentialProspect = new()
-                {
-                    Name = prospectName,
-                    ProfileUrl = prospectProfileUrl
-                };
-
-                prospects.Add(potentialProspect);
-            }
-
-            return prospects;
-        }
-
-        public IList<RecentlyAddedProspect> GetRecentlyAdded(IWebDriver webDriver, int fromMaxHoursAgo)
-        {
-            IList<RecentlyAddedProspect> prospects = new List<RecentlyAddedProspect>();
-            IList<IWebElement> recentlyAdded = RecentlyAddedLis(webDriver).ToList();
-            foreach (IWebElement newProspect in recentlyAdded)
-            {
-                if (AddedBeforeDesiredHoursAgo(newProspect, fromMaxHoursAgo, out int addedNumOfHoursAgo) == true)
-                {
-                    RecentlyAddedProspect recentlyAddedProspect = CreateRecentlyAddedFromElement(newProspect, addedNumOfHoursAgo);
-                    prospects.Add(recentlyAddedProspect);
-                }
-            }
-
-            return prospects;
-        }
-
-        private bool AddedBeforeDesiredHoursAgo(IWebElement recentlyAdded, int fromMaxHoursAgo, out int numOfHoursAgo)
-        {
-            IWebElement timeElement = GetTimeTag(recentlyAdded);
-            numOfHoursAgo = 0;
-
-            if (timeElement == null)
-            {
-                return false;
-            }
-
-            string timeTagText = timeElement.Text;
-            if (timeTagText == null)
-            {
-                return false;
-            }
-
-            if (timeTagText.Contains("minute"))
-            {
-                return true;
-            }
-
-            if (timeTagText.Contains("day"))
-            {
-                return false;
-            }
-
-            if (timeTagText.Contains("week"))
-            {
-                return false;
-            }
-
-            if (timeTagText.Contains("month"))
-            {
-                return false;
-            }
-
-            string resultAsString = string.Empty;
-            int result = 0;
-            for (int i = 0; i < timeTagText.Length; i++)
-            {
-                if (Char.IsDigit(timeTagText[i]))
-                    resultAsString += timeTagText[i];
-            }
-
-            if (resultAsString.Length > 0)
-            {
-                result = int.Parse(resultAsString);
-            }
-
-            if (result <= fromMaxHoursAgo)
-            {
-                numOfHoursAgo = result;
-                return true;
-            }
-            else
-            {
-                return false;
-            }
         }
 
         public IWebElement GetTimeTag(IWebElement webElement)

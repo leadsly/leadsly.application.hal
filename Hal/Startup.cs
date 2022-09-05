@@ -43,7 +43,6 @@ namespace Hal
                     .AddPageObjectModelsConfiguration()
                     .AddFacadesConfiguration()
                     .AddProvidersConfiguration()
-                    .AddSerializersConfiguration()
                     .AddMessageExecutorHandlers()
                     .AddInteractionHandlers()
                     .AddOrchestratorServices()

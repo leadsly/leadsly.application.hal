@@ -1,8 +1,9 @@
-﻿using Domain.Models.Requests;
+﻿using Domain.Models.ProspectList;
+using Domain.Models.RabbitMQMessages;
 using Domain.Models.Responses;
+using Domain.Models.SendConnections;
 using Domain.Orchestrators.Interfaces;
 using Domain.Services.Interfaces;
-using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -62,25 +63,25 @@ namespace Domain.Executors.Networking
         private async Task ProcessDataAsync(NetworkingMessageBody message)
         {
             // perform all async calls now.
-            IList<ConnectionSentRequest> connectionSentRequests = _phaseOrchestrator.GetConnectionSentRequests();
-            if (connectionSentRequests.Count > 0)
+            IList<ConnectionSent> connectionSents = _phaseOrchestrator.GetConnectionsSent();
+            if (connectionSents.Count > 0)
             {
-                await _networkingService.ProcessSentConnectionsAsync(connectionSentRequests, message);
+                await _networkingService.ProcessSentConnectionsAsync(connectionSents, message);
             }
 
-            IList<UpdateSearchUrlProgressRequest> updateUrlRequests = _phaseOrchestrator.GetUpdateSearchUrlRequests();
-            if (updateUrlRequests.Count > 0)
+            IList<Domain.Models.Networking.SearchUrlProgress> items = _phaseOrchestrator.GetUpdatedSearchUrls();
+            if (items.Count > 0)
             {
-                await _networkingService.UpdateSearchUrlsAsync(updateUrlRequests, message);
+                await _networkingService.UpdateSearchUrlsAsync(items, message);
             }
 
-            List<PersistPrimaryProspectRequest> persistPrimaryProspectRequests = _phaseOrchestrator.GetPersistPrimaryProspectRequests();
-            if (persistPrimaryProspectRequests.Count > 0)
+            List<PersistPrimaryProspect> persistPrimaryProspects = _phaseOrchestrator.GetPersistPrimaryProspects();
+            if (persistPrimaryProspects.Count > 0)
             {
-                await _networkingService.ProcessProspectListAsync(persistPrimaryProspectRequests, message);
+                await _networkingService.ProcessProspectListAsync(persistPrimaryProspects, message);
             }
 
-            bool monthlyLimitReached = _phaseOrchestrator.GetMonthlySearchLimitReachedRequest();
+            bool monthlyLimitReached = _phaseOrchestrator.GetMonthlySearchLimitReached();
             await _networkingService.UpdateMonthlySearchLimitAsync(monthlyLimitReached, message);
 
         }

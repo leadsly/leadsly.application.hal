@@ -1,9 +1,9 @@
-﻿using Domain.Models;
-using Domain.Models.Requests;
+﻿using Domain.Models.DeepScanProspectsForReplies;
+using Domain.Models.RabbitMQMessages;
+using Domain.Models.Requests.DeepScanProspectsForReplies;
 using Domain.Models.Responses;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
-using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
@@ -69,7 +69,6 @@ namespace Domain.Services
         {
             ProspectsRepliedRequest request = new()
             {
-                HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
                 RequestUrl = $"DeepScanProspectsForReplies/{message.HalId}",

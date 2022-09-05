@@ -1,4 +1,4 @@
-﻿using Domain.Models.Requests;
+﻿using Domain.Models.Requests.MonitorForNewConnections;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
 using Microsoft.Extensions.Logging;

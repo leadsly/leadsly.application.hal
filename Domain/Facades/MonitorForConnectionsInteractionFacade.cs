@@ -4,6 +4,7 @@ using Domain.Interactions.MonitorForNewConnections.GetAllRecentlyAdded.Interface
 using Domain.Interactions.MonitorForNewConnections.GetConnectionsCount.Interfaces;
 using Domain.Interactions.Shared.CloseAllConversations.Interfaces;
 using Domain.Interactions.Shared.RefreshBrowser.Interfaces;
+using Domain.Models.MonitorForNewProspects;
 using System.Collections.Generic;
 
 namespace Domain.Facades
@@ -29,7 +30,7 @@ namespace Domain.Facades
 
         public int ConnectionsCount => _getConnectionsCountHandler.GetConnectionsCount();
 
-        public IList<Models.RecentlyAddedProspect> RecentlyAddedProspects => _getAllRecentlyAddedHandler.GetRecentlyAddedProspects();
+        public IList<RecentlyAddedProspect> RecentlyAddedProspects => _getAllRecentlyAddedHandler.GetRecentlyAddedProspects();
 
         public bool HandleCloseAllConversationsInteraction(InteractionBase interaction)
         {

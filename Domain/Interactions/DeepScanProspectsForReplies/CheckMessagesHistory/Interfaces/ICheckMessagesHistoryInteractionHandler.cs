@@ -1,4 +1,4 @@
-﻿using Domain.Models;
+﻿using Domain.Models.DeepScanProspectsForReplies;
 
 namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory.Interfaces
 {

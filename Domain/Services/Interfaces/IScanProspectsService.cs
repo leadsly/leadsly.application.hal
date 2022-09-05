@@ -1,5 +1,5 @@
-﻿using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.Requests;
+﻿using Domain.Models.RabbitMQMessages;
+using Domain.Models.ScanProspectsForReplies;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,6 +8,6 @@ namespace Domain.Services.Interfaces
 {
     public interface IScanProspectsService
     {
-        Task ProcessNewMessagesAsync(IList<NewMessageRequest> newMessageRequests, ScanProspectsForRepliesBody message, CancellationToken ct = default);
+        Task ProcessNewMessagesAsync(IList<NewMessage> items, ScanProspectsForRepliesBody message, CancellationToken ct = default);
     }
 }

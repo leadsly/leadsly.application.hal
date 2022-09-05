@@ -1,5 +1,5 @@
 ﻿using Domain.Executors.MonitorForNewConnections.Events;
-using Leadsly.Application.Model.Campaigns;
+using Domain.Models.RabbitMQMessages;
 
 namespace Domain.Orchestrators.Interfaces
 {

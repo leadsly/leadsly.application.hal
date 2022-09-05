@@ -1,11 +1,11 @@
-﻿using Domain.Models.Requests;
-using Leadsly.Application.Model.Campaigns;
+﻿using Domain.Models.FollowUpMessage;
+using Domain.Models.RabbitMQMessages;
 
 namespace Domain.Orchestrators.Interfaces
 {
     public interface IFollowUpMessagePhaseOrchestrator
     {
-        public SentFollowUpMessageRequest GetSentFollowUpMessage();
+        public SentFollowUpMessage GetSentFollowUpMessage();
         void Execute(FollowUpMessageBody message);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Domain.Executors.ScanProspectsForReplies.Events;
+using Domain.Models.RabbitMQMessages;
 
 namespace Domain.Orchestrators.Interfaces
 {
@@ -6,6 +7,6 @@ namespace Domain.Orchestrators.Interfaces
     {
         event EndOfWorkDayReachedEventHandler EndOfWorkDayReached;
         event NewMessagesReceivedEventHandler NewMessagesReceived;
-        void Execute(Leadsly.Application.Model.Campaigns.ScanProspectsForRepliesBody message);
+        void Execute(ScanProspectsForRepliesBody message);
     }
 }

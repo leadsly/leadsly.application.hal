@@ -1,6 +1,6 @@
-﻿using Domain.PhaseHandlers.FollowUpMessageHandlers;
+﻿using Domain.Models.RabbitMQMessages;
+using Domain.PhaseHandlers.FollowUpMessageHandlers;
 using Domain.RabbitMQ.EventHandlers.Interfaces;
-using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RabbitMQ.Client;

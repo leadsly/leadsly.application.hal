@@ -1,4 +1,5 @@
 ﻿using Domain.Interactions.MonitorForNewConnections.GetAllRecentlyAdded.Interfaces;
+using Domain.Models.MonitorForNewProspects;
 using Domain.Services.Interfaces.POMs;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
@@ -15,12 +16,12 @@ namespace Domain.Interactions.MonitorForNewConnections.GetAllRecentlyAdded
 
         private readonly ILogger<GetAllRecentlyAddedInteractionHandler> _logger;
         private readonly IMonitorForNewConnectionsServicePOM _service;
-        private IList<Models.RecentlyAddedProspect> RecentlyAddedProspects { get; set; } = new List<Models.RecentlyAddedProspect>();
+        private IList<RecentlyAddedProspect> RecentlyAddedProspects { get; set; } = new List<RecentlyAddedProspect>();
 
         public bool HandleInteraction(InteractionBase interaction)
         {
             GetAllRecentlyAddedInteraction getAllRecentlyInteraction = interaction as GetAllRecentlyAddedInteraction;
-            IList<Models.RecentlyAddedProspect> recentlyAdded = _service.GetAllRecentlyAdded(getAllRecentlyInteraction.WebDriver);
+            IList<RecentlyAddedProspect> recentlyAdded = _service.GetAllRecentlyAdded(getAllRecentlyInteraction.WebDriver);
             if (recentlyAdded == null)
             {
                 // handle failures or retries here
@@ -31,10 +32,10 @@ namespace Domain.Interactions.MonitorForNewConnections.GetAllRecentlyAdded
             return true;
         }
 
-        public IList<Models.RecentlyAddedProspect> GetRecentlyAddedProspects()
+        public IList<RecentlyAddedProspect> GetRecentlyAddedProspects()
         {
-            IList<Models.RecentlyAddedProspect> prospects = RecentlyAddedProspects;
-            RecentlyAddedProspects = new List<Models.RecentlyAddedProspect>();
+            IList<RecentlyAddedProspect> prospects = RecentlyAddedProspects;
+            RecentlyAddedProspects = new List<RecentlyAddedProspect>();
             return prospects;
         }
     }

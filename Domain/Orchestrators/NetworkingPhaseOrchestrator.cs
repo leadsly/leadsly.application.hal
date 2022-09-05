@@ -3,15 +3,14 @@ using Domain.Interactions.Networking.ConnectWithProspect;
 using Domain.Interactions.Networking.GatherProspects;
 using Domain.Interactions.Networking.NoResultsFound;
 using Domain.Interactions.Networking.SearchResultsLimit;
-using Domain.Models.Networking;
-using Domain.Models.Requests;
+using Domain.Models.ProspectList;
+using Domain.Models.RabbitMQMessages;
+using Domain.Models.SendConnections;
 using Domain.Orchestrators.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces.POMs;
 using Leadsly.Application.Model;
-using Leadsly.Application.Model.Campaigns;
 using Leadsly.Application.Model.Responses;
-using Leadsly.Application.Model.WebDriver;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System.Collections.Generic;
@@ -40,42 +39,42 @@ namespace Domain.Orchestrators
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<NetworkingPhaseOrchestrator> _logger;
 
-        private List<PersistPrimaryProspectRequest> PersistPrimaryProspectRequests { get; set; } = new List<PersistPrimaryProspectRequest>();
-        private IList<ConnectionSentRequest> ConnectionSentRequests { get; set; } = new List<ConnectionSentRequest>();
-        private IList<Models.Requests.UpdateSearchUrlProgressRequest> UpdateSearchUrlRequests { get; set; } = new List<Models.Requests.UpdateSearchUrlProgressRequest>();
+        private List<PersistPrimaryProspect> PersistPrimaryProspects { get; set; } = new List<PersistPrimaryProspect>();
+        private IList<ConnectionSent> ConnectionsSent { get; set; } = new List<ConnectionSent>();
+        private IList<Models.Networking.SearchUrlProgress> UpdatedSearchUrlsProgress { get; set; } = new List<Models.Networking.SearchUrlProgress>();
         private IList<IWebElement> Prospects { get; set; } = new List<IWebElement>();
         private int NumberOfConnectionsSent { get; set; }
         private bool MonthlySearchLimitReached;
 
-        public IList<UpdateSearchUrlProgressRequest> GetUpdateSearchUrlRequests()
+        public IList<Models.Networking.SearchUrlProgress> GetUpdatedSearchUrls()
         {
-            IList<UpdateSearchUrlProgressRequest> requests = UpdateSearchUrlRequests;
-            UpdateSearchUrlRequests = new List<Models.Requests.UpdateSearchUrlProgressRequest>();
-            return requests;
+            IList<Models.Networking.SearchUrlProgress> searchUrlProgress = UpdatedSearchUrlsProgress;
+            UpdatedSearchUrlsProgress = new List<Models.Networking.SearchUrlProgress>();
+            return searchUrlProgress;
         }
 
-        public List<PersistPrimaryProspectRequest> GetPersistPrimaryProspectRequests()
+        public List<PersistPrimaryProspect> GetPersistPrimaryProspects()
         {
-            List<PersistPrimaryProspectRequest> requests = PersistPrimaryProspectRequests;
-            PersistPrimaryProspectRequests = new List<PersistPrimaryProspectRequest>();
-            return requests;
+            List<PersistPrimaryProspect> prospects = PersistPrimaryProspects;
+            PersistPrimaryProspects = new List<PersistPrimaryProspect>();
+            return prospects;
         }
 
-        public IList<ConnectionSentRequest> GetConnectionSentRequests()
+        public IList<ConnectionSent> GetConnectionsSent()
         {
-            IList<ConnectionSentRequest> requests = ConnectionSentRequests;
-            ConnectionSentRequests = new List<ConnectionSentRequest>();
-            return requests;
+            IList<ConnectionSent> connectionsSent = ConnectionsSent;
+            ConnectionsSent = new List<ConnectionSent>();
+            return connectionsSent;
         }
 
-        public bool GetMonthlySearchLimitReachedRequest()
+        public bool GetMonthlySearchLimitReached()
         {
             bool limitReached = MonthlySearchLimitReached;
             MonthlySearchLimitReached = false;
             return limitReached;
         }
 
-        public void Execute(NetworkingMessageBody message, IList<SearchUrlProgress> searchUrlsProgress)
+        public void Execute(NetworkingMessageBody message, IList<Models.Networking.SearchUrlProgress> searchUrlsProgress)
         {
             string halId = message.HalId;
             _logger.LogInformation("Executing Networking Phase on hal id {halId}", halId);
@@ -90,7 +89,7 @@ namespace Domain.Orchestrators
             ExecuteInternal(message, webDriver, searchUrlsProgress);
         }
 
-        private void ExecuteInternal(NetworkingMessageBody message, IWebDriver webDriver, IList<SearchUrlProgress> searchUrlsProgress)
+        private void ExecuteInternal(NetworkingMessageBody message, IWebDriver webDriver, IList<Models.Networking.SearchUrlProgress> searchUrlsProgress)
         {
             try
             {
@@ -103,10 +102,10 @@ namespace Domain.Orchestrators
             }
         }
 
-        private void BeginNetworking(NetworkingMessageBody message, IWebDriver webDriver, IList<SearchUrlProgress> searchUrlsProgress)
+        private void BeginNetworking(NetworkingMessageBody message, IWebDriver webDriver, IList<Models.Networking.SearchUrlProgress> searchUrlsProgress)
         {
             _logger.LogDebug("Begning to execute networking phase");
-            foreach (SearchUrlProgress searchUrlProgress in searchUrlsProgress)
+            foreach (Models.Networking.SearchUrlProgress searchUrlProgress in searchUrlsProgress)
             {
                 if (PrepareBrowser(webDriver, searchUrlProgress, message.HalId) == false)
                 {
@@ -135,7 +134,7 @@ namespace Domain.Orchestrators
             _logger.LogDebug("Finished executing networking phase");
         }
 
-        private void ConnectWithProspectsForSearchUrl(IWebDriver webDriver, NetworkingMessageBody message, SearchUrlProgress searchUrlProgress, int totalResults)
+        private void ConnectWithProspectsForSearchUrl(IWebDriver webDriver, NetworkingMessageBody message, Models.Networking.SearchUrlProgress searchUrlProgress, int totalResults)
         {
             _logger.LogInformation("ConnectWithProspectsForSearchUrl executing");
             for (int currentPage = searchUrlProgress.LastPage; currentPage < totalResults + 1; currentPage++)
@@ -190,7 +189,7 @@ namespace Domain.Orchestrators
                 }
 
                 _logger.LogInformation("Adding PrimaryProspectRequests List");
-                PersistPrimaryProspectRequests.AddRange(_interactionFacade.PersistPrimaryProspectRequests);
+                PersistPrimaryProspects.AddRange(_interactionFacade.PersistPrimaryProspects);
 
                 // if number of prospects comes back as zero continue to the next page
                 if (_interactionFacade.Prospects.Count == 0)
@@ -245,7 +244,7 @@ namespace Domain.Orchestrators
                     if (IsLastPage(webDriver, currentPage, totalResults))
                     {
                         // if number of available prospects on this page, matches the number of connection requests we have sent, we've exhausted this url
-                        bool exhausted = Prospects.Count == ConnectionSentRequests.Count;
+                        bool exhausted = Prospects.Count == ConnectionsSent.Count;
                         UpdateCurrentPage_SearchUrlProgress(searchUrlProgress.SearchUrlProgressId, currentPage, webDriver.Url, exhausted);
                     }
                     else
@@ -260,7 +259,7 @@ namespace Domain.Orchestrators
                 if (IsLastPage(webDriver, currentPage, totalResults))
                 {
                     _logger.LogDebug("We are on the last page for this search result");
-                    bool exhausted = Prospects.Count == ConnectionSentRequests.Count;
+                    bool exhausted = Prospects.Count == ConnectionsSent.Count;
                     _logger.LogDebug("Has this search url been exhausted: {0}", exhausted);
                     UpdateCurrentPage_SearchUrlProgress(searchUrlProgress.SearchUrlProgressId, currentPage, webDriver.Url, exhausted);
                     break;
@@ -352,7 +351,7 @@ namespace Domain.Orchestrators
                 if (succeeded == true)
                 {
                     NumberOfConnectionsSent += 1;
-                    ConnectionSentRequests.Add(_interactionFacade.ConnectionSentRequest);
+                    ConnectionsSent.Add(_interactionFacade.ConnectionSent);
                 }
                 else
                 {
@@ -361,7 +360,7 @@ namespace Domain.Orchestrators
             }
         }
 
-        private bool PrepareBrowser(IWebDriver webDriver, SearchUrlProgress searchUrlProgress, string halId)
+        private bool PrepareBrowser(IWebDriver webDriver, Models.Networking.SearchUrlProgress searchUrlProgress, string halId)
         {
             HalOperationResult<IOperationResponse> result = _webDriverProvider.SwitchToOrNewTab<IOperationResponse>(webDriver, searchUrlProgress.WindowHandleId);
             if (result.Succeeded == false)
@@ -410,7 +409,7 @@ namespace Domain.Orchestrators
             return false;
         }
 
-        private int? GetTotalNumberOfSearchResults(IWebDriver webDriver, SearchUrlProgress searchUrlProgress)
+        private int? GetTotalNumberOfSearchResults(IWebDriver webDriver, Models.Networking.SearchUrlProgress searchUrlProgress)
         {
             int totalResults = 0;
             if (searchUrlProgress.TotalSearchResults == 0)
@@ -444,20 +443,20 @@ namespace Domain.Orchestrators
 
         private void UpdateCurrentPage_SearchUrlProgress(string searchUrlProgressId, int currentPage, string currentUrl, bool exhausted = false)
         {
-            UpdateSearchUrlProgressRequest request = UpdateSearchUrlRequests.FirstOrDefault(r => r.SearchUrlProgressId == searchUrlProgressId);
-            if (request != null)
+            Models.Networking.SearchUrlProgress searchUrl = UpdatedSearchUrlsProgress.FirstOrDefault(r => r.SearchUrlProgressId == searchUrlProgressId);
+            if (searchUrl != null)
             {
-                request.SearchUrl = currentUrl;
-                request.LastPage = currentPage;
-                request.Exhausted = exhausted;
+                searchUrl.SearchUrl = currentUrl;
+                searchUrl.LastPage = currentPage;
+                searchUrl.Exhausted = exhausted;
             }
         }
 
         private void Add_UpdateSearchUrlProgressRequest(string searchUrlProgressId, int currentPage, string currentUrl, int totalResults, string currentWindowHandle)
         {
-            if (UpdateSearchUrlRequests.Any(req => req.SearchUrlProgressId == searchUrlProgressId) == false)
+            if (UpdatedSearchUrlsProgress.Any(req => req.SearchUrlProgressId == searchUrlProgressId) == false)
             {
-                UpdateSearchUrlRequests.Add(new()
+                UpdatedSearchUrlsProgress.Add(new()
                 {
                     SearchUrlProgressId = searchUrlProgressId,
                     StartedCrawling = true,

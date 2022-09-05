@@ -1,5 +1,5 @@
 ﻿using Domain.Interactions.Networking.ConnectWithProspect.Interfaces;
-using Domain.Models.Requests;
+using Domain.Models.SendConnections;
 using Domain.POMs.Dialogs;
 using Domain.POMs.Pages;
 using Domain.Services.Interfaces;
@@ -26,7 +26,7 @@ namespace Domain.Interactions.Networking.ConnectWithProspect
             _logger = logger;
         }
 
-        public ConnectionSentRequest ConnectionSentRequest { get; private set; }
+        public ConnectionSent ConnectionSent { get; private set; }
 
         private readonly ILinkedInSearchPage _linkedInSearchPage;
         private readonly IHumanBehaviorService _humanBehaviorService;
@@ -50,7 +50,7 @@ namespace Domain.Interactions.Networking.ConnectWithProspect
                 return false;
             }
 
-            ConnectionSentRequest = CreateCampaignProspects(connectWithProspectInteraction.Prospect, connectWithProspectInteraction.Message.CampaignId);
+            ConnectionSent = CreateCampaignProspects(connectWithProspectInteraction.Prospect);
 
             return true;
         }
@@ -76,14 +76,13 @@ namespace Domain.Interactions.Networking.ConnectWithProspect
             return sendConnectionSuccess;
         }
 
-        private ConnectionSentRequest CreateCampaignProspects(IWebElement prospect, string campaignId)
+        private ConnectionSent CreateCampaignProspects(IWebElement prospect)
         {
-            return new ConnectionSentRequest()
+            return new ConnectionSent()
             {
                 ConnectionSentTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds(),
                 Name = GetProspectsName(prospect),
-                ProfileUrl = GetProspectsProfileUrl(prospect),
-                CampaignId = campaignId
+                ProfileUrl = GetProspectsProfileUrl(prospect)
             };
         }
 

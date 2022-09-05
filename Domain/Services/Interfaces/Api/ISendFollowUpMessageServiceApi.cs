@@ -1,4 +1,4 @@
-﻿using Domain.Models.Requests;
+﻿using Domain.Models.Requests.FollowUpMessage;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;

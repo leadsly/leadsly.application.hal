@@ -3,7 +3,7 @@ using Domain.Interactions;
 using Domain.Interactions.ScanProspectsForReplies.GetMessageContent.Interfaces;
 using Domain.Interactions.ScanProspectsForReplies.GetNewMessages.Interfaces;
 using Domain.Interactions.Shared.CloseAllConversations.Interfaces;
-using Leadsly.Application.Model.Requests;
+using Domain.Models.ScanProspectsForReplies;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System.Collections.Generic;
@@ -29,9 +29,9 @@ namespace Domain.Facades
         private readonly IGetMessageContentInteractionHandler _getMessageContentHandler;
         private readonly IGetNewMessagesInteractionHandler _getNewMessagesHandler;
 
-        public IList<IWebElement> NewMessages => _getNewMessagesHandler.GetNewMessages();
+        public IList<IWebElement> NewMessageElements => _getNewMessagesHandler.GetNewMessages();
 
-        public NewMessageRequest NewMessageRequest => _getMessageContentHandler.GetNewMessageRequest();
+        public NewMessage NewMessage => _getMessageContentHandler.GetNewMessage();
 
         public bool HandleGetMessageContentInteraction(InteractionBase interaction)
         {

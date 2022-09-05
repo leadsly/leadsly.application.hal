@@ -43,6 +43,7 @@ using Domain.Interactions.Shared.CloseAllConversations;
 using Domain.Interactions.Shared.CloseAllConversations.Interfaces;
 using Domain.Interactions.Shared.RefreshBrowser;
 using Domain.Interactions.Shared.RefreshBrowser.Interfaces;
+using Domain.Models.RabbitMQMessages;
 using Domain.OptionsJsonModels;
 using Domain.Orchestrators;
 using Domain.Orchestrators.Interfaces;
@@ -67,8 +68,6 @@ using Domain.RabbitMQ.EventHandlers;
 using Domain.RabbitMQ.EventHandlers.Interfaces;
 using Domain.RabbitMQ.Interfaces;
 using Domain.Repositories;
-using Domain.Serializers;
-using Domain.Serializers.Interfaces;
 using Domain.Services;
 using Domain.Services.Api;
 using Domain.Services.Interfaces;
@@ -81,7 +80,6 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Infrastructure.Repositories;
 using Leadsly.Application.Model;
-using Leadsly.Application.Model.Campaigns;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
@@ -206,11 +204,6 @@ namespace Hal.Configurations
         public static IServiceCollection AddServicesConfiguration(this IServiceCollection services)
         {
             Log.Information("Registering services configuration.");
-
-            services.AddHttpClient<ITriggerPhaseService, TriggerPhaseService>(opt =>
-            {
-                opt.Timeout = TimeSpan.FromMinutes(5);
-            });
 
             services.AddHttpClient<ILeadslyGridSidecartService, LeadslyGridSidecartService>(opt =>
             {
@@ -368,16 +361,6 @@ namespace Hal.Configurations
             return services;
         }
 
-        public static IServiceCollection AddSerializersConfiguration(this IServiceCollection services)
-        {
-            Log.Information("Registering serializers configuration.");
-
-            services.AddScoped<IRabbitMQSerializer, RabbitMQSerializer>();
-            services.AddScoped<ICampaignSerializer, CampaignSerializer>();
-
-            return services;
-        }
-
         public static IServiceCollection AddRabbitMQConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
             Log.Information("Registering rabbit mq services configuration.");
@@ -424,7 +407,6 @@ namespace Hal.Configurations
             Log.Information("Registering providers configuration.");
 
             services.AddScoped<IWebDriverProvider, WebDriverProvider>();
-            services.AddScoped<IHalOperationConfigurationProvider, HalOperationConfigurationProvider>();
 
             return services;
         }

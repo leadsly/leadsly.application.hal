@@ -1,4 +1,4 @@
-﻿using Leadsly.Application.Model.Campaigns;
+﻿using Domain.Models.RabbitMQMessages;
 using System.Threading.Tasks;
 
 namespace Domain.Executors

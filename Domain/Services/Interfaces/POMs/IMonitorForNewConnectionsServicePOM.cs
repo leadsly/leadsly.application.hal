@@ -1,4 +1,5 @@
-﻿using OpenQA.Selenium;
+﻿using Domain.Models.MonitorForNewProspects;
+using OpenQA.Selenium;
 using System.Collections.Generic;
 
 namespace Domain.Services.Interfaces.POMs
@@ -6,6 +7,6 @@ namespace Domain.Services.Interfaces.POMs
     public interface IMonitorForNewConnectionsServicePOM
     {
         int? GetConnectionsCount(IWebDriver webDriver);
-        IList<Models.RecentlyAddedProspect> GetAllRecentlyAdded(IWebDriver webDriver);
+        IList<RecentlyAddedProspect> GetAllRecentlyAdded(IWebDriver webDriver);
     }
 }

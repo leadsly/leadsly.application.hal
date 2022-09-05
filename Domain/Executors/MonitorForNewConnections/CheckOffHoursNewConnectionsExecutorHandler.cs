@@ -1,6 +1,7 @@
-﻿using Domain.Orchestrators.Interfaces;
+﻿using Domain.Models.MonitorForNewProspects;
+using Domain.Models.RabbitMQMessages;
+using Domain.Orchestrators.Interfaces;
 using Domain.Services.Interfaces;
-using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -45,7 +46,7 @@ namespace Domain.Executors.MonitorForNewConnections
 
         private async Task ProcessRecentlyAddedProspects(CheckOffHoursNewConnectionsBody message)
         {
-            IList<Models.RecentlyAddedProspect> recentlyAddedProspects = _phaseOrchestrator.RecentlyAddedProspects;
+            IList<RecentlyAddedProspect> recentlyAddedProspects = _phaseOrchestrator.RecentlyAddedProspects;
             if (recentlyAddedProspects.Count > 0)
             {
                 await _service.ProcessRecentlyAddedProspectsAsync(recentlyAddedProspects, message);

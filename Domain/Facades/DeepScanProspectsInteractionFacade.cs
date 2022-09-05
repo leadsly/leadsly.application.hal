@@ -4,7 +4,7 @@ using Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory.Inter
 using Domain.Interactions.DeepScanProspectsForReplies.ClearMessagingSearchCriteria.Interfaces;
 using Domain.Interactions.DeepScanProspectsForReplies.EnterSearchMessageCriteria.Interfaces;
 using Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageItem.Interfaces;
-using Domain.Models;
+using Domain.Models.DeepScanProspectsForReplies;
 using OpenQA.Selenium;
 using System.Collections.Generic;
 

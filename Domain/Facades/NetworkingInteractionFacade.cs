@@ -3,7 +3,8 @@ using Domain.Interactions;
 using Domain.Interactions.Networking.Decorators;
 using Domain.Interactions.Networking.NoResultsFound.Interfaces;
 using Domain.Interactions.Networking.SearchResultsLimit.Interfaces;
-using Domain.Models.Requests;
+using Domain.Models.ProspectList;
+using Domain.Models.SendConnections;
 using OpenQA.Selenium;
 using System.Collections.Generic;
 
@@ -27,11 +28,11 @@ namespace Domain.Facades
         private readonly RetryConnectWithProspectHandlerDecorator _connectWithProspectInteractionHandler;
         private readonly RetryGatherProspectsHandlerDecorator _gatherProspectsInteractionHandler;
 
-        public List<PersistPrimaryProspectRequest> PersistPrimaryProspectRequests => _gatherProspectsInteractionHandler.PersistPrimaryProspectRequests;
+        public List<PersistPrimaryProspect> PersistPrimaryProspects => _gatherProspectsInteractionHandler.PersistPrimaryProspects;
 
         public IList<IWebElement> Prospects => _gatherProspectsInteractionHandler.Prospects;
 
-        public ConnectionSentRequest ConnectionSentRequest => _connectWithProspectInteractionHandler.ConnectionSentRequest;
+        public ConnectionSent ConnectionSent => _connectWithProspectInteractionHandler.ConnectionSent;
 
         public bool HandleNoResultsFoundInteraction(InteractionBase interaction)
         {

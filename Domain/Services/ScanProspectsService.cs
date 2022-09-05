@@ -1,7 +1,8 @@
-﻿using Domain.Services.Interfaces;
+﻿using Domain.Models.RabbitMQMessages;
+using Domain.Models.Requests.ScanProspectsForreplies;
+using Domain.Models.ScanProspectsForReplies;
+using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
-using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.Requests;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -21,15 +22,14 @@ namespace Domain.Services
         private readonly ILogger<ScanProspectsService> _logger;
         private readonly IScanProspectsForRepliesServiceApi _scanProspectsForRepliesServiceApi;
 
-        public async Task ProcessNewMessagesAsync(IList<NewMessageRequest> newMessageRequests, ScanProspectsForRepliesBody message, CancellationToken ct = default)
+        public async Task ProcessNewMessagesAsync(IList<NewMessage> items, ScanProspectsForRepliesBody message, CancellationToken ct = default)
         {
             NewMessagesRequest request = new()
             {
-                HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
                 RequestUrl = $"ScanProspectsForReplies/{message.HalId}/prospects-replied",
-                NewMessages = newMessageRequests
+                Items = items
             };
 
             HttpResponseMessage response = await _scanProspectsForRepliesServiceApi.ProcessNewMessagesAsync(request, ct);

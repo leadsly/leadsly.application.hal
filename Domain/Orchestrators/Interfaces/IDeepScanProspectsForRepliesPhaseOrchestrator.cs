@@ -1,6 +1,6 @@
-﻿using Domain.Models;
+﻿using Domain.Models.DeepScanProspectsForReplies;
+using Domain.Models.RabbitMQMessages;
 using Domain.Models.Responses;
-using Leadsly.Application.Model.Campaigns;
 using System.Collections.Generic;
 
 namespace Domain.Orchestrators.Interfaces

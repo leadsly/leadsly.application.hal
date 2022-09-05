@@ -1,6 +1,6 @@
-﻿using Domain.Services.Interfaces;
+﻿using Domain.Models.Requests.ScanProspectsForreplies;
+using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
-using Leadsly.Application.Model.Requests;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Net.Http;
@@ -37,7 +37,7 @@ namespace Domain.Services.Api
                     RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
-                        Items = request.NewMessages
+                        Items = request.Items
                     })
                 };
 

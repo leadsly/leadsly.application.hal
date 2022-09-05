@@ -1,7 +1,7 @@
-﻿using Domain.Models.Requests;
+﻿using Domain.Models.FollowUpMessage;
+using Domain.Models.RabbitMQMessages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Services.Interfaces;
-using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
@@ -48,10 +48,10 @@ namespace Domain.Executors.FollowUpMessage
 
         private async Task ProcessSentFollowUpMessageAsync(FollowUpMessageBody message)
         {
-            SentFollowUpMessageRequest request = _orchestrator.GetSentFollowUpMessage();
-            if (request != null)
+            SentFollowUpMessage item = _orchestrator.GetSentFollowUpMessage();
+            if (item != null)
             {
-                await _service.ProcessSentFollowUpMessageAsync(request, message);
+                await _service.ProcessSentFollowUpMessageAsync(item, message);
             }
         }
     }

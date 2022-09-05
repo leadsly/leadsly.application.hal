@@ -1,5 +1,5 @@
 ﻿using Domain.Interactions;
-using Leadsly.Application.Model.Requests;
+using Domain.Models.ScanProspectsForReplies;
 using OpenQA.Selenium;
 using System.Collections.Generic;
 
@@ -7,8 +7,8 @@ namespace Domain.Facades.Interfaces
 {
     public interface IScanProspectsForRepliesInteractionFacade
     {
-        IList<IWebElement> NewMessages { get; }
-        NewMessageRequest NewMessageRequest { get; }
+        IList<IWebElement> NewMessageElements { get; }
+        NewMessage NewMessage { get; }
         bool HandleGetNewMessagesInteraction(InteractionBase interaction);
         bool HandleGetMessageContentInteraction(InteractionBase interaction);
         bool HandleCloseConversationsInteraction(InteractionBase interaction);

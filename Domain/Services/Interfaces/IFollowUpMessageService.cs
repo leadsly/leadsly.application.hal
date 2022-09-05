@@ -1,5 +1,5 @@
-﻿using Domain.Models.Requests;
-using Leadsly.Application.Model.Campaigns;
+﻿using Domain.Models.FollowUpMessage;
+using Domain.Models.RabbitMQMessages;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,7 +7,7 @@ namespace Domain.Services.Interfaces
 {
     public interface IFollowUpMessageService
     {
-        Task ProcessSentFollowUpMessageAsync(SentFollowUpMessageRequest request, FollowUpMessageBody message, CancellationToken ct = default);
+        Task ProcessSentFollowUpMessageAsync(SentFollowUpMessage item, FollowUpMessageBody message, CancellationToken ct = default);
 
     }
 }

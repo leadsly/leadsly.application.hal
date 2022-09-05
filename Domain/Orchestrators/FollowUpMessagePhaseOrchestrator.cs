@@ -3,12 +3,12 @@ using Domain.Interactions;
 using Domain.Interactions.FollowUpMessage.CreateNewMessage;
 using Domain.Interactions.FollowUpMessage.EnterMessage;
 using Domain.Interactions.FollowUpMessage.EnterProspectName;
-using Domain.Models.Requests;
+using Domain.Models.FollowUpMessage;
+using Domain.Models.RabbitMQMessages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
-using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.WebDriver;
+using Leadsly.Application.Model;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
@@ -34,13 +34,13 @@ namespace Domain.Orchestrators
         private readonly ILogger<FollowUpMessagePhaseOrchestrator> _logger;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ITimestampService _timestampService;
-        private SentFollowUpMessageRequest SentFollowUpMessageRequest { get; set; }
+        private SentFollowUpMessage SentFollowUpMessage { get; set; }
 
-        public SentFollowUpMessageRequest GetSentFollowUpMessage()
+        public SentFollowUpMessage GetSentFollowUpMessage()
         {
-            SentFollowUpMessageRequest request = SentFollowUpMessageRequest;
-            SentFollowUpMessageRequest = null;
-            return request;
+            SentFollowUpMessage item = SentFollowUpMessage;
+            SentFollowUpMessage = null;
+            return item;
         }
 
         public void Execute(FollowUpMessageBody message)
@@ -96,7 +96,7 @@ namespace Domain.Orchestrators
                 return;
             }
 
-            SentFollowUpMessageRequest = new()
+            SentFollowUpMessage = new()
             {
                 MessageOrderNum = message.OrderNum,
                 CampaignProspectId = message.CampaignProspectId,

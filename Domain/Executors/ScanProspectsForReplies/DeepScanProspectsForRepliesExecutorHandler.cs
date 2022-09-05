@@ -4,7 +4,6 @@ using Domain.Orchestrators.Interfaces;
 using Domain.RabbitMQ.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
-using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;

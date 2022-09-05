@@ -1,4 +1,4 @@
-﻿using Leadsly.Application.Model.Campaigns;
+﻿using Domain.Models.RabbitMQMessages;
 using System;
 
 namespace Domain.Executors.ScanProspectsForReplies.Events

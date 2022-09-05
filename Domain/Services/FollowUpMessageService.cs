@@ -1,7 +1,8 @@
-﻿using Domain.Models.Requests;
+﻿using Domain.Models.FollowUpMessage;
+using Domain.Models.RabbitMQMessages;
+using Domain.Models.Requests.FollowUpMessage;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
-using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using System.Net.Http;
 using System.Threading;
@@ -20,11 +21,15 @@ namespace Domain.Services
         private readonly ILogger<FollowUpMessageService> _logger;
         private readonly ISendFollowUpMessageServiceApi _api;
 
-        public async Task ProcessSentFollowUpMessageAsync(SentFollowUpMessageRequest request, FollowUpMessageBody message, CancellationToken ct = default)
+        public async Task ProcessSentFollowUpMessageAsync(SentFollowUpMessage item, FollowUpMessageBody message, CancellationToken ct = default)
         {
-            request.NamespaceName = message.NamespaceName;
-            request.ServiceDiscoveryName = message.ServiceDiscoveryName;
-            request.RequestUrl = $"FollowUpMessage/{request.CampaignProspectId}/follow-up";
+            SentFollowUpMessageRequest request = new()
+            {
+                NamespaceName = message.NamespaceName,
+                ServiceDiscoveryName = message.ServiceDiscoveryName,
+                RequestUrl = $"FollowUpMessage/{item.CampaignProspectId}/follow-up",
+                Item = item
+            };
 
             HttpResponseMessage response = await _api.ProcessSentFollowUpMessageAsync(request, ct);
 

@@ -1,13 +1,13 @@
-﻿using Domain.Models.Requests;
+﻿using Domain.Models.RabbitMQMessages;
+using Domain.Models.Requests.MonitorForNewConnections;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
-using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using RecentlyAddedProspect = Domain.Models.RecentlyAddedProspect;
+using RecentlyAddedProspect = Domain.Models.MonitorForNewProspects.RecentlyAddedProspect;
 
 namespace Domain.Services
 {

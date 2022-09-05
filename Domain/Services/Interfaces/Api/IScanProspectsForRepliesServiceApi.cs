@@ -1,4 +1,4 @@
-﻿using Leadsly.Application.Model.Requests;
+﻿using Domain.Models.Requests.ScanProspectsForreplies;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;

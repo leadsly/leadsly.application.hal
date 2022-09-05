@@ -1,5 +1,5 @@
 ﻿using Domain.Interactions.Networking.ConnectWithProspect.Interfaces;
-using Domain.Models.Requests;
+using Domain.Models.SendConnections;
 using Microsoft.Extensions.Logging;
 
 namespace Domain.Interactions.Networking.Decorators
@@ -12,7 +12,7 @@ namespace Domain.Interactions.Networking.Decorators
             _decorated = decorated;
         }
 
-        public ConnectionSentRequest ConnectionSentRequest => _decorated.ConnectionSentRequest;
+        public ConnectionSent ConnectionSent => _decorated.ConnectionSent;
         private readonly ILogger<RetryConnectWithProspectHandlerDecorator> _logger;
         private readonly IConnectWithProspectInteractionHandler _decorated;
 

@@ -1,5 +1,5 @@
 ﻿using Domain.Interactions.Networking.GatherProspects.Interfaces;
-using Domain.Models.Requests;
+using Domain.Models.ProspectList;
 using OpenQA.Selenium;
 using System.Collections.Generic;
 
@@ -7,7 +7,7 @@ namespace Domain.Interactions.Networking.Decorators
 {
     public class RetryGatherProspectsHandlerDecorator : IGatherProspectsInteractionHandler
     {
-        public List<PersistPrimaryProspectRequest> PersistPrimaryProspectRequests => _decorated.PersistPrimaryProspectRequests;
+        public List<PersistPrimaryProspect> PersistPrimaryProspects => _decorated.PersistPrimaryProspects;
 
         public IList<IWebElement> Prospects => _decorated.Prospects;
 

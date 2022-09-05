@@ -1,5 +1,4 @@
-﻿using Domain.Models;
-using Domain.Models.Requests;
+﻿using Domain.Models.Requests.DeepScanProspectsForReplies;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;

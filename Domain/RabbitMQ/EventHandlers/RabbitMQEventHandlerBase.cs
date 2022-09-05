@@ -1,4 +1,4 @@
-﻿using Leadsly.Application.Model.Campaigns;
+﻿using Domain.Models.RabbitMQMessages;
 
 namespace Domain.RabbitMQ.EventHandlers
 {

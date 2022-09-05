@@ -1,4 +1,4 @@
-﻿using Leadsly.Application.Model.Campaigns;
+﻿using Domain.Models.RabbitMQMessages;
 using OpenQA.Selenium;
 
 namespace Domain.Interactions.Networking.GatherProspects

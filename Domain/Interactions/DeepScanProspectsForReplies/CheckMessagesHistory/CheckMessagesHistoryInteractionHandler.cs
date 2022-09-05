@@ -1,5 +1,5 @@
 ﻿using Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory.Interfaces;
-using Domain.Models;
+using Domain.Models.DeepScanProspectsForReplies;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.POMs;
 using Microsoft.Extensions.Logging;

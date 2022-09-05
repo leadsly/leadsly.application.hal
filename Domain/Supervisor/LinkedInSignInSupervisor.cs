@@ -2,7 +2,6 @@
 using Domain.Models.Responses;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.Responses;
-using Leadsly.Application.Model.WebDriver;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using OpenQA.Selenium;

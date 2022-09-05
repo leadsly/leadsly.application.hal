@@ -1,10 +1,11 @@
 ﻿using Domain.Interactions;
 using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince;
 using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince.Interfaces;
+using Domain.Models.MonitorForNewProspects;
+using Domain.Models.RabbitMQMessages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Providers.Interfaces;
-using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.WebDriver;
+using Leadsly.Application.Model;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System.Collections.Generic;
@@ -28,7 +29,7 @@ namespace Domain.Orchestrators
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<CheckOffHoursNewConnectionsPhaseOrchestrator> _logger;
 
-        public IList<Models.RecentlyAddedProspect> RecentlyAddedProspects => _interactionHandler.GetRecentlyAddedProspects();
+        public IList<RecentlyAddedProspect> RecentlyAddedProspects => _interactionHandler.GetRecentlyAddedProspects();
 
         public void Execute(CheckOffHoursNewConnectionsBody message)
         {

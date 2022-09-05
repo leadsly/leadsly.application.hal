@@ -5,11 +5,11 @@ using Domain.Interactions.MonitorForNewConnections.GetAllRecentlyAdded;
 using Domain.Interactions.MonitorForNewConnections.GetConnectionsCount;
 using Domain.Interactions.Shared.CloseAllConversations;
 using Domain.Interactions.Shared.RefreshBrowser;
+using Domain.Models.RabbitMQMessages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
-using Leadsly.Application.Model.Campaigns;
-using Leadsly.Application.Model.WebDriver;
+using Leadsly.Application.Model;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
@@ -93,12 +93,12 @@ namespace Domain.Orchestrators
                 if (getConnectionsCountSucceeded == true && getAllRecentlyAddedSucceeded == true)
                 {
                     int previousConnectionsCount = _interactionsFacade.ConnectionsCount;
-                    IList<Models.RecentlyAddedProspect> previousRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
+                    IList<Models.MonitorForNewProspects.RecentlyAddedProspect> previousRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
 
                     if (GetAllRecentlyAddedInteraction(webDriver) == true)
                     {
-                        IList<Models.RecentlyAddedProspect> currentRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
-                        IList<Models.RecentlyAddedProspect> newRecentlyAddedProspects = currentRecentlyAddedProspects.Where(p => previousRecentlyAddedProspects.Any(prev => prev.Name == p.Name) == false).ToList();
+                        IList<Models.MonitorForNewProspects.RecentlyAddedProspect> currentRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
+                        IList<Models.MonitorForNewProspects.RecentlyAddedProspect> newRecentlyAddedProspects = currentRecentlyAddedProspects.Where(p => previousRecentlyAddedProspects.Any(prev => prev.Name == p.Name) == false).ToList();
 
                         // invoke an event here
                         OutputRecentlyAddedProspects(message, newRecentlyAddedProspects);
@@ -108,7 +108,7 @@ namespace Domain.Orchestrators
             }
         }
 
-        private void OutputRecentlyAddedProspects(MonitorForNewAcceptedConnectionsBody message, IList<Models.RecentlyAddedProspect> newRecentlyAddedProspects)
+        private void OutputRecentlyAddedProspects(MonitorForNewAcceptedConnectionsBody message, IList<Models.MonitorForNewProspects.RecentlyAddedProspect> newRecentlyAddedProspects)
         {
             if (newRecentlyAddedProspects != null && newRecentlyAddedProspects.Count > 0)
             {

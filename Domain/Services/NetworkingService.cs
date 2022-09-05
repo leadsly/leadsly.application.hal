@@ -1,8 +1,13 @@
-﻿using Domain.Models.Requests;
+﻿using Domain.Models.ProspectList;
+using Domain.Models.RabbitMQMessages;
+using Domain.Models.Requests;
+using Domain.Models.Requests.Networking;
+using Domain.Models.Requests.ProspectList;
+using Domain.Models.Requests.SendConnections;
 using Domain.Models.Responses;
+using Domain.Models.SendConnections;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
-using Leadsly.Application.Model.Campaigns;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
@@ -33,8 +38,7 @@ namespace Domain.Services
             {
                 RequestUrl = $"Networking/{message.CampaignId}/url",
                 NamespaceName = message.NamespaceName,
-                ServiceDiscoveryName = message.ServiceDiscoveryName,
-                HalId = message.HalId
+                ServiceDiscoveryName = message.ServiceDiscoveryName
             };
 
             HttpResponseMessage rawResponse = await _networkingServiceApi.GetSearchUrlProgressAsync(request, ct);
@@ -66,20 +70,17 @@ namespace Domain.Services
             return response;
         }
 
-        public async Task ProcessSentConnectionsAsync(IList<ConnectionSentRequest> requests, NetworkingMessageBody message, CancellationToken ct = default)
+        public async Task ProcessSentConnectionsAsync(IList<ConnectionSent> items, NetworkingMessageBody message, CancellationToken ct = default)
         {
-            CampaignProspectListRequest req = new()
+            ConnectionsSentRequest request = new()
             {
-                HalId = message.HalId,
-                UserId = message.UserId,
-                CampaignId = message.CampaignId,
-                CampaignProspects = requests,
+                Items = items,
                 RequestUrl = $"SendConnections/{message.CampaignId}/prospects",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
             };
 
-            HttpResponseMessage response = await _networkingServiceApi.ProcessContactedCampaignProspectListAsync(req, ct);
+            HttpResponseMessage response = await _networkingServiceApi.ProcessSentConnectionsAsync(request, ct);
             if (response == null)
             {
                 _logger.LogError("Response from application server was null. The request was responsible for saving primary prospects to the database");
@@ -92,18 +93,19 @@ namespace Domain.Services
             }
         }
 
-        public async Task UpdateSearchUrlsAsync(IList<UpdateSearchUrlProgressRequest> requests, NetworkingMessageBody message, CancellationToken ct = default)
+        public async Task UpdateSearchUrlsAsync(IList<Domain.Models.Networking.SearchUrlProgress> items, NetworkingMessageBody message, CancellationToken ct = default)
         {
-            IList<Task<HttpResponseMessage>> reqs = requests.Select(req =>
+            IList<Task<HttpResponseMessage>> reqs = items.Select(x =>
             {
-                req.CampaignId = message.CampaignId;
-                req.RequestUrl = $"Networking/{req.SearchUrlProgressId}/url";
-                req.NamespaceName = message.NamespaceName;
-                req.ServiceDiscoveryName = message.ServiceDiscoveryName;
-                req.HalId = message.HalId;
-                req.LastActivityTimestamp = _timestampService.TimestampNow();
+                UpdateSearchUrlProgressRequest request = new()
+                {
+                    Item = x,
+                    RequestUrl = $"Networking/{x.SearchUrlProgressId}/url",
+                    NamespaceName = message.NamespaceName,
+                    ServiceDiscoveryName = message.ServiceDiscoveryName
+                };
 
-                return _networkingServiceApi.UpdateSearchUrlAsync(req, ct);
+                return _networkingServiceApi.UpdateSearchUrlAsync(request, ct);
             }).ToList();
 
             await Task.WhenAll(reqs);
@@ -125,16 +127,12 @@ namespace Domain.Services
             }
         }
 
-        public async Task ProcessProspectListAsync(IList<PersistPrimaryProspectRequest> requests, NetworkingMessageBody message, CancellationToken ct = default)
+        public async Task ProcessProspectListAsync(IList<PersistPrimaryProspect> items, NetworkingMessageBody message, CancellationToken ct = default)
         {
             CollectedProspectsRequest request = new()
             {
-                HalId = message.HalId,
-                UserId = message.UserId,
-                CampaignId = message.CampaignId,
-                PrimaryProspectListId = message.PrimaryProspectListId,
                 CampaignProspectListId = message.CampaignProspectListId,
-                Prospects = requests,
+                Items = items,
                 RequestUrl = $"ProspectList/{message.HalId}",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName
@@ -157,7 +155,6 @@ namespace Domain.Services
         {
             MonthlySearchLimitReachedRequest request = new()
             {
-                HalId = message.HalId,
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
                 MonthlySearchLimitReached = limitReached,
