@@ -9,6 +9,9 @@ namespace Domain.Models.Requests.ProspectList
         public string NamespaceName { get; set; } = string.Empty;
         public string RequestUrl { get; set; } = string.Empty;
         public string CampaignProspectListId { get; set; }
-        public IList<PersistPrimaryProspect> Items { get; set; }
+        public string PrimaryProspectListId { get; set; }
+        public string CampaignId { get; set; }
+        public string SocialAccountId { get; set; }
+        public IList<PersistPrimaryProspectModel> Items { get; set; }
     }
 }

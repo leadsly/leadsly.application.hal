@@ -1,6 +1,6 @@
 ﻿namespace Domain.Models.MonitorForNewProspects
 {
-    public class RecentlyAddedProspect
+    public class RecentlyAddedProspectModel
     {
         public string Name { get; set; }
         public string ProfileUrl { get; set; }

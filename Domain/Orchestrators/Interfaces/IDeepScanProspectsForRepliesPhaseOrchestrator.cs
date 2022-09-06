@@ -7,7 +7,7 @@ namespace Domain.Orchestrators.Interfaces
 {
     public interface IDeepScanProspectsForRepliesPhaseOrchestrator
     {
-        IList<ProspectReplied> Prospects { get; }
+        IList<ProspectRepliedModel> Prospects { get; }
         void Execute(DeepScanProspectsForRepliesBody message, IList<NetworkProspectResponse> contactedProspects);
     }
 }

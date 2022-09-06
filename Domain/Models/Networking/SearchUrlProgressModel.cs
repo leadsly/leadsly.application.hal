@@ -1,6 +1,6 @@
 ﻿namespace Domain.Models.Networking
 {
-    public class SearchUrlProgress
+    public class SearchUrlProgressModel
     {
         public string SearchUrlProgressId { get; set; }
         public string WindowHandleId { get; set; }

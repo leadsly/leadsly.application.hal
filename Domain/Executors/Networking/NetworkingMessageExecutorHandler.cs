@@ -63,19 +63,19 @@ namespace Domain.Executors.Networking
         private async Task ProcessDataAsync(NetworkingMessageBody message)
         {
             // perform all async calls now.
-            IList<ConnectionSent> connectionSents = _phaseOrchestrator.GetConnectionsSent();
+            IList<ConnectionSentModel> connectionSents = _phaseOrchestrator.GetConnectionsSent();
             if (connectionSents.Count > 0)
             {
                 await _networkingService.ProcessSentConnectionsAsync(connectionSents, message);
             }
 
-            IList<Domain.Models.Networking.SearchUrlProgress> items = _phaseOrchestrator.GetUpdatedSearchUrls();
+            IList<Domain.Models.Networking.SearchUrlProgressModel> items = _phaseOrchestrator.GetUpdatedSearchUrls();
             if (items.Count > 0)
             {
                 await _networkingService.UpdateSearchUrlsAsync(items, message);
             }
 
-            List<PersistPrimaryProspect> persistPrimaryProspects = _phaseOrchestrator.GetPersistPrimaryProspects();
+            List<PersistPrimaryProspectModel> persistPrimaryProspects = _phaseOrchestrator.GetPersistPrimaryProspects();
             if (persistPrimaryProspects.Count > 0)
             {
                 await _networkingService.ProcessProspectListAsync(persistPrimaryProspects, message);

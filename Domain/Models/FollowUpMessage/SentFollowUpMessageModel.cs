@@ -1,8 +1,7 @@
 ﻿namespace Domain.Models.FollowUpMessage
 {
-    public class SentFollowUpMessage
+    public class SentFollowUpMessageModel
     {
-        public string CampaignProspectId { get; set; }
         public int MessageOrderNum { get; set; }
         public long ActualDeliveryDateTimeStamp { get; set; }
     }

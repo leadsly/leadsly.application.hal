@@ -1,6 +1,6 @@
 ﻿namespace Domain.Models.ScanProspectsForReplies
 {
-    public class NewMessage
+    public class NewMessageModel
     {
         public string ResponseMessage { get; set; }
 

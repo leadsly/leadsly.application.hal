@@ -29,7 +29,7 @@ namespace Domain.Orchestrators
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<CheckOffHoursNewConnectionsPhaseOrchestrator> _logger;
 
-        public IList<RecentlyAddedProspect> RecentlyAddedProspects => _interactionHandler.GetRecentlyAddedProspects();
+        public IList<RecentlyAddedProspectModel> RecentlyAddedProspects => _interactionHandler.GetRecentlyAddedProspects();
 
         public void Execute(CheckOffHoursNewConnectionsBody message)
         {

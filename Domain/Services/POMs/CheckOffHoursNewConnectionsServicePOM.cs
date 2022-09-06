@@ -21,7 +21,7 @@ namespace Domain.Services.POMs
         private readonly ITimestampService _timestampService;
         private readonly IConnectionsView _connectionView;
 
-        public IList<RecentlyAddedProspect> GetAllRecentlyAddedSince(IWebDriver webDriver, int numOfHoursAgo, string timezoneId)
+        public IList<RecentlyAddedProspectModel> GetAllRecentlyAddedSince(IWebDriver webDriver, int numOfHoursAgo, string timezoneId)
         {
             _logger.LogDebug("Getting all recently added prospects since {numOfHoursAgo} hours ago", numOfHoursAgo);
             IList<IWebElement> recentlyAdded = _connectionView.GetRecentlyAdded(webDriver);
@@ -31,7 +31,7 @@ namespace Domain.Services.POMs
                 return null;
             }
 
-            IList<RecentlyAddedProspect> prospects = new List<RecentlyAddedProspect>();
+            IList<RecentlyAddedProspectModel> prospects = new List<RecentlyAddedProspectModel>();
             foreach (IWebElement recentlyAddedProspect in recentlyAdded)
             {
                 if (AddedBeforeDesiredHoursAgo(recentlyAddedProspect, numOfHoursAgo, out int addedNumOfHoursAgo) == true)
@@ -39,7 +39,7 @@ namespace Domain.Services.POMs
                     string prospectName = _connectionView.GetNameFromLiTag(recentlyAddedProspect);
                     string prospectProfileUrl = _connectionView.GetProfileUrlFromLiTag(recentlyAddedProspect);
                     DateTimeOffset acceptedRequest = _timestampService.GetNowLocalized(timezoneId).AddHours(-addedNumOfHoursAgo);
-                    RecentlyAddedProspect prospect = new RecentlyAddedProspect
+                    RecentlyAddedProspectModel prospect = new RecentlyAddedProspectModel
                     {
                         Name = prospectName,
                         AcceptedRequestTimestamp = acceptedRequest.ToUnixTimeSeconds(),

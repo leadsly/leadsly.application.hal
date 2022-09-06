@@ -12,7 +12,7 @@ namespace Domain.Interactions.Networking.Decorators
             _decorated = decorated;
         }
 
-        public ConnectionSent ConnectionSent => _decorated.ConnectionSent;
+        public ConnectionSentModel ConnectionSent => _decorated.ConnectionSent;
         private readonly ILogger<RetryConnectWithProspectHandlerDecorator> _logger;
         private readonly IConnectWithProspectInteractionHandler _decorated;
 

@@ -93,12 +93,12 @@ namespace Domain.Orchestrators
                 if (getConnectionsCountSucceeded == true && getAllRecentlyAddedSucceeded == true)
                 {
                     int previousConnectionsCount = _interactionsFacade.ConnectionsCount;
-                    IList<Models.MonitorForNewProspects.RecentlyAddedProspect> previousRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
+                    IList<Models.MonitorForNewProspects.RecentlyAddedProspectModel> previousRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
 
                     if (GetAllRecentlyAddedInteraction(webDriver) == true)
                     {
-                        IList<Models.MonitorForNewProspects.RecentlyAddedProspect> currentRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
-                        IList<Models.MonitorForNewProspects.RecentlyAddedProspect> newRecentlyAddedProspects = currentRecentlyAddedProspects.Where(p => previousRecentlyAddedProspects.Any(prev => prev.Name == p.Name) == false).ToList();
+                        IList<Models.MonitorForNewProspects.RecentlyAddedProspectModel> currentRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
+                        IList<Models.MonitorForNewProspects.RecentlyAddedProspectModel> newRecentlyAddedProspects = currentRecentlyAddedProspects.Where(p => previousRecentlyAddedProspects.Any(prev => prev.Name == p.Name) == false).ToList();
 
                         // invoke an event here
                         OutputRecentlyAddedProspects(message, newRecentlyAddedProspects);
@@ -108,7 +108,7 @@ namespace Domain.Orchestrators
             }
         }
 
-        private void OutputRecentlyAddedProspects(MonitorForNewAcceptedConnectionsBody message, IList<Models.MonitorForNewProspects.RecentlyAddedProspect> newRecentlyAddedProspects)
+        private void OutputRecentlyAddedProspects(MonitorForNewAcceptedConnectionsBody message, IList<Models.MonitorForNewProspects.RecentlyAddedProspectModel> newRecentlyAddedProspects)
         {
             if (newRecentlyAddedProspects != null && newRecentlyAddedProspects.Count > 0)
             {

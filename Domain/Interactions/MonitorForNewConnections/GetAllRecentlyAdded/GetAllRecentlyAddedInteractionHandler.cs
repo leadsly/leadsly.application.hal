@@ -16,12 +16,12 @@ namespace Domain.Interactions.MonitorForNewConnections.GetAllRecentlyAdded
 
         private readonly ILogger<GetAllRecentlyAddedInteractionHandler> _logger;
         private readonly IMonitorForNewConnectionsServicePOM _service;
-        private IList<RecentlyAddedProspect> RecentlyAddedProspects { get; set; } = new List<RecentlyAddedProspect>();
+        private IList<RecentlyAddedProspectModel> RecentlyAddedProspects { get; set; } = new List<RecentlyAddedProspectModel>();
 
         public bool HandleInteraction(InteractionBase interaction)
         {
             GetAllRecentlyAddedInteraction getAllRecentlyInteraction = interaction as GetAllRecentlyAddedInteraction;
-            IList<RecentlyAddedProspect> recentlyAdded = _service.GetAllRecentlyAdded(getAllRecentlyInteraction.WebDriver);
+            IList<RecentlyAddedProspectModel> recentlyAdded = _service.GetAllRecentlyAdded(getAllRecentlyInteraction.WebDriver);
             if (recentlyAdded == null)
             {
                 // handle failures or retries here
@@ -32,10 +32,10 @@ namespace Domain.Interactions.MonitorForNewConnections.GetAllRecentlyAdded
             return true;
         }
 
-        public IList<RecentlyAddedProspect> GetRecentlyAddedProspects()
+        public IList<RecentlyAddedProspectModel> GetRecentlyAddedProspects()
         {
-            IList<RecentlyAddedProspect> prospects = RecentlyAddedProspects;
-            RecentlyAddedProspects = new List<RecentlyAddedProspect>();
+            IList<RecentlyAddedProspectModel> prospects = RecentlyAddedProspects;
+            RecentlyAddedProspects = new List<RecentlyAddedProspectModel>();
             return prospects;
         }
     }

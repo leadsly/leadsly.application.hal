@@ -46,7 +46,7 @@ namespace Domain.Executors.MonitorForNewConnections
 
         private async Task ProcessRecentlyAddedProspects(CheckOffHoursNewConnectionsBody message)
         {
-            IList<RecentlyAddedProspect> recentlyAddedProspects = _phaseOrchestrator.RecentlyAddedProspects;
+            IList<RecentlyAddedProspectModel> recentlyAddedProspects = _phaseOrchestrator.RecentlyAddedProspects;
             if (recentlyAddedProspects.Count > 0)
             {
                 await _service.ProcessRecentlyAddedProspectsAsync(recentlyAddedProspects, message);

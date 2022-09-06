@@ -5,6 +5,6 @@ namespace Domain.Interactions.MonitorForNewConnections.GetAllRecentlyAdded.Inter
 {
     public interface IGetAllRecentlyAddedInteractionHandler : IInteractionHandler
     {
-        public IList<RecentlyAddedProspect> GetRecentlyAddedProspects();
+        public IList<RecentlyAddedProspectModel> GetRecentlyAddedProspects();
     }
 }

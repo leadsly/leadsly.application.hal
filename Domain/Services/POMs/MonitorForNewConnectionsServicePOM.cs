@@ -19,7 +19,7 @@ namespace Domain.Services.POMs
         private readonly ILogger<MonitorForNewConnectionsServicePOM> _logger;
         private readonly IConnectionsView _connectionView;
 
-        public IList<RecentlyAddedProspect> GetAllRecentlyAdded(IWebDriver webDriver)
+        public IList<RecentlyAddedProspectModel> GetAllRecentlyAdded(IWebDriver webDriver)
         {
             IList<IWebElement> recentlyAdded = _connectionView.GetRecentlyAdded(webDriver);
             if (recentlyAdded == null)
@@ -27,10 +27,10 @@ namespace Domain.Services.POMs
                 return null;
             }
 
-            IList<RecentlyAddedProspect> prospects = new List<RecentlyAddedProspect>();
+            IList<RecentlyAddedProspectModel> prospects = new List<RecentlyAddedProspectModel>();
             foreach (IWebElement recentlyAddedProspect in recentlyAdded)
             {
-                RecentlyAddedProspect potentialProspect = new()
+                RecentlyAddedProspectModel potentialProspect = new()
                 {
                     Name = _connectionView.GetNameFromLiTag(recentlyAddedProspect),
                     ProfileUrl = _connectionView.GetProfileUrlFromLiTag(recentlyAddedProspect)

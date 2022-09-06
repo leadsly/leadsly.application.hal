@@ -8,6 +8,6 @@ namespace Domain.Models.Responses
     public class GetSearchUrlProgressResponse
     {
         [DataMember(Name = "SearchUrlsProgress")]
-        public IList<SearchUrlProgress> SearchUrls { get; set; }
+        public IList<SearchUrlProgressModel> SearchUrls { get; set; }
     }
 }

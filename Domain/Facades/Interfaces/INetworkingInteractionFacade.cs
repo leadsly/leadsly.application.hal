@@ -8,9 +8,9 @@ namespace Domain.Facades.Interfaces
 {
     public interface INetworkingInteractionFacade
     {
-        public List<PersistPrimaryProspect> PersistPrimaryProspects { get; }
+        public List<PersistPrimaryProspectModel> PersistPrimaryProspects { get; }
         public IList<IWebElement> Prospects { get; }
-        public ConnectionSent ConnectionSent { get; }
+        public ConnectionSentModel ConnectionSent { get; }
         bool HandleNoResultsFoundInteraction(InteractionBase interaction);
         bool HandleConnectWithProspectsInteraction(InteractionBase interaction);
         bool HandleGatherProspectsInteraction(InteractionBase interaction);

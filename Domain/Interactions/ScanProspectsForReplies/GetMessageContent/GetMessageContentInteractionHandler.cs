@@ -22,7 +22,7 @@ namespace Domain.Interactions.ScanProspectsForReplies.GetMessageContent
         private readonly ILogger<GetNewMessagesInteractionHandler> _logger;
         private readonly ITimestampService _timestampService;
         private readonly IScanProspectsServicePOM _service;
-        private NewMessage NewMessage { get; set; }
+        private NewMessageModel NewMessage { get; set; }
         public bool HandleInteraction(InteractionBase interaction)
         {
             GetMessageContentInteraction getMessageContentInteraction = interaction as GetMessageContentInteraction;
@@ -39,7 +39,7 @@ namespace Domain.Interactions.ScanProspectsForReplies.GetMessageContent
             if (messageContent != null)
             {
                 _logger.LogDebug("Message content was found");
-                NewMessage newMessage = new()
+                NewMessageModel newMessage = new()
                 {
                     ProspectName = _service.ProspectNameFromMessage(getMessageContentInteraction.Message),
                     ResponseMessage = messageContent.Text,
@@ -52,9 +52,9 @@ namespace Domain.Interactions.ScanProspectsForReplies.GetMessageContent
             return true;
         }
 
-        public NewMessage GetNewMessage()
+        public NewMessageModel GetNewMessage()
         {
-            NewMessage newMessage = NewMessage;
+            NewMessageModel newMessage = NewMessage;
             NewMessage = null;
             return newMessage;
         }

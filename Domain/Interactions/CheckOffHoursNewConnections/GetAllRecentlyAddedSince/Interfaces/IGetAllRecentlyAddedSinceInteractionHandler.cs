@@ -5,6 +5,6 @@ namespace Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSin
 {
     public interface IGetAllRecentlyAddedSinceInteractionHandler : IInteractionHandler
     {
-        public IList<RecentlyAddedProspect> GetRecentlyAddedProspects();
+        public IList<RecentlyAddedProspectModel> GetRecentlyAddedProspects();
     }
 }

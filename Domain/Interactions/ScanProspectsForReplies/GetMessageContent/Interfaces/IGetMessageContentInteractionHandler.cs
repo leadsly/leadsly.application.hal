@@ -4,6 +4,6 @@ namespace Domain.Interactions.ScanProspectsForReplies.GetMessageContent.Interfac
 {
     public interface IGetMessageContentInteractionHandler : IInteractionHandler
     {
-        public NewMessage GetNewMessage();
+        public NewMessageModel GetNewMessage();
     }
 }

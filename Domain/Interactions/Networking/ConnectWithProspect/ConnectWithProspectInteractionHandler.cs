@@ -26,7 +26,7 @@ namespace Domain.Interactions.Networking.ConnectWithProspect
             _logger = logger;
         }
 
-        public ConnectionSent ConnectionSent { get; private set; }
+        public ConnectionSentModel ConnectionSent { get; private set; }
 
         private readonly ILinkedInSearchPage _linkedInSearchPage;
         private readonly IHumanBehaviorService _humanBehaviorService;
@@ -76,9 +76,9 @@ namespace Domain.Interactions.Networking.ConnectWithProspect
             return sendConnectionSuccess;
         }
 
-        private ConnectionSent CreateCampaignProspects(IWebElement prospect)
+        private ConnectionSentModel CreateCampaignProspects(IWebElement prospect)
         {
-            return new ConnectionSent()
+            return new ConnectionSentModel()
             {
                 ConnectionSentTimestamp = DateTimeOffset.Now.ToUnixTimeSeconds(),
                 Name = GetProspectsName(prospect),

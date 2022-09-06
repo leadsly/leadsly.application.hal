@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using RecentlyAddedProspect = Domain.Models.MonitorForNewProspects.RecentlyAddedProspect;
+using RecentlyAddedProspectModel = Domain.Models.MonitorForNewProspects.RecentlyAddedProspectModel;
 
 namespace Domain.Services
 {
@@ -22,7 +22,7 @@ namespace Domain.Services
         private readonly ILogger<MonitorForNewConnectionsService> _logger;
         private readonly IMonitorProspectsForNewConnectionsServiceApi _api;
 
-        public async Task ProcessRecentlyAddedProspectsAsync(IList<RecentlyAddedProspect> items, PublishMessageBody message, CancellationToken ct = default)
+        public async Task ProcessRecentlyAddedProspectsAsync(IList<RecentlyAddedProspectModel> items, PublishMessageBody message, CancellationToken ct = default)
         {
             RecentlyAddedProspectsRequest request = new()
             {

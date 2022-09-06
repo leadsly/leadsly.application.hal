@@ -34,11 +34,11 @@ namespace Domain.Orchestrators
         private readonly ILogger<FollowUpMessagePhaseOrchestrator> _logger;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ITimestampService _timestampService;
-        private SentFollowUpMessage SentFollowUpMessage { get; set; }
+        private SentFollowUpMessageModel SentFollowUpMessage { get; set; }
 
-        public SentFollowUpMessage GetSentFollowUpMessage()
+        public SentFollowUpMessageModel GetSentFollowUpMessage()
         {
-            SentFollowUpMessage item = SentFollowUpMessage;
+            SentFollowUpMessageModel item = SentFollowUpMessage;
             SentFollowUpMessage = null;
             return item;
         }
@@ -99,7 +99,6 @@ namespace Domain.Orchestrators
             SentFollowUpMessage = new()
             {
                 MessageOrderNum = message.OrderNum,
-                CampaignProspectId = message.CampaignProspectId,
                 ActualDeliveryDateTimeStamp = _timestampService.TimestampNow()
             };
         }

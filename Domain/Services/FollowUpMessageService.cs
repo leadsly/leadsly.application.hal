@@ -21,13 +21,13 @@ namespace Domain.Services
         private readonly ILogger<FollowUpMessageService> _logger;
         private readonly ISendFollowUpMessageServiceApi _api;
 
-        public async Task ProcessSentFollowUpMessageAsync(SentFollowUpMessage item, FollowUpMessageBody message, CancellationToken ct = default)
+        public async Task ProcessSentFollowUpMessageAsync(SentFollowUpMessageModel item, FollowUpMessageBody message, CancellationToken ct = default)
         {
             SentFollowUpMessageRequest request = new()
             {
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
-                RequestUrl = $"FollowUpMessage/{item.CampaignProspectId}/follow-up",
+                RequestUrl = $"FollowUpMessage/{message.CampaignProspectId}/follow-up",
                 Item = item
             };
 

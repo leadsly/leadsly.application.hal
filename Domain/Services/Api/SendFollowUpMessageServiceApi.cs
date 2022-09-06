@@ -37,8 +37,7 @@ namespace Domain.Services.Api
                     RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
                     Content = JsonContent.Create(new
                     {
-                        MessageOrderNum = request.Item.MessageOrderNum,
-                        ActualDeliveryDateTimeStamp = request.Item.ActualDeliveryDateTimeStamp
+                        Item = request.Item
                     })
                 };
 

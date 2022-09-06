@@ -9,6 +9,6 @@ namespace Domain.Models.Requests.MonitorForNewConnections
         public string ServiceDiscoveryName { get; set; }
         public string RequestUrl { get; set; }
         public string ApplicationUserId { get; set; }
-        public IList<RecentlyAddedProspect> Items { get; set; }
+        public IList<RecentlyAddedProspectModel> Items { get; set; }
     }
 }

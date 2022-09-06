@@ -48,7 +48,7 @@ namespace Domain.Executors.FollowUpMessage
 
         private async Task ProcessSentFollowUpMessageAsync(FollowUpMessageBody message)
         {
-            SentFollowUpMessage item = _orchestrator.GetSentFollowUpMessage();
+            SentFollowUpMessageModel item = _orchestrator.GetSentFollowUpMessage();
             if (item != null)
             {
                 await _service.ProcessSentFollowUpMessageAsync(item, message);

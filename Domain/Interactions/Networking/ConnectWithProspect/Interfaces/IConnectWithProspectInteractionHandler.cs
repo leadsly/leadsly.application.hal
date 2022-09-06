@@ -4,6 +4,6 @@ namespace Domain.Interactions.Networking.ConnectWithProspect.Interfaces
 {
     public interface IConnectWithProspectInteractionHandler : IInteractionHandler
     {
-        public ConnectionSent ConnectionSent { get; }
+        public ConnectionSentModel ConnectionSent { get; }
     }
 }

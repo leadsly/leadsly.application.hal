@@ -7,6 +7,6 @@ namespace Domain.Services.Interfaces.POMs
     public interface IMonitorForNewConnectionsServicePOM
     {
         int? GetConnectionsCount(IWebDriver webDriver);
-        IList<RecentlyAddedProspect> GetAllRecentlyAdded(IWebDriver webDriver);
+        IList<RecentlyAddedProspectModel> GetAllRecentlyAdded(IWebDriver webDriver);
     }
 }

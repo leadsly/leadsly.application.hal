@@ -22,7 +22,7 @@ namespace Domain.Services
         private readonly ILogger<ScanProspectsService> _logger;
         private readonly IScanProspectsForRepliesServiceApi _scanProspectsForRepliesServiceApi;
 
-        public async Task ProcessNewMessagesAsync(IList<NewMessage> items, ScanProspectsForRepliesBody message, CancellationToken ct = default)
+        public async Task ProcessNewMessagesAsync(IList<NewMessageModel> items, ScanProspectsForRepliesBody message, CancellationToken ct = default)
         {
             NewMessagesRequest request = new()
             {

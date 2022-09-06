@@ -8,6 +8,6 @@ namespace Domain.Models.Requests.DeepScanProspectsForReplies
         public string NamespaceName { get; set; }
         public string ServiceDiscoveryName { get; set; }
         public string RequestUrl { get; set; }
-        public IList<ProspectReplied> Items { get; set; }
+        public IList<ProspectRepliedModel> Items { get; set; }
     }
 }

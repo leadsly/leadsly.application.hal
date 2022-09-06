@@ -6,7 +6,7 @@ namespace Domain.Orchestrators.Interfaces
 {
     public interface ICheckOffHoursNewConnectionsPhaseOrchestrator
     {
-        public IList<RecentlyAddedProspect> RecentlyAddedProspects { get; }
+        public IList<RecentlyAddedProspectModel> RecentlyAddedProspects { get; }
         void Execute(CheckOffHoursNewConnectionsBody message);
     }
 }

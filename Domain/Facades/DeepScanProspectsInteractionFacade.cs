@@ -29,7 +29,7 @@ namespace Domain.Facades
         private readonly IEnterSearchMessageCriteriaInteractionHandler _enterSearchMessageCriteriaHandler;
         private readonly IGetProspectsMessageItemInteractionHandler _getProspectsMesageItemHandler;
 
-        public ProspectReplied ProspectReplied { get; set; }
+        public ProspectRepliedModel ProspectReplied { get; set; }
 
         public IList<IWebElement> ProspectMessageListItems { get; set; }
 

@@ -7,7 +7,7 @@ namespace Domain.Interactions.Networking.Decorators
 {
     public class RetryGatherProspectsHandlerDecorator : IGatherProspectsInteractionHandler
     {
-        public List<PersistPrimaryProspect> PersistPrimaryProspects => _decorated.PersistPrimaryProspects;
+        public List<PersistPrimaryProspectModel> PersistPrimaryProspects => _decorated.PersistPrimaryProspects;
 
         public IList<IWebElement> Prospects => _decorated.Prospects;
 

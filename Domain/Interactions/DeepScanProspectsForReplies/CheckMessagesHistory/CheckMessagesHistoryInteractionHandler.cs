@@ -25,7 +25,7 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory
         private readonly IDeepScanProspectsServicePOM _service;
         private readonly ILogger<CheckMessagesHistoryInteractionHandler> _logger;
 
-        private ProspectReplied Prospect { get; set; }
+        private ProspectRepliedModel Prospect { get; set; }
 
         public bool HandleInteraction(InteractionBase interaction)
         {
@@ -64,7 +64,7 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory
                     if (checkMessageHistoryInteraction.ProspectName == nameFromMessage)
                     {
                         _logger.LogDebug("Prospect {0} responded to our message", checkMessageHistoryInteraction.ProspectName);
-                        ProspectReplied prospect = new()
+                        ProspectRepliedModel prospect = new()
                         {
                             ResponseMessageTimestamp = _timestampService.TimestampNow(),
                             CampaignProspectId = checkMessageHistoryInteraction.CampaignProspectId,
@@ -89,9 +89,9 @@ namespace Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory
             return true;
         }
 
-        public ProspectReplied GetProspect()
+        public ProspectRepliedModel GetProspect()
         {
-            ProspectReplied prospect = Prospect;
+            ProspectRepliedModel prospect = Prospect;
             Prospect = null;
             return prospect;
         }

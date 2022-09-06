@@ -21,13 +21,13 @@ namespace Domain.Interactions.Networking.GatherProspects
             _linkedInSearchPage = linkedInSearchPage;
         }
 
-        public List<PersistPrimaryProspect> PersistPrimaryProspects
+        public List<PersistPrimaryProspectModel> PersistPrimaryProspects
         {
             get
             {
                 // anytime we get values from this property, reset it back to zero
-                List<PersistPrimaryProspect> requests = _persistPrimaryProspectRequests;
-                _persistPrimaryProspectRequests = new List<PersistPrimaryProspect>();
+                List<PersistPrimaryProspectModel> requests = _persistPrimaryProspectRequests;
+                _persistPrimaryProspectRequests = new List<PersistPrimaryProspectModel>();
                 return requests;
             }
             set
@@ -37,7 +37,7 @@ namespace Domain.Interactions.Networking.GatherProspects
 
         }
 
-        private List<PersistPrimaryProspect> _persistPrimaryProspectRequests = new List<PersistPrimaryProspect>();
+        private List<PersistPrimaryProspectModel> _persistPrimaryProspectRequests = new List<PersistPrimaryProspectModel>();
         public IList<IWebElement> Prospects { get; set; }
         private readonly ILinkedInSearchPage _linkedInSearchPage;
         private readonly ILogger<GatherProspectsInteractionHandler> _logger;
@@ -62,7 +62,7 @@ namespace Domain.Interactions.Networking.GatherProspects
         {
             GatherProspectsInteraction gatherProspectsInteraction = interaction as GatherProspectsInteraction;
             NetworkingMessageBody message = gatherProspectsInteraction.Message as NetworkingMessageBody;
-            IList<IWebElement> connectableProspects = GetConnectableProspects(gatherProspectsInteraction.WebDriver, message.PrimaryProspectListId);
+            IList<IWebElement> connectableProspects = GetConnectableProspects(gatherProspectsInteraction.WebDriver);
             if (connectableProspects == null)
             {
                 return false;
@@ -70,17 +70,17 @@ namespace Domain.Interactions.Networking.GatherProspects
             else
             {
                 Prospects = connectableProspects;
-                ProspectList(gatherProspectsInteraction.WebDriver, message);
+                ProspectList(gatherProspectsInteraction.WebDriver);
             }
 
             return true;
         }
 
-        private IList<IWebElement> GetConnectableProspects(IWebDriver webDriver, string primaryProspectListId)
+        private IList<IWebElement> GetConnectableProspects(IWebDriver webDriver)
         {
             _logger.LogTrace("Crawling all of prospects on this page");
             // filter down the list to only those prospects that we can connect with
-            IList<IWebElement> connectableProspectsOnThisPage = CrawlProspects(webDriver, primaryProspectListId)?.Where(ConnectableProspects)?.ToList();
+            IList<IWebElement> connectableProspectsOnThisPage = CrawlProspects(webDriver)?.Where(ConnectableProspects)?.ToList();
 
             webDriver.ScrollTop(_humanBehaviorService);
             _humanBehaviorService.RandomWaitMilliSeconds(2000, 3000);
@@ -91,7 +91,7 @@ namespace Domain.Interactions.Networking.GatherProspects
             return connectableProspectsOnThisPage;
         }
 
-        private IList<IWebElement> CrawlProspects(IWebDriver webDriver, string primaryProspectListId)
+        private IList<IWebElement> CrawlProspects(IWebDriver webDriver)
         {
             bool? didSearchResultsDisplay = DidSearchResultsDisplay(webDriver);
             if (didSearchResultsDisplay == false || didSearchResultsDisplay == null)
@@ -150,19 +150,19 @@ namespace Domain.Interactions.Networking.GatherProspects
             return true;
         }
 
-        private void ProspectList(IWebDriver webDriver, NetworkingMessageBody message)
+        private void ProspectList(IWebDriver webDriver)
         {
             _logger.LogDebug($"Persisting {Prospects.Count} prospects as part of the ProspectListPhase.");
-            List<PersistPrimaryProspect> collectedProspects = CreatePrimaryProspects(Prospects, message.PrimaryProspectListId);
+            List<PersistPrimaryProspectModel> collectedProspects = CreatePrimaryProspects(Prospects);
             if (collectedProspects.Count > 0)
             {
                 PersistPrimaryProspects = collectedProspects;
             }
         }
 
-        private List<PersistPrimaryProspect> CreatePrimaryProspects(IList<IWebElement> prospects, string primaryProspectListId)
+        private List<PersistPrimaryProspectModel> CreatePrimaryProspects(IList<IWebElement> prospects)
         {
-            List<PersistPrimaryProspect> primaryProspects = new List<PersistPrimaryProspect>();
+            List<PersistPrimaryProspectModel> primaryProspects = new List<PersistPrimaryProspectModel>();
             foreach (IWebElement webElement in prospects)
             {
                 primaryProspects.Add(new()
@@ -172,7 +172,6 @@ namespace Domain.Interactions.Networking.GatherProspects
                     ProfileUrl = GetProspectsProfileUrl(webElement),
                     SearchResultAvatarUrl = GetProspectsSearchResultAvatarUrl(webElement),
                     Area = GetProspectsArea(webElement),
-                    PrimaryProspectListId = primaryProspectListId,
                     EmploymentInfo = GetProspectsEmploymentInfo(webElement)
                 });
             }

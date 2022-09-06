@@ -6,7 +6,7 @@ namespace Domain.Interactions.Networking.GatherProspects.Interfaces
 {
     public interface IGatherProspectsInteractionHandler : IInteractionHandler
     {
-        public List<PersistPrimaryProspect> PersistPrimaryProspects { get; }
+        public List<PersistPrimaryProspectModel> PersistPrimaryProspects { get; }
         public IList<IWebElement> Prospects { get; }
     }
 }

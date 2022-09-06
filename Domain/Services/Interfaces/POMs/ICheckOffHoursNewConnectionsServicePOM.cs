@@ -6,6 +6,6 @@ namespace Domain.Services.Interfaces.POMs
 {
     public interface ICheckOffHoursNewConnectionsServicePOM
     {
-        IList<RecentlyAddedProspect> GetAllRecentlyAddedSince(IWebDriver webDriver, int numOfHoursAgo, string timezoneId);
+        IList<RecentlyAddedProspectModel> GetAllRecentlyAddedSince(IWebDriver webDriver, int numOfHoursAgo, string timezoneId);
     }
 }

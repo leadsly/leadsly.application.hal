@@ -1,4 +1,5 @@
-﻿using Domain.Models.ProspectList;
+﻿using Domain.Models.Networking;
+using Domain.Models.ProspectList;
 using Domain.Models.RabbitMQMessages;
 using Domain.Models.Requests;
 using Domain.Models.Requests.Networking;
@@ -70,7 +71,7 @@ namespace Domain.Services
             return response;
         }
 
-        public async Task ProcessSentConnectionsAsync(IList<ConnectionSent> items, NetworkingMessageBody message, CancellationToken ct = default)
+        public async Task ProcessSentConnectionsAsync(IList<ConnectionSentModel> items, NetworkingMessageBody message, CancellationToken ct = default)
         {
             ConnectionsSentRequest request = new()
             {
@@ -93,7 +94,7 @@ namespace Domain.Services
             }
         }
 
-        public async Task UpdateSearchUrlsAsync(IList<Domain.Models.Networking.SearchUrlProgress> items, NetworkingMessageBody message, CancellationToken ct = default)
+        public async Task UpdateSearchUrlsAsync(IList<SearchUrlProgressModel> items, NetworkingMessageBody message, CancellationToken ct = default)
         {
             IList<Task<HttpResponseMessage>> reqs = items.Select(x =>
             {
@@ -127,10 +128,13 @@ namespace Domain.Services
             }
         }
 
-        public async Task ProcessProspectListAsync(IList<PersistPrimaryProspect> items, NetworkingMessageBody message, CancellationToken ct = default)
+        public async Task ProcessProspectListAsync(IList<PersistPrimaryProspectModel> items, NetworkingMessageBody message, CancellationToken ct = default)
         {
             CollectedProspectsRequest request = new()
             {
+                CampaignId = message.CampaignId,
+                PrimaryProspectListId = message.PrimaryProspectListId,
+                SocialAccountId = message.SocialAccountId,
                 CampaignProspectListId = message.CampaignProspectListId,
                 Items = items,
                 RequestUrl = $"ProspectList/{message.HalId}",

@@ -36,7 +36,7 @@ namespace Domain.Orchestrators
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<DeepScanProspectsForRepliesOrchestrator> _logger;
 
-        public IList<ProspectReplied> Prospects { get; set; } = new List<ProspectReplied>();
+        public IList<ProspectRepliedModel> Prospects { get; set; } = new List<ProspectRepliedModel>();
 
         public void Execute(DeepScanProspectsForRepliesBody message, IList<NetworkProspectResponse> prospects)
         {

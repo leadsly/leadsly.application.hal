@@ -7,7 +7,7 @@ namespace Domain.Facades.Interfaces
     public interface IMonitorForConnectionsInteractionFacade
     {
         public int ConnectionsCount { get; }
-        public IList<RecentlyAddedProspect> RecentlyAddedProspects { get; }
+        public IList<RecentlyAddedProspectModel> RecentlyAddedProspects { get; }
         bool HandleGetConnectionsCountInteraction(InteractionBase interaction);
         bool HandleGetAllRecentlyAddedInteraction(InteractionBase interaction);
         bool HandleRefreshBrowserInteraction(InteractionBase interaction);

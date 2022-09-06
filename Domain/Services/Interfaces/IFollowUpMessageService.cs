@@ -7,7 +7,7 @@ namespace Domain.Services.Interfaces
 {
     public interface IFollowUpMessageService
     {
-        Task ProcessSentFollowUpMessageAsync(SentFollowUpMessage item, FollowUpMessageBody message, CancellationToken ct = default);
+        Task ProcessSentFollowUpMessageAsync(SentFollowUpMessageModel item, FollowUpMessageBody message, CancellationToken ct = default);
 
     }
 }

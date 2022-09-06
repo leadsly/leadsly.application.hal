@@ -8,6 +8,6 @@ namespace Domain.Services.Interfaces
 {
     public interface IScanProspectsService
     {
-        Task ProcessNewMessagesAsync(IList<NewMessage> items, ScanProspectsForRepliesBody message, CancellationToken ct = default);
+        Task ProcessNewMessagesAsync(IList<NewMessageModel> items, ScanProspectsForRepliesBody message, CancellationToken ct = default);
     }
 }

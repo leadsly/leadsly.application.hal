@@ -37,7 +37,7 @@ namespace Domain.Orchestrators
         private readonly ITimestampService _timestampService;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<ScanProspectsForRepliesPhaseOrchestrator> _logger;
-        private IList<NewMessage> NewMessages { get; set; } = new List<NewMessage>();
+        private IList<NewMessageModel> NewMessages { get; set; } = new List<NewMessageModel>();
         public static bool IsRunning { get; set; } = false;
 
         public event EndOfWorkDayReachedEventHandler EndOfWorkDayReached;
@@ -107,7 +107,7 @@ namespace Domain.Orchestrators
                         continue;
                     }
 
-                    NewMessage newMessage = _interactionsFacade.NewMessage;
+                    NewMessageModel newMessage = _interactionsFacade.NewMessage;
                     if (newMessage != null)
                     {
                         NewMessages.Add(newMessage);

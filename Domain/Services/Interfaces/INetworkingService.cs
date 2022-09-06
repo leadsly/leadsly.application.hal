@@ -11,9 +11,9 @@ namespace Domain.Services.Interfaces
     public interface INetworkingService
     {
         Task<GetSearchUrlProgressResponse> GetSearchUrlProgressAsync(NetworkingMessageBody message, CancellationToken ct = default);
-        Task ProcessSentConnectionsAsync(IList<ConnectionSent> items, NetworkingMessageBody message, CancellationToken ct = default);
-        Task UpdateSearchUrlsAsync(IList<Domain.Models.Networking.SearchUrlProgress> items, NetworkingMessageBody message, CancellationToken ct = default);
-        Task ProcessProspectListAsync(IList<PersistPrimaryProspect> items, NetworkingMessageBody message, CancellationToken ct = default);
+        Task ProcessSentConnectionsAsync(IList<ConnectionSentModel> items, NetworkingMessageBody message, CancellationToken ct = default);
+        Task UpdateSearchUrlsAsync(IList<Domain.Models.Networking.SearchUrlProgressModel> items, NetworkingMessageBody message, CancellationToken ct = default);
+        Task ProcessProspectListAsync(IList<PersistPrimaryProspectModel> items, NetworkingMessageBody message, CancellationToken ct = default);
         Task UpdateMonthlySearchLimitAsync(bool limitReached, NetworkingMessageBody message, CancellationToken ct = default);
     }
 }

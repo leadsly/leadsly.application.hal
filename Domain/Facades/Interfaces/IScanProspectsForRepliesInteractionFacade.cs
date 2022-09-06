@@ -8,7 +8,7 @@ namespace Domain.Facades.Interfaces
     public interface IScanProspectsForRepliesInteractionFacade
     {
         IList<IWebElement> NewMessageElements { get; }
-        NewMessage NewMessage { get; }
+        NewMessageModel NewMessage { get; }
         bool HandleGetNewMessagesInteraction(InteractionBase interaction);
         bool HandleGetMessageContentInteraction(InteractionBase interaction);
         bool HandleCloseConversationsInteraction(InteractionBase interaction);

@@ -31,7 +31,7 @@ namespace Domain.Facades
 
         public IList<IWebElement> NewMessageElements => _getNewMessagesHandler.GetNewMessages();
 
-        public NewMessage NewMessage => _getMessageContentHandler.GetNewMessage();
+        public NewMessageModel NewMessage => _getMessageContentHandler.GetNewMessage();
 
         public bool HandleGetMessageContentInteraction(InteractionBase interaction)
         {

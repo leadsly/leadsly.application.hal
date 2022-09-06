@@ -7,7 +7,7 @@ namespace Domain.Facades.Interfaces
 {
     public interface IDeepScanProspectsInteractionFacade
     {
-        public ProspectReplied ProspectReplied { get; }
+        public ProspectRepliedModel ProspectReplied { get; }
         public IList<IWebElement> ProspectMessageListItems { get; }
         bool HandleClearMessagingCriteriaInteraction(InteractionBase interaction);
         bool HandleEnterSearchmessageCriteriaInteraction(InteractionBase interaction);

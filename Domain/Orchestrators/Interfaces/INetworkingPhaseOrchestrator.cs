@@ -7,10 +7,10 @@ namespace Domain.Orchestrators.Interfaces
 {
     public interface INetworkingPhaseOrchestrator
     {
-        public IList<Models.Networking.SearchUrlProgress> GetUpdatedSearchUrls();
-        public List<PersistPrimaryProspect> GetPersistPrimaryProspects();
-        public IList<ConnectionSent> GetConnectionsSent();
+        public IList<Models.Networking.SearchUrlProgressModel> GetUpdatedSearchUrls();
+        public List<PersistPrimaryProspectModel> GetPersistPrimaryProspects();
+        public IList<ConnectionSentModel> GetConnectionsSent();
         public bool GetMonthlySearchLimitReached();
-        void Execute(NetworkingMessageBody message, IList<Models.Networking.SearchUrlProgress> searchUrlsProgress);
+        void Execute(NetworkingMessageBody message, IList<Models.Networking.SearchUrlProgressModel> searchUrlsProgress);
     }
 }

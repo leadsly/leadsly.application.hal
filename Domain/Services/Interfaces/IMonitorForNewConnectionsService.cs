@@ -8,6 +8,6 @@ namespace Domain.Services.Interfaces
 {
     public interface IMonitorForNewConnectionsService
     {
-        Task ProcessRecentlyAddedProspectsAsync(IList<RecentlyAddedProspect> requests, PublishMessageBody message, CancellationToken ct = default);
+        Task ProcessRecentlyAddedProspectsAsync(IList<RecentlyAddedProspectModel> requests, PublishMessageBody message, CancellationToken ct = default);
     }
 }

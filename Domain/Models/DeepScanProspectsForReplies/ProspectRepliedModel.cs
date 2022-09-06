@@ -1,6 +1,6 @@
 ﻿namespace Domain.Models.DeepScanProspectsForReplies
 {
-    public class ProspectReplied
+    public class ProspectRepliedModel
     {
         public string CampaignProspectId { get; set; }
         public string ResponseMessage { get; set; }

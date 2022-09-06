@@ -5,7 +5,7 @@ namespace Domain.Orchestrators.Interfaces
 {
     public interface IFollowUpMessagePhaseOrchestrator
     {
-        public SentFollowUpMessage GetSentFollowUpMessage();
+        public SentFollowUpMessageModel GetSentFollowUpMessage();
         void Execute(FollowUpMessageBody message);
     }
 }

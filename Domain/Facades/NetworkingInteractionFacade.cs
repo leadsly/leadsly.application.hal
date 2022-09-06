@@ -28,11 +28,11 @@ namespace Domain.Facades
         private readonly RetryConnectWithProspectHandlerDecorator _connectWithProspectInteractionHandler;
         private readonly RetryGatherProspectsHandlerDecorator _gatherProspectsInteractionHandler;
 
-        public List<PersistPrimaryProspect> PersistPrimaryProspects => _gatherProspectsInteractionHandler.PersistPrimaryProspects;
+        public List<PersistPrimaryProspectModel> PersistPrimaryProspects => _gatherProspectsInteractionHandler.PersistPrimaryProspects;
 
         public IList<IWebElement> Prospects => _gatherProspectsInteractionHandler.Prospects;
 
-        public ConnectionSent ConnectionSent => _connectWithProspectInteractionHandler.ConnectionSent;
+        public ConnectionSentModel ConnectionSent => _connectWithProspectInteractionHandler.ConnectionSent;
 
         public bool HandleNoResultsFoundInteraction(InteractionBase interaction)
         {

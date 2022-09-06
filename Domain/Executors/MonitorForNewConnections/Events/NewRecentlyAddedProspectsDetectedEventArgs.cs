@@ -7,13 +7,13 @@ namespace Domain.Executors.MonitorForNewConnections.Events
 {
     public class NewRecentlyAddedProspectsDetectedEventArgs : EventArgs
     {
-        public NewRecentlyAddedProspectsDetectedEventArgs(PublishMessageBody message, IList<RecentlyAddedProspect> newRecentlyAddedProspects)
+        public NewRecentlyAddedProspectsDetectedEventArgs(PublishMessageBody message, IList<RecentlyAddedProspectModel> newRecentlyAddedProspects)
         {
             Message = message;
             NewRecentlyAddedProspects = newRecentlyAddedProspects;
         }
 
         public PublishMessageBody Message { get; set; }
-        public IList<RecentlyAddedProspect> NewRecentlyAddedProspects { get; set; }
+        public IList<RecentlyAddedProspectModel> NewRecentlyAddedProspects { get; set; }
     }
 }

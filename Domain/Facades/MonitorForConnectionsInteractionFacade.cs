@@ -30,7 +30,7 @@ namespace Domain.Facades
 
         public int ConnectionsCount => _getConnectionsCountHandler.GetConnectionsCount();
 
-        public IList<RecentlyAddedProspect> RecentlyAddedProspects => _getAllRecentlyAddedHandler.GetRecentlyAddedProspects();
+        public IList<RecentlyAddedProspectModel> RecentlyAddedProspects => _getAllRecentlyAddedHandler.GetRecentlyAddedProspects();
 
         public bool HandleCloseAllConversationsInteraction(InteractionBase interaction)
         {
