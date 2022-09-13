@@ -57,6 +57,7 @@ namespace Domain.Providers
                 return result;
             }
 
+
             return _webDriverService.CloseTab<T>(getWebDriverOperationResult.Value.WebDriver, windowHandleId);
         }
 
