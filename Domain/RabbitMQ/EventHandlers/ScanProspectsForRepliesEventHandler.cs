@@ -3,7 +3,6 @@ using Domain.PhaseHandlers.ScanProspectsForRepliesHandler;
 using Domain.RabbitMQ.EventHandlers.Interfaces;
 using Leadsly.Application.Model;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
@@ -18,7 +17,7 @@ namespace Domain.RabbitMQ.EventHandlers
             ILogger<ScanProspectsForRepliesEventHandler> logger,
             HalWorkCommandHandlerDecorator<DeepScanProspectsForRepliesCommand> deepScanHandler,
             HalWorkCommandHandlerDecorator<ScanProspectsForRepliesCommand> scanHandler
-            )
+            ) : base(logger)
         {
             _logger = logger;
             _deepScanHandler = deepScanHandler;
@@ -51,34 +50,16 @@ namespace Domain.RabbitMQ.EventHandlers
 
             if (networkType == RabbitMQConstants.ScanProspectsForReplies.ExecuteDeepScan)
             {
-                PublishMessageBody message = DeserializeMessage(rawMessage);
+                PublishMessageBody message = DeserializeMessage<DeepScanProspectsForRepliesBody>(rawMessage);
                 DeepScanProspectsForRepliesCommand deepScanProspectsCommand = new DeepScanProspectsForRepliesCommand(channel, eventArgs, message, message.StartOfWorkday, message.EndOfWorkday, message.TimeZoneId);
                 await _deepScanHandler.HandleAsync(deepScanProspectsCommand);
             }
             else if (networkType == RabbitMQConstants.ScanProspectsForReplies.ExecutePhase)
             {
-                PublishMessageBody message = DeserializeMessage(rawMessage);
+                PublishMessageBody message = DeserializeMessage<ScanProspectsForRepliesBody>(rawMessage);
                 ScanProspectsForRepliesCommand scanProspectsCommand = new ScanProspectsForRepliesCommand(channel, eventArgs, message, message.StartOfWorkday, message.EndOfWorkday, message.TimeZoneId);
                 await _scanHandler.HandleAsync(scanProspectsCommand);
             }
-        }
-
-        protected override PublishMessageBody DeserializeMessage(string rawMessage)
-        {
-            _logger.LogInformation("Deserializing DeepScanProspectsForRepliesBody");
-            PublishMessageBody message = null;
-            try
-            {
-                message = JsonConvert.DeserializeObject<PublishMessageBody>(rawMessage);
-                _logger.LogDebug("Successfully deserialized DeepScanProspectsForRepliesBody");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to deserialize DeepScanProspectsForRepliesBody. Returning an explicit null");
-                return null;
-            }
-
-            return message;
         }
     }
 }

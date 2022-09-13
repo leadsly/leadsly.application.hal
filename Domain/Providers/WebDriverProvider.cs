@@ -379,7 +379,7 @@ namespace Domain.Providers
                     {
                         GridNamespaceName = gridNamespaceName,
                         GridServiceDiscoveryName = gridServiceDiscoveryName,
-                        RequestUrl = "FileManager/clone-profile",
+                        RequestUrl = "BrowserProfile/clone-profile",
                         DefaultChromeProfileName = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeProfileName,
                         DefaultChromeUserProfilesDir = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir,
                         NewChromeProfile = newChromeProfile,

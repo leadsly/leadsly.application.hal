@@ -2,10 +2,8 @@
 using Domain.PhaseHandlers.NetworkingHandler;
 using Domain.RabbitMQ.EventHandlers.Interfaces;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,6 +14,7 @@ namespace Domain.RabbitMQ.EventHandlers
         public NetworkingEventHandler(
             ILogger<NetworkingEventHandler> logger,
             HalWorkCommandHandlerDecorator<NetworkingCommand> networkingHandler)
+            : base(logger)
         {
             _networkingHandler = networkingHandler;
             _logger = logger;
@@ -30,28 +29,10 @@ namespace Domain.RabbitMQ.EventHandlers
 
             byte[] body = eventArgs.Body.ToArray();
             string rawMessage = Encoding.UTF8.GetString(body);
-            PublishMessageBody message = DeserializeMessage(rawMessage);
+            PublishMessageBody message = DeserializeMessage<NetworkingMessageBody>(rawMessage);
 
             NetworkingCommand networkingCommand = new NetworkingCommand(channel, eventArgs, message, message.StartOfWorkday, message.EndOfWorkday, message.TimeZoneId);
             await _networkingHandler.HandleAsync(networkingCommand);
-        }
-
-        protected override PublishMessageBody DeserializeMessage(string rawMessage)
-        {
-            _logger.LogInformation("Deserializing FollowUpMessageBody");
-            FollowUpMessageBody followUpMessageBody = null;
-            try
-            {
-                followUpMessageBody = JsonConvert.DeserializeObject<FollowUpMessageBody>(rawMessage);
-                _logger.LogDebug("Successfully deserialized FollowUpMessageBody");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to deserialize FollowUpMessageBody. Returning an explicit null");
-                return null;
-            }
-
-            return followUpMessageBody;
         }
     }
 }

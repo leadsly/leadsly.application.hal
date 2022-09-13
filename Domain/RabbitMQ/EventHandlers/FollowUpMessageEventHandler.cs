@@ -2,10 +2,8 @@
 using Domain.PhaseHandlers.FollowUpMessageHandlers;
 using Domain.RabbitMQ.EventHandlers.Interfaces;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,6 +14,7 @@ namespace Domain.RabbitMQ.EventHandlers
         public FollowUpMessageEventHandler(
             ILogger<FollowUpMessageEventHandler> logger,
             HalWorkCommandHandlerDecorator<FollowUpMessageCommand> followUpHandler)
+            : base(logger)
         {
             _logger = logger;
             _followUpHandler = followUpHandler;
@@ -30,28 +29,12 @@ namespace Domain.RabbitMQ.EventHandlers
 
             byte[] body = eventArgs.Body.ToArray();
             string rawMessage = Encoding.UTF8.GetString(body);
-            PublishMessageBody followUpMessages = DeserializeMessage(rawMessage);
+            PublishMessageBody followUpMessages = DeserializeMessage<FollowUpMessageBody>(rawMessage);
 
             FollowUpMessageCommand followUpMessageCommand = new FollowUpMessageCommand(channel, eventArgs, followUpMessages, followUpMessages.StartOfWorkday, followUpMessages.EndOfWorkday, followUpMessages.TimeZoneId);
             await _followUpHandler.HandleAsync(followUpMessageCommand);
         }
 
-        protected override PublishMessageBody DeserializeMessage(string rawMessage)
-        {
-            _logger.LogInformation("Deserializing FollowUpMessageBody");
-            FollowUpMessageBody followUpMessageBody = null;
-            try
-            {
-                followUpMessageBody = JsonConvert.DeserializeObject<FollowUpMessageBody>(rawMessage);
-                _logger.LogDebug("Successfully deserialized FollowUpMessageBody");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to deserialize FollowUpMessageBody. Returning an explicit null");
-                return null;
-            }
 
-            return followUpMessageBody;
-        }
     }
 }

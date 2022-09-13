@@ -3,7 +3,6 @@ using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
 using Domain.RabbitMQ.EventHandlers.Interfaces;
 using Leadsly.Application.Model;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
@@ -18,7 +17,7 @@ namespace Domain.RabbitMQ.EventHandlers
             ILogger<MonitorForNewAcceptedConnectionsEventHandler> logger,
             HalWorkCommandHandlerDecorator<CheckOffHoursNewConnectionsCommand> offHoursHandler,
             HalWorkCommandHandlerDecorator<MonitorForNewConnectionsCommand> monitorHandler
-            )
+            ) : base(logger)
         {
             _logger = logger;
             _monitorHandler = monitorHandler;
@@ -45,16 +44,17 @@ namespace Domain.RabbitMQ.EventHandlers
 
             byte[] body = eventArgs.Body.ToArray();
             string rawMessage = Encoding.UTF8.GetString(body);
-            PublishMessageBody message = DeserializeMessage(rawMessage);
 
             if (executionType == RabbitMQConstants.MonitorNewAcceptedConnections.ExecuteOffHoursScan)
             {
+                PublishMessageBody message = DeserializeMessage<CheckOffHoursNewConnectionsBody>(rawMessage);
                 _logger.LogInformation("[CheckOffHoursNewConnections] Executing CheckOffHoursNewConnections phase");
                 CheckOffHoursNewConnectionsCommand offHoursCommand = new CheckOffHoursNewConnectionsCommand(channel, eventArgs, message);
                 await _offHoursHandler.HandleAsync(offHoursCommand);
             }
             else if (executionType == RabbitMQConstants.MonitorNewAcceptedConnections.ExecutePhase)
             {
+                PublishMessageBody message = DeserializeMessage<MonitorForNewAcceptedConnectionsBody>(rawMessage);
                 _logger.LogInformation("[MonitorForNewConnections] Executing MonitorForNewConnections phase");
                 MonitorForNewConnectionsCommand monitorCommand = new MonitorForNewConnectionsCommand(channel, eventArgs, message, message.StartOfWorkday, message.EndOfWorkday, message.TimeZoneId);
                 await _monitorHandler.HandleAsync(monitorCommand);
@@ -63,24 +63,6 @@ namespace Domain.RabbitMQ.EventHandlers
             {
                 _logger.LogInformation("Header called execution-type did not match any expected values. It's value was {executionType}", executionType);
             }
-        }
-
-        protected override PublishMessageBody DeserializeMessage(string rawMessage)
-        {
-            _logger.LogInformation("Deserializing MonitorForNewAcceptedConnectionsBody");
-            PublishMessageBody message = null;
-            try
-            {
-                message = JsonConvert.DeserializeObject<PublishMessageBody>(rawMessage);
-                _logger.LogDebug("Successfully deserialized MonitorForNewAcceptedConnectionsBody");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to deserialize MonitorForNewAcceptedConnectionsBody. Returning an explicit null");
-                return null;
-            }
-
-            return message;
         }
     }
 }
