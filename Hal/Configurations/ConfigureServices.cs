@@ -247,7 +247,7 @@ namespace Hal.Configurations
             services.AddScoped<IScanProspectsService, ScanProspectsService>();
             services.AddScoped<IDeepScanProspectsService, DeepScanProspectsService>();
             services.AddScoped<IFollowUpMessageService, FollowUpMessageService>();
-            services.AddScoped<IMonitorForNewConnectionsService, IMonitorForNewConnectionsService>();
+            services.AddScoped<IMonitorForNewConnectionsService, MonitorForNewConnectionsService>();
 
             return services;
         }
