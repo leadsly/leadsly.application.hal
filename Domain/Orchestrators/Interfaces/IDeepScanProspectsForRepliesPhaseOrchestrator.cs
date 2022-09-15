@@ -1,6 +1,6 @@
 ﻿using Domain.Models.DeepScanProspectsForReplies;
-using Domain.Models.RabbitMQMessages;
 using Domain.Models.Responses;
+using Domain.MQ.Messages;
 using System.Collections.Generic;
 
 namespace Domain.Orchestrators.Interfaces

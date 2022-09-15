@@ -1,5 +1,5 @@
 ﻿using Domain.Models.MonitorForNewProspects;
-using Domain.Models.RabbitMQMessages;
+using Domain.MQ.Messages;
 using System;
 using System.Collections.Generic;
 

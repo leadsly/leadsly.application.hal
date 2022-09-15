@@ -1,5 +1,5 @@
 ﻿using Domain.Executors;
-using Domain.Models.RabbitMQMessages;
+using Domain.MQ.Messages;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;

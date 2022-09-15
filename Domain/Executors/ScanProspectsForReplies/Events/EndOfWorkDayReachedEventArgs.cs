@@ -1,4 +1,4 @@
-﻿using Domain.Models.RabbitMQMessages;
+﻿using Domain.MQ.Messages;
 using System;
 
 namespace Domain.Executors.ScanProspectsForReplies.Events

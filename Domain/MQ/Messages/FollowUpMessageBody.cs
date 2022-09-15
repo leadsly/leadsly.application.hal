@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Models.RabbitMQMessages
+namespace Domain.MQ.Messages
 {
     [DataContract]
     public class FollowUpMessageBody : PublishMessageBody

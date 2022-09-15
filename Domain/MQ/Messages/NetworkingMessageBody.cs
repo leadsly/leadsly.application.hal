@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Domain.Models.RabbitMQMessages
+namespace Domain.MQ.Messages
 {
     [DataContract]
     public class NetworkingMessageBody : PublishMessageBody

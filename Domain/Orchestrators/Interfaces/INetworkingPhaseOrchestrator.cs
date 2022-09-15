@@ -1,6 +1,6 @@
 ﻿using Domain.Models.ProspectList;
-using Domain.Models.RabbitMQMessages;
 using Domain.Models.SendConnections;
+using Domain.MQ.Messages;
 using System.Collections.Generic;
 
 namespace Domain.Orchestrators.Interfaces

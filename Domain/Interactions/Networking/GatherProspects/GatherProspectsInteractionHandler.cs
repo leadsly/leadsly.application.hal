@@ -1,6 +1,6 @@
 ﻿using Domain.Interactions.Networking.GatherProspects.Interfaces;
 using Domain.Models.ProspectList;
-using Domain.Models.RabbitMQMessages;
+using Domain.MQ.Messages;
 using Domain.POMs;
 using Domain.POMs.Pages;
 using Domain.Services.Interfaces;

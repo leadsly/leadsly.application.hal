@@ -2,7 +2,7 @@
 using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince;
 using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince.Interfaces;
 using Domain.Models.MonitorForNewProspects;
-using Domain.Models.RabbitMQMessages;
+using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Providers.Interfaces;
 using Leadsly.Application.Model;

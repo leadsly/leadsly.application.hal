@@ -1,5 +1,5 @@
 ﻿using Domain.Models.FollowUpMessage;
-using Domain.Models.RabbitMQMessages;
+using Domain.MQ.Messages;
 using System.Threading;
 using System.Threading.Tasks;
 

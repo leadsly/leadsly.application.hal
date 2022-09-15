@@ -1,7 +1,7 @@
 ﻿using Domain.Models.DeepScanProspectsForReplies;
-using Domain.Models.RabbitMQMessages;
 using Domain.Models.Requests.DeepScanProspectsForReplies;
 using Domain.Models.Responses;
+using Domain.MQ.Messages;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
 using Microsoft.Extensions.Logging;

@@ -1,5 +1,5 @@
-﻿using Domain.Models.RabbitMQMessages;
-using Domain.MQ.EventHandlers.Interfaces;
+﻿using Domain.MQ.EventHandlers.Interfaces;
+using Domain.MQ.Messages;
 using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
 using Leadsly.Application.Model;
 using Microsoft.Extensions.Logging;

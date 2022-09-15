@@ -1,5 +1,5 @@
-﻿using Domain.Models.RabbitMQMessages;
-using Domain.MQ.EventHandlers.Interfaces;
+﻿using Domain.MQ.EventHandlers.Interfaces;
+using Domain.MQ.Messages;
 using Domain.PhaseHandlers.FollowUpMessageHandlers;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;

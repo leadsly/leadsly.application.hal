@@ -1,5 +1,5 @@
 ﻿using Domain.Executors.MonitorForNewConnections.Events;
-using Domain.Models.RabbitMQMessages;
+using Domain.MQ.Messages;
 
 namespace Domain.Orchestrators.Interfaces
 {

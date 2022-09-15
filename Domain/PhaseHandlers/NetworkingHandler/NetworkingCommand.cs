@@ -1,4 +1,4 @@
-﻿using Domain.Models.RabbitMQMessages;
+﻿using Domain.MQ.Messages;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;

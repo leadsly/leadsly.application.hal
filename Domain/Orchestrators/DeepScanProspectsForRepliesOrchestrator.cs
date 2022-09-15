@@ -4,8 +4,8 @@ using Domain.Interactions.DeepScanProspectsForReplies.ClearMessagingSearchCriter
 using Domain.Interactions.DeepScanProspectsForReplies.EnterSearchMessageCriteria;
 using Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageItem;
 using Domain.Models.DeepScanProspectsForReplies;
-using Domain.Models.RabbitMQMessages;
 using Domain.Models.Responses;
+using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces.POMs;

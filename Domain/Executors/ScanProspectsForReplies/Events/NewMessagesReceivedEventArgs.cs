@@ -1,5 +1,5 @@
-﻿using Domain.Models.RabbitMQMessages;
-using Domain.Models.ScanProspectsForReplies;
+﻿using Domain.Models.ScanProspectsForReplies;
+using Domain.MQ.Messages;
 using System;
 using System.Collections.Generic;
 

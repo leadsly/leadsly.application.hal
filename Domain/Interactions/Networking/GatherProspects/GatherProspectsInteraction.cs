@@ -1,4 +1,4 @@
-﻿using Domain.Models.RabbitMQMessages;
+﻿using Domain.MQ.Messages;
 using OpenQA.Selenium;
 
 namespace Domain.Interactions.Networking.GatherProspects

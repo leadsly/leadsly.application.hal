@@ -1,6 +1,6 @@
-﻿using Domain.Models.RabbitMQMessages;
-using Domain.Models.Responses;
+﻿using Domain.Models.Responses;
 using Domain.MQ.Interfaces;
+using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;

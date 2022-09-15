@@ -1,6 +1,6 @@
 ﻿using Domain.Models.FollowUpMessage;
-using Domain.Models.RabbitMQMessages;
 using Domain.Models.Requests.FollowUpMessage;
+using Domain.MQ.Messages;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
 using Microsoft.Extensions.Logging;

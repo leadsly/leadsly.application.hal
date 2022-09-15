@@ -1,6 +1,6 @@
-﻿using Domain.Models.RabbitMQMessages;
-using Domain.Models.Requests.ScanProspectsForreplies;
+﻿using Domain.Models.Requests.ScanProspectsForreplies;
 using Domain.Models.ScanProspectsForReplies;
+using Domain.MQ.Messages;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
 using Microsoft.Extensions.Logging;

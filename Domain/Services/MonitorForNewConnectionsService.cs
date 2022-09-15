@@ -1,5 +1,5 @@
-﻿using Domain.Models.RabbitMQMessages;
-using Domain.Models.Requests.MonitorForNewConnections;
+﻿using Domain.Models.Requests.MonitorForNewConnections;
+using Domain.MQ.Messages;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
 using Microsoft.Extensions.Logging;

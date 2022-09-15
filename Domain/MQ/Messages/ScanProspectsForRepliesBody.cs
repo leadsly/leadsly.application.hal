@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace Domain.Models.RabbitMQMessages
+namespace Domain.MQ.Messages
 {
     [DataContract]
     public class ScanProspectsForRepliesBody : PublishMessageBody

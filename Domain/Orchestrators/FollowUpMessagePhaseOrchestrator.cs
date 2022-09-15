@@ -4,7 +4,7 @@ using Domain.Interactions.FollowUpMessage.CreateNewMessage;
 using Domain.Interactions.FollowUpMessage.EnterMessage;
 using Domain.Interactions.FollowUpMessage.EnterProspectName;
 using Domain.Models.FollowUpMessage;
-using Domain.Models.RabbitMQMessages;
+using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;

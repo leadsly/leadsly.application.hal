@@ -1,12 +1,12 @@
 ﻿using Domain.Models.Networking;
 using Domain.Models.ProspectList;
-using Domain.Models.RabbitMQMessages;
 using Domain.Models.Requests;
 using Domain.Models.Requests.Networking;
 using Domain.Models.Requests.ProspectList;
 using Domain.Models.Requests.SendConnections;
 using Domain.Models.Responses;
 using Domain.Models.SendConnections;
+using Domain.MQ.Messages;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
 using Microsoft.Extensions.Logging;

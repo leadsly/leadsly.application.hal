@@ -5,7 +5,7 @@ using Domain.Interactions.MonitorForNewConnections.GetAllRecentlyAdded;
 using Domain.Interactions.MonitorForNewConnections.GetConnectionsCount;
 using Domain.Interactions.Shared.CloseAllConversations;
 using Domain.Interactions.Shared.RefreshBrowser;
-using Domain.Models.RabbitMQMessages;
+using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;

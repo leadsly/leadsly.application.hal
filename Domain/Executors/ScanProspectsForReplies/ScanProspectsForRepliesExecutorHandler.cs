@@ -1,5 +1,5 @@
 ﻿using Domain.Executors.ScanProspectsForReplies.Events;
-using Domain.Models.RabbitMQMessages;
+using Domain.MQ.Messages;
 using Domain.Orchestrators;
 using Domain.Orchestrators.Interfaces;
 using Domain.Services.Interfaces;
