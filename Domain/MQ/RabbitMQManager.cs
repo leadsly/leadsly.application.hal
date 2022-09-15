@@ -1,4 +1,4 @@
-﻿using Domain.RabbitMQ.Interfaces;
+﻿using Domain.MQ.Interfaces;
 using Domain.Repositories;
 using Leadsly.Application.Model;
 using Leadsly.Application.Model.RabbitMQ;
@@ -10,7 +10,7 @@ using RabbitMQ.Client.Events;
 using System;
 using System.Collections.Generic;
 
-namespace Domain.RabbitMQ
+namespace Domain.MQ
 {
     public class RabbitMQManager : IRabbitMQManager
     {

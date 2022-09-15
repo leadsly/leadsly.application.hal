@@ -1,5 +1,5 @@
-﻿using Domain.RabbitMQ.EventHandlers.Interfaces;
-using Domain.RabbitMQ.Interfaces;
+﻿using Domain.MQ.EventHandlers.Interfaces;
+using Domain.MQ.Interfaces;
 using Leadsly.Application.Model;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client.Events;

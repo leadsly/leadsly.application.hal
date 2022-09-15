@@ -1,11 +1,11 @@
-﻿using Domain.PhaseHandlers.RestartApplicationHandler;
-using Domain.RabbitMQ.EventHandlers.Interfaces;
+﻿using Domain.MQ.EventHandlers.Interfaces;
+using Domain.PhaseHandlers.RestartApplicationHandler;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Threading.Tasks;
 
-namespace Domain.RabbitMQ.EventHandlers
+namespace Domain.MQ.EventHandlers
 {
     public class RestartApplicationEventHandler : IRestartApplicationEventHandler
     {

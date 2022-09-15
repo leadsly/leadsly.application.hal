@@ -1,6 +1,6 @@
 ﻿using Domain.Models.RabbitMQMessages;
+using Domain.MQ.EventHandlers.Interfaces;
 using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
-using Domain.RabbitMQ.EventHandlers.Interfaces;
 using Leadsly.Application.Model;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
@@ -9,7 +9,7 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.RabbitMQ.EventHandlers
+namespace Domain.MQ.EventHandlers
 {
     public class MonitorForNewAcceptedConnectionsEventHandler : RabbitMQEventHandlerBase, IMonitorForNewAcceptedConnectionsEventHandler
     {

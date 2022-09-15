@@ -3,7 +3,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 
-namespace Domain.RabbitMQ
+namespace Domain.MQ
 {
     public static class RabbitMQExtensions
     {

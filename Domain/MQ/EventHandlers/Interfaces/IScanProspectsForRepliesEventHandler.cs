@@ -1,7 +1,7 @@
 ﻿using RabbitMQ.Client.Events;
 using System.Threading.Tasks;
 
-namespace Domain.RabbitMQ.EventHandlers.Interfaces
+namespace Domain.MQ.EventHandlers.Interfaces
 {
     public interface IScanProspectsForRepliesEventHandler
     {

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 
-namespace Domain.RabbitMQ.EventHandlers
+namespace Domain.MQ.EventHandlers
 {
     public abstract class RabbitMQEventHandlerBase
     {

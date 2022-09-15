@@ -2,7 +2,7 @@
 using Microsoft.Extensions.ObjectPool;
 using RabbitMQ.Client;
 
-namespace Domain.RabbitMQ
+namespace Domain.MQ
 {
     public class RabbitModelPooledObjectPolicy : PooledObjectPolicy<IModel>
     {

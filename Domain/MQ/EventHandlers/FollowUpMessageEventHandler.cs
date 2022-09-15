@@ -1,13 +1,13 @@
 ﻿using Domain.Models.RabbitMQMessages;
+using Domain.MQ.EventHandlers.Interfaces;
 using Domain.PhaseHandlers.FollowUpMessageHandlers;
-using Domain.RabbitMQ.EventHandlers.Interfaces;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.RabbitMQ.EventHandlers
+namespace Domain.MQ.EventHandlers
 {
     public class FollowUpMessageEventHandler : RabbitMQEventHandlerBase, IFollowUpMessageEventHandler
     {

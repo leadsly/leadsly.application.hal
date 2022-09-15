@@ -1,6 +1,6 @@
 ﻿using RabbitMQ.Client.Events;
 
-namespace Domain.RabbitMQ.Interfaces
+namespace Domain.MQ.Interfaces
 {
     public interface IRabbitMQManager
     {
