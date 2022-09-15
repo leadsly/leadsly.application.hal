@@ -41,18 +41,19 @@ namespace Domain.Orchestrators
         public void Execute(DeepScanProspectsForRepliesBody message, IList<NetworkProspectResponse> prospects)
         {
             string halId = message.HalId;
-            _logger.LogInformation("Executing DeepScanProspectsForRepliesBody on hal id {halId}", halId);
+            string messageTypeName = nameof(DeepScanProspectsForRepliesBody);
+            _logger.LogInformation("Executing {0} on HalId {1}", messageTypeName, halId);
 
-            IWebDriver webDriver = _webDriverProvider.GetOrCreateWebDriver(BrowserPurpose.ScanForReplies, message.ChromeProfileName, message.GridNamespaceName, message.GridServiceDiscoveryName, out bool isNewWebDriver);
+            IWebDriver webDriver = _webDriverProvider.GetOrCreateWebDriver(BrowserPurpose.ScanForReplies, message);
             if (webDriver == null)
             {
-                _logger.LogError("WebDriver could not be found or created. Cannot proceed");
+                _logger.LogError("Execution of {0} failed. WebDriver could not be found or created. Cannot proceed. HalId: {1}", messageTypeName, message.HalId);
                 return;
             }
 
-            bool succeeded = GoToPage(webDriver, message.PageUrl);
-            if (succeeded == false)
+            if (GoToPage(webDriver, message.PageUrl) == false)
             {
+                _logger.LogError("Execution of {0} failed. WebDriver could not navigate to the given PageUrl {1}. HalId {2}", messageTypeName, message.PageUrl, message.HalId);
                 return;
             }
 

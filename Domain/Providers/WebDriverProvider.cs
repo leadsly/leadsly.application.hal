@@ -1,5 +1,6 @@
 ﻿using Domain.Models;
 using Domain.Models.Requests;
+using Domain.MQ.Messages;
 using Domain.Providers.Interfaces;
 using Domain.Repositories;
 using Domain.Services.Interfaces;
@@ -360,12 +361,12 @@ namespace Domain.Providers
             return result;
         }
 
-        private IWebDriver CreateWebDriver(BrowserPurpose browserPurpose, string chromeProfile, string gridNamespaceName, string gridServiceDiscoveryName)
+        private IWebDriver CreateWebDriver(BrowserPurpose browserPurpose, string chromeProfileName, string gridNamespaceName, string gridServiceDiscoveryName, string proxyNamespaceName, string proxyServiceDiscoveryName)
         {
             WebDriverOptions webDriverOptions = GetWebDriverOptions();
-            //string chromeProfile = chromeProfileName;
             string browser = Enum.GetName(browserPurpose);
             string defaultChromeProfileDir = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeUserProfilesDir;
+            string chromeProfile = chromeProfileName;
             if (browserPurpose == BrowserPurpose.Auth)
             {
                 chromeProfile = webDriverOptions.ChromeProfileConfigOptions.DefaultChromeProfileName;
@@ -397,13 +398,12 @@ namespace Domain.Providers
                     return null;
                 }
 
-                // _fileManager.CloneDefaultChromeProfile(newChromeProfile, webDriverOptions);
                 string newChromeProfilePath = defaultChromeProfileDir + "/" + newChromeProfile;
                 _logger.LogDebug("New chrome profile directory that will be used is: {newChromeProfileDir}", newChromeProfilePath);
                 chromeProfile = newChromeProfile;
             }
-            IList<string> webDriverArguments = webDriverOptions.ChromeProfileConfigOptions.AddArguments;
-            ChromeOptions options = _webDriverService.SetChromeOptions(webDriverArguments, chromeProfile, defaultChromeProfileDir);
+
+            ChromeOptions options = _webDriverService.SetChromeOptions(webDriverOptions, proxyNamespaceName, proxyServiceDiscoveryName, chromeProfile, defaultChromeProfileDir);
 
             IWebDriver webDriver = _webDriverService.Create(options, webDriverOptions, gridNamespaceName, gridServiceDiscoveryName);
             if (webDriver != null)
@@ -414,52 +414,27 @@ namespace Domain.Providers
             return webDriver;
         }
 
-        public IWebDriver GetOrCreateWebDriver(BrowserPurpose browserPurpose, string chromeProfileName, string namespaceName, string serviceDiscoveryName, out bool isNewWebdriver)
+        public IWebDriver GetOrCreateWebDriver(BrowserPurpose browserPurpose, PublishMessageBody mqMessage)
         {
-            isNewWebdriver = false;
+            return GetOrCreateWebDriverInternal(browserPurpose, mqMessage.ChromeProfileName, mqMessage.GridNamespaceName, mqMessage.GridServiceDiscoveryName, mqMessage.ProxyNamespaceName, mqMessage.ProxyServiceDiscoveryName, out bool isNewWebDriver);
+        }
+
+        public IWebDriver GetOrCreateWebDriver(BrowserPurpose browserPurpose, LinkedInSignInRequest request, out bool isNewWebdriver)
+        {
+            return GetOrCreateWebDriverInternal(browserPurpose, string.Empty, request.GridNamespaceName, request.GridServiceDiscoveryName, request.ProxyNamespaceName, request.ProxyServiceDiscoveryName, out isNewWebdriver);
+        }
+
+        private IWebDriver GetOrCreateWebDriverInternal(BrowserPurpose browserPurpose, string chromeProfileName, string gridNamespaceName, string gridServiceDiscoveryName, string proxyNamespaceName, string proxyServiceDiscoveryName, out bool isNewWebDriver)
+        {
             IWebDriver webDriver = GetWebDriver(browserPurpose);
+            isNewWebDriver = false;
             if (webDriver == null)
             {
-                isNewWebdriver = true;
-                webDriver = CreateWebDriver(browserPurpose, chromeProfileName, namespaceName, serviceDiscoveryName);
+                webDriver = CreateWebDriver(browserPurpose, chromeProfileName, gridNamespaceName, gridServiceDiscoveryName, proxyNamespaceName, proxyServiceDiscoveryName);
+                isNewWebDriver = true;
             }
 
             return webDriver;
-        }
-
-        public HalOperationResult<T> GetWebDriver<T>(WebDriverOperationData operationData) where T : IOperationResponse
-        {
-            HalOperationResult<T> result = new();
-
-            result = WebDriverExists<T>(operationData.BrowserPurpose);
-            if (result.Succeeded == false)
-            {
-                string browserPurpose = Enum.GetName(operationData.BrowserPurpose);
-                result.Failures.Add(new()
-                {
-                    Code = Codes.WEBDRIVER_MANAGEMENT_ERROR,
-                    Reason = "The requested web driver does not exist in the list",
-                    Detail = $"Web driver for {browserPurpose} does not exist in the list"
-                });
-                return result;
-            }
-
-            result = CheckWebDriverConnection<T>(operationData.BrowserPurpose);
-            if (result.Succeeded == false)
-            {
-                string browserPurpose = Enum.GetName(operationData.BrowserPurpose);
-                result.Failures.Add(new()
-                {
-                    Code = Codes.WEBDRIVER_ERROR,
-                    Reason = "The requested web driver is not responding to commands",
-                    Detail = $"Web driver for {browserPurpose} is not responding to commands"
-                });
-                return result;
-            }
-            HalOperationResult<IGetOrCreateWebDriverOperation> getWebDriverResult = GetWebDriver<IGetOrCreateWebDriverOperation>(operationData.BrowserPurpose);
-            result.Value = (T)getWebDriverResult.Value;
-            result.Succeeded = true;
-            return result;
         }
 
         public IWebDriver GetWebDriver(BrowserPurpose browserPurpose)
@@ -531,26 +506,6 @@ namespace Domain.Providers
             return result;
         }
 
-        public HalOperationResult<T> Refresh<T>(IWebDriver webDriver) where T : IOperationResponse
-        {
-            _logger.LogInformation("Attempting to refresh.");
-            HalOperationResult<T> result = new();
-
-            try
-            {
-                webDriver.Navigate().Refresh();
-                _logger.LogInformation("Successfully refresh web driver");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to successfully refresh the page");
-                return result;
-            }
-
-            result.Succeeded = true;
-            return result;
-        }
-
         public bool Refresh(IWebDriver webDriver)
         {
             try
@@ -561,31 +516,6 @@ namespace Domain.Providers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to successfully refresh the page");
-                return false;
-            }
-
-            return true;
-        }
-
-        public bool WebDriverExists(BrowserPurpose browserPurpose)
-        {
-            try
-            {
-                HalOperationResult<IOperationResponse> result = GetWebDriver<IOperationResponse>(browserPurpose);
-                if (result.Succeeded == false)
-                {
-                    return false;
-                }
-
-                result = CheckWebDriverConnection<IOperationResponse>(browserPurpose);
-                if (result.Succeeded == false)
-                {
-                    _logger.LogWarning("WebDriver exists but cannot connect to it.");
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
                 return false;
             }
 

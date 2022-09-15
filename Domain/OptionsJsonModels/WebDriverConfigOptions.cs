@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Domain.OptionsJsonModels
 {
@@ -23,9 +19,15 @@ namespace Domain.OptionsJsonModels
     }
 
     public class ChromeConfigOptions
-    {      
+    {
+        public Proxy Proxy { get; set; }
         public string DefaultProfile { get; set; }
         public string ChromeUserDirectory { get; set; }
         public List<string> AddArguments { get; set; }
+    }
+
+    public class Proxy
+    {
+        public string HttpProxy { get; set; }
     }
 }

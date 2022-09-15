@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Domain.Models
 {
@@ -25,9 +21,17 @@ namespace Domain.Models
 
     public class ChromeProfileConfigOptions
     {
+        public Proxy Proxy { get; set; }
         public string DefaultChromeProfileName { get; set; }
         public string DefaultChromeUserProfilesDir { get; set; }
         public string ChromeProfileName { get; set; }
         public List<string> AddArguments { get; set; }
+
+
+    }
+
+    public class Proxy
+    {
+        public string HttpProxy { get; set; }
     }
 }

@@ -78,12 +78,13 @@ namespace Domain.Orchestrators
         public void Execute(NetworkingMessageBody message, IList<SearchUrlProgressModel> searchUrlsProgress)
         {
             string halId = message.HalId;
-            _logger.LogInformation("Executing Networking Phase on hal id {halId}", halId);
+            string messageTypeName = nameof(NetworkingMessageBody);
+            _logger.LogInformation("Executing {0} on HalId {1}", messageTypeName, halId);
 
-            IWebDriver webDriver = _webDriverProvider.GetOrCreateWebDriver(BrowserPurpose.Networking, message.ChromeProfileName, message.GridNamespaceName, message.GridServiceDiscoveryName, out bool isNewWebDriver);
+            IWebDriver webDriver = _webDriverProvider.GetOrCreateWebDriver(BrowserPurpose.Networking, message);
             if (webDriver == null)
             {
-                _logger.LogError("WebDriver could not be found or created. Cannot proceed");
+                _logger.LogError("Execution of {0} failed. WebDriver could not be found or created. Cannot proceed. HalId: {1}", messageTypeName, message.HalId);
                 return;
             }
 
@@ -363,23 +364,24 @@ namespace Domain.Orchestrators
 
         private bool PrepareBrowser(IWebDriver webDriver, SearchUrlProgressModel searchUrlProgress, string halId)
         {
+            string messageTypeName = nameof(NetworkingMessageBody);
             HalOperationResult<IOperationResponse> result = _webDriverProvider.SwitchToOrNewTab<IOperationResponse>(webDriver, searchUrlProgress.WindowHandleId);
             if (result.Succeeded == false)
             {
-                _logger.LogError("Failed to switch to an existing tab or create a new one. Hal id {halId}", halId);
+                _logger.LogError("Execution of {0} failed. Failed to switch to an existing tab or create a new one. Hal id {1}", messageTypeName, halId);
                 return false;
             }
 
             bool pageNavigationSucceeded = GoToPage(webDriver, searchUrlProgress.SearchUrl);
             if (pageNavigationSucceeded == false)
             {
-                _logger.LogError("Failed to navigate to page {searchUrl}. Hal id {halId}", searchUrlProgress.SearchUrl, halId);
+                _logger.LogError("Execution of {0} failed. Failed to navigate to page {1}. Hal id {2}", messageTypeName, searchUrlProgress.SearchUrl, halId);
                 return false;
             }
 
             if (NoSearchResultsDisplayed(webDriver) == true)
             {
-                _logger.LogError("No search results page displayed again. This means we've tried refreshing and waiting for results page to be displayed, but it wasn't.");
+                _logger.LogError("Execution of {0} failed. No search results page displayed again. This means we've tried refreshing and waiting for results page to be displayed, but it wasn't.", messageTypeName);
                 return false;
             }
 

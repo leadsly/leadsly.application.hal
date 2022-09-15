@@ -40,7 +40,7 @@ namespace Domain.Supervisor
                 _webDriverProvider.CloseBrowser<IOperationResponse>(BrowserPurpose.Auth);
             }
 
-            IWebDriver webDriver = _webDriverProvider.GetOrCreateWebDriver(BrowserPurpose.Auth, string.Empty, request.GridNamespaceName, request.GridServiceDiscoveryName, out bool isNewWebDriver);
+            IWebDriver webDriver = _webDriverProvider.GetOrCreateWebDriver(BrowserPurpose.Auth, request, out bool isNewWebDriver);
             if (webDriver == null)
             {
                 return null;

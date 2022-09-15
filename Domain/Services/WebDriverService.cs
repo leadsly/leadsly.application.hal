@@ -12,7 +12,6 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Remote;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -130,12 +129,12 @@ namespace Domain.Services
             return driver;
         }
 
-        public ChromeOptions SetChromeOptions(IList<string> addArguments, string chromeProfile, string defaultChromeProfileDir)
+        public ChromeOptions SetChromeOptions(WebDriverOptions webDriverOptions, string proxyNamespaceName, string proxyServiceDiscoveryName, string chromeProfile, string defaultChromeProfileDir)
         {
             _logger.LogInformation("Setting chrome options. Chrome profile name: {chromeProfile}. UserDataDir is: {defaultChromeProfileDir}", chromeProfile, defaultChromeProfileDir);
 
             ChromeOptions options = new();
-            foreach (string addArgument in addArguments)
+            foreach (string addArgument in webDriverOptions.ChromeProfileConfigOptions.AddArguments)
             {
                 _logger.LogDebug("New WebDriver argument: {addArgument}", addArgument);
                 options.AddArgument(addArgument);
@@ -143,6 +142,11 @@ namespace Domain.Services
 
             _logger.LogDebug($"Setting --user-data-dir to {defaultChromeProfileDir}/{chromeProfile}");
             options.AddArgument(@$"--user-data-dir={defaultChromeProfileDir}/{chromeProfile}");
+
+            options.Proxy = new()
+            {
+                HttpProxy = _env.IsProduction() ? $"http://{proxyServiceDiscoveryName}.{proxyNamespaceName}" : webDriverOptions.ChromeProfileConfigOptions.Proxy.HttpProxy
+            };
 
             return options;
         }

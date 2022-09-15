@@ -5,7 +5,6 @@ using Hal.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
-using System.Threading.Tasks;
 
 namespace Hal.Controllers
 {
@@ -24,7 +23,7 @@ namespace Hal.Controllers
 
         [HttpPost("signin")]
         [AuthAttemptCount]
-        public async Task<IActionResult> SignIn(LinkedInSignInRequest request)
+        public IActionResult SignIn(LinkedInSignInRequest request)
         {
             _logger.LogInformation("SignIn action executing.");
             HttpContext.Request.Headers.TryGetValue("X-Auth-Attempt-Count", out StringValues attemptCount);

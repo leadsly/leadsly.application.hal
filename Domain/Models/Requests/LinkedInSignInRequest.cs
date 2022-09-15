@@ -16,5 +16,11 @@ namespace Domain.Models.Requests
 
         [DataMember(IsRequired = true)]
         public string GridNamespaceName { get; set; }
+
+        [DataMember(IsRequired = true)]
+        public string ProxyServiceDiscoveryName { get; set; }
+
+        [DataMember(IsRequired = true)]
+        public string ProxyNamespaceName { get; set; }
     }
 }

@@ -6,7 +6,7 @@ namespace Domain.MQ.Messages
     public class CheckOffHoursNewConnectionsBody : PublishMessageBody
     {
         [DataMember]
-        public string TimezoneId { get; set; }
+        public string PageUrl { get; set; }
 
         [DataMember(IsRequired = false)]
         public int NumOfHoursAgo { get; set; }

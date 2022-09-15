@@ -34,12 +34,19 @@ namespace Domain.Orchestrators
         public void Execute(CheckOffHoursNewConnectionsBody message)
         {
             string halId = message.HalId;
-            _logger.LogInformation("Executing DeepScanProspectsForRepliesBody on hal id {halId}", halId);
+            string messageTypeName = nameof(CheckOffHoursNewConnectionsBody);
+            _logger.LogInformation("Executing {0} on HalId {1}", messageTypeName, halId);
 
-            IWebDriver webDriver = _webDriverProvider.GetOrCreateWebDriver(BrowserPurpose.ScanForReplies, message.ChromeProfileName, message.GridNamespaceName, message.GridServiceDiscoveryName, out bool isNewWebDriver);
+            IWebDriver webDriver = _webDriverProvider.GetOrCreateWebDriver(BrowserPurpose.MonitorForNewAcceptedConnections, message);
             if (webDriver == null)
             {
-                _logger.LogError("WebDriver could not be found or created. Cannot proceed");
+                _logger.LogError("Execution of {0} failed. WebDriver could not be found or created. Cannot proceed. HalId: {1}", messageTypeName, message.HalId);
+                return;
+            }
+
+            if (GoToPage(webDriver, message.PageUrl) == false)
+            {
+                _logger.LogError("Execution of {0} failed. WebDriver could not navigate to the given PageUrl {1}. HalId {2}", messageTypeName, message.PageUrl, message.HalId);
                 return;
             }
 
@@ -66,7 +73,7 @@ namespace Domain.Orchestrators
             {
                 WebDriver = webDriver,
                 NumOfHoursAgo = message.NumOfHoursAgo,
-                TimezoneId = message.TimezoneId
+                TimezoneId = message.TimeZoneId
             };
 
             return _interactionHandler.HandleInteraction(interaction);

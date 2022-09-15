@@ -3,11 +3,6 @@ using Domain.OptionsJsonModels;
 using Domain.Repositories;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Repositories
 {
@@ -36,11 +31,15 @@ namespace Infrastructure.Repositories
                 },
                 ChromeProfileConfigOptions = new()
                 {
+                    Proxy = new()
+                    {
+                        HttpProxy = _webDriverOptions.ChromeConfigOptions.Proxy?.HttpProxy
+                    },
                     DefaultChromeProfileName = _webDriverOptions.ChromeConfigOptions.DefaultProfile,
                     DefaultChromeUserProfilesDir = _webDriverOptions.ChromeConfigOptions.ChromeUserDirectory,
                     AddArguments = _webDriverOptions.ChromeConfigOptions.AddArguments
                 },
-                DefaultImplicitWait = _webDriverOptions.DefaultImplicitWait                
+                DefaultImplicitWait = _webDriverOptions.DefaultImplicitWait
             };
         }
     }
