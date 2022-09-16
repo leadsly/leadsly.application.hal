@@ -73,7 +73,7 @@ namespace Domain.Orchestrators
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected exception occured while executing FollowUpMessage phase");
+                _logger.LogError(ex, "Unexpected exception occured while executing {0} phase", nameof(FollowUpMessageBody));
             }
         }
 

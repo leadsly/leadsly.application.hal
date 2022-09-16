@@ -5,6 +5,7 @@ using Domain.Interactions.MonitorForNewConnections.GetAllRecentlyAdded;
 using Domain.Interactions.MonitorForNewConnections.GetConnectionsCount;
 using Domain.Interactions.Shared.CloseAllConversations;
 using Domain.Interactions.Shared.RefreshBrowser;
+using Domain.Models.MonitorForNewProspects;
 using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Providers.Interfaces;
@@ -100,12 +101,12 @@ namespace Domain.Orchestrators
                 if (getConnectionsCountSucceeded == true && getAllRecentlyAddedSucceeded == true)
                 {
                     int previousConnectionsCount = _interactionsFacade.ConnectionsCount;
-                    IList<Models.MonitorForNewProspects.RecentlyAddedProspectModel> previousRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
+                    IList<RecentlyAddedProspectModel> previousRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
 
                     if (GetAllRecentlyAddedInteraction(webDriver) == true)
                     {
-                        IList<Models.MonitorForNewProspects.RecentlyAddedProspectModel> currentRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
-                        IList<Models.MonitorForNewProspects.RecentlyAddedProspectModel> newRecentlyAddedProspects = currentRecentlyAddedProspects.Where(p => previousRecentlyAddedProspects.Any(prev => prev.Name == p.Name) == false).ToList();
+                        IList<RecentlyAddedProspectModel> currentRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
+                        IList<RecentlyAddedProspectModel> newRecentlyAddedProspects = currentRecentlyAddedProspects.Where(p => previousRecentlyAddedProspects.Any(prev => prev.Name == p.Name) == false).ToList();
 
                         // invoke an event here
                         OutputRecentlyAddedProspects(message, newRecentlyAddedProspects);

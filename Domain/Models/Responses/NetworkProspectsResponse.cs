@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using Domain.Models.Networking;
+using System.Collections.Generic;
 
 namespace Domain.Models.Responses
 {
     public class NetworkProspectsResponse
     {
-        public IList<NetworkProspectResponse> Items { get; set; }
+        public IList<NetworkProspectModel> Items { get; set; }
     }
 }

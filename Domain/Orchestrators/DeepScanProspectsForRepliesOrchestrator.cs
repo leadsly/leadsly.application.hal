@@ -4,7 +4,7 @@ using Domain.Interactions.DeepScanProspectsForReplies.ClearMessagingSearchCriter
 using Domain.Interactions.DeepScanProspectsForReplies.EnterSearchMessageCriteria;
 using Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageItem;
 using Domain.Models.DeepScanProspectsForReplies;
-using Domain.Models.Responses;
+using Domain.Models.Networking;
 using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Providers.Interfaces;
@@ -38,7 +38,7 @@ namespace Domain.Orchestrators
 
         public IList<ProspectRepliedModel> Prospects { get; set; } = new List<ProspectRepliedModel>();
 
-        public void Execute(DeepScanProspectsForRepliesBody message, IList<NetworkProspectResponse> prospects)
+        public void Execute(DeepScanProspectsForRepliesBody message, IList<NetworkProspectModel> prospects)
         {
             string halId = message.HalId;
             string messageTypeName = nameof(DeepScanProspectsForRepliesBody);
@@ -67,7 +67,7 @@ namespace Domain.Orchestrators
             ExecuteInternal(message, webDriver, prospects, visibleMessagesCount);
         }
 
-        private void ExecuteInternal(DeepScanProspectsForRepliesBody message, IWebDriver webDriver, IList<NetworkProspectResponse> prospects, int visibleMessagesCount)
+        private void ExecuteInternal(DeepScanProspectsForRepliesBody message, IWebDriver webDriver, IList<NetworkProspectModel> prospects, int visibleMessagesCount)
         {
             try
             {
@@ -79,9 +79,9 @@ namespace Domain.Orchestrators
             }
         }
 
-        private void BeginDeepScanning(DeepScanProspectsForRepliesBody message, IWebDriver webDriver, IList<NetworkProspectResponse> prospects, int visibleMessagesCount)
+        private void BeginDeepScanning(DeepScanProspectsForRepliesBody message, IWebDriver webDriver, IList<NetworkProspectModel> prospects, int visibleMessagesCount)
         {
-            foreach (NetworkProspectResponse networkProspect in prospects)
+            foreach (NetworkProspectModel networkProspect in prospects)
             {
                 if (ClearMessagingSearchCriteria(webDriver) == false)
                 {
@@ -137,7 +137,7 @@ namespace Domain.Orchestrators
             return _interactionsFacade.HandleEnterSearchmessageCriteriaInteraction(interaction);
         }
 
-        private bool CheckMessageHistoryForRepliesToOurLastMessage(IWebElement messageListItem, NetworkProspectResponse networkProspect, IWebDriver webDriver)
+        private bool CheckMessageHistoryForRepliesToOurLastMessage(IWebElement messageListItem, NetworkProspectModel networkProspect, IWebDriver webDriver)
         {
             CheckMessagesHistoryInteraction checkMessageContents = new()
             {

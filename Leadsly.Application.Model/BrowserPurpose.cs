@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Leadsly.Application.Model
+﻿namespace Leadsly.Application.Model
 {
     public enum BrowserPurpose
     {
@@ -15,6 +9,7 @@ namespace Leadsly.Application.Model
         MonitorForNewAcceptedConnections,
         Connect,
         ScanForReplies,
-        Networking
+        Networking,
+        AllInOne
     }
 }
