@@ -85,7 +85,7 @@ namespace Domain.Services
 
         public async Task UpdatePreviouslyConnectedNetworkProspectsAsync(PublishMessageBody message, IList<RecentlyAddedProspectModel> items, int previousTotalConnectionsCount, CancellationToken ct)
         {
-            UpdateCurrentConnectedNetworkProspectsRequest request = new()
+            UpdateConnectedNetworkProspectsRequest request = new()
             {
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,

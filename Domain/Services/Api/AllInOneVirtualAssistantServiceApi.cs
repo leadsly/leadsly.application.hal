@@ -50,7 +50,7 @@ namespace Domain.Services.Api
             return response;
         }
 
-        public async Task<HttpResponseMessage> UpdatePreviouslyConnectedNetworkProspectsAsync(UpdateCurrentConnectedNetworkProspectsRequest request, CancellationToken ct = default)
+        public async Task<HttpResponseMessage> UpdatePreviouslyConnectedNetworkProspectsAsync(UpdateConnectedNetworkProspectsRequest request, CancellationToken ct = default)
         {
             string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 
