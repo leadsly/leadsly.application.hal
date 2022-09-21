@@ -64,7 +64,7 @@ namespace Domain.Services.Api
                     Content = JsonContent.Create(new
                     {
                         Items = request.Items,
-                        PreviousTotalConnectionsCount = request.PreviousTotalConnectionsCount
+                        TotalConnectionsCount = request.PreviousTotalConnectionsCount
                     })
                 };
 

@@ -1,6 +1,6 @@
-﻿using Domain.Executors.MonitorForNewConnections.Events;
+﻿using Domain.Executors.AllInOneVirtualAssistant.Events;
+using Domain.Executors.MonitorForNewConnections.Events;
 using Domain.Executors.ScanProspectsForReplies.Events;
-using Domain.Models.AllInOneVirtualAssistant;
 using Domain.Models.FollowUpMessage;
 using Domain.Models.Networking;
 using Domain.Models.ProspectList;
@@ -14,12 +14,12 @@ namespace Domain.Orchestrators.Interfaces
     {
         event NewRecentlyAddedProspectsDetectedEventHandler NewConnectionsDetected;
         event NewMessagesReceivedEventHandler NewMessagesReceived;
+        event UpdateRecentlyAddedProspectsEventHandler UpdateRecentlyAddedProspects;
         public List<PersistPrimaryProspectModel> PersistPrimaryProspects { get; }
         public IList<ConnectionSentModel> ConnectionsSent { get; }
         public bool GetMonthlySearchLimitReached();
         public IList<SearchUrlProgressModel> GetUpdatedSearchUrlsProgress();
         public IList<SentFollowUpMessageModel> GetSentFollowUpMessages();
-        public PreviouslyConnectedNetworkProspectsModel GetPreviouslyConnectedNetworkProspects();
         void Execute(AllInOneVirtualAssistantMessageBody message);
     }
 }

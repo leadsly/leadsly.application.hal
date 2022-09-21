@@ -46,7 +46,7 @@ namespace Domain.Services
 
         #region AllInOneVirtualAssistant
 
-        public async Task<PreviouslyConnectedNetworkProspectsResponse> GetAllPreviouslyConnectedNetworkProspectsAsync(PublishMessageBody message, CancellationToken ct = default)
+        public async Task<ConnectedNetworkProspectsResponse> GetAllPreviouslyConnectedNetworkProspectsAsync(PublishMessageBody message, CancellationToken ct = default)
         {
             PreviouslyConnectedNetworkProspectsRequest request = new()
             {
@@ -69,15 +69,15 @@ namespace Domain.Services
                 return null;
             }
 
-            PreviouslyConnectedNetworkProspectsResponse response = default;
+            ConnectedNetworkProspectsResponse response = default;
             try
             {
-                response = JsonConvert.DeserializeObject<PreviouslyConnectedNetworkProspectsResponse>(content);
-                _logger.LogDebug("Successfully deserialized {0}", typeof(PreviouslyConnectedNetworkProspectsResponse).Name);
+                response = JsonConvert.DeserializeObject<ConnectedNetworkProspectsResponse>(content);
+                _logger.LogDebug("Successfully deserialized {0}", typeof(ConnectedNetworkProspectsResponse).Name);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to deserialize {0}. Returning an explicit null", typeof(PreviouslyConnectedNetworkProspectsResponse).Name);
+                _logger.LogError(ex, "Failed to deserialize {0}. Returning an explicit null", typeof(ConnectedNetworkProspectsResponse).Name);
             }
 
             return response;

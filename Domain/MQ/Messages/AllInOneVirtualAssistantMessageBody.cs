@@ -8,7 +8,7 @@ namespace Domain.MQ.Messages
     public class AllInOneVirtualAssistantMessageBody : PublishMessageBody
     {
         [IgnoreDataMember]
-        public PreviouslyConnectedNetworkProspectsResponse PreviousMonitoredResponse { get; set; }
+        public ConnectedNetworkProspectsResponse PreviousMonitoredResponse { get; set; }
 
         [IgnoreDataMember]
         public Queue<NetworkingMessageBody> NetworkingMessages { get; set; }

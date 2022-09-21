@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace Domain.Models.AllInOneVirtualAssistant
 {
-    public class PreviouslyConnectedNetworkProspectsModel
+    public class ConnectedNetworkProspectsModel
     {
-        public int PreviousTotalConnectionsCount { get; set; }
+        public int TotalConnectionsCount { get; set; }
         public IList<RecentlyAddedProspectModel> Items { get; set; }
     }
 }

@@ -1,6 +1,6 @@
-﻿using Domain.Executors.MonitorForNewConnections.Events;
+﻿using Domain.Executors.AllInOneVirtualAssistant.Events;
+using Domain.Executors.MonitorForNewConnections.Events;
 using Domain.Executors.ScanProspectsForReplies.Events;
-using Domain.Models.AllInOneVirtualAssistant;
 using Domain.Models.FollowUpMessage;
 using Domain.Models.Networking;
 using Domain.Models.ProspectList;
@@ -47,13 +47,14 @@ namespace Domain.Executors.AllInOneVirtualAssistant
                 // wire up the event handler
                 _orchestrator.NewConnectionsDetected += OnNewConnectionsDetected;
                 _orchestrator.NewMessagesReceived += OnNewMessagesReceived;
+                _orchestrator.UpdateRecentlyAddedProspects += OnUpdateConnectedProspectsReceived;
 
                 // fetch search progress urls
                 await GetSearchUrlsProgressAsync(message);
 
                 // fetch previous connected with prospects, this list should include the total connections count, as well as a list of
                 // prospects first name last name subheading and when we connected with them
-                PreviouslyConnectedNetworkProspectsResponse previousMonitoredResponse = await _service.GetAllPreviouslyConnectedNetworkProspectsAsync(message);
+                ConnectedNetworkProspectsResponse previousMonitoredResponse = await _service.GetAllPreviouslyConnectedNetworkProspectsAsync(message);
                 if (previousMonitoredResponse == null)
                 {
                     _logger.LogError("Error occured executing {0}. An error occured retrieving data. The response was null. HalId {1}", nameof(AllInOneVirtualAssistantMessageBody), message.HalId);
@@ -167,10 +168,12 @@ namespace Domain.Executors.AllInOneVirtualAssistant
         {
             _logger.LogDebug("Executing {0}. New prospects have been detected. Sending them to the server for processing. HalId {1}", nameof(AllInOneVirtualAssistantMessageBody), e.Message.HalId);
             await _service.ProcessRecentlyAddedProspectsAsync(e.NewRecentlyAddedProspects, e.Message);
+        }
 
+        private async Task OnUpdateConnectedProspectsReceived(object sender, UpdateRecentlyAddedProspectsEventArgs e)
+        {
             _logger.LogInformation("Executing {0}. Preparing request to update previously connected network prospects. HalId {1}", nameof(AllInOneVirtualAssistantMessageBody), e.Message.HalId);
-            PreviouslyConnectedNetworkProspectsModel previouslyConnectedNetworkProspects = _orchestrator.GetPreviouslyConnectedNetworkProspects();
-            await _service.UpdatePreviouslyConnectedNetworkProspectsAsync(e.Message, previouslyConnectedNetworkProspects.Items, previouslyConnectedNetworkProspects.PreviousTotalConnectionsCount);
+            await _service.UpdatePreviouslyConnectedNetworkProspectsAsync(e.Message, e.NewRecentlyAddedProspects, e.TotalConnectionsCount);
         }
     }
 }

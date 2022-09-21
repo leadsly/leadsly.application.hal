@@ -1,4 +1,5 @@
-﻿using Domain.Executors.MonitorForNewConnections.Events;
+﻿using Domain.Executors.AllInOneVirtualAssistant.Events;
+using Domain.Executors.MonitorForNewConnections.Events;
 using Domain.Executors.ScanProspectsForReplies.Events;
 using Domain.Facades.Interfaces;
 using Domain.InstructionSets.Interfaces;
@@ -12,7 +13,6 @@ using Domain.Interactions.MonitorForNewConnections.GetAllRecentlyAdded;
 using Domain.Interactions.MonitorForNewConnections.GetConnectionsCount;
 using Domain.Interactions.Networking.GetTotalSearchResults;
 using Domain.Interactions.Networking.NoResultsFound;
-using Domain.Models.AllInOneVirtualAssistant;
 using Domain.Models.FollowUpMessage;
 using Domain.Models.MonitorForNewProspects;
 using Domain.Models.Networking;
@@ -48,19 +48,13 @@ namespace Domain.Orchestrators
         }
 
         public event NewMessagesReceivedEventHandler NewMessagesReceived;
-        public PreviouslyConnectedNetworkProspectsModel PreviouslyConnectedNetworkProspects { get; private set; } = new();
         public event NewRecentlyAddedProspectsDetectedEventHandler NewConnectionsDetected;
+        public event UpdateRecentlyAddedProspectsEventHandler UpdateRecentlyAddedProspects;
         private readonly IConnectWithProspectsForSearchUrlInstructionSet _instructionSet;
         private readonly IAllInOneVirtualAssistantInteractionFacade _interactionsFacade;
         private readonly ILogger<AllInOneVirtualAssistantPhaseOrchestrator> _logger;
         private readonly IWebDriverProvider _webDriverProvider;
         private IList<SentFollowUpMessageModel> SentFollowUpMessages { get; set; } = new List<SentFollowUpMessageModel>();
-        public IList<SentFollowUpMessageModel> GetSentFollowUpMessages()
-        {
-            IList<SentFollowUpMessageModel> items = SentFollowUpMessages;
-            SentFollowUpMessages = null;
-            return items;
-        }
         private IList<SearchUrlProgressModel> UpdatedSearchUrlsProgress => _instructionSet.UpdatedSearchUrlsProgress;
         private bool MonthlySearchLimitReached => _instructionSet.MonthlySearchLimitReached;
         private int NumberOfConnectionsSent
@@ -83,7 +77,14 @@ namespace Domain.Orchestrators
 
         public IList<RecentlyAddedProspectModel> RecentlyAddedProspects { get; private set; }
 
-        public int PreviousTotalConnectionsCount { get; private set; }
+        public int TotalConnectionsCount { get; private set; }
+
+        public IList<SentFollowUpMessageModel> GetSentFollowUpMessages()
+        {
+            IList<SentFollowUpMessageModel> items = SentFollowUpMessages;
+            SentFollowUpMessages = null;
+            return items;
+        }
 
         public void Execute(AllInOneVirtualAssistantMessageBody message)
         {
@@ -138,7 +139,7 @@ namespace Domain.Orchestrators
 
         private void HandleMonitorForNewConnections(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message)
         {
-            PreviouslyConnectedNetworkProspectsResponse previousMonitoredResponse = message.PreviousMonitoredResponse;
+            ConnectedNetworkProspectsResponse previousMonitoredResponse = message.PreviousMonitoredResponse;
             bool getConnectionsCountSucceeded = GetConnectionsCount(webDriver);
 
             if (getConnectionsCountSucceeded == false)
@@ -158,23 +159,25 @@ namespace Domain.Orchestrators
                 // ensure response Items is not null
                 if (previousMonitoredResponse.Items != null)
                 {
-                    _logger.LogTrace("Executing {0}. Server has successfully set Items property on {1} response. HalId {2}", nameof(AllInOneVirtualAssistantMessageBody), nameof(PreviouslyConnectedNetworkProspectsResponse), message.HalId);
+                    _logger.LogTrace("Executing {0}. Server has successfully set Items property on {1} response. HalId {2}", nameof(AllInOneVirtualAssistantMessageBody), nameof(ConnectedNetworkProspectsResponse), message.HalId);
                     int previousConnectionsCount = 0;
                     IList<RecentlyAddedProspectModel> previousRecentlyAddedProspects = default;
 
                     // set previous count and previous recently added prospects to whats on the page currently
                     if (previousMonitoredResponse.Items.Count == 0)
                     {
-                        _logger.LogDebug("Executing {0}. {1} response did not contain any prospects to check against. Setting previous values from what is currently displayed on the page. HalId {2}", nameof(AllInOneVirtualAssistantMessageBody), nameof(PreviouslyConnectedNetworkProspectsResponse), message.HalId);
+                        _logger.LogDebug("Executing {0}. {1} response did not contain any prospects to check against. Setting previous values from what is currently displayed on the page. HalId {2}", nameof(AllInOneVirtualAssistantMessageBody), nameof(ConnectedNetworkProspectsResponse), message.HalId);
                         // persist results to server
                         previousConnectionsCount = _interactionsFacade.ConnectionsCount;
                         previousRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
+
+                        OutputSaveRecentlyAddedProspects(message, previousConnectionsCount, previousRecentlyAddedProspects);
                     }
                     // or set it to whatever the server had saved before
                     else
                     {
-                        _logger.LogDebug("Executing {0}. {1} response did contain prospects to check against. HalId {2}", nameof(AllInOneVirtualAssistantMessageBody), nameof(PreviouslyConnectedNetworkProspectsResponse), message.HalId);
-                        previousConnectionsCount = previousMonitoredResponse.PreviousTotalConnectionsCount;
+                        _logger.LogDebug("Executing {0}. {1} response did contain prospects to check against. HalId {2}", nameof(AllInOneVirtualAssistantMessageBody), nameof(ConnectedNetworkProspectsResponse), message.HalId);
+                        previousConnectionsCount = previousMonitoredResponse.TotalConnectionsCount;
                         previousRecentlyAddedProspects = previousMonitoredResponse.Items;
                     }
 
@@ -186,8 +189,7 @@ namespace Domain.Orchestrators
                             _logger.LogTrace("Executing {0}. Total connections count is greater than previous connection count.", nameof(AllInOneVirtualAssistantMessageBody));
                             IList<RecentlyAddedProspectModel> currentRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
 
-                            PreviouslyConnectedNetworkProspects.PreviousTotalConnectionsCount = currentTotalConnectionsCount;
-                            PreviouslyConnectedNetworkProspects.Items = currentRecentlyAddedProspects;
+                            OutputSaveRecentlyAddedProspects(message, currentTotalConnectionsCount, currentRecentlyAddedProspects);
 
                             IList<RecentlyAddedProspectModel> newRecentlyAddedProspects = currentRecentlyAddedProspects.Where(p => previousRecentlyAddedProspects.Any(prev => prev.Name == p.Name) == false).ToList();
 
@@ -228,11 +230,10 @@ namespace Domain.Orchestrators
             }
         }
 
-        public PreviouslyConnectedNetworkProspectsModel GetPreviouslyConnectedNetworkProspects()
+        private void OutputSaveRecentlyAddedProspects(AllInOneVirtualAssistantMessageBody message, int totalConnectionsCount, IList<RecentlyAddedProspectModel> recentlyAddedProspects)
         {
-            PreviouslyConnectedNetworkProspectsModel model = PreviouslyConnectedNetworkProspects;
-            PreviouslyConnectedNetworkProspects = new();
-            return model;
+            _logger.LogDebug("Executing {0}. Saving recently added prospects", nameof(AllInOneVirtualAssistantMessageBody));
+            UpdateRecentlyAddedProspects.Invoke(this, new UpdateRecentlyAddedProspectsEventArgs(message, recentlyAddedProspects, totalConnectionsCount));
         }
 
         #endregion
