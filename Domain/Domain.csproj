@@ -20,8 +20,4 @@
 		<ProjectReference Include="..\Leadsly.Application.Model\Leadsly.Application.Model.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Interactions\AllInOneVirtualAssistant\" />
-	</ItemGroup>
-
 </Project>

@@ -6,6 +6,12 @@ using Domain.Executors.Networking;
 using Domain.Executors.ScanProspectsForReplies;
 using Domain.Facades;
 using Domain.Facades.Interfaces;
+using Domain.InstructionSets;
+using Domain.InstructionSets.Interfaces;
+using Domain.Interactions.AllInOneVirtualAssistant.GetAllUnreadMessages;
+using Domain.Interactions.AllInOneVirtualAssistant.GetAllUnreadMessages.Interfaces;
+using Domain.Interactions.AllInOneVirtualAssistant.GetMessageContent;
+using Domain.Interactions.AllInOneVirtualAssistant.GetMessageContent.Interfaces;
 using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince;
 using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince.Interfaces;
 using Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory;
@@ -31,12 +37,18 @@ using Domain.Interactions.Networking.ConnectWithProspect.Interfaces;
 using Domain.Interactions.Networking.Decorators;
 using Domain.Interactions.Networking.GatherProspects;
 using Domain.Interactions.Networking.GatherProspects.Interfaces;
+using Domain.Interactions.Networking.GetTotalSearchResults;
+using Domain.Interactions.Networking.GetTotalSearchResults.Interfaces;
+using Domain.Interactions.Networking.GoToTheNextPage;
+using Domain.Interactions.Networking.GoToTheNextPage.Interfaces;
+using Domain.Interactions.Networking.IsLastPage;
+using Domain.Interactions.Networking.IsLastPage.Interfaces;
+using Domain.Interactions.Networking.IsNextButtonDisabled;
+using Domain.Interactions.Networking.IsNextButtonDisabled.Interfaces;
 using Domain.Interactions.Networking.NoResultsFound;
 using Domain.Interactions.Networking.NoResultsFound.Interfaces;
 using Domain.Interactions.Networking.SearchResultsLimit;
 using Domain.Interactions.Networking.SearchResultsLimit.Interfaces;
-using Domain.Interactions.ScanProspectsForReplies.GetMessageContent;
-using Domain.Interactions.ScanProspectsForReplies.GetMessageContent.Interfaces;
 using Domain.Interactions.ScanProspectsForReplies.GetNewMessages;
 using Domain.Interactions.ScanProspectsForReplies.GetNewMessages.Interfaces;
 using Domain.Interactions.Shared.CloseAllConversations;
@@ -197,6 +209,7 @@ namespace Hal.Configurations
             services.AddScoped<IFollowUpMessageServicePOM, FollowUpMessageServicePOM>();
             services.AddScoped<ICheckOffHoursNewConnectionsServicePOM, CheckOffHoursNewConnectionsServicePOM>();
             services.AddScoped<IMonitorForNewConnectionsServicePOM, MonitorForNewConnectionsServicePOM>();
+            services.AddScoped<IMessageListBubbleServicePOM, MessageListBubbleServicePOM>();
 
             return services;
         }
@@ -235,6 +248,11 @@ namespace Hal.Configurations
                 opt.Timeout = TimeSpan.FromMinutes(5);
             });
 
+            services.AddHttpClient<IAllInOneVirtualAssistantServiceApi, AllInOneVirtualAssistantServiceApi>(opt =>
+            {
+                opt.Timeout = TimeSpan.FromMinutes(5);
+            });
+
             services.AddScoped<IWebDriverService, WebDriverService>();
             services.AddScoped<ITimestampService, TimestampService>();
             services.AddScoped<IRabbitMQManager, RabbitMQManager>();
@@ -248,6 +266,7 @@ namespace Hal.Configurations
             services.AddScoped<IDeepScanProspectsService, DeepScanProspectsService>();
             services.AddScoped<IFollowUpMessageService, FollowUpMessageService>();
             services.AddScoped<IMonitorForNewConnectionsService, MonitorForNewConnectionsService>();
+            services.AddScoped<IAllInOneVirtualAssistantService, AllInOneVirtualAssistantService>();
 
             return services;
         }
@@ -275,6 +294,15 @@ namespace Hal.Configurations
             services.AddScoped<IScanProspectsForRepliesPhaseOrchestrator, ScanProspectsForRepliesPhaseOrchestrator>();
             services.AddScoped<ICheckOffHoursNewConnectionsPhaseOrchestrator, CheckOffHoursNewConnectionsPhaseOrchestrator>();
             services.AddScoped<IMonitorForNewConnectionsPhaseOrchestrator, MonitorForNewConnectionsPhaseOrchestrator>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddInteractionSets(this IServiceCollection services)
+        {
+            Log.Information("Registering intersection sets services.");
+
+            services.AddScoped<IConnectWithProspectsForSearchUrlInstructionSet, ConnectWithProspectsForSearchUrlInstructionSet>();
 
             return services;
         }
@@ -307,11 +335,15 @@ namespace Hal.Configurations
             services.AddScoped<IGatherProspectsInteractionHandler, GatherProspectsInteractionHandler>();
             services.AddScoped<INoResultsFoundInteractionHandler, NoResultsFoundInteractionHandler>();
             services.AddScoped<ISearchResultsLimitInteractionHandler, SearchResultsLimitInteractionHandler>();
+            services.AddScoped<IGetTotalSearchResultsInteractionHandler, GetTotalSearchResultsInteractionHandler>();
+            services.AddScoped<IGoToTheNextPageInteractionHandler, GoToTheNextPageInteractionHandler>();
+            services.AddScoped<IIsLastPageInteractionHandler, IsLastPageInteractionHandler>();
+            services.AddScoped<IIsNextButtonDisabledInteractionHandler, IsNextButtonDisabledInteractionHandler>();
 
             ////////////////////////////////////////////////////////////
             /// ScanProspectsForReplies Interactions
             ///////////////////////////////////////////////////////////
-            services.AddScoped<IGetMessageContentInteractionHandler, GetMessageContentInteractionHandler>();
+            services.AddScoped<Domain.Interactions.ScanProspectsForReplies.GetMessageContent.Interfaces.IGetMessageContentInteractionHandler, Domain.Interactions.ScanProspectsForReplies.GetMessageContent.GetMessageContentInteractionHandler>();
             services.AddScoped<IGetNewMessagesInteractionHandler, GetNewMessagesInteractionHandler>();
 
             ////////////////////////////////////////////////////////////
@@ -324,6 +356,14 @@ namespace Hal.Configurations
             ///////////////////////////////////////////////////////////
             services.AddScoped<IGetAllRecentlyAddedInteractionHandler, GetAllRecentlyAddedInteractionHandler>();
             services.AddScoped<IGetConnectionsCountInteractionHandler, GetConnectionsCountInteractionHandler>();
+
+            ////////////////////////////////////////////////////////////
+            /// AllInOneVirtualAssistant Interactions
+            ///////////////////////////////////////////////////////////
+            services.AddScoped<IGetAllUnreadMessagesInteractionHandler, GetAllUnreadMessagesInteractionHandler>();
+            services.AddScoped<Domain.Interactions.AllInOneVirtualAssistant.GetMessageContent.Interfaces.IGetMessageContentInteractionHandler, Domain.Interactions.AllInOneVirtualAssistant.GetMessageContent.GetMessageContentInteractionHandler>();
+            services.AddScoped<IGetMessagesContentInteractionHandler, GetMessagesContentInteractionHandler>();
+            services.AddScoped<IGetMessagesContentInteractionHandler, GetMessagesContentInteractionHandler>();
 
             ////////////////////////////////////////////////////////////
             /// Shared Interactions
@@ -398,6 +438,7 @@ namespace Hal.Configurations
             services.AddScoped<IHowDoYouKnowDialog, HowDoYouKnowDialog>();
             services.AddScoped<ICustomizeYourInvitationDialog, CustomizeYourInvitationDialog>();
             services.AddScoped<ISearchResultsFooter, SearchResultsFooter>();
+            services.AddScoped<IMessageListBubble, MessageListBubble>();
 
             return services;
         }

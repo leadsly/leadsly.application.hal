@@ -7,7 +7,6 @@ using Domain.Models.FollowUpMessage;
 using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Providers.Interfaces;
-using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
@@ -20,20 +19,17 @@ namespace Domain.Orchestrators
         public FollowUpMessagePhaseOrchestrator(
             ILogger<FollowUpMessagePhaseOrchestrator> logger,
             IFollowUpMessageInteractionFacade interactionFacade,
-            ITimestampService timestampService,
             IWebDriverProvider webDriverProvider)
             : base(logger)
         {
             _interactionFacade = interactionFacade;
             _logger = logger;
             _webDriverProvider = webDriverProvider;
-            _timestampService = timestampService;
         }
 
         private readonly IFollowUpMessageInteractionFacade _interactionFacade;
         private readonly ILogger<FollowUpMessagePhaseOrchestrator> _logger;
         private readonly IWebDriverProvider _webDriverProvider;
-        private readonly ITimestampService _timestampService;
         private SentFollowUpMessageModel SentFollowUpMessage { get; set; }
 
         public SentFollowUpMessageModel GetSentFollowUpMessage()
@@ -91,17 +87,13 @@ namespace Domain.Orchestrators
                 return;
             }
 
-            bool enterMessageSucceeded = EnterMessageInteraction(webDriver, message.Content);
+            bool enterMessageSucceeded = EnterMessageInteraction(webDriver, message.Content, message.OrderNum);
             if (enterMessageSucceeded == false)
             {
                 return;
             }
 
-            SentFollowUpMessage = new()
-            {
-                MessageOrderNum = message.OrderNum,
-                ActualDeliveryDateTimeStamp = _timestampService.TimestampNow()
-            };
+            SentFollowUpMessage = _interactionFacade.SentFollowUpMessage;
         }
 
         private bool CreateNewMessageInteraction(IWebDriver webDriver)
@@ -125,12 +117,13 @@ namespace Domain.Orchestrators
             return _interactionFacade.HandleEnterProspectNameInteraction(interaction);
         }
 
-        private bool EnterMessageInteraction(IWebDriver webDriver, string content)
+        private bool EnterMessageInteraction(IWebDriver webDriver, string content, int orderNum)
         {
             InteractionBase interaction = new EnterMessageInteraction
             {
                 Content = content,
-                WebDriver = webDriver
+                WebDriver = webDriver,
+                OrderNum = orderNum
             };
 
             return _interactionFacade.HandleEnterMessageInteraction(interaction);

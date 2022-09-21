@@ -197,5 +197,6 @@ namespace PageObjects
         {
             return _conversationCards.GetAllConversationCloseButtons(webDriver);
         }
+
     }
 }

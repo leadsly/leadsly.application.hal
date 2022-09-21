@@ -81,7 +81,7 @@ namespace Domain.Executors.ScanProspectsForReplies
             catch (Exception ex)
             {
                 string halId = message.HalId;
-                _logger.LogError(ex, "Failed to publish TriggerScanProspectsForReplies message for halId {halId}", halId);
+                _logger.LogError(ex, "Failed to publish {0} message for halId {1}", nameof(TriggerScanProspectsForRepliesMessage), halId);
             }
         }
 

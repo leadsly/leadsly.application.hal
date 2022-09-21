@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Models.Networking;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 
 namespace Domain.MQ.Messages
@@ -31,6 +32,9 @@ namespace Domain.MQ.Messages
 
         [DataMember]
         public int FailedDeliveryCount { get; set; }
+
+        [IgnoreDataMember]
+        public IList<SearchUrlProgressModel> SearchUrlsProgress { get; set; }
 
 
     }

@@ -30,5 +30,6 @@ namespace Domain.Providers.Interfaces
             where T : IOperationResponse;
 
         bool Refresh(IWebDriver webDriver);
+        bool CloseCurrentTab(IWebDriver webDriver, string originalWindowHandle);
     }
 }

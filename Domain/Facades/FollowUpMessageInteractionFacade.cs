@@ -3,6 +3,7 @@ using Domain.Interactions;
 using Domain.Interactions.FollowUpMessage.CreateNewMessage.Interfaces;
 using Domain.Interactions.FollowUpMessage.EnterMessage.Interfaces;
 using Domain.Interactions.FollowUpMessage.EnterProspectName.Interfaces;
+using Domain.Models.FollowUpMessage;
 
 namespace Domain.Facades
 {
@@ -21,6 +22,8 @@ namespace Domain.Facades
         private readonly ICreateNewMessageInteractionHandler _createNewMessageHandler;
         private readonly IEnterMessageInteractionHandler _enterMessageHandler;
         private readonly IEnterProspectNameInteractionHandler _enterProspectNameHandler;
+
+        public SentFollowUpMessageModel SentFollowUpMessage => _enterMessageHandler.GetSentFollowUpMessageModel();
 
         public bool HandleCreateNewMessageInteraction(InteractionBase interaction)
         {

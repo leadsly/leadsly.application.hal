@@ -12,7 +12,10 @@ namespace Domain.Interactions.ScanProspectsForReplies.GetMessageContent
 {
     public class GetMessageContentInteractionHandler : IGetMessageContentInteractionHandler
     {
-        public GetMessageContentInteractionHandler(ILogger<GetNewMessagesInteractionHandler> logger, IScanProspectsServicePOM service, ITimestampService timeStampService)
+        public GetMessageContentInteractionHandler(
+            ILogger<GetNewMessagesInteractionHandler> logger,
+            IScanProspectsServicePOM service,
+            ITimestampService timeStampService)
         {
             _logger = logger;
             _timestampService = timeStampService;

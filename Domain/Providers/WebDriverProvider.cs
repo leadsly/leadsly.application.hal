@@ -542,5 +542,21 @@ namespace Domain.Providers
         {
             return webDriver.WindowHandles.Any(w => w == windowHandleId);
         }
+
+        public bool CloseCurrentTab(IWebDriver webDriver, string originalWindowHandle)
+        {
+            bool succeeded = false;
+            try
+            {
+                webDriver.Close();
+                webDriver.SwitchTo().Window(originalWindowHandle);
+                succeeded = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to close current tab");
+            }
+            return succeeded;
+        }
     }
 }
