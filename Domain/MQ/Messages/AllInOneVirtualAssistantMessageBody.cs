@@ -15,5 +15,10 @@ namespace Domain.MQ.Messages
 
         [IgnoreDataMember]
         public Queue<FollowUpMessageBody> FollowUpMessages { get; set; }
+        [DataMember(IsRequired = false)]
+        public DeepScanProspectsForRepliesBody DeepScanProspectsForReplies { get; set; }
+
+        [DataMember]
+        public CheckOffHoursNewConnectionsBody CheckOffHoursNewConnections { get; set; }
     }
 }
