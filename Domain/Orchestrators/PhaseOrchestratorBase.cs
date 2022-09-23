@@ -12,6 +12,7 @@ namespace Domain.Orchestrators
         }
 
         private ILogger _logger;
+        protected string PrimaryWindowHandle { get; set; }
 
         protected virtual bool GoToPage(IWebDriver webDriver, string pageUrl)
         {
@@ -39,6 +40,40 @@ namespace Domain.Orchestrators
             else
             {
                 succeeded = true;
+            }
+
+            return succeeded;
+        }
+
+        protected virtual bool SwitchToNewTab(IWebDriver webDriver)
+        {
+            bool succeeded = false;
+            try
+            {
+                webDriver.SwitchTo().NewWindow(WindowType.Tab);
+                succeeded = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to switch to new tab");
+            }
+
+            return succeeded;
+        }
+
+        protected virtual bool SwitchBackToMainTab(IWebDriver webDriver)
+        {
+            _logger.LogDebug("Navigating back to the primary tab");
+            bool succeeded = false;
+            try
+            {
+                webDriver.Close();
+                webDriver.SwitchTo().Window(PrimaryWindowHandle);
+                succeeded = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to switch webdriver back to the original tab");
             }
 
             return succeeded;

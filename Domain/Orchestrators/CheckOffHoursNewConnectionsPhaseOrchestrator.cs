@@ -1,6 +1,4 @@
-﻿using Domain.Interactions;
-using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince;
-using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince.Interfaces;
+﻿using Domain.InstructionSets.Interfaces;
 using Domain.Models.MonitorForNewProspects;
 using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
@@ -16,20 +14,20 @@ namespace Domain.Orchestrators
     {
         public CheckOffHoursNewConnectionsPhaseOrchestrator(
             ILogger<CheckOffHoursNewConnectionsPhaseOrchestrator> logger,
-            IGetAllRecentlyAddedSinceInteractionHandler interactionHandler,
+            ICheckForNewConnectionsFromOffHoursInstructionSet instructionSet,
             IWebDriverProvider webDriverProvider)
             : base(logger)
         {
             _logger = logger;
-            _interactionHandler = interactionHandler;
+            _instructionSet = instructionSet;
             _webDriverProvider = webDriverProvider;
         }
 
-        private readonly IGetAllRecentlyAddedSinceInteractionHandler _interactionHandler;
+        private readonly ICheckForNewConnectionsFromOffHoursInstructionSet _instructionSet;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<CheckOffHoursNewConnectionsPhaseOrchestrator> _logger;
 
-        public IList<RecentlyAddedProspectModel> RecentlyAddedProspects => _interactionHandler.GetRecentlyAddedProspects();
+        public IList<RecentlyAddedProspectModel> RecentlyAddedProspects => _instructionSet.RecentlyAddedProspects;
 
         public void Execute(CheckOffHoursNewConnectionsBody message)
         {
@@ -55,28 +53,28 @@ namespace Domain.Orchestrators
 
         private void ExecuteInternal(IWebDriver webDriver, CheckOffHoursNewConnectionsBody message)
         {
-            BeginCheckingForNewConnectionsFromOffHours(webDriver, message);
+            _instructionSet.BeginCheckingForNewConnectionsFromOffHours(webDriver, message);
         }
 
-        private void BeginCheckingForNewConnectionsFromOffHours(IWebDriver webDriver, CheckOffHoursNewConnectionsBody message)
-        {
-            bool succeeded = GetRecentlyAdded(webDriver, message);
-            if (succeeded == false)
-            {
-                _logger.LogDebug("Failed to get recently added prospects from CheckOffHoursConnectionsPhase");
-            }
-        }
+        //private void BeginCheckingForNewConnectionsFromOffHours(IWebDriver webDriver, CheckOffHoursNewConnectionsBody message)
+        //{
+        //    bool succeeded = GetRecentlyAdded(webDriver, message);
+        //    if (succeeded == false)
+        //    {
+        //        _logger.LogDebug("Failed to get recently added prospects from CheckOffHoursConnectionsPhase");
+        //    }
+        //}
 
-        private bool GetRecentlyAdded(IWebDriver webDriver, CheckOffHoursNewConnectionsBody message)
-        {
-            InteractionBase interaction = new GetAllRecentlyAddedSinceInteraction
-            {
-                WebDriver = webDriver,
-                NumOfHoursAgo = message.NumOfHoursAgo,
-                TimezoneId = message.TimeZoneId
-            };
+        //private bool GetRecentlyAdded(IWebDriver webDriver, CheckOffHoursNewConnectionsBody message)
+        //{
+        //    InteractionBase interaction = new GetAllRecentlyAddedSinceInteraction
+        //    {
+        //        WebDriver = webDriver,
+        //        NumOfHoursAgo = message.NumOfHoursAgo,
+        //        TimezoneId = message.TimeZoneId
+        //    };
 
-            return _interactionHandler.HandleInteraction(interaction);
-        }
+        //    return _interactionHandler.HandleInteraction(interaction);
+        //}
     }
 }

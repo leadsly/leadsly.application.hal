@@ -1,4 +1,5 @@
-﻿using Domain.Models.FollowUpMessage;
+﻿using Domain.Models.DeepScanProspectsForReplies;
+using Domain.Models.FollowUpMessage;
 using Domain.Models.MonitorForNewProspects;
 using Domain.Models.Networking;
 using Domain.Models.ProspectList;
@@ -26,9 +27,11 @@ namespace Domain.Services
             IScanProspectsService scanProspectsService,
             IMonitorForNewConnectionsService monitorForNewConnectionsService,
             IFollowUpMessageService followUpMessageService,
+            IDeepScanProspectsService deepScanProspectsService,
             ILogger<AllInOneVirtualAssistantService> logger,
             IAllInOneVirtualAssistantServiceApi api)
         {
+            _deepScanProspectsService = deepScanProspectsService;
             _networkingService = networkingService;
             _scanProspectsService = scanProspectsService;
             _monitorForNewConnectionsService = monitorForNewConnectionsService;
@@ -37,6 +40,7 @@ namespace Domain.Services
             _api = api;
         }
 
+        private readonly IDeepScanProspectsService _deepScanProspectsService;
         private readonly INetworkingService _networkingService;
         private readonly IScanProspectsService _scanProspectsService;
         private readonly IMonitorForNewConnectionsService _monitorForNewConnectionsService;
@@ -91,7 +95,7 @@ namespace Domain.Services
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
                 RequestUrl = $"MonitorForNewProspects/{message.HalId}/previous-prospects",
                 Items = items,
-                PreviousTotalConnectionsCount = previousTotalConnectionsCount
+                TotalConnectionsCount = previousTotalConnectionsCount
             };
 
             HttpResponseMessage rawMessage = await _api.UpdatePreviouslyConnectedNetworkProspectsAsync(request, ct);
@@ -178,6 +182,24 @@ namespace Domain.Services
             _logger.LogTrace("Executing {0}. This is for {1}", nameof(ProcessSentFollowUpMessageAsync), nameof(FollowUpMessageBody));
             FollowUpMessageBody followUpMessageBody = message as FollowUpMessageBody;
             await _followUpMessageService.ProcessSentFollowUpMessageAsync(item, followUpMessageBody, ct);
+        }
+
+        #endregion
+
+        #region DeepScanProspectsForReplies
+
+        public async Task<NetworkProspectsResponse> GetAllProspectsFromActiveCampaignsAsync(PublishMessageBody message, CancellationToken ct = default)
+        {
+            _logger.LogTrace("Executing {0}. This is for {1}", nameof(ProcessSentFollowUpMessageAsync), nameof(DeepScanProspectsForRepliesBody));
+            DeepScanProspectsForRepliesBody deepScanProspectsMessage = message as DeepScanProspectsForRepliesBody;
+            return await _deepScanProspectsService.GetAllProspectsFromActiveCampaignsAsync(deepScanProspectsMessage, ct);
+        }
+
+        public async Task ProcessCampaignProspectsThatRepliedAsync(IList<ProspectRepliedModel> prospects, PublishMessageBody message, CancellationToken ct = default)
+        {
+            _logger.LogTrace("Executing {0}. This is for {1}", nameof(ProcessSentFollowUpMessageAsync), nameof(DeepScanProspectsForRepliesBody));
+            DeepScanProspectsForRepliesBody deepScanProspectsMessage = message as DeepScanProspectsForRepliesBody;
+            await _deepScanProspectsService.ProcessCampaignProspectsThatRepliedAsync(prospects, deepScanProspectsMessage, ct);
         }
 
         #endregion

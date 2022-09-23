@@ -20,6 +20,8 @@ using Domain.Interactions.DeepScanProspectsForReplies.ClearMessagingSearchCriter
 using Domain.Interactions.DeepScanProspectsForReplies.ClearMessagingSearchCriteria.Interfaces;
 using Domain.Interactions.DeepScanProspectsForReplies.EnterSearchMessageCriteria;
 using Domain.Interactions.DeepScanProspectsForReplies.EnterSearchMessageCriteria.Interfaces;
+using Domain.Interactions.DeepScanProspectsForReplies.GetAllVisibleConversationCount;
+using Domain.Interactions.DeepScanProspectsForReplies.GetAllVisibleConversationCount.Interfaces;
 using Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageItem;
 using Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageItem.Interfaces;
 using Domain.Interactions.FollowUpMessage.CreateNewMessage;
@@ -60,14 +62,18 @@ using Domain.MQ.EventHandlers;
 using Domain.MQ.EventHandlers.Interfaces;
 using Domain.MQ.Interfaces;
 using Domain.MQ.Messages;
+using Domain.MQ.Services;
+using Domain.MQ.Services.Interfaces;
 using Domain.OptionsJsonModels;
 using Domain.Orchestrators;
 using Domain.Orchestrators.Interfaces;
+using Domain.PhaseConsumers.AllInOneVirtualAssistantHandler;
 using Domain.PhaseConsumers.FollowUpMessageHandlers;
 using Domain.PhaseConsumers.MonitorForNewConnectionsHandlers;
 using Domain.PhaseConsumers.NetworkingHandler;
 using Domain.PhaseConsumers.RestartApplicationHandler;
 using Domain.PhaseConsumers.ScanProspectsForRepliesHandlers;
+using Domain.PhaseHandlers.AllInOneVirtualAssistantHandler;
 using Domain.PhaseHandlers.FollowUpMessageHandlers;
 using Domain.PhaseHandlers.MonitorForNewConnectionsHandler;
 using Domain.PhaseHandlers.NetworkingHandler;
@@ -111,7 +117,6 @@ using Serilog;
 using System;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Hal.Configurations
 {
@@ -162,6 +167,7 @@ namespace Hal.Configurations
             services.AddScoped<IConsumeCommandHandler<MonitorForNewConnectionsConsumerCommand>, MonitorForNewConnectionsConsumerCommandHandler>();
             services.AddScoped<IConsumeCommandHandler<ScanProspectsForRepliesConsumerCommand>, ScanProspectsForRepliesConsumerCommandHandler>();
             services.AddScoped<IConsumeCommandHandler<NetworkingConsumerCommand>, NetworkingConsumerCommandHandler>();
+            services.AddScoped<IConsumeCommandHandler<AllInOneVirtualAssistantConsumerCommand>, AllInOneVirtualAssistantConsumerCommandHandler>();
 
             // Handlers for processing the given phase
             services.AddScoped<ICommandHandler<RestartApplicationCommand>, RestartApplicationCommandHandler>();
@@ -171,6 +177,16 @@ namespace Hal.Configurations
             services.AddScoped<ICommandHandler<ScanProspectsForRepliesCommand>, ScanProspectsForRepliesCommandHandler>();
             services.AddScoped<ICommandHandler<CheckOffHoursNewConnectionsCommand>, CheckOffHoursNewConnectionsCommandHandler>();
             services.AddScoped<ICommandHandler<NetworkingCommand>, NetworkingCommandHandler>();
+            services.AddScoped<ICommandHandler<AllInOneVirtualAssistantCommand>, AllInOneVirtualAssistantCommandHandler>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddJsonOptions(this IServiceCollection services, IConfiguration configuration)
+        {
+            Log.Information("Registering JsonOptions services configuration.");
+
+            services.Configure<FeatureFlagsOptions>(options => configuration.GetSection(nameof(FeatureFlagsOptions)).Bind(options));
 
             return services;
         }
@@ -280,6 +296,7 @@ namespace Hal.Configurations
             services.AddScoped<INetworkingEventHandler, NetworkingEventHandler>();
             services.AddScoped<IRestartApplicationEventHandler, RestartApplicationEventHandler>();
             services.AddScoped<IScanProspectsForRepliesEventHandler, ScanProspectsForRepliesEventHandler>();
+            services.AddScoped<IAllInOneVirtualAssistantEventHandler, AllInOneVirtualAssistantEventHandler>();
 
             return services;
         }
@@ -302,7 +319,10 @@ namespace Hal.Configurations
         {
             Log.Information("Registering intersection sets services.");
 
-            services.AddScoped<IConnectWithProspectsForSearchUrlInstructionSet, ConnectWithProspectsForSearchUrlInstructionSet>();
+            services.AddScoped<INetworkingInstructionSet, NetworkingInstructionSet>();
+            services.AddScoped<ICheckForNewConnectionsFromOffHoursInstructionSet, CheckForNewConnectionsFromOffHoursInstructionSet>();
+            services.AddScoped<IDeepScanInstructionSet, DeepScanInstructionSet>();
+            services.AddScoped<IFollowUpMessageInstructionSet, FollowUpMessageInstructionSet>();
 
             return services;
         }
@@ -318,6 +338,7 @@ namespace Hal.Configurations
             services.AddScoped<IClearMessagingSearchCriteriaInteractionHandler, ClearMessagingSearchCriteriaInteractionHandler>();
             services.AddScoped<IEnterSearchMessageCriteriaInteractionHandler, EnterSearchMessageCriteriaInteractionHandler>();
             services.AddScoped<IGetProspectsMessageItemInteractionHandler, GetProspectsMessageItemInteractionHandler>();
+            services.AddScoped<IGetAllVisibleConversationCountInteractionHandler, GetAllVisibleConversationCountInteractionHandler>();
 
             ////////////////////////////////////////////////////////////
             /// FollowUpMessage Interactions
@@ -397,6 +418,9 @@ namespace Hal.Configurations
             services.AddScoped<IFollowUpMessageInteractionFacade, FollowUpMessageInteractionFacade>();
             services.AddScoped<IMonitorForConnectionsInteractionFacade, MonitorForConnectionsInteractionFacade>();
             services.AddScoped<IScanProspectsForRepliesInteractionFacade, ScanProspectsForRepliesInteractionFacade>();
+            services.AddScoped<IAllInOneInstructionsSetFacade, AllInOneInstructionsSetFacade>();
+            services.AddScoped<IAllInOneVirtualAssistantInteractionFacade, AllInOneVirtualAssistantInteractionFacade>();
+            services.AddScoped<IDeepScanProspectsInteractionFacade, DeepScanProspectsInteractionFacade>();
 
             return services;
         }
@@ -419,6 +443,15 @@ namespace Hal.Configurations
                 }
                 return provider.Create(new RabbitModelPooledObjectPolicy(rabbitMQConfigOptions.Value, halId));
             });
+
+            return services;
+        }
+
+        public static IServiceCollection AddRabbitMQServices(this IServiceCollection services)
+        {
+            Log.Information("Registering rabbit mq services");
+
+            services.AddScoped<IGetMQMessagesService, GetMQMessagesService>();
 
             return services;
         }
@@ -503,7 +536,7 @@ namespace Hal.Configurations
                         {
                             context.Response.Headers.Add(ApiConstants.TokenOptions.ExpiredToken, "true");
                         }
-                        return Task.CompletedTask;
+                        return System.Threading.Tasks.Task.CompletedTask;
                     }
                 };
             });

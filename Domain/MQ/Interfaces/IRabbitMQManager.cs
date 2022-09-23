@@ -1,4 +1,5 @@
-﻿using RabbitMQ.Client.Events;
+﻿using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 
 namespace Domain.MQ.Interfaces
 {
@@ -7,5 +8,7 @@ namespace Domain.MQ.Interfaces
         void StartConsuming(string queueNameIn, string routingKeyIn, string halId, AsyncEventHandler<BasicDeliverEventArgs> receivedHandlerAsync);
 
         void PublishMessage(byte[] body, string queueNameIn, string routingKeyIn);
+
+        BasicGetResult GetMessage(string queueNameIn, string halId);
     }
 }

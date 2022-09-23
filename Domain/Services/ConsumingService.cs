@@ -1,4 +1,5 @@
-﻿using Domain.PhaseConsumers.FollowUpMessageHandlers;
+﻿using Domain.PhaseConsumers.AllInOneVirtualAssistantHandler;
+using Domain.PhaseConsumers.FollowUpMessageHandlers;
 using Domain.PhaseConsumers.MonitorForNewConnectionsHandlers;
 using Domain.PhaseConsumers.NetworkingHandler;
 using Domain.PhaseConsumers.RestartApplicationHandler;
@@ -57,14 +58,27 @@ namespace Domain.Services
                 FollowUpMessageConsumerCommand followUpCommand = new FollowUpMessageConsumerCommand(halIdentity.Id);
                 await followUpHandler.ConsumeAsync(followUpCommand);
 
-
                 ////////////////////////////////////////////////////////////////////////////////////
                 /// Consume Networking [ ProspectListPhase AND SendConnectionsPhase ]
                 ////////////////////////////////////////////////////////////////////////////////////
                 HalConsumingCommandHandlerDecorator<NetworkingConsumerCommand> networkingHandler = scope.ServiceProvider.GetRequiredService<HalConsumingCommandHandlerDecorator<NetworkingConsumerCommand>>();
                 NetworkingConsumerCommand networkingCommand = new NetworkingConsumerCommand(halIdentity.Id);
                 await networkingHandler.ConsumeAsync(networkingCommand);
+            }
+        }
 
+        public async Task StartConsumingAsync_AllInOneVirtualAssistant()
+        {
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                IHalIdentity halIdentity = scope.ServiceProvider.GetRequiredService<IHalIdentity>();
+
+                ////////////////////////////////////////////////////////////////////////////////////
+                /// Consume AllInOneVirtualAssistant messages
+                ////////////////////////////////////////////////////////////////////////////////////
+                IConsumeCommandHandler<AllInOneVirtualAssistantConsumerCommand> handler = scope.ServiceProvider.GetRequiredService<IConsumeCommandHandler<AllInOneVirtualAssistantConsumerCommand>>();
+                AllInOneVirtualAssistantConsumerCommand allInOneCommand = new AllInOneVirtualAssistantConsumerCommand(halIdentity.Id);
+                await handler.ConsumeAsync(allInOneCommand);
             }
         }
     }

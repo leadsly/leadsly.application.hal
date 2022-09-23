@@ -1,4 +1,5 @@
-﻿using Domain.Models.FollowUpMessage;
+﻿using Domain.Models.DeepScanProspectsForReplies;
+using Domain.Models.FollowUpMessage;
 using Domain.Models.MonitorForNewProspects;
 using Domain.Models.Networking;
 using Domain.Models.ProspectList;
@@ -24,5 +25,7 @@ namespace Domain.Services.Interfaces
         Task ProcessProspectListAsync(IList<PersistPrimaryProspectModel> items, PublishMessageBody message, CancellationToken ct = default);
         Task UpdateMonthlySearchLimitAsync(bool limitReached, PublishMessageBody message, CancellationToken ct = default);
         Task ProcessNewMessagesAsync(IList<NewMessageModel> items, PublishMessageBody message, CancellationToken ct = default);
+        Task<NetworkProspectsResponse> GetAllProspectsFromActiveCampaignsAsync(PublishMessageBody message, CancellationToken ct = default);
+        Task ProcessCampaignProspectsThatRepliedAsync(IList<ProspectRepliedModel> prospects, PublishMessageBody message, CancellationToken ct = default);
     }
 }

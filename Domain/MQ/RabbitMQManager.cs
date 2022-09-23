@@ -92,6 +92,20 @@ namespace Domain.MQ
             _pool.Return(channel);
         }
 
+        public BasicGetResult GetMessage(string queueNameIn, string halId)
+        {
+            RabbitMQOptions options = _rabbitMQRepository.GetRabbitMQConfigOptions();
+            string exchangeName = options.ExchangeOptions.Hal.Name;
+            string exchangeType = options.ExchangeOptions.Hal.ExchangeType;
+
+            var channel = _pool.Get();
+
+            string queueName = options.QueueConfigOptions.Hal.Name.Replace("{halId}", halId);
+            queueName = queueName.Replace("{queueName}", queueNameIn);
+
+            return channel.BasicGet(queueName, true);
+        }
+
         private RabbitMQOptions GetRabbitMQOptions()
         {
             if (_memoryCache.TryGetValue(CacheKeys.RabbitMQConfigOptions, out RabbitMQOptions options) == false)

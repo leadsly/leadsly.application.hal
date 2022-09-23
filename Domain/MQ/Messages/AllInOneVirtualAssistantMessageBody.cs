@@ -7,6 +7,12 @@ namespace Domain.MQ.Messages
     [DataContract]
     public class AllInOneVirtualAssistantMessageBody : PublishMessageBody
     {
+        [DataMember(IsRequired = false)]
+        public CheckOffHoursNewConnectionsBody CheckOffHoursNewConnections { get; set; }
+
+        [DataMember(IsRequired = false)]
+        public DeepScanProspectsForRepliesBody DeepScanProspectsForReplies { get; set; }
+
         [IgnoreDataMember]
         public ConnectedNetworkProspectsResponse PreviousMonitoredResponse { get; set; }
 
@@ -15,10 +21,5 @@ namespace Domain.MQ.Messages
 
         [IgnoreDataMember]
         public Queue<FollowUpMessageBody> FollowUpMessages { get; set; }
-        [DataMember(IsRequired = false)]
-        public DeepScanProspectsForRepliesBody DeepScanProspectsForReplies { get; set; }
-
-        [DataMember]
-        public CheckOffHoursNewConnectionsBody CheckOffHoursNewConnections { get; set; }
     }
 }

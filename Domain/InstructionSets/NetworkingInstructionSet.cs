@@ -3,9 +3,11 @@ using Domain.InstructionSets.Interfaces;
 using Domain.Interactions;
 using Domain.Interactions.Networking.ConnectWithProspect;
 using Domain.Interactions.Networking.GatherProspects;
+using Domain.Interactions.Networking.GetTotalSearchResults;
 using Domain.Interactions.Networking.GoToTheNextPage;
 using Domain.Interactions.Networking.IsLastPage;
 using Domain.Interactions.Networking.IsNextButtonDisabled;
+using Domain.Interactions.Networking.NoResultsFound;
 using Domain.Interactions.Networking.SearchResultsLimit;
 using Domain.Models.Networking;
 using Domain.Models.ProspectList;
@@ -18,17 +20,17 @@ using System.Linq;
 
 namespace Domain.InstructionSets
 {
-    public class ConnectWithProspectsForSearchUrlInstructionSet : IConnectWithProspectsForSearchUrlInstructionSet
+    public class NetworkingInstructionSet : INetworkingInstructionSet
     {
-        public ConnectWithProspectsForSearchUrlInstructionSet(
-            ILogger<ConnectWithProspectsForSearchUrlInstructionSet> logger,
+        public NetworkingInstructionSet(
+            ILogger<NetworkingInstructionSet> logger,
             INetworkingInteractionFacade interactionFacade)
         {
             _logger = logger;
             _interactionFacade = interactionFacade;
         }
 
-        private readonly ILogger<ConnectWithProspectsForSearchUrlInstructionSet> _logger;
+        private readonly ILogger<NetworkingInstructionSet> _logger;
         private readonly INetworkingInteractionFacade _interactionFacade;
 
         private List<PersistPrimaryProspectModel> PersistPrimaryProspects { get; set; } = new List<PersistPrimaryProspectModel>();
@@ -350,6 +352,43 @@ namespace Domain.InstructionSets
             _logger.LogDebug("Number of connections sent has not reached the max number of connections that can be sent");
 
             return false;
+        }
+
+        public bool GetTotalnumberOfSearchResultsInteraction(IWebDriver webDriver, SearchUrlProgressModel searchUrlProgress)
+        {
+            InteractionBase interaction = new GetTotalSearchResultsInteraction
+            {
+                WebDriver = webDriver,
+                TotalNumberOfResults = searchUrlProgress.TotalSearchResults
+            };
+
+            return _interactionFacade.HandleGetTotalNumberOfSearchResults(interaction);
+        }
+
+        public bool NoSearchResultsDisplayedInteraction(IWebDriver webDriver)
+        {
+            NoResultsFoundInteraction interaction = new()
+            {
+                WebDriver = webDriver
+            };
+
+            return _interactionFacade.HandleNoResultsFoundInteraction(interaction);
+        }
+
+        public void Add_UpdateSearchUrlProgressRequest(string searchUrlProgressId, int currentPage, string currentUrl, int totalResults, string currentWindowHandle)
+        {
+            if (UpdatedSearchUrlsProgress.Any(req => req.SearchUrlProgressId == searchUrlProgressId) == false)
+            {
+                UpdatedSearchUrlsProgress.Add(new()
+                {
+                    SearchUrlProgressId = searchUrlProgressId,
+                    StartedCrawling = true,
+                    LastPage = currentPage,
+                    SearchUrl = currentUrl,
+                    TotalSearchResults = totalResults,
+                    WindowHandleId = currentWindowHandle
+                });
+            }
         }
     }
 }

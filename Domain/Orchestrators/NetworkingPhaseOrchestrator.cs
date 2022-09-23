@@ -1,8 +1,5 @@
 ﻿using Domain.Facades.Interfaces;
 using Domain.InstructionSets.Interfaces;
-using Domain.Interactions;
-using Domain.Interactions.Networking.GetTotalSearchResults;
-using Domain.Interactions.Networking.NoResultsFound;
 using Domain.Models.Networking;
 using Domain.Models.ProspectList;
 using Domain.Models.SendConnections;
@@ -14,7 +11,6 @@ using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Domain.Orchestrators
 {
@@ -24,7 +20,7 @@ namespace Domain.Orchestrators
             ILogger<NetworkingPhaseOrchestrator> logger,
             INetworkingInteractionFacade interactionFacade,
             IWebDriverProvider webDriverProvider,
-            IConnectWithProspectsForSearchUrlInstructionSet instructionSet
+            INetworkingInstructionSet instructionSet
             ) : base(logger)
         {
 
@@ -34,34 +30,22 @@ namespace Domain.Orchestrators
             _instructionSet = instructionSet;
         }
 
-        private readonly IConnectWithProspectsForSearchUrlInstructionSet _instructionSet;
+        private readonly INetworkingInstructionSet _instructionSet;
         private readonly INetworkingInteractionFacade _interactionFacade;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<NetworkingPhaseOrchestrator> _logger;
-        private IList<SearchUrlProgressModel> UpdatedSearchUrlsProgress => _instructionSet.UpdatedSearchUrlsProgress;
+        //private IList<SearchUrlProgressModel> UpdatedSearchUrlsProgress => _instructionSet.UpdatedSearchUrlsProgress;
         private bool MonthlySearchLimitReached => _instructionSet.MonthlySearchLimitReached;
         private int NumberOfConnectionsSent
         {
-            get
-            {
-                return _instructionSet.NumberOfConnectionsSent;
-            }
-            set
-            {
-                _instructionSet.NumberOfConnectionsSent = value;
-            }
+            get => _instructionSet.NumberOfConnectionsSent;
+            set => _instructionSet.NumberOfConnectionsSent = value;
         }
         public List<PersistPrimaryProspectModel> PersistPrimaryProspects => _instructionSet.GetPersistPrimaryProspects();
         public IList<ConnectionSentModel> ConnectionsSent => _instructionSet.GetConnectionsSent();
 
-        public IList<SearchUrlProgressModel> GetUpdatedSearchUrlsProgress()
-        {
-            return _instructionSet.GetUpdatedSearchUrls();
-        }
-        public bool GetMonthlySearchLimitReached()
-        {
-            return _instructionSet.GetMonthlySearchLimitReached();
-        }
+        public IList<SearchUrlProgressModel> GetUpdatedSearchUrlsProgress() => _instructionSet.GetUpdatedSearchUrls();
+        public bool GetMonthlySearchLimitReached() => _instructionSet.GetMonthlySearchLimitReached();
 
         public void Execute(NetworkingMessageBody message, IList<SearchUrlProgressModel> searchUrlsProgress)
         {
@@ -102,7 +86,7 @@ namespace Domain.Orchestrators
                     return;
                 }
 
-                if (GetTotalnumberOfSearchResults(webDriver, searchUrlProgress) == false)
+                if (_instructionSet.GetTotalnumberOfSearchResultsInteraction(webDriver, searchUrlProgress) == false)
                 {
                     // just move onto the next search url
                     _logger.LogDebug($"Unable to determine total number of search results. Moving on to the next search url in the list. This failure occured for search result: {searchUrlProgress.SearchUrl}");
@@ -110,7 +94,7 @@ namespace Domain.Orchestrators
                 }
 
                 int totalResults = _interactionFacade.TotalNumberOfSearchResults;
-                Add_UpdateSearchUrlProgressRequest(searchUrlProgress.SearchUrlProgressId, searchUrlProgress.LastPage, webDriver.Url, totalResults, webDriver.CurrentWindowHandle);
+                _instructionSet.Add_UpdateSearchUrlProgressRequest(searchUrlProgress.SearchUrlProgressId, searchUrlProgress.LastPage, webDriver.Url, totalResults, webDriver.CurrentWindowHandle);
 
                 _instructionSet.ConnectWithProspectsForSearchUrl(webDriver, message, searchUrlProgress, (int)totalResults);
 
@@ -141,7 +125,7 @@ namespace Domain.Orchestrators
                 return false;
             }
 
-            if (NoSearchResultsDisplayed(webDriver) == true)
+            if (_instructionSet.NoSearchResultsDisplayedInteraction(webDriver) == true)
             {
                 _logger.LogError("Execution of {0} failed. No search results page displayed again. This means we've tried refreshing and waiting for results page to be displayed, but it wasn't.", messageTypeName);
                 return false;
@@ -150,41 +134,41 @@ namespace Domain.Orchestrators
             return true;
         }
 
-        private bool NoSearchResultsDisplayed(IWebDriver webDriver)
-        {
-            NoResultsFoundInteraction interaction = new()
-            {
-                WebDriver = webDriver
-            };
+        //private bool NoSearchResultsDisplayed(IWebDriver webDriver)
+        //{
+        //    NoResultsFoundInteraction interaction = new()
+        //    {
+        //        WebDriver = webDriver
+        //    };
 
-            return _interactionFacade.HandleNoResultsFoundInteraction(interaction);
-        }
+        //    return _interactionFacade.HandleNoResultsFoundInteraction(interaction);
+        //}
 
-        private bool GetTotalnumberOfSearchResults(IWebDriver webDriver, SearchUrlProgressModel searchUrlProgress)
-        {
-            InteractionBase interaction = new GetTotalSearchResultsInteraction
-            {
-                WebDriver = webDriver,
-                TotalNumberOfResults = searchUrlProgress.TotalSearchResults
-            };
+        //private bool GetTotalnumberOfSearchResults(IWebDriver webDriver, SearchUrlProgressModel searchUrlProgress)
+        //{
+        //    InteractionBase interaction = new GetTotalSearchResultsInteraction
+        //    {
+        //        WebDriver = webDriver,
+        //        TotalNumberOfResults = searchUrlProgress.TotalSearchResults
+        //    };
 
-            return _interactionFacade.HandleGetTotalNumberOfSearchResults(interaction);
-        }
+        //    return _interactionFacade.HandleGetTotalNumberOfSearchResults(interaction);
+        //}
 
-        private void Add_UpdateSearchUrlProgressRequest(string searchUrlProgressId, int currentPage, string currentUrl, int totalResults, string currentWindowHandle)
-        {
-            if (UpdatedSearchUrlsProgress.Any(req => req.SearchUrlProgressId == searchUrlProgressId) == false)
-            {
-                UpdatedSearchUrlsProgress.Add(new()
-                {
-                    SearchUrlProgressId = searchUrlProgressId,
-                    StartedCrawling = true,
-                    LastPage = currentPage,
-                    SearchUrl = currentUrl,
-                    TotalSearchResults = totalResults,
-                    WindowHandleId = currentWindowHandle
-                });
-            }
-        }
+        //private void Add_UpdateSearchUrlProgressRequest(string searchUrlProgressId, int currentPage, string currentUrl, int totalResults, string currentWindowHandle)
+        //{
+        //    if (UpdatedSearchUrlsProgress.Any(req => req.SearchUrlProgressId == searchUrlProgressId) == false)
+        //    {
+        //        UpdatedSearchUrlsProgress.Add(new()
+        //        {
+        //            SearchUrlProgressId = searchUrlProgressId,
+        //            StartedCrawling = true,
+        //            LastPage = currentPage,
+        //            SearchUrl = currentUrl,
+        //            TotalSearchResults = totalResults,
+        //            WindowHandleId = currentWindowHandle
+        //        });
+        //    }
+        //}
     }
 }

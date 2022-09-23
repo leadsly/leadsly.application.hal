@@ -5,7 +5,7 @@ namespace Domain.Services.Interfaces.POMs
 {
     public interface IDeepScanProspectsServicePOM
     {
-        int GetVisibleConversationCount(IWebDriver webDriver);
+        int? GetVisibleConversationCount(IWebDriver webDriver);
 
         bool ClearMessagingSearchCriteria(IWebDriver webDriver);
 

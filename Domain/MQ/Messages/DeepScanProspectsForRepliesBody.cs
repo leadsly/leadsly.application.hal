@@ -1,4 +1,6 @@
-﻿using System.Runtime.Serialization;
+﻿using Domain.Models.Networking;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace Domain.MQ.Messages
 {
@@ -7,5 +9,8 @@ namespace Domain.MQ.Messages
     {
         [DataMember]
         public string PageUrl { get; set; } = string.Empty;
+
+        [IgnoreDataMember]
+        public IList<NetworkProspectModel> NetworkProspects { get; set; }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Domain.Interactions;
-using Domain.Models.FollowUpMessage;
 using Domain.Models.MonitorForNewProspects;
 using Domain.Models.ScanProspectsForReplies;
 using OpenQA.Selenium;
@@ -14,15 +13,9 @@ namespace Domain.Facades.Interfaces
         public IList<IWebElement> UnreadMessages { get; }
         public IList<NewMessageModel> NewMessages { get; }
         public IList<RecentlyAddedProspectModel> RecentlyAddedProspects { get; }
-        public SentFollowUpMessageModel SentFollowUpMessage { get; }
         bool HandleGetConnectionsCountInteraction(InteractionBase interaction);
         bool HandleGetAllRecentlyAddedInteraction(InteractionBase interaction);
         bool HandleGetAllUnreadMessageListBubbles(InteractionBase interaction);
         bool HandleGetUnreadMessagesContent(InteractionBase interaction);
-        bool HandleCreateNewMessageInteraction(InteractionBase interaction);
-        bool HandleEnterMessageInteraction(InteractionBase interaction);
-        bool HandleEnterProspectNameInteraction(InteractionBase interaction);
-        bool HandleNoResultsFoundInteraction(InteractionBase interaction);
-        bool HandleGetTotalNumberOfSearchResults(InteractionBase interaction);
     }
 }

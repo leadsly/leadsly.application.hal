@@ -2,17 +2,12 @@
 using Domain.Executors.MonitorForNewConnections.Events;
 using Domain.Executors.ScanProspectsForReplies.Events;
 using Domain.Facades.Interfaces;
-using Domain.InstructionSets.Interfaces;
 using Domain.Interactions;
 using Domain.Interactions.AllInOneVirtualAssistant.GetAllUnreadMessages;
 using Domain.Interactions.AllInOneVirtualAssistant.GetMessageContent;
-using Domain.Interactions.FollowUpMessage.CreateNewMessage;
-using Domain.Interactions.FollowUpMessage.EnterMessage;
-using Domain.Interactions.FollowUpMessage.EnterProspectName;
 using Domain.Interactions.MonitorForNewConnections.GetAllRecentlyAdded;
 using Domain.Interactions.MonitorForNewConnections.GetConnectionsCount;
-using Domain.Interactions.Networking.GetTotalSearchResults;
-using Domain.Interactions.Networking.NoResultsFound;
+using Domain.Models.DeepScanProspectsForReplies;
 using Domain.Models.FollowUpMessage;
 using Domain.Models.MonitorForNewProspects;
 using Domain.Models.Networking;
@@ -24,7 +19,6 @@ using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Providers.Interfaces;
 using Leadsly.Application.Model;
-using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
@@ -35,13 +29,15 @@ namespace Domain.Orchestrators
 {
     public class AllInOneVirtualAssistantPhaseOrchestrator : PhaseOrchestratorBase, IAllInOneVirtualAssistantPhaseOrchestrator
     {
+        private const string PRIMARY_PAGE_URL = "https://www.linkedin.com/mynetwork/invite-connect/connections/";
+
         public AllInOneVirtualAssistantPhaseOrchestrator(
             ILogger<AllInOneVirtualAssistantPhaseOrchestrator> logger,
             IAllInOneVirtualAssistantInteractionFacade interactionsFacade,
-            IConnectWithProspectsForSearchUrlInstructionSet instructionSet,
+            IAllInOneInstructionsSetFacade instructionsSetFacade,
             IWebDriverProvider webDriverProvider) : base(logger)
         {
-            _instructionSet = instructionSet;
+            _instructionsSetFacade = instructionsSetFacade;
             _interactionsFacade = interactionsFacade;
             _logger = logger;
             _webDriverProvider = webDriverProvider;
@@ -50,35 +46,28 @@ namespace Domain.Orchestrators
         public event NewMessagesReceivedEventHandler NewMessagesReceived;
         public event NewRecentlyAddedProspectsDetectedEventHandler NewConnectionsDetected;
         public event UpdateRecentlyAddedProspectsEventHandler UpdateRecentlyAddedProspects;
-        private readonly IConnectWithProspectsForSearchUrlInstructionSet _instructionSet;
+        public event OffHoursNewConnectionsEventHandler OffHoursNewConnectionsDetected;
+        public event ProspectsThatRepliedEventHandler ProspectsThatRepliedDetected;
+        public event FollowUpMessagesSentEventHandler FollowUpMessagesSent;
+
+        private readonly IAllInOneInstructionsSetFacade _instructionsSetFacade;
         private readonly IAllInOneVirtualAssistantInteractionFacade _interactionsFacade;
         private readonly ILogger<AllInOneVirtualAssistantPhaseOrchestrator> _logger;
         private readonly IWebDriverProvider _webDriverProvider;
         private IList<SentFollowUpMessageModel> SentFollowUpMessages { get; set; } = new List<SentFollowUpMessageModel>();
-        private IList<SearchUrlProgressModel> UpdatedSearchUrlsProgress => _instructionSet.UpdatedSearchUrlsProgress;
-        private bool MonthlySearchLimitReached => _instructionSet.MonthlySearchLimitReached;
+        private bool MonthlySearchLimitReached => _instructionsSetFacade.MonthlySearchLimitReached;
         private int NumberOfConnectionsSent
         {
-            get
-            {
-                return _instructionSet.NumberOfConnectionsSent;
-            }
-            set
-            {
-                _instructionSet.NumberOfConnectionsSent = value;
-            }
+            get => _instructionsSetFacade.NumberOfConnectionsSent;
+
+            set => _instructionsSetFacade.NumberOfConnectionsSent = value;
         }
         private Queue<FollowUpMessageBody> FollowUpMessages { get; set; }
         private Queue<NetworkingMessageBody> NetworkingMessages { get; set; }
-
-        public List<PersistPrimaryProspectModel> PersistPrimaryProspects => _instructionSet.GetPersistPrimaryProspects();
-
-        public IList<ConnectionSentModel> ConnectionsSent => _instructionSet.GetConnectionsSent();
-
+        public List<PersistPrimaryProspectModel> PersistPrimaryProspects => _instructionsSetFacade.GetPersistPrimaryProspects();
+        public IList<ConnectionSentModel> ConnectionsSent => _instructionsSetFacade.GetConnectionsSent();
         public IList<RecentlyAddedProspectModel> RecentlyAddedProspects { get; private set; }
-
         public int TotalConnectionsCount { get; private set; }
-
         public IList<SentFollowUpMessageModel> GetSentFollowUpMessages()
         {
             IList<SentFollowUpMessageModel> items = SentFollowUpMessages;
@@ -102,6 +91,14 @@ namespace Domain.Orchestrators
                 return;
             }
 
+            if (GoToPage(webDriver, PRIMARY_PAGE_URL))
+            {
+                _logger.LogError("Failed to navigate to {0}. This phase will exist and nothing else will be executed.", PRIMARY_PAGE_URL);
+                return;
+            }
+
+            PrimaryWindowHandle = webDriver.CurrentWindowHandle;
+
             ExecuteInternal(webDriver, message);
         }
 
@@ -119,19 +116,23 @@ namespace Domain.Orchestrators
 
         private void BeginVirtualAssistantWork(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message)
         {
-            // 1. start with monitor for new connections
+            // 1. deep scan prospects for replies
+            HandleDeepScanProspectsForReplies(webDriver, message);
+
+            // 2. check off hours connections
+            HandleCheckOffHoursNewConnections(webDriver, message);
+
+            // 3. start with monitor for new connections
             HandleMonitorForNewConnections(webDriver, message);
 
-            // 2. then execute scan prospects for replies
+            // 4. then execute scan prospects for replies
             HandleScanProspectsForReplies(webDriver, message);
 
-            // 3. run follow up messages
+            // 5. run follow up messages
             HandleFollowUpMessages(webDriver, message);
 
-            // 4. run networking 
+            // 6. run networking 
             HandleNetworking(webDriver, message);
-
-            // 5. post message to the server we're done, start deprovisioning process
 
         }
 
@@ -318,79 +319,79 @@ namespace Domain.Orchestrators
         private void HandleFollowUpMessages(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message)
         {
             int length = FollowUpMessages.Count;
-            for (int i = 0; i < length; i++)
+            try
             {
-                FollowUpMessageBody followUpMessage = FollowUpMessages.Dequeue();
-
-                if (CreateNewMessageInteraction(webDriver) == false)
+                if (FollowUpMessages.Any() == true)
                 {
-                    continue;
+                    string pageUrl = FollowUpMessages.Peek().PageUrl;
+                    if (PrepareBrowserWindow(webDriver, pageUrl) == false)
+                    {
+                        return;
+                    }
                 }
 
-                if (EnterProspectNameInteraction(webDriver, followUpMessage.ProspectName) == false)
+                for (int i = 0; i < length; i++)
                 {
-                    continue;
-                }
+                    FollowUpMessageBody followUpMessage = FollowUpMessages.Dequeue();
 
-                if (EnterMessageInteraction(webDriver, followUpMessage.Content, followUpMessage.OrderNum) == false)
-                {
-                    continue;
+                    // before the follow up message is sent out lets make sure that deepscanprospectsfor replies did not find the prospect in our inbox and one that has replied already
+                    if (ShouldSend(followUpMessage) == true)
+                    {
+                        SendFollowUpMessage(webDriver, followUpMessage);
+                    }
                 }
+            }
+            finally
+            {
+                OutputFollowUpMessagesSent(message);
 
-                SentFollowUpMessageModel model = _interactionsFacade.SentFollowUpMessage;
-                if (model != null)
-                {
-                    SentFollowUpMessages.Add(model);
-                }
+                SwitchBackToMainTab(webDriver);
             }
         }
 
-        private bool CreateNewMessageInteraction(IWebDriver webDriver)
+        private bool ShouldSend(FollowUpMessageBody followUpMessage)
         {
-            InteractionBase interaction = new CreateNewMessageInteraction
+            IList<ProspectRepliedModel> prospectsThatReplied = _instructionsSetFacade.ProspectsThatReplied;
+            if (prospectsThatReplied.Count > 0)
             {
-                WebDriver = webDriver
-            };
+                if (prospectsThatReplied.Any(p => p.Name == followUpMessage.ProspectName))
+                {
+                    return false;
+                }
+            }
 
-            return _interactionsFacade.HandleCreateNewMessageInteraction(interaction);
+            return true;
         }
 
-        private bool EnterProspectNameInteraction(IWebDriver webDriver, string prospectName)
+        private void SendFollowUpMessage(IWebDriver webDriver, FollowUpMessageBody message)
         {
-            InteractionBase interaction = new EnterProspectNameInteraction
+            try
             {
-                ProspectName = prospectName,
-                WebDriver = webDriver
-            };
+                _instructionsSetFacade.SendFollowUpMessage(webDriver, message);
 
-            return _interactionsFacade.HandleEnterProspectNameInteraction(interaction);
+                SentFollowUpMessageModel sentFollowUpMessage = _instructionsSetFacade.GetSentFollowUpMessage();
+                if (sentFollowUpMessage != null)
+                {
+                    SentFollowUpMessages.Add(sentFollowUpMessage);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected exception occured while executing {0} phase", nameof(FollowUpMessageBody));
+            }
         }
 
-        private bool EnterMessageInteraction(IWebDriver webDriver, string content, int orderNum)
+        private void OutputFollowUpMessagesSent(AllInOneVirtualAssistantMessageBody message)
         {
-            InteractionBase interaction = new EnterMessageInteraction
+            if (SentFollowUpMessages != null && SentFollowUpMessages.Count > 0)
             {
-                Content = content,
-                WebDriver = webDriver,
-                OrderNum = orderNum
-            };
-
-            return _interactionsFacade.HandleEnterMessageInteraction(interaction);
+                this.FollowUpMessagesSent.Invoke(this, new FollowUpMessagesSentEventArgs(message, SentFollowUpMessages));
+            }
         }
 
         #endregion
 
         #region Networking
-
-        public bool GetMonthlySearchLimitReached()
-        {
-            return _instructionSet.GetMonthlySearchLimitReached();
-        }
-
-        public IList<SearchUrlProgressModel> GetUpdatedSearchUrlsProgress()
-        {
-            return _instructionSet.GetUpdatedSearchUrls();
-        }
 
         private void HandleNetworking(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message)
         {
@@ -418,78 +419,50 @@ namespace Domain.Orchestrators
             _logger.LogDebug("Begning to execute networking phase");
             foreach (SearchUrlProgressModel searchUrlProgress in message.SearchUrlsProgress)
             {
-                if (PrepareBrowser(webDriver, searchUrlProgress, message.HalId) == false)
+                try
                 {
-                    return;
-                }
+                    if (PrepareBrowser(webDriver, searchUrlProgress, message.HalId) == false)
+                    {
+                        return;
+                    }
 
-                if (GetTotalnumberOfSearchResults(webDriver, searchUrlProgress) == false)
+                    if (_instructionsSetFacade.GetTotalnumberOfSearchResultsInteraction(webDriver, searchUrlProgress) == false)
+                    {
+                        // just move onto the next search url
+                        _logger.LogDebug($"Unable to determine total number of search results. Moving on to the next search url in the list. This failure occured for search result: {searchUrlProgress.SearchUrl}");
+                        continue;
+                    }
+
+                    int totalResults = _interactionsFacade.TotalNumberOfSearchResults;
+                    _instructionsSetFacade.Add_UpdateSearchUrlProgressRequest(searchUrlProgress.SearchUrlProgressId, searchUrlProgress.LastPage, webDriver.Url, totalResults, webDriver.CurrentWindowHandle);
+
+                    _instructionsSetFacade.ConnectWithProspectsForSearchUrl(webDriver, message, searchUrlProgress, (int)totalResults);
+
+                    // see if we can get away with this.
+                    if (NumberOfConnectionsSent >= message.ProspectsToCrawl)
+                        break;
+
+                    if (MonthlySearchLimitReached == true)
+                        break;
+                }
+                finally
                 {
-                    // just move onto the next search url
-                    _logger.LogDebug($"Unable to determine total number of search results. Moving on to the next search url in the list. This failure occured for search result: {searchUrlProgress.SearchUrl}");
-                    continue;
+                    SwitchBackToMainTab(webDriver);
                 }
-
-                int totalResults = _interactionsFacade.TotalNumberOfSearchResults;
-                Add_UpdateSearchUrlProgressRequest(searchUrlProgress.SearchUrlProgressId, searchUrlProgress.LastPage, webDriver.Url, totalResults, webDriver.CurrentWindowHandle);
-
-                _instructionSet.ConnectWithProspectsForSearchUrl(webDriver, message, searchUrlProgress, (int)totalResults);
-
-                // see if we can get away with this.
-                if (NumberOfConnectionsSent >= message.ProspectsToCrawl)
-                    break;
-
-                if (MonthlySearchLimitReached == true)
-                    break;
             }
             _logger.LogDebug("Finished executing networking phase");
-        }
-
-        private void Add_UpdateSearchUrlProgressRequest(string searchUrlProgressId, int currentPage, string currentUrl, int totalResults, string currentWindowHandle)
-        {
-            if (UpdatedSearchUrlsProgress.Any(req => req.SearchUrlProgressId == searchUrlProgressId) == false)
-            {
-                UpdatedSearchUrlsProgress.Add(new()
-                {
-                    SearchUrlProgressId = searchUrlProgressId,
-                    StartedCrawling = true,
-                    LastPage = currentPage,
-                    SearchUrl = currentUrl,
-                    TotalSearchResults = totalResults,
-                    WindowHandleId = currentWindowHandle
-                });
-            }
-        }
-
-        private bool GetTotalnumberOfSearchResults(IWebDriver webDriver, SearchUrlProgressModel searchUrlProgress)
-        {
-            InteractionBase interaction = new GetTotalSearchResultsInteraction
-            {
-                WebDriver = webDriver,
-                TotalNumberOfResults = searchUrlProgress.TotalSearchResults
-            };
-
-            return _interactionsFacade.HandleGetTotalNumberOfSearchResults(interaction);
         }
 
         private bool PrepareBrowser(IWebDriver webDriver, SearchUrlProgressModel searchUrlProgress, string halId)
         {
             string messageTypeName = nameof(NetworkingMessageBody);
-            HalOperationResult<IOperationResponse> result = _webDriverProvider.SwitchToOrNewTab<IOperationResponse>(webDriver, searchUrlProgress.WindowHandleId);
-            if (result.Succeeded == false)
+            if (PrepareBrowserWindow(webDriver, searchUrlProgress.SearchUrl) == false)
             {
                 _logger.LogError("Execution of {0} failed. Failed to switch to an existing tab or create a new one. Hal id {1}", messageTypeName, halId);
                 return false;
             }
 
-            bool pageNavigationSucceeded = GoToPage(webDriver, searchUrlProgress.SearchUrl);
-            if (pageNavigationSucceeded == false)
-            {
-                _logger.LogError("Execution of {0} failed. Failed to navigate to page {1}. Hal id {2}", messageTypeName, searchUrlProgress.SearchUrl, halId);
-                return false;
-            }
-
-            if (NoSearchResultsDisplayed(webDriver) == true)
+            if (_instructionsSetFacade.NoSearchResultsDisplayedInteraction(webDriver) == true)
             {
                 _logger.LogError("Execution of {0} failed. No search results page displayed again. This means we've tried refreshing and waiting for results page to be displayed, but it wasn't.", messageTypeName);
                 return false;
@@ -498,16 +471,109 @@ namespace Domain.Orchestrators
             return true;
         }
 
-        private bool NoSearchResultsDisplayed(IWebDriver webDriver)
+        public bool GetMonthlySearchLimitReached()
         {
-            NoResultsFoundInteraction interaction = new()
-            {
-                WebDriver = webDriver
-            };
+            return _instructionsSetFacade.GetMonthlySearchLimitReached();
+        }
 
-            return _interactionsFacade.HandleNoResultsFoundInteraction(interaction);
+        public IList<SearchUrlProgressModel> GetUpdatedSearchUrlsProgress()
+        {
+            return _instructionsSetFacade.GetUpdatedSearchUrls();
         }
 
         #endregion
+
+        #region DeepScanProspectsForReplies
+
+        private void HandleDeepScanProspectsForReplies(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message)
+        {
+            if (message.DeepScanProspectsForReplies != null)
+            {
+                if (PrepareBrowserWindow(webDriver, message.DeepScanProspectsForReplies.PageUrl) == false)
+                {
+                    return;
+                }
+
+                int visibleMessagesCount = 0;
+                if (_instructionsSetFacade.GetVisibleConversationCountInteraction(webDriver) == true)
+                {
+                    visibleMessagesCount = _instructionsSetFacade.VisibleConversationCount;
+                }
+
+                if (visibleMessagesCount == 0)
+                {
+                    _logger.LogDebug("There are no messages in this user's inbox. No need to run {0} phase", nameof(DeepScanProspectsForRepliesBody));
+                    return;
+                }
+
+                try
+                {
+                    _instructionsSetFacade.BeginDeepScanning(webDriver, message.DeepScanProspectsForReplies.NetworkProspects, visibleMessagesCount);
+                }
+                finally
+                {
+                    _instructionsSetFacade.ClearMessagingSearchCriteriaInteraction(webDriver);
+                    OutputProspectsThatReplied(message);
+
+                    SwitchBackToMainTab(webDriver);
+                }
+            }
+        }
+
+        private void OutputProspectsThatReplied(AllInOneVirtualAssistantMessageBody message)
+        {
+            IList<ProspectRepliedModel> prospectsThatReplied = _instructionsSetFacade.ProspectsThatReplied;
+            if (prospectsThatReplied != null && prospectsThatReplied.Count > 0)
+            {
+                _logger.LogDebug("{0} found prospects that replied!", nameof(DeepScanProspectsForRepliesBody));
+                this.ProspectsThatRepliedDetected.Invoke(this, new ProspectsThatRepliedEventArgs(message, prospectsThatReplied));
+            }
+        }
+
+        #endregion
+
+        #region CheckOffHoursNewConnections
+
+        private void HandleCheckOffHoursNewConnections(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message)
+        {
+            if (message.CheckOffHoursNewConnections != null)
+            {
+                try
+                {
+                    _instructionsSetFacade.BeginCheckingForNewConnectionsFromOffHours(webDriver, message.CheckOffHoursNewConnections);
+                }
+                finally
+                {
+                    OutputCheckOffHoursNewConnections(message);
+                }
+            }
+        }
+
+        private void OutputCheckOffHoursNewConnections(AllInOneVirtualAssistantMessageBody message)
+        {
+            IList<RecentlyAddedProspectModel> recentlyAddedProspects = _instructionsSetFacade.RecentlyAddedProspects;
+            if (recentlyAddedProspects != null && recentlyAddedProspects.Count > 0)
+            {
+                _logger.LogDebug("{0} found new connections!", nameof(CheckOffHoursNewConnectionsBody));
+                this.OffHoursNewConnectionsDetected.Invoke(this, new OffHoursNewConnectionsEventArgs(message, recentlyAddedProspects));
+            }
+        }
+
+        #endregion
+
+        private bool PrepareBrowserWindow(IWebDriver webDriver, string pageUrl)
+        {
+            if (SwitchToNewTab(webDriver) == false)
+            {
+                return false;
+            }
+
+            if (GoToPage(webDriver, pageUrl) == false)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }

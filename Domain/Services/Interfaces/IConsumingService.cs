@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Domain.Services.Interfaces
 {
@@ -12,5 +8,6 @@ namespace Domain.Services.Interfaces
         /// Start consuming (getting messages).
         /// </summary>
         Task StartConsumingAsync();
+        Task StartConsumingAsync_AllInOneVirtualAssistant();
     }
 }

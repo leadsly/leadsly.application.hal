@@ -13,8 +13,11 @@ namespace Domain.Orchestrators.Interfaces
     public interface IAllInOneVirtualAssistantPhaseOrchestrator
     {
         event NewRecentlyAddedProspectsDetectedEventHandler NewConnectionsDetected;
+        event OffHoursNewConnectionsEventHandler OffHoursNewConnectionsDetected;
         event NewMessagesReceivedEventHandler NewMessagesReceived;
         event UpdateRecentlyAddedProspectsEventHandler UpdateRecentlyAddedProspects;
+        event ProspectsThatRepliedEventHandler ProspectsThatRepliedDetected;
+        event FollowUpMessagesSentEventHandler FollowUpMessagesSent;
         public List<PersistPrimaryProspectModel> PersistPrimaryProspects { get; }
         public IList<ConnectionSentModel> ConnectionsSent { get; }
         public bool GetMonthlySearchLimitReached();

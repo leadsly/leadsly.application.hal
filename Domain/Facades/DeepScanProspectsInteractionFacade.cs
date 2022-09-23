@@ -3,6 +3,7 @@ using Domain.Interactions;
 using Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory.Interfaces;
 using Domain.Interactions.DeepScanProspectsForReplies.ClearMessagingSearchCriteria.Interfaces;
 using Domain.Interactions.DeepScanProspectsForReplies.EnterSearchMessageCriteria.Interfaces;
+using Domain.Interactions.DeepScanProspectsForReplies.GetAllVisibleConversationCount.Interfaces;
 using Domain.Interactions.DeepScanProspectsForReplies.GetProspectsMessageItem.Interfaces;
 using Domain.Models.DeepScanProspectsForReplies;
 using OpenQA.Selenium;
@@ -16,22 +17,27 @@ namespace Domain.Facades
             IClearMessagingSearchCriteriaInteractionHandler clearMessagingSearchCriteriaHandler,
             IEnterSearchMessageCriteriaInteractionHandler enterSearchMessageCriteriaHandler,
             ICheckMessagesHistoryInteractionHandler checkMessagesHistoryInteractionHandler,
+            IGetAllVisibleConversationCountInteractionHandler getVisibleConversationCountHandler,
             IGetProspectsMessageItemInteractionHandler getProspectsMesageItemHandler)
         {
             _clearMessagingSearchCriteriaHandler = clearMessagingSearchCriteriaHandler;
             _enterSearchMessageCriteriaHandler = enterSearchMessageCriteriaHandler;
             _getProspectsMesageItemHandler = getProspectsMesageItemHandler;
             _checkMessagesHistoryInteractionHandler = checkMessagesHistoryInteractionHandler;
+            _getVisibleConversationCountHandler = getVisibleConversationCountHandler;
         }
 
         private readonly ICheckMessagesHistoryInteractionHandler _checkMessagesHistoryInteractionHandler;
+        private readonly IGetAllVisibleConversationCountInteractionHandler _getVisibleConversationCountHandler;
         private readonly IClearMessagingSearchCriteriaInteractionHandler _clearMessagingSearchCriteriaHandler;
         private readonly IEnterSearchMessageCriteriaInteractionHandler _enterSearchMessageCriteriaHandler;
         private readonly IGetProspectsMessageItemInteractionHandler _getProspectsMesageItemHandler;
 
-        public ProspectRepliedModel ProspectReplied { get; set; }
+        public ProspectRepliedModel ProspectReplied { get; private set; }
 
-        public IList<IWebElement> ProspectMessageListItems { get; set; }
+        public IList<IWebElement> ProspectMessageListItems { get; private set; }
+
+        public int ConversationCount { get; private set; }
 
         public bool HandleClearMessagingCriteriaInteraction(InteractionBase interaction)
         {
@@ -54,6 +60,13 @@ namespace Domain.Facades
         {
             bool succeeded = _checkMessagesHistoryInteractionHandler.HandleInteraction(interaction);
             ProspectReplied = _checkMessagesHistoryInteractionHandler.GetProspect();
+            return succeeded;
+        }
+
+        public bool HandleGetVisibleConversationsCountInteraction(InteractionBase interaction)
+        {
+            bool succeeded = _getVisibleConversationCountHandler.HandleInteraction(interaction);
+            ConversationCount = _getVisibleConversationCountHandler.GetConversationCount();
             return succeeded;
         }
     }

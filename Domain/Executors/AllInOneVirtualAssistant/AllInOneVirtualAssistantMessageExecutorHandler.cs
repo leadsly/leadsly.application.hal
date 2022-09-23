@@ -48,9 +48,14 @@ namespace Domain.Executors.AllInOneVirtualAssistant
                 _orchestrator.NewConnectionsDetected += OnNewConnectionsDetected;
                 _orchestrator.NewMessagesReceived += OnNewMessagesReceived;
                 _orchestrator.UpdateRecentlyAddedProspects += OnUpdateConnectedProspectsReceived;
+                _orchestrator.FollowUpMessagesSent += OnFollowUpMessagesSent;
+
+                await SetupDeepScanProspectsForRepliesAsync(message);
+
+                SetupCheckOffHoursConnections(message);
 
                 // fetch search progress urls
-                await GetSearchUrlsProgressAsync(message);
+                await SetupForNetworkingMessagesAsync(message);
 
                 // fetch previous connected with prospects, this list should include the total connections count, as well as a list of
                 // prospects first name last name subheading and when we connected with them
@@ -59,11 +64,9 @@ namespace Domain.Executors.AllInOneVirtualAssistant
                 {
                     _logger.LogError("Error occured executing {0}. An error occured retrieving data. The response was null. HalId {1}", nameof(AllInOneVirtualAssistantMessageBody), message.HalId);
                 }
-                else
-                {
-                    message.PreviousMonitoredResponse = previousMonitoredResponse;
-                    _orchestrator.Execute(message);
-                }
+
+                message.PreviousMonitoredResponse = previousMonitoredResponse;
+                _orchestrator.Execute(message);
 
                 succeeded = true;
             }
@@ -76,7 +79,34 @@ namespace Domain.Executors.AllInOneVirtualAssistant
             return succeeded;
         }
 
-        private async Task GetSearchUrlsProgressAsync(AllInOneVirtualAssistantMessageBody message)
+        private async Task SetupDeepScanProspectsForRepliesAsync(AllInOneVirtualAssistantMessageBody message)
+        {
+            if (message.DeepScanProspectsForReplies != null)
+            {
+                _orchestrator.ProspectsThatRepliedDetected += OnProspectsThatRepliesDetected;
+
+                NetworkProspectsResponse networkProspects = await _service.GetAllProspectsFromActiveCampaignsAsync(message);
+                if (networkProspects == null || networkProspects.Items.Count == 0)
+                {
+                    _logger.LogDebug("No network prospects were retrieved. {0} will not be triggered", nameof(DeepScanProspectsForRepliesBody));
+                    message.DeepScanProspectsForReplies = null;
+                }
+                else
+                {
+                    message.DeepScanProspectsForReplies.NetworkProspects = networkProspects.Items;
+                }
+            }
+        }
+
+        private void SetupCheckOffHoursConnections(AllInOneVirtualAssistantMessageBody message)
+        {
+            if (message.CheckOffHoursNewConnections != null)
+            {
+                _orchestrator.OffHoursNewConnectionsDetected += OnOffHoursNewConnectionsDetected;
+            }
+        }
+
+        private async Task SetupForNetworkingMessagesAsync(AllInOneVirtualAssistantMessageBody message)
         {
             Queue<NetworkingMessageBody> networkingMessages = new Queue<NetworkingMessageBody>();
 
@@ -123,19 +153,6 @@ namespace Domain.Executors.AllInOneVirtualAssistant
 
             bool monthlyLimitReached = _orchestrator.GetMonthlySearchLimitReached();
             await _service.UpdateMonthlySearchLimitAsync(monthlyLimitReached, message);
-
-            IList<SentFollowUpMessageModel> sentFollowUpMessages = _orchestrator.GetSentFollowUpMessages();
-            ParallelOptions parallelOptions = new()
-            {
-                MaxDegreeOfParallelism = 3
-            };
-            if (sentFollowUpMessages?.Count > 0)
-            {
-                await Parallel.ForEachAsync(sentFollowUpMessages, parallelOptions, async (sentFollowUpMessage, ct) =>
-                {
-                    await _service.ProcessSentFollowUpMessageAsync(sentFollowUpMessage, message);
-                });
-            }
         }
 
         private void PublishDeprovisionResources(AllInOneVirtualAssistantMessageBody message)
@@ -174,6 +191,35 @@ namespace Domain.Executors.AllInOneVirtualAssistant
         {
             _logger.LogInformation("Executing {0}. Preparing request to update previously connected network prospects. HalId {1}", nameof(AllInOneVirtualAssistantMessageBody), e.Message.HalId);
             await _service.UpdatePreviouslyConnectedNetworkProspectsAsync(e.Message, e.NewRecentlyAddedProspects, e.TotalConnectionsCount);
+        }
+
+        private async Task OnProspectsThatRepliesDetected(object sender, ProspectsThatRepliedEventArgs e)
+        {
+            _logger.LogInformation("Executing {0}. Preparing request to update all of the prospects who replied. HalId {1}. This is executed from {2} ", nameof(AllInOneVirtualAssistantMessageBody), e.Message.HalId, nameof(DeepScanProspectsForRepliesBody));
+            await _service.ProcessCampaignProspectsThatRepliedAsync(e.Prospects, e.Message);
+        }
+
+        private async Task OnOffHoursNewConnectionsDetected(object sender, OffHoursNewConnectionsEventArgs e)
+        {
+            _logger.LogDebug("Executing {0}. New prospects have been detected from {1}. Sending them to the server for processing. HalId {2}", nameof(AllInOneVirtualAssistantMessageBody), nameof(CheckOffHoursNewConnectionsBody), e.Message.HalId);
+            await _service.ProcessRecentlyAddedProspectsAsync(e.RecentlyAddedProspects, e.Message);
+        }
+
+        private async Task OnFollowUpMessagesSent(object sender, FollowUpMessagesSentEventArgs e)
+        {
+            _logger.LogDebug("Executing {0}. New prospects have been detected from {1}. Sending them to the server for processing. HalId {2}", nameof(AllInOneVirtualAssistantMessageBody), nameof(FollowUpMessageBody), e.Message.HalId);
+            IList<SentFollowUpMessageModel> sentFollowUpMessages = _orchestrator.GetSentFollowUpMessages();
+            ParallelOptions parallelOptions = new()
+            {
+                MaxDegreeOfParallelism = 3
+            };
+            if (sentFollowUpMessages?.Count > 0)
+            {
+                await Parallel.ForEachAsync(sentFollowUpMessages, parallelOptions, async (sentFollowUpMessage, ct) =>
+                {
+                    await _service.ProcessSentFollowUpMessageAsync(sentFollowUpMessage, e.Message);
+                });
+            }
         }
     }
 }

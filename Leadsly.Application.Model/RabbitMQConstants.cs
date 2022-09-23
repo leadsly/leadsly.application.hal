@@ -25,6 +25,15 @@
             public const string RoutingKey = "deprovision-resources";
         }
 
+        public static class AllInOneVirtualAssistant
+        {
+            public const string QueueName = "all.in.one.virtual.assistant";
+            public const string RoutingKey = "all-in-one-virtual-assistant";
+            public const string ExecuteType = "execution-type";
+            public const string Initial = "Initial";
+            public const string Regular = "Regular";
+        }
+
         public static class NetworkingConnections
         {
             public const string QueueName = "networking.connections";

@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace Domain.InstructionSets.Interfaces
 {
-    public interface IConnectWithProspectsForSearchUrlInstructionSet
+    public interface INetworkingInstructionSet
     {
         public int NumberOfConnectionsSent { get; set; }
         public bool MonthlySearchLimitReached { get; }
@@ -17,5 +17,8 @@ namespace Domain.InstructionSets.Interfaces
         public IList<ConnectionSentModel> GetConnectionsSent();
         public bool GetMonthlySearchLimitReached();
         public void ConnectWithProspectsForSearchUrl(IWebDriver webDriver, NetworkingMessageBody message, SearchUrlProgressModel searchUrlProgress, int totalResults);
+        public bool GetTotalnumberOfSearchResultsInteraction(IWebDriver webDriver, SearchUrlProgressModel searchUrlProgress);
+        public bool NoSearchResultsDisplayedInteraction(IWebDriver webDriver);
+        public void Add_UpdateSearchUrlProgressRequest(string searchUrlProgressId, int currentPage, string currentUrl, int totalResults, string currentWindowHandle);
     }
 }

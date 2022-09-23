@@ -25,13 +25,13 @@ namespace Domain.Services.POMs
         private readonly ILogger<DeepScanProspectsServicePOM> _logger;
         private readonly ILinkedInMessagingPage _linkedInMessagingPage;
 
-        public int GetVisibleConversationCount(IWebDriver webDriver)
+        public int? GetVisibleConversationCount(IWebDriver webDriver)
         {
             _humanBehaviorService.RandomWaitMilliSeconds(500, 700);
             IList<IWebElement> visibleConversationListItems = _linkedInMessagingPage.GetVisibleConversationListItems(webDriver);
             if (visibleConversationListItems == null)
             {
-                return 0;
+                return null;
             }
 
             return visibleConversationListItems.Count;
