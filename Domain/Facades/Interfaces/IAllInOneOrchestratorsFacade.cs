@@ -1,6 +1,7 @@
 ﻿using Domain.Executors.AllInOneVirtualAssistant.Events;
 using Domain.Executors.MonitorForNewConnections.Events;
 using Domain.Executors.ScanProspectsForReplies.Events;
+using Domain.Models.DeepScanProspectsForReplies;
 using Domain.Models.FollowUpMessage;
 using Domain.Models.Networking;
 using Domain.Models.ProspectList;
@@ -25,6 +26,7 @@ namespace Domain.Facades.Interfaces
         public bool MonthlySearchLimitReached { get; }
         public IList<SearchUrlProgressModel> UpdatedSearchUrlsProgress { get; }
         public IList<SentFollowUpMessageModel> SentFollowUpMessages { get; }
+        public IList<ProspectRepliedModel> ProspectsThatReplied { get; }
         public void HandleDeepScanProspectsForReplies(IWebDriver webDriver, DeepScanProspectsForRepliesBody message);
         public void HandleCheckOffHoursNewConnections(IWebDriver webDriver, CheckOffHoursNewConnectionsBody message);
         public void HandleMonitorForNewConnections(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message);

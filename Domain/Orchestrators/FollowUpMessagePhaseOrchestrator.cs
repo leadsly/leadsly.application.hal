@@ -93,11 +93,8 @@ namespace Domain.Orchestrators
                 {
                     FollowUpMessageBody followUpMessage = followUpMessages.Dequeue();
 
-                    // before the follow up message is sent out lets make sure that deepscanprospectsfor replies did not find the prospect in our inbox and one that has replied already
-                    //if (ShouldSend(followUpMessage) == true)
-                    //{
                     SendFollowUpMessage(webDriver, followUpMessage);
-                    //}
+
                 }
             }
             finally

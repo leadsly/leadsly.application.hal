@@ -2,6 +2,7 @@
 using Domain.Executors.MonitorForNewConnections.Events;
 using Domain.Executors.ScanProspectsForReplies.Events;
 using Domain.Facades.Interfaces;
+using Domain.Models.DeepScanProspectsForReplies;
 using Domain.Models.FollowUpMessage;
 using Domain.Models.Networking;
 using Domain.Models.ProspectList;
@@ -38,6 +39,7 @@ namespace Domain.Facades
         private readonly INetworkingPhaseOrchestrator _networkingOrchestrator;
         private readonly IScanProspectsForRepliesPhaseOrchestrator _scanProspectsForRepliesOrchestrator;
 
+        public IList<ProspectRepliedModel> ProspectsThatReplied => _deepScanOrchestrator.Prospects;
         public List<PersistPrimaryProspectModel> PersistPrimaryProspects => _networkingOrchestrator.PersistPrimaryProspects;
         public bool MonthlySearchLimitReached => _networkingOrchestrator.GetMonthlySearchLimitReached();
         public IList<SearchUrlProgressModel> UpdatedSearchUrlsProgress => _networkingOrchestrator.UpdatedSearchUrlsProgress;

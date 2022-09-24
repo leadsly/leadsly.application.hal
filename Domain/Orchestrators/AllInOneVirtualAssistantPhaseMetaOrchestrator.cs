@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Domain.Orchestrators
 {
@@ -127,6 +128,10 @@ namespace Domain.Orchestrators
             {
                 // 1. deep scan prospects for replies
                 _orchestratorsFacade.HandleDeepScanProspectsForReplies(webDriver, message.DeepScanProspectsForReplies);
+
+                // before the follow up message is sent out lets make sure that deepscanprospectsfor replies did not find the prospect in our inbox and one that has replied already
+                IEnumerable<FollowUpMessageBody> followUpMessages = message.FollowUpMessages.Where(f => _orchestratorsFacade.ProspectsThatReplied.Any(x => x.Name == f.ProspectName) == false);
+                message.FollowUpMessages = new Queue<FollowUpMessageBody>(followUpMessages);
             }
 
             if (message.CheckOffHoursNewConnections != null)
