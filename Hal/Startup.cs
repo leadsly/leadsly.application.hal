@@ -42,7 +42,6 @@ namespace Hal
                     .AddRemoveNull204FormatterConfigration()
                     .AddRabbitMQConfiguration(Configuration)
                     .AddPageObjectModelsConfiguration()
-                    .AddRabbitMQServices()
                     .AddFacadesConfiguration()
                     .AddProvidersConfiguration()
                     .AddMessageExecutorHandlers()

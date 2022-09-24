@@ -64,8 +64,6 @@ using Domain.MQ.EventHandlers;
 using Domain.MQ.EventHandlers.Interfaces;
 using Domain.MQ.Interfaces;
 using Domain.MQ.Messages;
-using Domain.MQ.Services;
-using Domain.MQ.Services.Interfaces;
 using Domain.OptionsJsonModels;
 using Domain.Orchestrators;
 using Domain.Orchestrators.Interfaces;
@@ -446,15 +444,6 @@ namespace Hal.Configurations
                 }
                 return provider.Create(new RabbitModelPooledObjectPolicy(rabbitMQConfigOptions.Value, halId));
             });
-
-            return services;
-        }
-
-        public static IServiceCollection AddRabbitMQServices(this IServiceCollection services)
-        {
-            Log.Information("Registering rabbit mq services");
-
-            services.AddScoped<IGetMQMessagesService, GetMQMessagesService>();
 
             return services;
         }
