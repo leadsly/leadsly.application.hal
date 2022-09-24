@@ -1,4 +1,5 @@
-﻿using Domain.InstructionSets.Interfaces;
+﻿using Domain.Executors.AllInOneVirtualAssistant.Events;
+using Domain.InstructionSets.Interfaces;
 using Domain.Models.DeepScanProspectsForReplies;
 using Domain.Models.Networking;
 using Domain.MQ.Messages;
@@ -27,7 +28,7 @@ namespace Domain.Orchestrators
         private readonly IDeepScanInstructionSet _instructionsSet;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<DeepScanProspectsForRepliesOrchestrator> _logger;
-
+        public event ProspectsThatRepliedEventHandler ProspectsThatRepliedDetected;
         public IList<ProspectRepliedModel> Prospects => _instructionsSet.Prospects;
 
         public void Execute(DeepScanProspectsForRepliesBody message, IList<NetworkProspectModel> prospects)
@@ -49,7 +50,18 @@ namespace Domain.Orchestrators
                 return;
             }
 
-            int visibleMessagesCount = 0;
+            if (GetVisibleConversationCountInteraction(webDriver, out int visibleMessagesCount) == false)
+            {
+                return;
+            }
+
+            ExecuteInternal(webDriver, prospects, visibleMessagesCount);
+        }
+
+        private bool GetVisibleConversationCountInteraction(IWebDriver webDriver, out int visibleMessagesCount)
+        {
+            string messageTypeName = nameof(DeepScanProspectsForRepliesBody);
+            visibleMessagesCount = 0;
             if (_instructionsSet.GetVisibleConversationCountInteraction(webDriver) == true)
             {
                 visibleMessagesCount = _instructionsSet.VisibleConversationCount;
@@ -57,11 +69,11 @@ namespace Domain.Orchestrators
 
             if (visibleMessagesCount == 0)
             {
-                _logger.LogDebug("There are no messages in this user's inbox. No need to run DeepScanProspectsForReplies phase");
-                return;
+                _logger.LogDebug("There are no messages in this user's inbox. No need to run {0} phase", messageTypeName);
+                return false;
             }
 
-            ExecuteInternal(webDriver, prospects, visibleMessagesCount);
+            return true;
         }
 
         private void ExecuteInternal(IWebDriver webDriver, IList<NetworkProspectModel> prospects, int visibleMessagesCount)
@@ -73,6 +85,41 @@ namespace Domain.Orchestrators
             finally
             {
                 _instructionsSet.ClearMessagingSearchCriteriaInteraction(webDriver);
+            }
+        }
+
+        public void Execute(IWebDriver webDriver, DeepScanProspectsForRepliesBody message)
+        {
+            if (PrepareBrowserWindow(webDriver, message.PageUrl) == false)
+            {
+                return;
+            }
+
+            if (GetVisibleConversationCountInteraction(webDriver, out int visibleMessagesCount) == false)
+            {
+                return;
+            }
+
+            try
+            {
+                _instructionsSet.BeginDeepScanning(webDriver, message.NetworkProspects, visibleMessagesCount);
+            }
+            finally
+            {
+                _instructionsSet.ClearMessagingSearchCriteriaInteraction(webDriver);
+                OutputProspectsThatReplied(message);
+
+                SwitchBackToMainTab(webDriver);
+            }
+        }
+
+        private void OutputProspectsThatReplied(DeepScanProspectsForRepliesBody message)
+        {
+            IList<ProspectRepliedModel> prospectsThatReplied = _instructionsSet.Prospects;
+            if (prospectsThatReplied != null && prospectsThatReplied.Count > 0)
+            {
+                _logger.LogDebug("{0} found prospects that replied!", nameof(DeepScanProspectsForRepliesBody));
+                this.ProspectsThatRepliedDetected.Invoke(this, new ProspectsThatRepliedEventArgs(message, prospectsThatReplied));
             }
         }
 

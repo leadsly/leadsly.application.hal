@@ -1,5 +1,6 @@
 ﻿using Domain.Executors.ScanProspectsForReplies.Events;
 using Domain.MQ.Messages;
+using OpenQA.Selenium;
 
 namespace Domain.Orchestrators.Interfaces
 {
@@ -8,5 +9,6 @@ namespace Domain.Orchestrators.Interfaces
         event EndOfWorkDayReachedEventHandler EndOfWorkDayReached;
         event NewMessagesReceivedEventHandler NewMessagesReceived;
         void Execute(ScanProspectsForRepliesBody message);
+        void Execute(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message);
     }
 }

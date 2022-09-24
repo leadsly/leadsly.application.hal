@@ -10,8 +10,10 @@ using Domain.InstructionSets;
 using Domain.InstructionSets.Interfaces;
 using Domain.Interactions.AllInOneVirtualAssistant.GetAllUnreadMessages;
 using Domain.Interactions.AllInOneVirtualAssistant.GetAllUnreadMessages.Interfaces;
-using Domain.Interactions.AllInOneVirtualAssistant.GetMessageContent;
-using Domain.Interactions.AllInOneVirtualAssistant.GetMessageContent.Interfaces;
+using Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessageContent;
+using Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessageContent.Interfaces;
+using Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessagesContent;
+using Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessagesContent.Interfaces;
 using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince;
 using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince.Interfaces;
 using Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory;
@@ -305,6 +307,8 @@ namespace Hal.Configurations
         {
             Log.Information("Registering orchestrator services.");
 
+            services.AddScoped<IAllInOneVirtualAssistantPhaseMetaOrchestrator, AllInOneVirtualAssistantPhaseMetaOrchestrator>();
+
             services.AddScoped<IFollowUpMessagePhaseOrchestrator, FollowUpMessagePhaseOrchestrator>();
             services.AddScoped<INetworkingPhaseOrchestrator, NetworkingPhaseOrchestrator>();
             services.AddScoped<IDeepScanProspectsForRepliesPhaseOrchestrator, DeepScanProspectsForRepliesOrchestrator>();
@@ -382,9 +386,9 @@ namespace Hal.Configurations
             /// AllInOneVirtualAssistant Interactions
             ///////////////////////////////////////////////////////////
             services.AddScoped<IGetAllUnreadMessagesInteractionHandler, GetAllUnreadMessagesInteractionHandler>();
-            services.AddScoped<Domain.Interactions.AllInOneVirtualAssistant.GetMessageContent.Interfaces.IGetMessageContentInteractionHandler, Domain.Interactions.AllInOneVirtualAssistant.GetMessageContent.GetMessageContentInteractionHandler>();
-            services.AddScoped<IGetMessagesContentInteractionHandler, GetMessagesContentInteractionHandler>();
-            services.AddScoped<IGetMessagesContentInteractionHandler, GetMessagesContentInteractionHandler>();
+            services.AddScoped<IGetUnreadMessageContentInteractionHandler, GetUnreadMessageContentInteractionHandler>();
+            services.AddScoped<IGetUnreadMessagesContentInteractionHandler, GetUnreadMessagesContentInteractionHandler>();
+            services.AddScoped<IGetUnreadMessagesContentInteractionHandler, GetUnreadMessagesContentInteractionHandler>();
 
             ////////////////////////////////////////////////////////////
             /// Shared Interactions
@@ -418,9 +422,8 @@ namespace Hal.Configurations
             services.AddScoped<IFollowUpMessageInteractionFacade, FollowUpMessageInteractionFacade>();
             services.AddScoped<IMonitorForConnectionsInteractionFacade, MonitorForConnectionsInteractionFacade>();
             services.AddScoped<IScanProspectsForRepliesInteractionFacade, ScanProspectsForRepliesInteractionFacade>();
-            services.AddScoped<IAllInOneInstructionsSetFacade, AllInOneInstructionsSetFacade>();
-            services.AddScoped<IAllInOneVirtualAssistantInteractionFacade, AllInOneVirtualAssistantInteractionFacade>();
             services.AddScoped<IDeepScanProspectsInteractionFacade, DeepScanProspectsInteractionFacade>();
+            services.AddScoped<IAllInOneOrchestratorsFacade, AllInOneOrchestratorsFacade>();
 
             return services;
         }

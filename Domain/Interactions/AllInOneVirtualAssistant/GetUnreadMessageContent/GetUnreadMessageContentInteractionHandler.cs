@@ -1,16 +1,16 @@
-﻿using Domain.Interactions.AllInOneVirtualAssistant.GetMessageContent.Interfaces;
+﻿using Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessageContent.Interfaces;
 using Domain.Models.ScanProspectsForReplies;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.POMs;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 
-namespace Domain.Interactions.AllInOneVirtualAssistant.GetMessageContent
+namespace Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessageContent
 {
-    public class GetMessageContentInteractionHandler : IGetMessageContentInteractionHandler
+    public class GetUnreadMessageContentInteractionHandler : IGetUnreadMessageContentInteractionHandler
     {
-        public GetMessageContentInteractionHandler(
-            ILogger<GetMessageContentInteractionHandler> logger,
+        public GetUnreadMessageContentInteractionHandler(
+            ILogger<GetUnreadMessageContentInteractionHandler> logger,
             IMessageListBubbleServicePOM service,
             ITimestampService timestampService
             )
@@ -21,14 +21,14 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.GetMessageContent
         }
 
         private readonly ITimestampService _timestampService;
-        private readonly ILogger<GetMessageContentInteractionHandler> _logger;
+        private readonly ILogger<GetUnreadMessageContentInteractionHandler> _logger;
         private readonly IMessageListBubbleServicePOM _service;
         private NewMessageModel NewMessage { get; set; }
 
         public bool HandleInteraction(InteractionBase interaction)
         {
             IWebDriver webDriver = interaction.WebDriver;
-            GetMessageContentInteraction getMessageInteraction = interaction as GetMessageContentInteraction;
+            GetUnreadMessageContentInteraction getMessageInteraction = interaction as GetUnreadMessageContentInteraction;
 
             if (_service.ClickNewMessage(getMessageInteraction.Message, webDriver) == false)
             {

@@ -1,6 +1,8 @@
 ﻿using Domain.Executors.ScanProspectsForReplies.Events;
 using Domain.Facades.Interfaces;
 using Domain.Interactions;
+using Domain.Interactions.AllInOneVirtualAssistant.GetAllUnreadMessages;
+using Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessagesContent;
 using Domain.Interactions.ScanProspectsForReplies.GetMessageContent;
 using Domain.Interactions.ScanProspectsForReplies.GetNewMessages;
 using Domain.Interactions.Shared.CloseAllConversations;
@@ -63,6 +65,21 @@ namespace Domain.Orchestrators
             }
 
             ExecuteInternal(message, webDriver);
+        }
+
+        public void Execute(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message)
+        {
+            if (GetAllUnreadMessageListBubbles(webDriver, message.HalId) == false)
+            {
+                _logger.LogWarning("Executing {0}. Failed to get all unread messages from the messages list bubble. HalId {1}", nameof(AllInOneVirtualAssistantMessageBody), message.HalId);
+            }
+
+            if (GetUnreadMessagesContent(webDriver) == false)
+            {
+                _logger.LogWarning("Executing {0}. Failed to get unread messages content. HalId {1}", nameof(AllInOneVirtualAssistantMessageBody), message.HalId);
+            }
+
+            OutputMessageResponses(message);
         }
 
         private void ExecuteInternal(ScanProspectsForRepliesBody message, IWebDriver webDriver)
@@ -150,12 +167,40 @@ namespace Domain.Orchestrators
             return _interactionsFacade.HandleCloseConversationsInteraction(interaction);
         }
 
-        private void OutputMessageResponses(ScanProspectsForRepliesBody message)
+        private void OutputMessageResponses(PublishMessageBody message)
         {
             if (NewMessages.Count > 0)
             {
                 this.NewMessagesReceived.Invoke(this, new NewMessagesReceivedEventArgs(message, NewMessages));
             }
+        }
+
+        private bool GetAllUnreadMessageListBubbles(IWebDriver webDriver, string halId)
+        {
+            InteractionBase interaction = new GetAllUnreadMessagesInteraction
+            {
+                HalId = halId,
+                WebDriver = webDriver
+            };
+
+            return _interactionsFacade.HandleGetAllUnreadMessageListBubbles(interaction);
+        }
+
+        private bool GetUnreadMessagesContent(IWebDriver webDriver)
+        {
+            IList<IWebElement> unreadMessages = _interactionsFacade.UnreadMessages;
+            if (unreadMessages.Count > 0)
+            {
+                InteractionBase interaction = new GetUnreadMessagesContentInteraction
+                {
+                    WebDriver = webDriver,
+                    Messages = unreadMessages
+                };
+
+                return _interactionsFacade.HandleGetUnreadMessagesContent(interaction);
+            }
+
+            return true;
         }
     }
 }

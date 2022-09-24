@@ -27,14 +27,14 @@ namespace Domain.InstructionSets
 
         public void BeginCheckingForNewConnectionsFromOffHours(IWebDriver webDriver, CheckOffHoursNewConnectionsBody message)
         {
-            bool succeeded = GetRecentlyAdded(webDriver, message);
+            bool succeeded = GetRecentlyAddedInteraction(webDriver, message);
             if (succeeded == false)
             {
                 _logger.LogDebug("Failed to get recently added prospects from CheckOffHoursConnectionsPhase");
             }
         }
 
-        private bool GetRecentlyAdded(IWebDriver webDriver, CheckOffHoursNewConnectionsBody message)
+        private bool GetRecentlyAddedInteraction(IWebDriver webDriver, CheckOffHoursNewConnectionsBody message)
         {
             InteractionBase interaction = new GetAllRecentlyAddedSinceInteraction
             {

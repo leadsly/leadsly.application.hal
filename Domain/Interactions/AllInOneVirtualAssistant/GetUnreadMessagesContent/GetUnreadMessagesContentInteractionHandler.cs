@@ -1,4 +1,6 @@
-﻿using Domain.Interactions.AllInOneVirtualAssistant.GetMessageContent.Interfaces;
+﻿using Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessageContent;
+using Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessageContent.Interfaces;
+using Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessagesContent.Interfaces;
 using Domain.Interactions.Shared.CloseAllConversations;
 using Domain.Interactions.Shared.CloseAllConversations.Interfaces;
 using Domain.Models.ScanProspectsForReplies;
@@ -6,29 +8,29 @@ using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System.Collections.Generic;
 
-namespace Domain.Interactions.AllInOneVirtualAssistant.GetMessageContent
+namespace Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessagesContent
 {
-    public class GetMessagesContentInteractionHandler : IGetMessagesContentInteractionHandler
+    public class GetUnreadMessagesContentInteractionHandler : IGetUnreadMessagesContentInteractionHandler
     {
-        public GetMessagesContentInteractionHandler(
-            ILogger<GetMessagesContentInteractionHandler> logger,
+        public GetUnreadMessagesContentInteractionHandler(
+            ILogger<GetUnreadMessagesContentInteractionHandler> logger,
             ICloseAllConversationsInteractionHandler closeAllConversationsHandler,
-            IGetMessageContentInteractionHandler getMessageContentHandler)
+            IGetUnreadMessageContentInteractionHandler getMessageContentHandler)
         {
             _logger = logger;
             _getMessageContentHandler = getMessageContentHandler;
             _closeAllConversationsHandler = closeAllConversationsHandler;
         }
 
-        private readonly ILogger<GetMessagesContentInteractionHandler> _logger;
-        private readonly IGetMessageContentInteractionHandler _getMessageContentHandler;
+        private readonly ILogger<GetUnreadMessagesContentInteractionHandler> _logger;
+        private readonly IGetUnreadMessageContentInteractionHandler _getMessageContentHandler;
         private readonly ICloseAllConversationsInteractionHandler _closeAllConversationsHandler;
         private IList<NewMessageModel> NewMessages { get; set; } = new List<NewMessageModel>();
 
         public bool HandleInteraction(InteractionBase interaction)
         {
             IWebDriver webDriver = interaction.WebDriver;
-            GetMessagesContentInteraction getMessagesContentInteraction = interaction as GetMessagesContentInteraction;
+            GetUnreadMessagesContentInteraction getMessagesContentInteraction = interaction as GetUnreadMessagesContentInteraction;
 
             foreach (IWebElement messageListItem in getMessagesContentInteraction.Messages)
             {
@@ -50,7 +52,7 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.GetMessageContent
 
         private bool GetMessageContent(IWebDriver webDriver, IWebElement messageListItem)
         {
-            GetMessageContentInteraction interaction = new()
+            GetUnreadMessageContentInteraction interaction = new()
             {
                 Message = messageListItem,
                 WebDriver = webDriver

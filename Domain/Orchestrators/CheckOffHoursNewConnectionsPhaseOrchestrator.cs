@@ -1,4 +1,5 @@
-﻿using Domain.InstructionSets.Interfaces;
+﻿using Domain.Executors.AllInOneVirtualAssistant.Events;
+using Domain.InstructionSets.Interfaces;
 using Domain.Models.MonitorForNewProspects;
 using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
@@ -27,6 +28,7 @@ namespace Domain.Orchestrators
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<CheckOffHoursNewConnectionsPhaseOrchestrator> _logger;
 
+        public event OffHoursNewConnectionsEventHandler OffHoursNewConnectionsDetected;
         public IList<RecentlyAddedProspectModel> RecentlyAddedProspects => _instructionSet.RecentlyAddedProspects;
 
         public void Execute(CheckOffHoursNewConnectionsBody message)
@@ -51,9 +53,31 @@ namespace Domain.Orchestrators
             ExecuteInternal(webDriver, message);
         }
 
+        public void Execute(IWebDriver webDriver, CheckOffHoursNewConnectionsBody message)
+        {
+            try
+            {
+                ExecuteInternal(webDriver, message);
+            }
+            finally
+            {
+                OutputCheckOffHoursNewConnections(message);
+            }
+        }
+
         private void ExecuteInternal(IWebDriver webDriver, CheckOffHoursNewConnectionsBody message)
         {
             _instructionSet.BeginCheckingForNewConnectionsFromOffHours(webDriver, message);
+        }
+
+        private void OutputCheckOffHoursNewConnections(CheckOffHoursNewConnectionsBody message)
+        {
+            IList<RecentlyAddedProspectModel> recentlyAddedProspects = _instructionSet.RecentlyAddedProspects;
+            if (recentlyAddedProspects != null && recentlyAddedProspects.Count > 0)
+            {
+                _logger.LogDebug("{0} found new connections!", nameof(CheckOffHoursNewConnectionsBody));
+                this.OffHoursNewConnectionsDetected.Invoke(this, new OffHoursNewConnectionsEventArgs(message, recentlyAddedProspects));
+            }
         }
 
         //private void BeginCheckingForNewConnectionsFromOffHours(IWebDriver webDriver, CheckOffHoursNewConnectionsBody message)

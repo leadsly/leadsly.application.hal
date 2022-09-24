@@ -40,6 +40,8 @@ namespace Domain.InstructionSets
         public int NumberOfConnectionsSent { get; set; }
         public bool MonthlySearchLimitReached { get; private set; }
 
+        public int TotalNumberOfSearchResults => _interactionFacade.TotalNumberOfSearchResults;
+
         #region Getters
 
         public IList<SearchUrlProgressModel> GetUpdatedSearchUrls()

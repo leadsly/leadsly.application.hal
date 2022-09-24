@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace Domain.Orchestrators.Interfaces
 {
-    public interface IAllInOneVirtualAssistantPhaseOrchestrator
+    public interface IAllInOneVirtualAssistantPhaseMetaOrchestrator
     {
         event NewRecentlyAddedProspectsDetectedEventHandler NewConnectionsDetected;
         event OffHoursNewConnectionsEventHandler OffHoursNewConnectionsDetected;
@@ -20,9 +20,9 @@ namespace Domain.Orchestrators.Interfaces
         event FollowUpMessagesSentEventHandler FollowUpMessagesSent;
         public List<PersistPrimaryProspectModel> PersistPrimaryProspects { get; }
         public IList<ConnectionSentModel> ConnectionsSent { get; }
-        public bool GetMonthlySearchLimitReached();
-        public IList<SearchUrlProgressModel> GetUpdatedSearchUrlsProgress();
-        public IList<SentFollowUpMessageModel> GetSentFollowUpMessages();
+        public bool MonthlySearchLimitReached { get; }
+        public IList<SearchUrlProgressModel> UpdatedSearchUrlsProgress { get; }
+        public IList<SentFollowUpMessageModel> SentFollowUpMessages { get; }
         void Execute(AllInOneVirtualAssistantMessageBody message);
     }
 }

@@ -45,7 +45,22 @@ namespace Domain.Orchestrators
             return succeeded;
         }
 
-        protected virtual bool SwitchToNewTab(IWebDriver webDriver)
+        protected bool PrepareBrowserWindow(IWebDriver webDriver, string pageUrl)
+        {
+            if (SwitchToNewTab(webDriver) == false)
+            {
+                return false;
+            }
+
+            if (GoToPage(webDriver, pageUrl) == false)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool SwitchToNewTab(IWebDriver webDriver)
         {
             bool succeeded = false;
             try

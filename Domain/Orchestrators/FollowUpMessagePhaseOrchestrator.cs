@@ -1,4 +1,5 @@
-﻿using Domain.InstructionSets.Interfaces;
+﻿using Domain.Executors.AllInOneVirtualAssistant.Events;
+using Domain.InstructionSets.Interfaces;
 using Domain.Models.FollowUpMessage;
 using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
@@ -7,6 +8,8 @@ using Leadsly.Application.Model;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Domain.Orchestrators
 {
@@ -26,8 +29,16 @@ namespace Domain.Orchestrators
         private readonly IFollowUpMessageInstructionSet _instructionSet;
         private readonly ILogger<FollowUpMessagePhaseOrchestrator> _logger;
         private readonly IWebDriverProvider _webDriverProvider;
-
+        private IList<SentFollowUpMessageModel> SentFollowUpMessages { get; set; } = new List<SentFollowUpMessageModel>();
+        public event FollowUpMessagesSentEventHandler FollowUpMessagesSent;
         public SentFollowUpMessageModel GetSentFollowUpMessage() => _instructionSet.GetSentFollowUpMessage();
+
+        public IList<SentFollowUpMessageModel> GetSentFollowUpMessages()
+        {
+            IList<SentFollowUpMessageModel> messages = SentFollowUpMessages;
+            SentFollowUpMessages = new List<SentFollowUpMessageModel>();
+            return messages;
+        }
 
         public void Execute(FollowUpMessageBody message)
         {
@@ -60,6 +71,66 @@ namespace Domain.Orchestrators
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected exception occured while executing {0} phase", nameof(FollowUpMessageBody));
+            }
+        }
+
+        public void Execute(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message)
+        {
+            Queue<FollowUpMessageBody> followUpMessages = message.FollowUpMessages;
+            int length = followUpMessages.Count;
+            try
+            {
+                if (followUpMessages.Any() == true)
+                {
+                    string pageUrl = followUpMessages.Peek().PageUrl;
+                    if (PrepareBrowserWindow(webDriver, pageUrl) == false)
+                    {
+                        return;
+                    }
+                }
+
+                for (int i = 0; i < length; i++)
+                {
+                    FollowUpMessageBody followUpMessage = followUpMessages.Dequeue();
+
+                    // before the follow up message is sent out lets make sure that deepscanprospectsfor replies did not find the prospect in our inbox and one that has replied already
+                    //if (ShouldSend(followUpMessage) == true)
+                    //{
+                    SendFollowUpMessage(webDriver, followUpMessage);
+                    //}
+                }
+            }
+            finally
+            {
+                OutputFollowUpMessagesSent(message);
+
+                SwitchBackToMainTab(webDriver);
+            }
+        }
+
+        private void SendFollowUpMessage(IWebDriver webDriver, FollowUpMessageBody message)
+        {
+            try
+            {
+                _instructionSet.SendFollowUpMessage(webDriver, message);
+
+                SentFollowUpMessageModel sentFollowUpMessage = GetSentFollowUpMessage();
+                if (sentFollowUpMessage != null)
+                {
+                    SentFollowUpMessages.Add(sentFollowUpMessage);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected exception occured while executing {0} phase", nameof(FollowUpMessageBody));
+            }
+        }
+
+        private void OutputFollowUpMessagesSent(AllInOneVirtualAssistantMessageBody message)
+        {
+            if (SentFollowUpMessages != null && SentFollowUpMessages.Count > 0)
+            {
+                this.FollowUpMessagesSent.Invoke(this, new FollowUpMessagesSentEventArgs(message, SentFollowUpMessages));
             }
         }
 

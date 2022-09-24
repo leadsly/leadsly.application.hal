@@ -26,7 +26,7 @@ namespace Domain.Executors.AllInOneVirtualAssistant
             ILogger<AllInOneVirtualAssistantMessageExecutorHandler> logger,
             IRabbitMQManager rabbitMQ,
             IAllInOneVirtualAssistantService service,
-            IAllInOneVirtualAssistantPhaseOrchestrator orchestrator)
+            IAllInOneVirtualAssistantPhaseMetaOrchestrator orchestrator)
         {
             _rabbitMQ = rabbitMQ;
             _service = service;
@@ -35,7 +35,7 @@ namespace Domain.Executors.AllInOneVirtualAssistant
         }
 
         private readonly ILogger<AllInOneVirtualAssistantMessageExecutorHandler> _logger;
-        private readonly IAllInOneVirtualAssistantPhaseOrchestrator _orchestrator;
+        private readonly IAllInOneVirtualAssistantPhaseMetaOrchestrator _orchestrator;
         private readonly IRabbitMQManager _rabbitMQ;
         private readonly IAllInOneVirtualAssistantService _service;
 
@@ -139,7 +139,7 @@ namespace Domain.Executors.AllInOneVirtualAssistant
                 await _service.ProcessSentConnectionsAsync(connectionSents, message);
             }
 
-            IList<SearchUrlProgressModel> searchUrlsProgress = _orchestrator.GetUpdatedSearchUrlsProgress();
+            IList<SearchUrlProgressModel> searchUrlsProgress = _orchestrator.UpdatedSearchUrlsProgress;
             if (searchUrlsProgress?.Count > 0)
             {
                 await _service.UpdateSearchUrlsAsync(searchUrlsProgress, message);
@@ -151,7 +151,7 @@ namespace Domain.Executors.AllInOneVirtualAssistant
                 await _service.ProcessProspectListAsync(persistPrimaryProspects, message);
             }
 
-            bool monthlyLimitReached = _orchestrator.GetMonthlySearchLimitReached();
+            bool monthlyLimitReached = _orchestrator.MonthlySearchLimitReached;
             await _service.UpdateMonthlySearchLimitAsync(monthlyLimitReached, message);
         }
 
@@ -208,7 +208,7 @@ namespace Domain.Executors.AllInOneVirtualAssistant
         private async Task OnFollowUpMessagesSent(object sender, FollowUpMessagesSentEventArgs e)
         {
             _logger.LogDebug("Executing {0}. New prospects have been detected from {1}. Sending them to the server for processing. HalId {2}", nameof(AllInOneVirtualAssistantMessageBody), nameof(FollowUpMessageBody), e.Message.HalId);
-            IList<SentFollowUpMessageModel> sentFollowUpMessages = _orchestrator.GetSentFollowUpMessages();
+            IList<SentFollowUpMessageModel> sentFollowUpMessages = _orchestrator.SentFollowUpMessages;
             ParallelOptions parallelOptions = new()
             {
                 MaxDegreeOfParallelism = 3

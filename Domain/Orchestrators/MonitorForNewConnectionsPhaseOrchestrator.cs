@@ -1,4 +1,5 @@
-﻿using Domain.Executors.MonitorForNewConnections.Events;
+﻿using Domain.Executors.AllInOneVirtualAssistant.Events;
+using Domain.Executors.MonitorForNewConnections.Events;
 using Domain.Facades.Interfaces;
 using Domain.Interactions;
 using Domain.Interactions.MonitorForNewConnections.GetAllRecentlyAdded;
@@ -6,6 +7,7 @@ using Domain.Interactions.MonitorForNewConnections.GetConnectionsCount;
 using Domain.Interactions.Shared.CloseAllConversations;
 using Domain.Interactions.Shared.RefreshBrowser;
 using Domain.Models.MonitorForNewProspects;
+using Domain.Models.Responses;
 using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Providers.Interfaces;
@@ -41,6 +43,7 @@ namespace Domain.Orchestrators
         public static bool IsRunning { get; set; } = false;
 
         public event NewRecentlyAddedProspectsDetectedEventHandler NewConnectionsDetected;
+        public event UpdateRecentlyAddedProspectsEventHandler UpdateRecentlyAddedProspects;
 
         public void Execute(MonitorForNewAcceptedConnectionsBody message)
         {
@@ -116,6 +119,70 @@ namespace Domain.Orchestrators
             }
         }
 
+        public void Execute(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message)
+        {
+            ConnectedNetworkProspectsResponse previousMonitoredResponse = message.PreviousMonitoredResponse;
+            bool getConnectionsCountSucceeded = GetConnectionsCount(webDriver);
+
+            if (getConnectionsCountSucceeded == false)
+            {
+                _logger.LogDebug("Executing {0}. Failed to determine total connections count. HalId {1}", nameof(AllInOneVirtualAssistantMessageBody), message.HalId);
+            }
+
+            bool getAllRecentlyAddedSucceeded = GetAllRecentlyAddedInteraction(webDriver);
+
+            if (getAllRecentlyAddedSucceeded == false)
+            {
+                _logger.LogDebug("Executing {0}. Failed to gather all recently added prospects. HalId {1}", nameof(AllInOneVirtualAssistantMessageBody), message.HalId);
+            }
+
+            if (getConnectionsCountSucceeded == true && getAllRecentlyAddedSucceeded == true)
+            {
+                // ensure response Items is not null
+                if (previousMonitoredResponse.Items != null)
+                {
+                    _logger.LogTrace("Executing {0}. Server has successfully set Items property on {1} response. HalId {2}", nameof(AllInOneVirtualAssistantMessageBody), nameof(ConnectedNetworkProspectsResponse), message.HalId);
+                    int previousConnectionsCount = 0;
+                    IList<RecentlyAddedProspectModel> previousRecentlyAddedProspects = default;
+
+                    // set previous count and previous recently added prospects to whats on the page currently
+                    if (previousMonitoredResponse.Items.Count == 0)
+                    {
+                        _logger.LogDebug("Executing {0}. {1} response did not contain any prospects to check against. Setting previous values from what is currently displayed on the page. HalId {2}", nameof(AllInOneVirtualAssistantMessageBody), nameof(ConnectedNetworkProspectsResponse), message.HalId);
+                        // persist results to server
+                        previousConnectionsCount = _interactionsFacade.ConnectionsCount;
+                        previousRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
+
+                        OutputSaveRecentlyAddedProspects(message, previousConnectionsCount, previousRecentlyAddedProspects);
+                    }
+                    // or set it to whatever the server had saved before
+                    else
+                    {
+                        _logger.LogDebug("Executing {0}. {1} response did contain prospects to check against. HalId {2}", nameof(AllInOneVirtualAssistantMessageBody), nameof(ConnectedNetworkProspectsResponse), message.HalId);
+                        previousConnectionsCount = previousMonitoredResponse.TotalConnectionsCount;
+                        previousRecentlyAddedProspects = previousMonitoredResponse.Items;
+                    }
+
+                    if (GetAllRecentlyAddedInteraction(webDriver) == true)
+                    {
+                        int currentTotalConnectionsCount = _interactionsFacade.ConnectionsCount;
+                        if (currentTotalConnectionsCount > previousConnectionsCount)
+                        {
+                            _logger.LogTrace("Executing {0}. Total connections count is greater than previous connection count.", nameof(AllInOneVirtualAssistantMessageBody));
+                            IList<RecentlyAddedProspectModel> currentRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
+
+                            OutputSaveRecentlyAddedProspects(message, currentTotalConnectionsCount, currentRecentlyAddedProspects);
+
+                            IList<RecentlyAddedProspectModel> newRecentlyAddedProspects = currentRecentlyAddedProspects.Where(p => previousRecentlyAddedProspects.Any(prev => prev.Name == p.Name) == false).ToList();
+
+                            // invoke an event here
+                            OutputRecentlyAddedProspects(message, newRecentlyAddedProspects);
+                        }
+                    }
+                }
+            }
+        }
+
         private void OutputRecentlyAddedProspects(MonitorForNewAcceptedConnectionsBody message, IList<Models.MonitorForNewProspects.RecentlyAddedProspectModel> newRecentlyAddedProspects)
         {
             if (newRecentlyAddedProspects != null && newRecentlyAddedProspects.Count > 0)
@@ -162,6 +229,21 @@ namespace Domain.Orchestrators
             };
 
             return _interactionsFacade.HandleRefreshBrowserInteraction(interaction);
+        }
+
+        private void OutputRecentlyAddedProspects(AllInOneVirtualAssistantMessageBody message, IList<RecentlyAddedProspectModel> newRecentlyAddedProspects)
+        {
+            if (newRecentlyAddedProspects != null && newRecentlyAddedProspects.Count > 0)
+            {
+                _logger.LogDebug("Executing {0}. Emitting new connections detected event", nameof(AllInOneVirtualAssistantMessageBody));
+                NewConnectionsDetected.Invoke(this, new NewRecentlyAddedProspectsDetectedEventArgs(message, newRecentlyAddedProspects));
+            }
+        }
+
+        private void OutputSaveRecentlyAddedProspects(AllInOneVirtualAssistantMessageBody message, int totalConnectionsCount, IList<RecentlyAddedProspectModel> recentlyAddedProspects)
+        {
+            _logger.LogDebug("Executing {0}. Saving recently added prospects", nameof(AllInOneVirtualAssistantMessageBody));
+            UpdateRecentlyAddedProspects.Invoke(this, new UpdateRecentlyAddedProspectsEventArgs(message, recentlyAddedProspects, totalConnectionsCount));
         }
     }
 }
