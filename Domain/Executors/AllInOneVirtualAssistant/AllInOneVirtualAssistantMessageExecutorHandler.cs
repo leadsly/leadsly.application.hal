@@ -54,8 +54,11 @@ namespace Domain.Executors.AllInOneVirtualAssistant
 
                 SetupCheckOffHoursConnections(message);
 
-                // fetch search progress urls
-                await SetupForNetworkingMessagesAsync(message);
+                // pull any networking messages
+                await GetNetworkingMessagesAsync(message);
+
+                // pull any follow up messages
+                await GetFollowUpMessagesAsync(message);
 
                 // fetch previous connected with prospects, this list should include the total connections count, as well as a list of
                 // prospects first name last name subheading and when we connected with them
@@ -106,10 +109,30 @@ namespace Domain.Executors.AllInOneVirtualAssistant
             }
         }
 
-        private async Task SetupForNetworkingMessagesAsync(AllInOneVirtualAssistantMessageBody message)
+        private async Task GetFollowUpMessagesAsync(AllInOneVirtualAssistantMessageBody message)
         {
-            Queue<NetworkingMessageBody> networkingMessages = new Queue<NetworkingMessageBody>();
+            FollowUpMessagesResponse followUpMessages = await _service.GetFollowUpMessagesAsync(message);
+            if (followUpMessages != null && followUpMessages.Items != null)
+            {
+                message.FollowUpMessages = new Queue<FollowUpMessageBody>(followUpMessages.Items);
+            }
+        }
 
+        private async Task GetNetworkingMessagesAsync(AllInOneVirtualAssistantMessageBody message)
+        {
+            // see if there are any networking messages that need to go out
+            NetworkingMessagesResponse networkingMessages = await _service.GetNetworkingMessagesAsync(message);
+
+            if (networkingMessages != null && networkingMessages.Items != null)
+            {
+                // fetch search urls
+                message.NetworkingMessages = new Queue<NetworkingMessageBody>(networkingMessages.Items);
+                await GetNetworkingSearchUrlsAsync(message);
+            }
+        }
+
+        private async Task GetNetworkingSearchUrlsAsync(AllInOneVirtualAssistantMessageBody message)
+        {
             ParallelOptions parallelOptions = new()
             {
                 MaxDegreeOfParallelism = 3
@@ -118,16 +141,13 @@ namespace Domain.Executors.AllInOneVirtualAssistant
             {
                 await Parallel.ForEachAsync(message.NetworkingMessages, parallelOptions, async (networkingMessage, ct) =>
                 {
-                    GetSearchUrlProgressResponse response = await _service.GetSearchUrlProgressAsync(networkingMessage);
+                    GetSearchUrlProgressResponse response = await _service.GetSearchUrlProgressAsync(message);
                     if (response != null && response.SearchUrls != null && response.SearchUrls.Count > 0)
                     {
                         networkingMessage.SearchUrlsProgress = response.SearchUrls;
-                        networkingMessages.Enqueue(networkingMessage);
                     }
                 });
             }
-
-            message.NetworkingMessages = networkingMessages;
         }
 
         private async Task ProcessDataAsync(AllInOneVirtualAssistantMessageBody message)

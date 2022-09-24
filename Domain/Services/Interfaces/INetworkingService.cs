@@ -16,5 +16,6 @@ namespace Domain.Services.Interfaces
         Task UpdateSearchUrlsAsync(IList<SearchUrlProgressModel> items, NetworkingMessageBody message, CancellationToken ct = default);
         Task ProcessProspectListAsync(IList<PersistPrimaryProspectModel> items, NetworkingMessageBody message, CancellationToken ct = default);
         Task UpdateMonthlySearchLimitAsync(bool limitReached, NetworkingMessageBody message, CancellationToken ct = default);
+        Task<NetworkingMessagesResponse> GetNetworkingMessagesAsync(PublishMessageBody message, CancellationToken ct);
     }
 }

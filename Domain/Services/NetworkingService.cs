@@ -71,6 +71,44 @@ namespace Domain.Services
             return response;
         }
 
+        public async Task<NetworkingMessagesResponse> GetNetworkingMessagesAsync(PublishMessageBody message, CancellationToken ct)
+        {
+            GetNetworkingMessagesRequest request = new()
+            {
+                RequestUrl = $"Networking/{message.HalId}/messages",
+                NamespaceName = message.NamespaceName,
+                ServiceDiscoveryName = message.ServiceDiscoveryName
+            };
+
+            HttpResponseMessage rawResponse = await _networkingServiceApi.GetNetworkingMessagesAsync(request, ct);
+
+            if (rawResponse == null)
+            {
+                _logger.LogError("Response from application server was null. The request was responsible for fetching NetworkingMessages");
+                return null;
+            }
+
+            if (rawResponse.IsSuccessStatusCode == false)
+            {
+                string content = await rawResponse.Content.ReadAsStringAsync();
+                _logger.LogError("Response from application server was not a successful status code. The request was responsible for getting NetworkingMessages. {content}", content);
+                return null;
+            }
+
+            NetworkingMessagesResponse response = default;
+            try
+            {
+                string json = await rawResponse.Content.ReadAsStringAsync();
+                response = JsonConvert.DeserializeObject<NetworkingMessagesResponse>(json);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to deserialize response from application server. The request was responsible for getting NetworkingMessages");
+            }
+
+            return response;
+        }
+
         public async Task ProcessSentConnectionsAsync(IList<ConnectionSentModel> items, NetworkingMessageBody message, CancellationToken ct = default)
         {
             ConnectionsSentRequest request = new()

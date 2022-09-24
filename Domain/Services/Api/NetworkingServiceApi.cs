@@ -26,6 +26,30 @@ namespace Domain.Services.Api
         private readonly HttpClient _httpClient;
         private readonly ILogger<NetworkingServiceApi> _logger;
 
+        public async Task<HttpResponseMessage> GetNetworkingMessagesAsync(GetNetworkingMessagesRequest request, CancellationToken ct = default)
+        {
+            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
+
+            HttpResponseMessage response = default;
+            try
+            {
+                HttpRequestMessage req = new()
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
+                };
+
+                _logger.LogInformation("Sending request to get NetworkingMessages");
+                response = await _httpClient.SendAsync(req, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send request to get NetworkingMessages");
+            }
+
+            return response;
+        }
+
         public async Task<HttpResponseMessage> GetSearchUrlProgressAsync(GetSearchUrlProgressRequest request, CancellationToken ct = default)
         {
             string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);

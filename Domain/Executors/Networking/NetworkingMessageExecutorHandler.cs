@@ -69,7 +69,7 @@ namespace Domain.Executors.Networking
                 await _networkingService.ProcessSentConnectionsAsync(connectionSents, message);
             }
 
-            IList<Domain.Models.Networking.SearchUrlProgressModel> items = _phaseOrchestrator.GetUpdatedSearchUrlsProgress();
+            IList<Domain.Models.Networking.SearchUrlProgressModel> items = _phaseOrchestrator.UpdatedSearchUrlsProgress;
             if (items.Count > 0)
             {
                 await _networkingService.UpdateSearchUrlsAsync(items, message);

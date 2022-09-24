@@ -10,10 +10,9 @@ namespace Domain.Services.Interfaces.Api
 {
     public interface INetworkingServiceApi
     {
+        Task<HttpResponseMessage> GetNetworkingMessagesAsync(GetNetworkingMessagesRequest request, CancellationToken ct = default);
         Task<HttpResponseMessage> GetSearchUrlProgressAsync(GetSearchUrlProgressRequest request, CancellationToken ct = default);
-
         Task<HttpResponseMessage> ProcessSentConnectionsAsync(ConnectionsSentRequest request, CancellationToken ct = default);
-
         Task<HttpResponseMessage> UpdateSearchUrlAsync(UpdateSearchUrlProgressRequest request, CancellationToken ct = default);
         Task<HttpResponseMessage> ProcessProspectListAsync(CollectedProspectsRequest request, CancellationToken ct = default);
         Task<HttpResponseMessage> UpdateMonthlySearchLimit(MonthlySearchLimitReachedRequest request, CancellationToken ct = default);

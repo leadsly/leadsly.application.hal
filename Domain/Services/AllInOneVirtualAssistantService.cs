@@ -151,6 +151,12 @@ namespace Domain.Services
             await _networkingService.UpdateMonthlySearchLimitAsync(limitReached, networkingMessage, ct);
         }
 
+        public async Task<NetworkingMessagesResponse> GetNetworkingMessagesAsync(PublishMessageBody message, CancellationToken ct = default)
+        {
+            _logger.LogTrace("Executing {0}. This is for {1}", nameof(GetNetworkingMessagesAsync), nameof(NetworkingMessageBody));
+            return await _networkingService.GetNetworkingMessagesAsync(message, ct);
+        }
+
         #endregion
 
         #region ScanProspectsForReplies
@@ -182,6 +188,12 @@ namespace Domain.Services
             _logger.LogTrace("Executing {0}. This is for {1}", nameof(ProcessSentFollowUpMessageAsync), nameof(FollowUpMessageBody));
             FollowUpMessageBody followUpMessageBody = message as FollowUpMessageBody;
             await _followUpMessageService.ProcessSentFollowUpMessageAsync(item, followUpMessageBody, ct);
+        }
+
+        public async Task<FollowUpMessagesResponse> GetFollowUpMessagesAsync(PublishMessageBody message, CancellationToken ct = default)
+        {
+            _logger.LogTrace("Executing {0}. This is for {1}", nameof(GetFollowUpMessagesAsync), nameof(FollowUpMessageBody));
+            return await _followUpMessageService.GetFollowUpMessagesAsync(message, ct);
         }
 
         #endregion
