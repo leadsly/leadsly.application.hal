@@ -14,7 +14,6 @@ using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Domain.Orchestrators
 {
@@ -124,32 +123,32 @@ namespace Domain.Orchestrators
 
         private void BeginVirtualAssistantWork(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message)
         {
-            if (message.DeepScanProspectsForReplies != null)
-            {
-                // 1. deep scan prospects for replies
-                _orchestratorsFacade.HandleDeepScanProspectsForReplies(webDriver, message.DeepScanProspectsForReplies);
+            //if (message.DeepScanProspectsForReplies != null)
+            //{
+            // 1. deep scan prospects for replies
+            // _orchestratorsFacade.HandleDeepScanProspectsForReplies(webDriver, message.DeepScanProspectsForReplies);
 
-                // before the follow up message is sent out lets make sure that deepscanprospectsfor replies did not find the prospect in our inbox and one that has replied already
-                IEnumerable<FollowUpMessageBody> followUpMessages = message.FollowUpMessages.Where(f => _orchestratorsFacade.ProspectsThatReplied.Any(x => x.Name == f.ProspectName) == false);
-                message.FollowUpMessages = new Queue<FollowUpMessageBody>(followUpMessages);
-            }
+            //// before the follow up message is sent out lets make sure that deepscanprospectsfor replies did not find the prospect in our inbox and one that has replied already
+            //IEnumerable<FollowUpMessageBody> followUpMessages = message.FollowUpMessages.Where(f => _orchestratorsFacade.ProspectsThatReplied.Any(x => x.Name == f.ProspectName) == false);
+            //message.FollowUpMessages = new Queue<FollowUpMessageBody>(followUpMessages);
+            // }
 
             if (message.CheckOffHoursNewConnections != null)
             {
-                // 2. check off hours connections
+                // 1. check off hours connections
                 _orchestratorsFacade.HandleCheckOffHoursNewConnections(webDriver, message.CheckOffHoursNewConnections);
             }
 
-            // 3. start with monitor for new connections
+            // 2. start with monitor for new connections
             _orchestratorsFacade.HandleMonitorForNewConnections(webDriver, message);
 
-            // 4. then execute scan prospects for replies
+            // 3. then execute scan prospects for replies
             _orchestratorsFacade.HandleScanProspectsForReplies(webDriver, message);
 
-            // 5. run follow up messages
+            // 4. run follow up messages
             _orchestratorsFacade.HandleFollowUpMessages(webDriver, message);
 
-            // 6. run networking 
+            // 5. run networking 
             _orchestratorsFacade.HandleNetworking(webDriver, message);
 
         }

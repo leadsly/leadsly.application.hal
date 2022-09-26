@@ -52,28 +52,28 @@ namespace Domain.Services.Api
             return response;
         }
 
-        public async Task<HttpResponseMessage> GetFollowUpMessagesAsync(GetFollowUpMessagesRequest request, CancellationToken ct = default)
-        {
-            string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
+        //public async Task<HttpResponseMessage> GetFollowUpMessagesAsync(GetFollowUpMessagesRequest request, CancellationToken ct = default)
+        //{
+        //    string baseServerUrl = _urlService.GetBaseServerUrl(request.ServiceDiscoveryName, request.NamespaceName);
 
-            HttpResponseMessage response = default;
-            try
-            {
-                HttpRequestMessage req = new()
-                {
-                    Method = HttpMethod.Get,
-                    RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
-                };
+        //    HttpResponseMessage response = default;
+        //    try
+        //    {
+        //        HttpRequestMessage req = new()
+        //        {
+        //            Method = HttpMethod.Get,
+        //            RequestUri = new Uri($"{baseServerUrl}/{request.RequestUrl}", UriKind.Absolute),
+        //        };
 
-                _logger.LogInformation("Sending request to get FollowUpMessages");
-                response = await _httpClient.SendAsync(req, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send request to get FollowUpMessages");
-            }
+        //        _logger.LogInformation("Sending request to get FollowUpMessages");
+        //        response = await _httpClient.SendAsync(req, ct);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Failed to send request to get FollowUpMessages");
+        //    }
 
-            return response;
-        }
+        //    return response;
+        //}
     }
 }

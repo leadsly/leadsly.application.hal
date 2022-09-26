@@ -1,5 +1,6 @@
 ﻿using Domain;
 using Domain.Executors;
+using Domain.Executors.AllInOneVirtualAssistant;
 using Domain.Executors.FollowUpMessage;
 using Domain.Executors.MonitorForNewConnections;
 using Domain.Executors.Networking;
@@ -64,6 +65,8 @@ using Domain.MQ.EventHandlers;
 using Domain.MQ.EventHandlers.Interfaces;
 using Domain.MQ.Interfaces;
 using Domain.MQ.Messages;
+using Domain.MQ.Services;
+using Domain.MQ.Services.Interfaces;
 using Domain.OptionsJsonModels;
 using Domain.Orchestrators;
 using Domain.Orchestrators.Interfaces;
@@ -287,6 +290,15 @@ namespace Hal.Configurations
             return services;
         }
 
+        public static IServiceCollection AddMQServices(this IServiceCollection service)
+        {
+            Log.Information("Registering RabbitMQ services");
+
+            service.AddScoped<IGetMQMessagesService, GetMQMessagesService>();
+
+            return service;
+        }
+
         public static IServiceCollection AddRabbitMQEventHandlers(this IServiceCollection services)
         {
             Log.Information("Registering RabbitMQ event handlers.");
@@ -406,6 +418,7 @@ namespace Hal.Configurations
             services.AddScoped<IMessageExecutorHandler<FollowUpMessageBody>, FollowUpMessageExecutorHandler>();
             services.AddScoped<IMessageExecutorHandler<MonitorForNewAcceptedConnectionsBody>, MonitorForNewConnectionsExecutorHandler>();
             services.AddScoped<IMessageExecutorHandler<CheckOffHoursNewConnectionsBody>, CheckOffHoursNewConnectionsExecutorHandler>();
+            services.AddScoped<IMessageExecutorHandler<AllInOneVirtualAssistantMessageBody>, AllInOneVirtualAssistantMessageExecutorHandler>();
 
             return services;
         }

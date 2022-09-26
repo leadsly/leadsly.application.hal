@@ -10,8 +10,8 @@ namespace Domain.MQ.Messages
         [DataMember(IsRequired = false)]
         public CheckOffHoursNewConnectionsBody CheckOffHoursNewConnections { get; set; }
 
-        [DataMember(IsRequired = false)]
-        public DeepScanProspectsForRepliesBody DeepScanProspectsForReplies { get; set; }
+        //[DataMember(IsRequired = false)]
+        //public DeepScanProspectsForRepliesBody DeepScanProspectsForReplies { get; set; }
 
         [IgnoreDataMember]
         public ConnectedNetworkProspectsResponse PreviousMonitoredResponse { get; set; }

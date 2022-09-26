@@ -50,15 +50,15 @@ namespace Domain.Executors.AllInOneVirtualAssistant
                 _orchestrator.UpdateRecentlyAddedProspects += OnUpdateConnectedProspectsReceived;
                 _orchestrator.FollowUpMessagesSent += OnFollowUpMessagesSent;
 
-                await SetupDeepScanProspectsForRepliesAsync(message);
+                // await SetupDeepScanProspectsForRepliesAsync(message);
 
                 SetupCheckOffHoursConnections(message);
 
                 // pull any networking messages
-                await GetNetworkingMessagesAsync(message);
+                await GetNetworkingSearchUrlsAsync(message);
 
                 // pull any follow up messages
-                await GetFollowUpMessagesAsync(message);
+                // await GetFollowUpMessagesAsync(message);
 
                 // fetch previous connected with prospects, this list should include the total connections count, as well as a list of
                 // prospects first name last name subheading and when we connected with them
@@ -82,24 +82,24 @@ namespace Domain.Executors.AllInOneVirtualAssistant
             return succeeded;
         }
 
-        private async Task SetupDeepScanProspectsForRepliesAsync(AllInOneVirtualAssistantMessageBody message)
-        {
-            if (message.DeepScanProspectsForReplies != null)
-            {
-                _orchestrator.ProspectsThatRepliedDetected += OnProspectsThatRepliesDetected;
+        //private async Task SetupDeepScanProspectsForRepliesAsync(AllInOneVirtualAssistantMessageBody message)
+        //{
+        //    if (message.DeepScanProspectsForReplies != null)
+        //    {
+        //        _orchestrator.ProspectsThatRepliedDetected += OnProspectsThatRepliesDetected;
 
-                NetworkProspectsResponse networkProspects = await _service.GetAllProspectsFromActiveCampaignsAsync(message);
-                if (networkProspects == null || networkProspects.Items.Count == 0)
-                {
-                    _logger.LogDebug("No network prospects were retrieved. {0} will not be triggered", nameof(DeepScanProspectsForRepliesBody));
-                    message.DeepScanProspectsForReplies = null;
-                }
-                else
-                {
-                    message.DeepScanProspectsForReplies.NetworkProspects = networkProspects.Items;
-                }
-            }
-        }
+        //        NetworkProspectsResponse networkProspects = await _service.GetAllProspectsFromActiveCampaignsAsync(message);
+        //        if (networkProspects == null || networkProspects.Items.Count == 0)
+        //        {
+        //            _logger.LogDebug("No network prospects were retrieved. {0} will not be triggered", nameof(DeepScanProspectsForRepliesBody));
+        //            message.DeepScanProspectsForReplies = null;
+        //        }
+        //        else
+        //        {
+        //            message.DeepScanProspectsForReplies.NetworkProspects = networkProspects.Items;
+        //        }
+        //    }
+        //}
 
         private void SetupCheckOffHoursConnections(AllInOneVirtualAssistantMessageBody message)
         {
@@ -109,29 +109,29 @@ namespace Domain.Executors.AllInOneVirtualAssistant
             }
         }
 
-        private async Task GetFollowUpMessagesAsync(AllInOneVirtualAssistantMessageBody message)
-        {
-            FollowUpMessagesResponse followUpMessages = await _service.GetFollowUpMessagesAsync(message);
-            if (followUpMessages != null && followUpMessages.Items != null)
-            {
-                message.FollowUpMessages = new Queue<FollowUpMessageBody>(followUpMessages.Items);
-            }
-        }
+        //private async Task GetFollowUpMessagesAsync(AllInOneVirtualAssistantMessageBody message)
+        //{
+        //    FollowUpMessagesResponse followUpMessages = await _service.GetFollowUpMessagesAsync(message);
+        //    if (followUpMessages != null && followUpMessages.Items != null)
+        //    {
+        //        message.FollowUpMessages = new Queue<FollowUpMessageBody>(followUpMessages.Items);
+        //    }
+        //}
 
-        private async Task GetNetworkingMessagesAsync(AllInOneVirtualAssistantMessageBody message)
-        {
-            // see if there are any networking messages that need to go out
-            NetworkingMessagesResponse networkingMessages = await _service.GetNetworkingMessagesAsync(message);
+        //private async Task GetNetworkingMessagesAsync(AllInOneVirtualAssistantMessageBody message)
+        //{
+        //    // see if there are any networking messages that need to go out
+        //    NetworkingMessagesResponse networkingMessages = await _service.GetNetworkingMessagesAsync(message);
 
-            if (networkingMessages != null && networkingMessages.Items != null)
-            {
-                // fetch search urls
-                message.NetworkingMessages = new Queue<NetworkingMessageBody>(networkingMessages.Items);
-                await GetNetworkingSearchUrlsAsync(message);
-            }
-        }
+        //    if (networkingMessages != null && networkingMessages.Items != null)
+        //    {
+        //        // fetch search urls
+        //        message.NetworkingMessages = new Queue<NetworkingMessageBody>(networkingMessages.Items);
+        //        await GetNetworkingSearchUrlsAsync(message);
+        //    }
+        //}
 
-        private async Task GetNetworkingSearchUrlsAsync(AllInOneVirtualAssistantMessageBody message)
+        public async Task GetNetworkingSearchUrlsAsync(AllInOneVirtualAssistantMessageBody message)
         {
             ParallelOptions parallelOptions = new()
             {
