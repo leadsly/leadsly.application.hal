@@ -39,14 +39,9 @@
 
     public class ExchangeConfigOptions
     {
-        public AppServerConfigOptions AppServer { get; set; }
-        public HalConfigOptions Hal { get; set; }
-        public class AppServerConfigOptions
-        {
-            public string Name { get; set; }
-            public string ExchangeType { get; set; }
-        }
-        public class HalConfigOptions
+        public ConfigOptions AppServer { get; set; }
+        public ConfigOptions Hal { get; set; }
+        public class ConfigOptions
         {
             public string Name { get; set; }
             public string ExchangeType { get; set; }
@@ -55,15 +50,9 @@
 
     public class QueueConfigOptions
     {
-        public AppServerConfigOptions AppServer { get; set; }
-        public HalConfigOptions Hal { get; set; }
-        public class AppServerConfigOptions
-        {
-            public string Name { get; set; }
-            public bool AutoAcknowledge { get; set; }
-        }
-
-        public class HalConfigOptions
+        public ConfigOptions AppServer { get; set; }
+        public ConfigOptions Hal { get; set; }
+        public class ConfigOptions
         {
             public string Name { get; set; }
             public bool AutoAcknowledge { get; set; }
