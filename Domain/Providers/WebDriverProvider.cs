@@ -125,6 +125,26 @@ namespace Domain.Providers
             return result;
         }
 
+        public bool CloseCurrentTab(IWebDriver webDriver, BrowserPurpose browserPurpose)
+        {
+            bool succeeded = false;
+            try
+            {
+                webDriver.Close();
+                if (browserPurpose != BrowserPurpose.None)
+                {
+                    RemoveWebDriver<IOperationResponse>(browserPurpose);
+                }
+                succeeded = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to close current browser tab");
+            }
+
+            return succeeded;
+        }
+
         private HalOperationResult<T> RemoveWebDriver<T>(BrowserPurpose browserPurpose) where T : IOperationResponse
         {
             HalOperationResult<T> result = new();

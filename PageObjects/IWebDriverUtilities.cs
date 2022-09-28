@@ -10,5 +10,6 @@ namespace PageObjects
         IWebElement WaitUntilNull(Func<IWebDriver, IWebElement> searchFunc, IWebDriver webDriver, int waitTimeInSeconds);
         IList<IWebElement> WaitUntilNotNull(Func<IWebDriver, IList<IWebElement>> searchFunc, IWebDriver webDriver, int waitTimeInSeconds);
         bool HandleClickElement(IWebElement element);
+        public void ScrollIntoView(IWebElement webElement, IWebDriver webDriver);
     }
 }

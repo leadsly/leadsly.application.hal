@@ -35,7 +35,8 @@ namespace Domain.PhaseHandlers.AllInOneVirtualAssistantHandler
             AllInOneVirtualAssistantMessageBody message = command.MessageBody as AllInOneVirtualAssistantMessageBody;
 
             GetNetworkingMessages(message);
-            GetFollowUpMessages(message);
+            // this needs to be requested each time at the top of the hour
+            // GetFollowUpMessages(message);
 
             bool succeeded = await _handler.ExecuteMessageAsync(message);
 
@@ -64,19 +65,19 @@ namespace Domain.PhaseHandlers.AllInOneVirtualAssistantHandler
             }
         }
 
-        private void GetFollowUpMessages(AllInOneVirtualAssistantMessageBody message)
-        {
-            string queueNameIn = RabbitMQConstants.FollowUpMessage.QueueName;
-            Queue<FollowUpMessageBody> allMessages = _service.GetAllMessages<FollowUpMessageBody>(queueNameIn, message.HalId);
-            if (allMessages == null)
-            {
-                _logger.LogDebug("There were no {0} messages found", nameof(FollowUpMessageBody));
-                message.FollowUpMessages = new Queue<FollowUpMessageBody>();
-            }
-            else
-            {
-                message.FollowUpMessages = allMessages;
-            }
-        }
+        //private void GetFollowUpMessages(AllInOneVirtualAssistantMessageBody message)
+        //{
+        //    string queueNameIn = RabbitMQConstants.FollowUpMessage.QueueName;
+        //    Queue<FollowUpMessageBody> allMessages = _service.GetAllMessages<FollowUpMessageBody>(queueNameIn, message.HalId);
+        //    if (allMessages == null)
+        //    {
+        //        _logger.LogDebug("There were no {0} messages found", nameof(FollowUpMessageBody));
+        //        message.FollowUpMessages = new Queue<FollowUpMessageBody>();
+        //    }
+        //    else
+        //    {
+        //        message.FollowUpMessages = allMessages;
+        //    }
+        //}
     }
 }

@@ -79,6 +79,8 @@ namespace Domain.Orchestrators
                 _logger.LogWarning("Executing {0}. Failed to get unread messages content. HalId {1}", nameof(AllInOneVirtualAssistantMessageBody), message.HalId);
             }
 
+            NewMessages = _interactionsFacade.NewMessages;
+
             OutputMessageResponses(message);
         }
 
@@ -169,7 +171,7 @@ namespace Domain.Orchestrators
 
         private void OutputMessageResponses(PublishMessageBody message)
         {
-            if (NewMessages.Count > 0)
+            if (NewMessages != null && NewMessages.Count > 0)
             {
                 this.NewMessagesReceived.Invoke(this, new NewMessagesReceivedEventArgs(message, NewMessages));
             }

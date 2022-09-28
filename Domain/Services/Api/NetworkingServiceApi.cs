@@ -225,6 +225,9 @@ namespace Domain.Services.Api
                     Content = JsonContent.Create(new
                     {
                         request.CampaignProspectListId,
+                        request.PrimaryProspectListId,
+                        request.SocialAccountId,
+                        request.CampaignId,
                         request.Items
                     })
                 };

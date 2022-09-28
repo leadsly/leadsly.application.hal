@@ -11,6 +11,8 @@ namespace Domain.Providers.Interfaces
         HalOperationResult<T> CloseBrowser<T>(BrowserPurpose browserPurpose)
             where T : IOperationResponse;
 
+        public bool CloseCurrentTab(IWebDriver webDriver, BrowserPurpose browserPurpose);
+
         HalOperationResult<T> CreateWebDriver<T>(WebDriverOperationData operationData, string namespaceName, string serviceDiscoveryName)
             where T : IOperationResponse;
 

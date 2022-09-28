@@ -76,6 +76,7 @@ namespace Domain.Orchestrators
             if (recentlyAddedProspects != null && recentlyAddedProspects.Count > 0)
             {
                 _logger.LogDebug("{0} found new connections!", nameof(CheckOffHoursNewConnectionsBody));
+                // -1 means it is checkoffhours so do not update total new connections property
                 this.OffHoursNewConnectionsDetected.Invoke(this, new OffHoursNewConnectionsEventArgs(message, recentlyAddedProspects));
             }
         }

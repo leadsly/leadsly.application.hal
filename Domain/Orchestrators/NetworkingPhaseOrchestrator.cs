@@ -1,4 +1,5 @@
-﻿using Domain.InstructionSets.Interfaces;
+﻿using Domain.Executors.AllInOneVirtualAssistant.Events;
+using Domain.InstructionSets.Interfaces;
 using Domain.Models.Networking;
 using Domain.Models.ProspectList;
 using Domain.Models.SendConnections;
@@ -27,6 +28,14 @@ namespace Domain.Orchestrators
             _instructionSet = instructionSet;
         }
 
+        public event PersistPrimaryProspectsEventHandler PersistPrimaryProspects;
+
+        public event ConnectionsSentEventHandler ConnectionsSent;
+
+        public event MonthlySearchLimitReachedEventHandler SearchLimitReached;
+
+        public event UpdatedSearchUrlProgressEventHandler UpdatedSearchUrlsProgress;
+
         private readonly INetworkingInstructionSet _instructionSet;
         private readonly IWebDriverProvider _webDriverProvider;
         private readonly ILogger<NetworkingPhaseOrchestrator> _logger;
@@ -36,11 +45,6 @@ namespace Domain.Orchestrators
             get => _instructionSet.NumberOfConnectionsSent;
             set => _instructionSet.NumberOfConnectionsSent = value;
         }
-        public List<PersistPrimaryProspectModel> PersistPrimaryProspects => _instructionSet.GetPersistPrimaryProspects();
-        public IList<ConnectionSentModel> ConnectionsSent => _instructionSet.GetConnectionsSent();
-
-        public IList<SearchUrlProgressModel> UpdatedSearchUrlsProgress => _instructionSet.GetUpdatedSearchUrls();
-        public bool GetMonthlySearchLimitReached() => _instructionSet.GetMonthlySearchLimitReached();
 
         public void Execute(NetworkingMessageBody message, IList<SearchUrlProgressModel> searchUrlsProgress)
         {
@@ -60,13 +64,16 @@ namespace Domain.Orchestrators
 
         public void Execute(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message)
         {
-            Queue<NetworkingMessageBody> networkingMessages = message.NetworkingMessages;
-            int length = networkingMessages.Count;
-            for (int i = 0; i < length; i++)
+            if (message.NetworkingMessages != null)
             {
-                NetworkingMessageBody networkingMessage = networkingMessages.Dequeue();
+                Queue<NetworkingMessageBody> networkingMessages = message.NetworkingMessages;
+                int length = networkingMessages.Count;
+                for (int i = 0; i < length; i++)
+                {
+                    NetworkingMessageBody networkingMessage = networkingMessages.Dequeue();
 
-                ExecuteInternal(networkingMessage, webDriver, networkingMessage.SearchUrlsProgress);
+                    ExecuteInternal(networkingMessage, webDriver, networkingMessage.SearchUrlsProgress);
+                }
             }
         }
 
@@ -78,9 +85,50 @@ namespace Domain.Orchestrators
             }
             finally
             {
-                _webDriverProvider.CloseBrowser<IOperationResponse>(BrowserPurpose.Networking);
+                _webDriverProvider.CloseCurrentTab(webDriver, BrowserPurpose.Networking);
                 NumberOfConnectionsSent = 0;
+
+                // output the results here
+                OutputProspectList(message);
+                OutputUpdateMonthlySearchLimit(message);
+                OutputConnectionsSent(message);
+                OutputUpdateSearchUrlsProgress(message);
             }
+        }
+
+        private void OutputProspectList(NetworkingMessageBody message)
+        {
+            List<PersistPrimaryProspectModel> persistPrimaryProspects = _instructionSet.GetPersistPrimaryProspects();
+            if (persistPrimaryProspects != null && persistPrimaryProspects.Count > 0)
+            {
+                _logger.LogInformation("Persisting {0} primary prospects for HalId {1}", persistPrimaryProspects.Count, message.HalId);
+                PersistPrimaryProspects.Invoke(this, new PersistPrimaryProspectsEventArgs(message, persistPrimaryProspects));
+            }
+        }
+
+        private void OutputUpdateMonthlySearchLimit(NetworkingMessageBody message)
+        {
+            IList<SearchUrlProgressModel> updatedSearchUrlsProgress = _instructionSet.GetUpdatedSearchUrls();
+            if (updatedSearchUrlsProgress != null && updatedSearchUrlsProgress.Count > 0)
+            {
+                UpdatedSearchUrlsProgress.Invoke(this, new UpdatedSearchUrlProgressEventArgs(message, updatedSearchUrlsProgress));
+            }
+        }
+
+        private void OutputConnectionsSent(NetworkingMessageBody message)
+        {
+            IList<ConnectionSentModel> connectionsSent = _instructionSet.GetConnectionsSent();
+            if (connectionsSent != null && connectionsSent.Count > 0)
+            {
+                _logger.LogInformation("Connections Sent: {0}", connectionsSent.Count);
+                ConnectionsSent.Invoke(this, new ConnectionsSentEventArgs(message, connectionsSent));
+            }
+        }
+
+        private void OutputUpdateSearchUrlsProgress(NetworkingMessageBody message)
+        {
+            bool searchLimitReached = _instructionSet.GetMonthlySearchLimitReached();
+            SearchLimitReached.Invoke(this, new MonthlySearchLimitReachedEventArgs(message, searchLimitReached));
         }
 
         private void BeginNetworking(NetworkingMessageBody message, IWebDriver webDriver, IList<SearchUrlProgressModel> searchUrlsProgress)

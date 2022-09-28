@@ -7,7 +7,7 @@ namespace Domain.Models.Responses
     [DataContract]
     public class GetSearchUrlProgressResponse
     {
-        [DataMember(Name = "SearchUrlsProgress")]
-        public IList<SearchUrlProgressModel> SearchUrls { get; set; }
+        [DataMember]
+        public IList<SearchUrlProgressModel> Items { get; set; }
     }
 }

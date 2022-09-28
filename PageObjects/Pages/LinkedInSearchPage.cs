@@ -1,4 +1,5 @@
 ﻿using Domain;
+using Domain.POMs;
 using Domain.POMs.Pages;
 using Domain.Services.Interfaces;
 using Leadsly.Application.Model;
@@ -263,38 +264,41 @@ namespace PageObjects.Pages
             return succeeded;
         }
 
-        public HalOperationResult<T> SendConnectionRequest<T>(IWebElement prospect) where T : IOperationResponse
+        public bool SendConnectionRequest(IWebElement prospect, IWebDriver webDriver)
         {
-            HalOperationResult<T> result = new();
-
             IWebElement actionButton = GetProspectsActionBtn(prospect);
             if (actionButton == null)
             {
                 _logger.LogDebug("[SendConnectionRequest] Action button not found");
                 // prospect must not contain an action button
-                return result;
+                return false;
+            }
+
+            webDriver.ScrollTop(_humanBehaviorService);
+
+            if (webDriver.IsElementVisible(actionButton) == false)
+            {
+                _webDriverUtilities.ScrollIntoView(actionButton, webDriver);
             }
 
             _logger.LogDebug("[SendConnectionRequest] Action button was found.");
             if (actionButton.Text == ApiConstants.PageObjectConstants.Connect)
             {
-                _logger.LogDebug("[SendConnectionRequest] Action button text is 'Connect'");
-                result = ClickButton<T>(actionButton);
-                if (result.Succeeded == false)
+                _logger.LogDebug("[SendConnectionRequest] Action button text is {0}", ApiConstants.PageObjectConstants.Connect);
+                if (_webDriverUtilities.HandleClickElement(actionButton) == false)
                 {
                     _logger.LogDebug("Failed to click 'Connect' button for the prospect");
-                    return result;
+                    return false;
                 }
             }
             else
             {
                 string actionButtonText = actionButton.Text;
                 _logger.LogDebug("[SendConnectionRequest] Action button text is '{actionButtonText}'", actionButtonText);
-                return result;
+                return false; ;
             }
 
-            result.Succeeded = true;
-            return result;
+            return true;
         }
 
         private HalOperationResult<T> ClickButton<T>(IWebElement btn)
@@ -498,6 +502,27 @@ namespace PageObjects.Pages
                 _logger.LogDebug("Tried looking for no search results div, but couldn't find it using '.search-results-container'");
             }
             return searchResultsDiv;
+        }
+
+        public bool AnyErrorPopUpMessages(IWebDriver webDriver)
+        {
+            IWebElement toastError = _webDriverUtilities.WaitUntilNotNull(ErrorToast, webDriver, 2);
+            return toastError != null;
+        }
+
+        private IWebElement ErrorToast(IWebDriver webDriver)
+        {
+            IWebElement toastMessage = default;
+            try
+            {
+                toastMessage = webDriver.FindElement(By.CssSelector(".artdeco-toasts_toasts div[data-test-artdeco-toast-item-type='error']"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("No error toast messages have been found");
+            }
+
+            return toastMessage;
         }
     }
 }

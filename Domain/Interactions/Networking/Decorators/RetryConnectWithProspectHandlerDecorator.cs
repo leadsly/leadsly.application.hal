@@ -13,6 +13,7 @@ namespace Domain.Interactions.Networking.Decorators
         }
 
         public ConnectionSentModel ConnectionSent => _decorated.ConnectionSent;
+        public bool ErrorToastMessageDetected => _decorated.ErrorToastMessageDetected;
         private readonly ILogger<RetryConnectWithProspectHandlerDecorator> _logger;
         private readonly IConnectWithProspectInteractionHandler _decorated;
 

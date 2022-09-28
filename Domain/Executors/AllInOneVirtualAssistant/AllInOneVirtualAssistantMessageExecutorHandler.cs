@@ -1,11 +1,7 @@
 ﻿using Domain.Executors.AllInOneVirtualAssistant.Events;
 using Domain.Executors.MonitorForNewConnections.Events;
 using Domain.Executors.ScanProspectsForReplies.Events;
-using Domain.Models.FollowUpMessage;
-using Domain.Models.Networking;
-using Domain.Models.ProspectList;
 using Domain.Models.Responses;
-using Domain.Models.SendConnections;
 using Domain.MQ.Interfaces;
 using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
@@ -14,7 +10,6 @@ using Leadsly.Application.Model;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -49,8 +44,10 @@ namespace Domain.Executors.AllInOneVirtualAssistant
                 _orchestrator.NewMessagesReceived += OnNewMessagesReceived;
                 _orchestrator.UpdateRecentlyAddedProspects += OnUpdateConnectedProspectsReceived;
                 _orchestrator.FollowUpMessagesSent += OnFollowUpMessagesSent;
-
-                // await SetupDeepScanProspectsForRepliesAsync(message);
+                _orchestrator.PersistPrimaryProspects += OnProcessProspectListAsync;
+                _orchestrator.ConnectionsSent += OnProcessSentConnectionsAsync;
+                _orchestrator.MonthlySearchLimitReached += OnUpdateMonthlySearchLimitAsync;
+                _orchestrator.UpdatedSearchUrlsProgress += OnUpdateSearchUrlsAsync;
 
                 SetupCheckOffHoursConnections(message);
 
@@ -75,31 +72,11 @@ namespace Domain.Executors.AllInOneVirtualAssistant
             }
             finally
             {
-                await ProcessDataAsync(message);
                 PublishDeprovisionResources(message);
             }
 
             return succeeded;
         }
-
-        //private async Task SetupDeepScanProspectsForRepliesAsync(AllInOneVirtualAssistantMessageBody message)
-        //{
-        //    if (message.DeepScanProspectsForReplies != null)
-        //    {
-        //        _orchestrator.ProspectsThatRepliedDetected += OnProspectsThatRepliesDetected;
-
-        //        NetworkProspectsResponse networkProspects = await _service.GetAllProspectsFromActiveCampaignsAsync(message);
-        //        if (networkProspects == null || networkProspects.Items.Count == 0)
-        //        {
-        //            _logger.LogDebug("No network prospects were retrieved. {0} will not be triggered", nameof(DeepScanProspectsForRepliesBody));
-        //            message.DeepScanProspectsForReplies = null;
-        //        }
-        //        else
-        //        {
-        //            message.DeepScanProspectsForReplies.NetworkProspects = networkProspects.Items;
-        //        }
-        //    }
-        //}
 
         private void SetupCheckOffHoursConnections(AllInOneVirtualAssistantMessageBody message)
         {
@@ -141,38 +118,59 @@ namespace Domain.Executors.AllInOneVirtualAssistant
             {
                 await Parallel.ForEachAsync(message.NetworkingMessages, parallelOptions, async (networkingMessage, ct) =>
                 {
-                    GetSearchUrlProgressResponse response = await _service.GetSearchUrlProgressAsync(message);
-                    if (response != null && response.SearchUrls != null && response.SearchUrls.Count > 0)
+                    GetSearchUrlProgressResponse response = await _service.GetSearchUrlProgressAsync(networkingMessage);
+                    if (response != null && response.Items != null && response.Items.Count > 0)
                     {
-                        networkingMessage.SearchUrlsProgress = response.SearchUrls;
+                        networkingMessage.SearchUrlsProgress = response.Items;
                     }
                 });
             }
         }
 
-        private async Task ProcessDataAsync(AllInOneVirtualAssistantMessageBody message)
+        private async Task OnProcessSentConnectionsAsync(object sender, ConnectionsSentEventArgs e)
         {
-            // perform all async calls now.
-            IList<ConnectionSentModel> connectionSents = _orchestrator.ConnectionsSent;
-            if (connectionSents?.Count > 0)
+            if (e.ConnectionsSent?.Count > 0)
             {
-                await _service.ProcessSentConnectionsAsync(connectionSents, message);
+                await _service.ProcessSentConnectionsAsync(e.ConnectionsSent, e.Message);
             }
+        }
 
-            IList<SearchUrlProgressModel> searchUrlsProgress = _orchestrator.UpdatedSearchUrlsProgress;
-            if (searchUrlsProgress?.Count > 0)
+        private async Task OnUpdateSearchUrlsAsync(object sender, UpdatedSearchUrlProgressEventArgs e)
+        {
+            if (e.UpdatedSearchUrlsProgress?.Count > 0)
             {
-                await _service.UpdateSearchUrlsAsync(searchUrlsProgress, message);
+                await _service.UpdateSearchUrlsAsync(e.UpdatedSearchUrlsProgress, e.Message);
             }
+        }
 
-            List<PersistPrimaryProspectModel> persistPrimaryProspects = _orchestrator.PersistPrimaryProspects;
-            if (persistPrimaryProspects?.Count > 0)
+        private async Task OnProcessProspectListAsync(object sender, PersistPrimaryProspectsEventArgs e)
+        {
+            if (e.PersistPrimaryProspects?.Count > 0)
             {
-                await _service.ProcessProspectListAsync(persistPrimaryProspects, message);
+                await _service.ProcessProspectListAsync(e.PersistPrimaryProspects, e.Message);
             }
+        }
 
-            bool monthlyLimitReached = _orchestrator.MonthlySearchLimitReached;
-            await _service.UpdateMonthlySearchLimitAsync(monthlyLimitReached, message);
+        private async Task OnUpdateMonthlySearchLimitAsync(object sender, MonthlySearchLimitReachedEventArgs e)
+        {
+            await _service.UpdateMonthlySearchLimitAsync(e.LimitReached, e.Message);
+        }
+
+        private async Task OnFollowUpMessagesSent(object sender, FollowUpMessagesSentEventArgs e)
+        {
+            _logger.LogDebug("Executing {0}. New prospects have been detected from {1}. Sending them to the server for processing. HalId {2}", nameof(AllInOneVirtualAssistantMessageBody), nameof(FollowUpMessageBody), e.Message.HalId);
+            // IList<SentFollowUpMessageModel> sentFollowUpMessages = _orchestrator.SentFollowUpMessages;
+            ParallelOptions parallelOptions = new()
+            {
+                MaxDegreeOfParallelism = 3
+            };
+            if (e.SentFollowUpMessages?.Count > 0)
+            {
+                await Parallel.ForEachAsync(e.SentFollowUpMessages, parallelOptions, async (sentFollowUpMessage, ct) =>
+                {
+                    await _service.ProcessSentFollowUpMessageAsync(sentFollowUpMessage, e.Message);
+                });
+            }
         }
 
         private void PublishDeprovisionResources(AllInOneVirtualAssistantMessageBody message)
@@ -223,23 +221,6 @@ namespace Domain.Executors.AllInOneVirtualAssistant
         {
             _logger.LogDebug("Executing {0}. New prospects have been detected from {1}. Sending them to the server for processing. HalId {2}", nameof(AllInOneVirtualAssistantMessageBody), nameof(CheckOffHoursNewConnectionsBody), e.Message.HalId);
             await _service.ProcessRecentlyAddedProspectsAsync(e.RecentlyAddedProspects, e.Message);
-        }
-
-        private async Task OnFollowUpMessagesSent(object sender, FollowUpMessagesSentEventArgs e)
-        {
-            _logger.LogDebug("Executing {0}. New prospects have been detected from {1}. Sending them to the server for processing. HalId {2}", nameof(AllInOneVirtualAssistantMessageBody), nameof(FollowUpMessageBody), e.Message.HalId);
-            IList<SentFollowUpMessageModel> sentFollowUpMessages = _orchestrator.SentFollowUpMessages;
-            ParallelOptions parallelOptions = new()
-            {
-                MaxDegreeOfParallelism = 3
-            };
-            if (sentFollowUpMessages?.Count > 0)
-            {
-                await Parallel.ForEachAsync(sentFollowUpMessages, parallelOptions, async (sentFollowUpMessage, ct) =>
-                {
-                    await _service.ProcessSentFollowUpMessageAsync(sentFollowUpMessage, e.Message);
-                });
-            }
         }
     }
 }

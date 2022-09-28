@@ -9,6 +9,7 @@ namespace Domain.Facades.Interfaces
     {
         IList<IWebElement> NewMessageElements { get; }
         NewMessageModel NewMessage { get; }
+        IList<NewMessageModel> NewMessages { get; }
         public IList<IWebElement> UnreadMessages { get; }
         bool HandleGetNewMessagesInteraction(InteractionBase interaction);
         bool HandleGetMessageContentInteraction(InteractionBase interaction);

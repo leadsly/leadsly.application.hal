@@ -113,6 +113,7 @@ namespace PageObjects.Controls
             {
                 _logger.LogInformation("Clicking conversation list item in the /invite-connect/connections/ page to bring the conversation into the window");
                 element.Click();
+                succeeded = true;
             }
             catch (Exception ex)
             {

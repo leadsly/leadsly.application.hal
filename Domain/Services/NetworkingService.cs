@@ -114,7 +114,7 @@ namespace Domain.Services
             ConnectionsSentRequest request = new()
             {
                 Items = items,
-                RequestUrl = $"SendConnections/{message.CampaignId}/prospects",
+                RequestUrl = $"Networking/{message.CampaignId}/prospects",
                 NamespaceName = message.NamespaceName,
                 ServiceDiscoveryName = message.ServiceDiscoveryName,
             };

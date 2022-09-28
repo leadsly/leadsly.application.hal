@@ -3,8 +3,6 @@ using Domain.Models.SendConnections;
 using Domain.POMs.Dialogs;
 using Domain.POMs.Pages;
 using Domain.Services.Interfaces;
-using Leadsly.Application.Model;
-using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
@@ -27,6 +25,7 @@ namespace Domain.Interactions.Networking.ConnectWithProspect
         }
 
         public ConnectionSentModel ConnectionSent { get; private set; }
+        public bool ErrorToastMessageDetected { get; private set; }
 
         private readonly ILinkedInSearchPage _linkedInSearchPage;
         private readonly IHumanBehaviorService _humanBehaviorService;
@@ -61,8 +60,7 @@ namespace Domain.Interactions.Networking.ConnectWithProspect
             _logger.LogInformation("[SendConnectionRequests]: Sending connection request to the given prospect");
 
             _humanBehaviorService.RandomWaitMilliSeconds(700, 3000);
-            HalOperationResult<IOperationResponse> sendConnectionResult = _linkedInSearchPage.SendConnectionRequest<IOperationResponse>(prospect);
-            if (sendConnectionResult.Succeeded == false)
+            if (_linkedInSearchPage.SendConnectionRequest(prospect, webDriver) == false)
             {
                 _logger.LogDebug("Clicking 'Connect' button on the prospect failed");
                 sendConnectionSuccess = false;
@@ -71,6 +69,14 @@ namespace Domain.Interactions.Networking.ConnectWithProspect
             {
                 _humanBehaviorService.RandomWaitMilliSeconds(700, 1500);
                 sendConnectionSuccess = _searchPageDialogManager.HandleConnectWithProspectModal(webDriver);
+            }
+
+            // check if there were any pop up messages displayed that would indicate an error occured or if the connect button still says connect vs pending
+            if (_linkedInSearchPage.AnyErrorPopUpMessages(webDriver) == true)
+            {
+                _logger.LogWarning("Error toast message was detected. No connection was sent.");
+                ErrorToastMessageDetected = true;
+                sendConnectionSuccess = false;
             }
 
             return sendConnectionSuccess;

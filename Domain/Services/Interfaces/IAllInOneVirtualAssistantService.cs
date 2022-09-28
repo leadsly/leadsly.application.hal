@@ -16,7 +16,7 @@ namespace Domain.Services.Interfaces
     public interface IAllInOneVirtualAssistantService
     {
         Task<ConnectedNetworkProspectsResponse> GetAllPreviouslyConnectedNetworkProspectsAsync(PublishMessageBody message, CancellationToken ct = default);
-        Task UpdatePreviouslyConnectedNetworkProspectsAsync(PublishMessageBody message, IList<RecentlyAddedProspectModel> items, int totalConnectionsCount, CancellationToken ct = default);
+        Task UpdatePreviouslyConnectedNetworkProspectsAsync(PublishMessageBody message, IList<RecentlyAddedProspectModel> items, int previousTotalConnectionsCount, CancellationToken ct = default);
         Task ProcessRecentlyAddedProspectsAsync(IList<RecentlyAddedProspectModel> requests, PublishMessageBody message, CancellationToken ct = default);
         Task ProcessSentFollowUpMessageAsync(SentFollowUpMessageModel item, PublishMessageBody message, CancellationToken ct = default);
         Task<GetSearchUrlProgressResponse> GetSearchUrlProgressAsync(PublishMessageBody message, CancellationToken ct = default);

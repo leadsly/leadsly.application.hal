@@ -5,6 +5,7 @@ using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using OpenQA.Selenium;
+using System;
 
 namespace Domain.Supervisor
 {
@@ -19,6 +20,10 @@ namespace Domain.Supervisor
             try
             {
                 resp = InitializeSignInProcedure(request, attemptCountHeader);
+            }
+            catch (Exception ex)
+            {
+
             }
             finally
             {
@@ -48,6 +53,7 @@ namespace Domain.Supervisor
 
             if (isNewWebDriver)
             {
+
                 _linkedInPageFacade.LinkedInPage.NavigateToPage(webDriver, SignInUrl);
             }
 
@@ -74,6 +80,7 @@ namespace Domain.Supervisor
             if (signInOperationResult == SignInOperationResult.HomePage)
             {
                 _logger.LogInformation("SignInOperationResult is HomePage");
+                HomePageIsDisplayed = true;
                 return new()
                 {
                     TwoFactorAuthRequired = false,

@@ -106,13 +106,14 @@ namespace Domain.Orchestrators
                     int previousConnectionsCount = _interactionsFacade.ConnectionsCount;
                     IList<RecentlyAddedProspectModel> previousRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
 
-                    if (GetAllRecentlyAddedInteraction(webDriver) == true)
+                    if (GetAllRecentlyAddedInteraction(webDriver) == true && GetConnectionsCount(webDriver))
                     {
                         IList<RecentlyAddedProspectModel> currentRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
                         IList<RecentlyAddedProspectModel> newRecentlyAddedProspects = currentRecentlyAddedProspects.Where(p => previousRecentlyAddedProspects.Any(prev => prev.Name == p.Name) == false).ToList();
 
                         // invoke an event here
-                        OutputRecentlyAddedProspects(message, newRecentlyAddedProspects);
+                        int newTotalConnectionsCount = _interactionsFacade.ConnectionsCount;
+                        OutputRecentlyAddedProspects(message, newRecentlyAddedProspects, newTotalConnectionsCount);
                     }
                 }
 
@@ -163,31 +164,34 @@ namespace Domain.Orchestrators
                         previousRecentlyAddedProspects = previousMonitoredResponse.Items;
                     }
 
-                    if (GetAllRecentlyAddedInteraction(webDriver) == true)
+                    if (GetConnectionsCount(webDriver) == true)
                     {
                         int currentTotalConnectionsCount = _interactionsFacade.ConnectionsCount;
                         if (currentTotalConnectionsCount > previousConnectionsCount)
                         {
-                            _logger.LogTrace("Executing {0}. Total connections count is greater than previous connection count.", nameof(AllInOneVirtualAssistantMessageBody));
-                            IList<RecentlyAddedProspectModel> currentRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
+                            if (GetAllRecentlyAddedInteraction(webDriver) == true)
+                            {
+                                _logger.LogTrace("Executing {0}. Total connections count is greater than previous connection count.", nameof(AllInOneVirtualAssistantMessageBody));
+                                IList<RecentlyAddedProspectModel> currentRecentlyAddedProspects = _interactionsFacade.RecentlyAddedProspects;
 
-                            OutputSaveRecentlyAddedProspects(message, currentTotalConnectionsCount, currentRecentlyAddedProspects);
+                                OutputSaveRecentlyAddedProspects(message, currentTotalConnectionsCount, currentRecentlyAddedProspects);
 
-                            IList<RecentlyAddedProspectModel> newRecentlyAddedProspects = currentRecentlyAddedProspects.Where(p => previousRecentlyAddedProspects.Any(prev => prev.Name == p.Name) == false).ToList();
+                                IList<RecentlyAddedProspectModel> newRecentlyAddedProspects = currentRecentlyAddedProspects.Where(p => previousRecentlyAddedProspects.Any(prev => prev.Name == p.Name) == false).ToList();
 
-                            // invoke an event here
-                            OutputRecentlyAddedProspects(message, newRecentlyAddedProspects);
+                                // invoke an event here                                
+                                OutputRecentlyAddedProspects(message, newRecentlyAddedProspects, currentTotalConnectionsCount);
+                            }
                         }
                     }
                 }
             }
         }
 
-        private void OutputRecentlyAddedProspects(MonitorForNewAcceptedConnectionsBody message, IList<Models.MonitorForNewProspects.RecentlyAddedProspectModel> newRecentlyAddedProspects)
+        private void OutputRecentlyAddedProspects(MonitorForNewAcceptedConnectionsBody message, IList<RecentlyAddedProspectModel> newRecentlyAddedProspects, int currentTotalConnectionsCount)
         {
             if (newRecentlyAddedProspects != null && newRecentlyAddedProspects.Count > 0)
             {
-                this.NewConnectionsDetected.Invoke(this, new NewRecentlyAddedProspectsDetectedEventArgs(message, newRecentlyAddedProspects));
+                this.NewConnectionsDetected.Invoke(this, new NewRecentlyAddedProspectsDetectedEventArgs(message, newRecentlyAddedProspects, currentTotalConnectionsCount));
             }
         }
 
@@ -231,12 +235,12 @@ namespace Domain.Orchestrators
             return _interactionsFacade.HandleRefreshBrowserInteraction(interaction);
         }
 
-        private void OutputRecentlyAddedProspects(AllInOneVirtualAssistantMessageBody message, IList<RecentlyAddedProspectModel> newRecentlyAddedProspects)
+        private void OutputRecentlyAddedProspects(AllInOneVirtualAssistantMessageBody message, IList<RecentlyAddedProspectModel> newRecentlyAddedProspects, int newTotalConnectionsCount)
         {
             if (newRecentlyAddedProspects != null && newRecentlyAddedProspects.Count > 0)
             {
                 _logger.LogDebug("Executing {0}. Emitting new connections detected event", nameof(AllInOneVirtualAssistantMessageBody));
-                NewConnectionsDetected.Invoke(this, new NewRecentlyAddedProspectsDetectedEventArgs(message, newRecentlyAddedProspects));
+                NewConnectionsDetected.Invoke(this, new NewRecentlyAddedProspectsDetectedEventArgs(message, newRecentlyAddedProspects, newTotalConnectionsCount));
             }
         }
 

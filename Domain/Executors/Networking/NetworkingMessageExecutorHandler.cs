@@ -1,12 +1,10 @@
-﻿using Domain.Models.ProspectList;
+﻿using Domain.Executors.AllInOneVirtualAssistant.Events;
 using Domain.Models.Responses;
-using Domain.Models.SendConnections;
 using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Domain.Executors.Networking
@@ -15,29 +13,29 @@ namespace Domain.Executors.Networking
     {
         public NetworkingMessageExecutorHandler(
             ILogger<NetworkingMessageExecutorHandler> logger,
-            INetworkingService networkingService,
-            INetworkingPhaseOrchestrator phaseOrchestrator
+            INetworkingService service,
+            INetworkingPhaseOrchestrator orchestrator
             )
         {
-            _phaseOrchestrator = phaseOrchestrator;
+            _orchestrator = orchestrator;
             _logger = logger;
-            _networkingService = networkingService;
+            _service = service;
         }
 
-        private readonly INetworkingPhaseOrchestrator _phaseOrchestrator;
-        private readonly INetworkingService _networkingService;
+        private readonly INetworkingPhaseOrchestrator _orchestrator;
+        private readonly INetworkingService _service;
         private readonly ILogger<NetworkingMessageExecutorHandler> _logger;
 
         public async Task<bool> ExecuteMessageAsync(NetworkingMessageBody message)
         {
             bool succeeded = false;
-            GetSearchUrlProgressResponse response = await _networkingService.GetSearchUrlProgressAsync(message);
-            if (response == null || response.SearchUrls == null)
+            GetSearchUrlProgressResponse response = await _service.GetSearchUrlProgressAsync(message);
+            if (response == null || response.Items == null)
             {
                 return succeeded;
             }
 
-            if (response.SearchUrls.Count == 0)
+            if (response.Items.Count == 0)
             {
                 _logger.LogInformation("There are no search urls left to crawl. All of search urls have been crawled.");
                 return true;
@@ -45,45 +43,54 @@ namespace Domain.Executors.Networking
 
             try
             {
-                _phaseOrchestrator.Execute(message, response.SearchUrls);
+                _orchestrator.PersistPrimaryProspects += OnProcessProspectListAsync;
+                _orchestrator.ConnectionsSent += OnProcessSentConnectionsAsync;
+                _orchestrator.SearchLimitReached += OnUpdateMonthlySearchLimitAsync;
+                _orchestrator.UpdatedSearchUrlsProgress += OnUpdateSearchUrlsAsync;
+
+                _orchestrator.Execute(message, response.Items);
                 succeeded = true;
             }
             catch (Exception ex)
             {
                 succeeded = false;
             }
-            finally
-            {
-                await ProcessDataAsync(message);
-            }
 
             return succeeded;
         }
 
-        private async Task ProcessDataAsync(NetworkingMessageBody message)
+        private async Task OnProcessSentConnectionsAsync(object sender, ConnectionsSentEventArgs e)
         {
-            // perform all async calls now.
-            IList<ConnectionSentModel> connectionSents = _phaseOrchestrator.ConnectionsSent;
-            if (connectionSents.Count > 0)
+            if (e.ConnectionsSent?.Count > 0)
             {
-                await _networkingService.ProcessSentConnectionsAsync(connectionSents, message);
+                NetworkingMessageBody networkingMessage = e.Message as NetworkingMessageBody;
+                await _service.ProcessSentConnectionsAsync(e.ConnectionsSent, networkingMessage);
             }
-
-            IList<Domain.Models.Networking.SearchUrlProgressModel> items = _phaseOrchestrator.UpdatedSearchUrlsProgress;
-            if (items.Count > 0)
-            {
-                await _networkingService.UpdateSearchUrlsAsync(items, message);
-            }
-
-            List<PersistPrimaryProspectModel> persistPrimaryProspects = _phaseOrchestrator.PersistPrimaryProspects;
-            if (persistPrimaryProspects.Count > 0)
-            {
-                await _networkingService.ProcessProspectListAsync(persistPrimaryProspects, message);
-            }
-
-            bool monthlyLimitReached = _phaseOrchestrator.GetMonthlySearchLimitReached();
-            await _networkingService.UpdateMonthlySearchLimitAsync(monthlyLimitReached, message);
-
         }
+
+        private async Task OnUpdateSearchUrlsAsync(object sender, UpdatedSearchUrlProgressEventArgs e)
+        {
+            if (e.UpdatedSearchUrlsProgress?.Count > 0)
+            {
+                NetworkingMessageBody networkingMessage = e.Message as NetworkingMessageBody;
+                await _service.UpdateSearchUrlsAsync(e.UpdatedSearchUrlsProgress, networkingMessage);
+            }
+        }
+
+        private async Task OnProcessProspectListAsync(object sender, PersistPrimaryProspectsEventArgs e)
+        {
+            if (e.PersistPrimaryProspects?.Count > 0)
+            {
+                NetworkingMessageBody networkingMessage = e.Message as NetworkingMessageBody;
+                await _service.ProcessProspectListAsync(e.PersistPrimaryProspects, networkingMessage);
+            }
+        }
+
+        private async Task OnUpdateMonthlySearchLimitAsync(object sender, MonthlySearchLimitReachedEventArgs e)
+        {
+            NetworkingMessageBody networkingMessage = e.Message as NetworkingMessageBody;
+            await _service.UpdateMonthlySearchLimitAsync(e.LimitReached, networkingMessage);
+        }
+
     }
 }

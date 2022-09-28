@@ -112,5 +112,24 @@ namespace PageObjects
 
             return succeeded;
         }
+
+        public void ScrollIntoView(IWebElement webElement, IWebDriver webDriver)
+        {
+            try
+            {
+                if (webElement != null)
+                {
+                    _logger.LogTrace("Executing javascript 'scrollIntoView' to scroll element into view");
+
+                    IJavaScriptExecutor js = (IJavaScriptExecutor)webDriver;
+                    // accounts for navbar
+                    js.ExecuteScript("window.scroll({ top: arguments[0], left: arguments[1], behavior: 'smooth' });", webElement.Location.X, webElement.Location.Y - 140);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("Could not execute scroll into view method on the given element");
+            }
+        }
     }
 }

@@ -2,15 +2,9 @@
 using Domain.Executors.MonitorForNewConnections.Events;
 using Domain.Executors.ScanProspectsForReplies.Events;
 using Domain.Facades.Interfaces;
-using Domain.Models.DeepScanProspectsForReplies;
-using Domain.Models.FollowUpMessage;
-using Domain.Models.Networking;
-using Domain.Models.ProspectList;
-using Domain.Models.SendConnections;
 using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
 using OpenQA.Selenium;
-using System.Collections.Generic;
 
 namespace Domain.Facades
 {
@@ -38,13 +32,6 @@ namespace Domain.Facades
         private readonly IMonitorForNewConnectionsPhaseOrchestrator _monitorForNewConnectionsOrchestrator;
         private readonly INetworkingPhaseOrchestrator _networkingOrchestrator;
         private readonly IScanProspectsForRepliesPhaseOrchestrator _scanProspectsForRepliesOrchestrator;
-
-        public IList<ProspectRepliedModel> ProspectsThatReplied => _deepScanOrchestrator.Prospects;
-        public List<PersistPrimaryProspectModel> PersistPrimaryProspects => _networkingOrchestrator.PersistPrimaryProspects;
-        public bool MonthlySearchLimitReached => _networkingOrchestrator.GetMonthlySearchLimitReached();
-        public IList<SearchUrlProgressModel> UpdatedSearchUrlsProgress => _networkingOrchestrator.UpdatedSearchUrlsProgress;
-        public IList<SentFollowUpMessageModel> SentFollowUpMessages => _followUpOrchestrator.GetSentFollowUpMessages();
-        public IList<ConnectionSentModel> ConnectionsSent => _networkingOrchestrator.ConnectionsSent;
 
         public event FollowUpMessagesSentEventHandler FollowUpMessagesSent
         {
@@ -80,6 +67,30 @@ namespace Domain.Facades
         {
             add => _deepScanOrchestrator.ProspectsThatRepliedDetected += value;
             remove => _deepScanOrchestrator.ProspectsThatRepliedDetected -= value;
+        }
+
+        public event PersistPrimaryProspectsEventHandler PersistPrimaryProspects
+        {
+            add => _networkingOrchestrator.PersistPrimaryProspects += value;
+            remove => _networkingOrchestrator.PersistPrimaryProspects -= value;
+        }
+
+        public event ConnectionsSentEventHandler ConnectionsSent
+        {
+            add => _networkingOrchestrator.ConnectionsSent += value;
+            remove => _networkingOrchestrator.ConnectionsSent -= value;
+        }
+
+        public event MonthlySearchLimitReachedEventHandler MonthlySearchLimitReached
+        {
+            add => _networkingOrchestrator.SearchLimitReached += value;
+            remove => _networkingOrchestrator.SearchLimitReached -= value;
+        }
+
+        public event UpdatedSearchUrlProgressEventHandler UpdatedSearchUrlsProgress
+        {
+            add => _networkingOrchestrator.UpdatedSearchUrlsProgress += value;
+            remove => _networkingOrchestrator.UpdatedSearchUrlsProgress -= value;
         }
 
         public void HandleCheckOffHoursNewConnections(IWebDriver webDriver, CheckOffHoursNewConnectionsBody message)

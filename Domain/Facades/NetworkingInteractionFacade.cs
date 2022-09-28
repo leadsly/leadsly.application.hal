@@ -52,6 +52,8 @@ namespace Domain.Facades
 
         public int TotalNumberOfSearchResults => _getTotalSearchResultsHandler.GetTotalResults();
 
+        public bool ErrorToastMessageDetected => _connectWithProspectInteractionHandler.ErrorToastMessageDetected;
+
         public bool HandleNoResultsFoundInteraction(InteractionBase interaction)
         {
             return _noSearchResultsHandler.HandleInteraction(interaction);

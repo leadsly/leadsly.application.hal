@@ -12,6 +12,7 @@ namespace Domain.Facades.Interfaces
         public IList<IWebElement> Prospects { get; }
         public ConnectionSentModel ConnectionSent { get; }
         public int TotalNumberOfSearchResults { get; }
+        public bool ErrorToastMessageDetected { get; }
         bool HandleGetTotalNumberOfSearchResults(InteractionBase interaction);
         bool HandleNoResultsFoundInteraction(InteractionBase interaction);
         bool HandleConnectWithProspectsInteraction(InteractionBase interaction);

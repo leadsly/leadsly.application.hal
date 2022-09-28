@@ -36,7 +36,7 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessageContent
                 return false;
             }
 
-            string messageContent = _service.GetMessageContent(getMessageInteraction.Message);
+            string messageContent = _service.GetMessageContent(_service.OpenedConversationPopUp);
             if (messageContent == null)
             {
                 _logger.LogError("Could not get message content");
@@ -46,7 +46,7 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessageContent
             _logger.LogDebug("Message content was found");
             NewMessageModel newMessage = new()
             {
-                ProspectName = _service.ProspectNameFromMessage(getMessageInteraction.Message),
+                ProspectName = _service.ProspectNameFromMessage(_service.OpenedConversationPopUp),
                 ResponseMessage = messageContent,
                 ResponseMessageTimestamp = _timestampService.TimestampNow()
             };

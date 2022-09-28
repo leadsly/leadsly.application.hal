@@ -7,6 +7,7 @@ namespace Domain.Services.Interfaces.POMs
     {
         IList<IWebElement> GetMessagesListBubbles(IWebDriver webDriver);
         IList<IWebElement> GetUnreadMessagesListBubbles(IList<IWebElement> messageListBubbles);
+        public IWebElement OpenedConversationPopUp { get; }
         bool ClickNewMessage(IWebElement newMessageListItem, IWebDriver webDriver);
         public string GetMessageContent(IWebElement conversationPopUp);
         string ProspectNameFromMessage(IWebElement element);

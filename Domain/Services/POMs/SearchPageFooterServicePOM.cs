@@ -45,6 +45,8 @@ namespace Domain.Services.POMs
                 webDriver.ScrollTop(_humanBehaviorService);
             }
 
+            _logger.LogInformation("Total count for this search result is {totalCount}", totalCount);
+
             return totalCount;
         }
 

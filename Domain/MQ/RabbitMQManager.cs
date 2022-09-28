@@ -95,15 +95,17 @@ namespace Domain.MQ
         public BasicGetResult GetMessage(string queueNameIn, string halId)
         {
             RabbitMQOptions options = _rabbitMQRepository.GetRabbitMQConfigOptions();
-            string exchangeName = options.ExchangeOptions.Hal.Name;
-            string exchangeType = options.ExchangeOptions.Hal.ExchangeType;
 
             var channel = _pool.Get();
 
             string queueName = options.QueueConfigOptions.Hal.Name.Replace("{halId}", halId);
             queueName = queueName.Replace("{queueName}", queueNameIn);
 
-            return channel.BasicGet(queueName, true);
+            BasicGetResult result = channel.BasicGet(queueName, true);
+
+            channel.BasicAck(result.DeliveryTag, false);
+
+            return result;
         }
 
         private RabbitMQOptions GetRabbitMQOptions()

@@ -3,6 +3,7 @@ using Domain.MQ.Messages;
 using Domain.MQ.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using System;
 using System.Collections.Generic;
 
 namespace Domain.MQ.Services
@@ -26,14 +27,21 @@ namespace Domain.MQ.Services
             BasicGetResult result = default;
             do
             {
-                result = _manager.GetMessage(queueNameIn, halId);
-                if (result != null)
+                try
                 {
-                    T mqMessage = result.Body.Deserialize<T>();
-                    if (mqMessage != null)
+                    result = _manager.GetMessage(queueNameIn, halId);
+                    if (result != null)
                     {
-                        mqMessages.Enqueue(mqMessage);
+                        T mqMessage = result.Body.Deserialize<T>();
+                        if (mqMessage != null)
+                        {
+                            mqMessages.Enqueue(mqMessage);
+                        }
                     }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Perhaps there are no messages on the queue");
                 }
 
             } while (result?.MessageCount > 0);

@@ -40,6 +40,7 @@ namespace Domain.Facades
         public IList<IWebElement> NewMessageElements => _getNewMessagesHandler.GetNewMessages();
 
         public NewMessageModel NewMessage => _getMessageContentHandler.GetNewMessage();
+        public IList<NewMessageModel> NewMessages => _getUnreadMessagesContentHandler.GetNewMessages();
         public IList<IWebElement> UnreadMessages => _getAllUnreadMessagesHandler.GetUnreadMessages();
 
         public bool HandleGetMessageContentInteraction(InteractionBase interaction)

@@ -143,10 +143,16 @@ namespace Domain.Services
             _logger.LogDebug($"Setting --user-data-dir to {defaultChromeProfileDir}/{chromeProfile}");
             options.AddArgument(@$"--user-data-dir={defaultChromeProfileDir}/{chromeProfile}");
 
-            options.Proxy = new()
-            {
-                HttpProxy = _env.IsProduction() ? $"http://{proxyServiceDiscoveryName}.{proxyNamespaceName}" : webDriverOptions.ChromeProfileConfigOptions.Proxy.HttpProxy
-            };
+            string httpProxyUrl = _env.IsProduction() ? $"http://{proxyServiceDiscoveryName}.{proxyNamespaceName}" : webDriverOptions.ChromeProfileConfigOptions.Proxy.HttpProxy;
+
+            // options.AddArguments($"--proxy-server={httpProxyUrl}");
+
+            //options.Proxy = new()
+            //{
+            //    Kind = ProxyKind.Manual,
+            //    HttpProxy = _env.IsProduction() ? $"http://{proxyServiceDiscoveryName}.{proxyNamespaceName}" : webDriverOptions.ChromeProfileConfigOptions.Proxy.HttpProxy,
+            //    SslProxy = "http://localhost:5078"
+            //};
 
             return options;
         }

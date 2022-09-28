@@ -267,6 +267,13 @@ namespace Domain.InstructionSets
                     NumberOfConnectionsSent += 1;
                     ConnectionsSent.Add(_interactionFacade.ConnectionSent);
                 }
+                else if (_interactionFacade.ErrorToastMessageDetected == true)
+                {
+                    // lets back off and treat this run as if we have successfully sent ALL connections. We will defer to another run or day
+                    NumberOfConnectionsSent = message.ProspectsToCrawl;
+                    // in case this wasn't the first interaction but subsequent, lets grab whatever we have in memory
+                    ConnectionsSent.Add(_interactionFacade.ConnectionSent);
+                }
                 else
                 {
                     _logger.LogDebug("The CampaignProspectRequest is null. Skipping this prospect and moving onto the next one");

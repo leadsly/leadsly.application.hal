@@ -9,10 +9,14 @@ namespace Domain.InstructionSets.Interfaces
 {
     public interface INetworkingInstructionSet
     {
+        //public event PersistPrimaryProspectsEventHandler PersistPrimaryProspects;
+        //public event ConnectionsSentEventHandler ConnectionsSent;
+        //public event MonthlySearchLimitReachedEventHandler SearchLimitReached;
+        //public event UpdatedSearchUrlProgressEventHandler UpdatedSearchUrlsProgress;
         public int NumberOfConnectionsSent { get; set; }
         public bool MonthlySearchLimitReached { get; }
         public int TotalNumberOfSearchResults { get; }
-        public IList<SearchUrlProgressModel> UpdatedSearchUrlsProgress { get; }
+        //public IList<SearchUrlProgressModel> UpdatedSearchUrlsProgress { get; }
         public IList<SearchUrlProgressModel> GetUpdatedSearchUrls();
         public List<PersistPrimaryProspectModel> GetPersistPrimaryProspects();
         public IList<ConnectionSentModel> GetConnectionsSent();

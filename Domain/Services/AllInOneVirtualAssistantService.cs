@@ -164,8 +164,7 @@ namespace Domain.Services
         public async Task ProcessNewMessagesAsync(IList<NewMessageModel> items, PublishMessageBody message, CancellationToken ct = default)
         {
             _logger.LogTrace("Executing {0}. This is for {1}", nameof(ProcessNewMessagesAsync), nameof(ScanProspectsForRepliesBody));
-            ScanProspectsForRepliesBody scanProspectsForRepliesMessage = message as ScanProspectsForRepliesBody;
-            await _scanProspectsService.ProcessNewMessagesAsync(items, scanProspectsForRepliesMessage, ct);
+            await _scanProspectsService.ProcessNewMessagesAsync(items, message, ct);
         }
 
         #endregion        
@@ -175,8 +174,7 @@ namespace Domain.Services
         public async Task ProcessRecentlyAddedProspectsAsync(IList<RecentlyAddedProspectModel> requests, PublishMessageBody message, CancellationToken ct = default)
         {
             _logger.LogTrace("Executing {0}. This is for {1}", nameof(ProcessRecentlyAddedProspectsAsync), nameof(MonitorForNewAcceptedConnectionsBody));
-            MonitorForNewAcceptedConnectionsBody monitorForNewAcceptedConnectionsBody = message as MonitorForNewAcceptedConnectionsBody;
-            await _monitorForNewConnectionsService.ProcessRecentlyAddedProspectsAsync(requests, monitorForNewAcceptedConnectionsBody, ct);
+            await _monitorForNewConnectionsService.ProcessRecentlyAddedProspectsAsync(requests, message, ct);
         }
 
         #endregion

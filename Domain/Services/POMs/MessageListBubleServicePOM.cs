@@ -26,6 +26,8 @@ namespace Domain.Services.POMs
             _humanBehaviorService = humanBehaviorService;
         }
 
+        public IWebElement OpenedConversationPopUp { get; private set; }
+
         public bool ClickNewMessage(IWebElement newMessageListItem, IWebDriver webDriver)
         {
             _humanBehaviorService.RandomWaitMilliSeconds(1000, 1500);
@@ -64,6 +66,7 @@ namespace Domain.Services.POMs
                             // we need to ensure this becomes the active conversation
                             _pom.ClickMinimizedConversation(openedConversation);
                             _humanBehaviorService.RandomWaitMilliSeconds(800, 1320);
+                            OpenedConversationPopUp = openedConversation;
                         }
                     }
                     else
@@ -72,6 +75,7 @@ namespace Domain.Services.POMs
                         if (prospectName == clickedProspectName)
                         {
                             // this means we've already have the current conversation active
+                            OpenedConversationPopUp = openedConversation;
                             break;
                         }
                     }
@@ -79,11 +83,14 @@ namespace Domain.Services.POMs
             }
 
             // wait until the conversation is opened
-            if (_pom.WaitUntilConversationIsDisplayed(newMessageListItem, webDriver) == false)
+            IWebElement openedConversationPopUp = openedConversations.FirstOrDefault();
+            if (_pom.WaitUntilConversationIsDisplayed(openedConversationPopUp, webDriver) == false)
             {
                 _logger.LogWarning("Could not locate conversation dialog after clicking the message list item. It's possible there was a misfire click that occured and the conversation was never opened");
                 return false;
             }
+
+            OpenedConversationPopUp = openedConversationPopUp;
 
             return true;
         }

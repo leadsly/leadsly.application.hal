@@ -76,32 +76,35 @@ namespace Domain.Orchestrators
 
         public void Execute(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message)
         {
-            Queue<FollowUpMessageBody> followUpMessages = message.FollowUpMessages;
-            int length = followUpMessages.Count;
-            try
+            if (message.FollowUpMessages != null)
             {
-                if (followUpMessages.Any() == true)
+                Queue<FollowUpMessageBody> followUpMessages = message.FollowUpMessages;
+                int length = followUpMessages.Count;
+                try
                 {
-                    string pageUrl = followUpMessages.Peek().PageUrl;
-                    if (PrepareBrowserWindow(webDriver, pageUrl) == false)
+                    if (followUpMessages.Any() == true)
                     {
-                        return;
+                        string pageUrl = followUpMessages.Peek().PageUrl;
+                        if (PrepareBrowserWindow(webDriver, pageUrl) == false)
+                        {
+                            return;
+                        }
+                    }
+
+                    for (int i = 0; i < length; i++)
+                    {
+                        FollowUpMessageBody followUpMessage = followUpMessages.Dequeue();
+
+                        SendFollowUpMessage(webDriver, followUpMessage);
+
                     }
                 }
-
-                for (int i = 0; i < length; i++)
+                finally
                 {
-                    FollowUpMessageBody followUpMessage = followUpMessages.Dequeue();
+                    OutputFollowUpMessagesSent(message);
 
-                    SendFollowUpMessage(webDriver, followUpMessage);
-
+                    SwitchBackToMainTab(webDriver);
                 }
-            }
-            finally
-            {
-                OutputFollowUpMessagesSent(message);
-
-                SwitchBackToMainTab(webDriver);
             }
         }
 
