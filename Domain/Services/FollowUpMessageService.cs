@@ -1,9 +1,12 @@
 ﻿using Domain.Models.FollowUpMessage;
 using Domain.Models.Requests.FollowUpMessage;
+using Domain.Models.Responses;
 using Domain.MQ.Messages;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.Api;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -45,42 +48,42 @@ namespace Domain.Services
             }
         }
 
-        //public async Task<FollowUpMessagesResponse> GetFollowUpMessagesAsync(PublishMessageBody message, CancellationToken ct = default)
-        //{
-        //    GetFollowUpMessagesRequest request = new()
-        //    {
-        //        RequestUrl = $"FollowUpMessage/{message.HalId}/messages",
-        //        NamespaceName = message.NamespaceName,
-        //        ServiceDiscoveryName = message.ServiceDiscoveryName
-        //    };
+        public async Task<FollowUpMessagesResponse> GetFollowUpMessagesAsync(PublishMessageBody message, CancellationToken ct = default)
+        {
+            GetFollowUpMessagesRequest request = new()
+            {
+                RequestUrl = $"FollowUpMessage/{message.HalId}/messages",
+                NamespaceName = message.NamespaceName,
+                ServiceDiscoveryName = message.ServiceDiscoveryName
+            };
 
-        //    HttpResponseMessage rawResponse = await _api.GetFollowUpMessagesAsync(request, ct);
+            HttpResponseMessage rawResponse = await _api.GetFollowUpMessagesAsync(request, ct);
 
-        //    if (rawResponse == null)
-        //    {
-        //        _logger.LogError("Response from application server was null. The request was responsible for fetching FollowUpMessages");
-        //        return null;
-        //    }
+            if (rawResponse == null)
+            {
+                _logger.LogError("Response from application server was null. The request was responsible for fetching FollowUpMessages");
+                return null;
+            }
 
-        //    if (rawResponse.IsSuccessStatusCode == false)
-        //    {
-        //        string content = await rawResponse.Content.ReadAsStringAsync();
-        //        _logger.LogError("Response from application server was not a successful status code. The request was responsible for getting FollowUpMessages. {content}", content);
-        //        return null;
-        //    }
+            if (rawResponse.IsSuccessStatusCode == false)
+            {
+                string content = await rawResponse.Content.ReadAsStringAsync();
+                _logger.LogError("Response from application server was not a successful status code. The request was responsible for getting FollowUpMessages. {content}", content);
+                return null;
+            }
 
-        //    FollowUpMessagesResponse response = default;
-        //    try
-        //    {
-        //        string json = await rawResponse.Content.ReadAsStringAsync();
-        //        response = JsonConvert.DeserializeObject<FollowUpMessagesResponse>(json);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Failed to deserialize response from application server. The request was responsible for getting FollowUpMessages");
-        //    }
+            FollowUpMessagesResponse response = default;
+            try
+            {
+                string json = await rawResponse.Content.ReadAsStringAsync();
+                response = JsonConvert.DeserializeObject<FollowUpMessagesResponse>(json);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to deserialize response from application server. The request was responsible for getting FollowUpMessages");
+            }
 
-        //    return response;
-        //}
+            return response;
+        }
     }
 }

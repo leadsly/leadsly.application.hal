@@ -10,6 +10,7 @@ using Leadsly.Application.Model;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -55,7 +56,7 @@ namespace Domain.Executors.AllInOneVirtualAssistant
                 await GetNetworkingSearchUrlsAsync(message);
 
                 // pull any follow up messages
-                // await GetFollowUpMessagesAsync(message);
+                await GetFollowUpMessagesAsync(message);
 
                 // fetch previous connected with prospects, this list should include the total connections count, as well as a list of
                 // prospects first name last name subheading and when we connected with them
@@ -86,14 +87,14 @@ namespace Domain.Executors.AllInOneVirtualAssistant
         //    }
         //}
 
-        //private async Task GetFollowUpMessagesAsync(AllInOneVirtualAssistantMessageBody message)
-        //{
-        //    FollowUpMessagesResponse followUpMessages = await _service.GetFollowUpMessagesAsync(message);
-        //    if (followUpMessages != null && followUpMessages.Items != null)
-        //    {
-        //        message.FollowUpMessages = new Queue<FollowUpMessageBody>(followUpMessages.Items);
-        //    }
-        //}
+        private async Task GetFollowUpMessagesAsync(AllInOneVirtualAssistantMessageBody message)
+        {
+            FollowUpMessagesResponse followUpMessages = await _service.GetFollowUpMessagesAsync(message);
+            if (followUpMessages != null && followUpMessages.Items != null)
+            {
+                message.FollowUpMessages = new Queue<FollowUpMessageBody>(followUpMessages.Items);
+            }
+        }
 
         //private async Task GetNetworkingMessagesAsync(AllInOneVirtualAssistantMessageBody message)
         //{

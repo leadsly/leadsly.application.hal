@@ -28,6 +28,6 @@ namespace Domain.Services.Interfaces
         Task<NetworkProspectsResponse> GetAllProspectsFromActiveCampaignsAsync(PublishMessageBody message, CancellationToken ct = default);
         Task ProcessCampaignProspectsThatRepliedAsync(IList<ProspectRepliedModel> prospects, PublishMessageBody message, CancellationToken ct = default);
         Task<NetworkingMessagesResponse> GetNetworkingMessagesAsync(PublishMessageBody message, CancellationToken ct = default);
-        // Task<FollowUpMessagesResponse> GetFollowUpMessagesAsync(PublishMessageBody message, CancellationToken ct = default);
+        Task<FollowUpMessagesResponse> GetFollowUpMessagesAsync(PublishMessageBody message, CancellationToken ct = default);
     }
 }
