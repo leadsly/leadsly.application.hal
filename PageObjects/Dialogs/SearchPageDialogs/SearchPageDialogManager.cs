@@ -138,7 +138,7 @@ namespace PageObjects.Dialogs.SearchPageDialogs
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to locate modal by css selector '#artdeco-modal-outlet .artdeco-modal'. Cannot connect with the prospect");
+                _logger.LogWarning("Failed to locate modal by css selector '#artdeco-modal-outlet .artdeco-modal'. Cannot connect with the prospect");
             }
             return modal;
         }
@@ -162,7 +162,7 @@ namespace PageObjects.Dialogs.SearchPageDialogs
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to locate modal by css selector '#artdeco-modal-outlet .artdeco-modal[role='dialog']'. Cannot connect with the prospect");
+                _logger.LogWarning("Failed to locate modal by css selector '#artdeco-modal-outlet .artdeco-modal[role='dialog']'. Cannot connect with the prospect");
             }
             return modal;
         }

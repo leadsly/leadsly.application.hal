@@ -380,7 +380,7 @@ namespace PageObjects.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to locate are these results helpful P tag");
+                _logger.LogWarning("Failed to locate are these results helpful P tag");
             }
             return areResultsHelpfulPTag;
         }
@@ -508,6 +508,32 @@ namespace PageObjects.Pages
         {
             IWebElement toastError = _webDriverUtilities.WaitUntilNotNull(ErrorToast, webDriver, 2);
             return toastError != null;
+        }
+
+        public bool CloseErrorPopUpMessage(IWebDriver webDriver)
+        {
+            IWebElement toastError = _webDriverUtilities.WaitUntilNotNull(ErrorToast, webDriver, 2);
+            if (toastError != null)
+            {
+                IWebElement closePopUpButton = ClosePopUpButton(toastError);
+                return _webDriverUtilities.HandleClickElement(closePopUpButton);
+            }
+
+            return false;
+        }
+
+        private IWebElement ClosePopUpButton(IWebElement popup)
+        {
+            IWebElement closePopUpButton = default;
+            try
+            {
+                closePopUpButton = popup.FindElement(By.XPath("//div[contains(@class, 'artdeco-toast-item')] //descendant:: li-icon[@type='cancel-icon']/ancestor::button"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Could not locate pop ups close button");
+            }
+            return closePopUpButton;
         }
 
         private IWebElement ErrorToast(IWebDriver webDriver)

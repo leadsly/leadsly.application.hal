@@ -9,6 +9,7 @@ namespace Domain.POMs.Pages
         void ScrollIntoView(IWebElement webElement, IWebDriver driver);
         bool IsNoSearchResultsContainerDisplayed(IWebDriver driver);
         bool AnyErrorPopUpMessages(IWebDriver webDriver);
+        bool CloseErrorPopUpMessage(IWebDriver webDriver);
         bool? ClickRetrySearch(IWebDriver driver, int numberOfTries, int delayBetweenEachClick);
         bool SendConnectionRequest(IWebElement prospect, IWebDriver webDriver);
         bool ScrollFooterIntoView(IWebDriver webDriver);

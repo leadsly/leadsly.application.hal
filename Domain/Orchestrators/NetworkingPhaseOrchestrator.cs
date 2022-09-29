@@ -1,7 +1,6 @@
 ﻿using Domain.Executors.AllInOneVirtualAssistant.Events;
 using Domain.InstructionSets.Interfaces;
 using Domain.Models.Networking;
-using Domain.Models.ProspectList;
 using Domain.Models.SendConnections;
 using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
@@ -28,7 +27,11 @@ namespace Domain.Orchestrators
             _instructionSet = instructionSet;
         }
 
-        public event PersistPrimaryProspectsEventHandler PersistPrimaryProspects;
+        public event PersistPrimaryProspectsEventHandler PersistPrimaryProspects
+        {
+            add => _instructionSet.PersistPrimaryProspects += value;
+            remove => _instructionSet.PersistPrimaryProspects -= value;
+        }
 
         public event ConnectionsSentEventHandler ConnectionsSent;
 
@@ -88,21 +91,10 @@ namespace Domain.Orchestrators
                 _webDriverProvider.CloseCurrentTab(webDriver, BrowserPurpose.Networking);
                 NumberOfConnectionsSent = 0;
 
-                // output the results here
-                OutputProspectList(message);
+                // output the results here                
                 OutputUpdateMonthlySearchLimit(message);
                 OutputConnectionsSent(message);
                 OutputUpdateSearchUrlsProgress(message);
-            }
-        }
-
-        private void OutputProspectList(NetworkingMessageBody message)
-        {
-            List<PersistPrimaryProspectModel> persistPrimaryProspects = _instructionSet.GetPersistPrimaryProspects();
-            if (persistPrimaryProspects != null && persistPrimaryProspects.Count > 0)
-            {
-                _logger.LogInformation("Persisting {0} primary prospects for HalId {1}", persistPrimaryProspects.Count, message.HalId);
-                PersistPrimaryProspects.Invoke(this, new PersistPrimaryProspectsEventArgs(message, persistPrimaryProspects));
             }
         }
 

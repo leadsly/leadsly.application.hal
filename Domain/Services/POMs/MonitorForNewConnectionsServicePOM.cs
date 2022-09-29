@@ -1,5 +1,6 @@
 ﻿using Domain.Models.MonitorForNewProspects;
 using Domain.POMs;
+using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.POMs;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
@@ -10,13 +11,18 @@ namespace Domain.Services.POMs
 {
     public class MonitorForNewConnectionsServicePOM : IMonitorForNewConnectionsServicePOM
     {
-        public MonitorForNewConnectionsServicePOM(IConnectionsView connectionView, ILogger<MonitorForNewConnectionsServicePOM> logger)
+        public MonitorForNewConnectionsServicePOM(
+            IConnectionsView connectionView,
+            ILogger<MonitorForNewConnectionsServicePOM> logger,
+            ITimestampService timestampService)
         {
+            _timestampService = timestampService;
             _connectionView = connectionView;
             _logger = logger;
         }
 
         private readonly ILogger<MonitorForNewConnectionsServicePOM> _logger;
+        private readonly ITimestampService _timestampService;
         private readonly IConnectionsView _connectionView;
 
         public IList<RecentlyAddedProspectModel> GetAllRecentlyAdded(IWebDriver webDriver)
@@ -33,7 +39,8 @@ namespace Domain.Services.POMs
                 RecentlyAddedProspectModel potentialProspect = new()
                 {
                     Name = _connectionView.GetNameFromLiTag(recentlyAddedProspect),
-                    ProfileUrl = _connectionView.GetProfileUrlFromLiTag(recentlyAddedProspect)
+                    ProfileUrl = _connectionView.GetProfileUrlFromLiTag(recentlyAddedProspect),
+                    AcceptedRequestTimestamp = _timestampService.TimestampNow()
                 };
 
                 prospects.Add(potentialProspect);

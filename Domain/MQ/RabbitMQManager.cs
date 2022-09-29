@@ -78,16 +78,20 @@ namespace Domain.MQ
             IDictionary<string, object> arguments = new Dictionary<string, object>();
             arguments.Add(RabbitMQConstants.QueueType, RabbitMQConstants.Classic);
 
-            channel.QueueDeclare(queue: queueNameIn, durable: true, exclusive: false, autoDelete: true, arguments: arguments);
+            string queueName = options.QueueConfigOptions.AppServer.Name.Replace("{queueName}", queueNameIn);
 
-            channel.QueueBind(queueNameIn, exchangeName, routingKeyIn, null);
+            channel.QueueDeclare(queue: queueName, durable: true, exclusive: false, autoDelete: true, arguments: arguments);
+
+            string routingKey = options.RoutingKey.AppServer.Replace("{purpose}", routingKeyIn);
+
+            channel.QueueBind(queueName, exchangeName, routingKey, null);
 
             _logger.LogInformation("The exchangeName is: {exchangeName} " +
                             "\r\nThe exchangeType is: {exchangeType} ",
                             exchangeName,
                             exchangeType);
 
-            channel.BasicPublish(exchange: exchangeName, routingKey: routingKeyIn, basicProperties: null, body: body);
+            channel.BasicPublish(exchange: exchangeName, routingKey: routingKey, basicProperties: null, body: body);
 
             _pool.Return(channel);
         }

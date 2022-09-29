@@ -74,9 +74,16 @@ namespace Domain.Interactions.Networking.ConnectWithProspect
             // check if there were any pop up messages displayed that would indicate an error occured or if the connect button still says connect vs pending
             if (_linkedInSearchPage.AnyErrorPopUpMessages(webDriver) == true)
             {
+                // close the toast
+                _linkedInSearchPage.CloseErrorPopUpMessage(webDriver);
+
                 _logger.LogWarning("Error toast message was detected. No connection was sent.");
                 ErrorToastMessageDetected = true;
                 sendConnectionSuccess = false;
+            }
+            else
+            {
+                ErrorToastMessageDetected = false;
             }
 
             return sendConnectionSuccess;

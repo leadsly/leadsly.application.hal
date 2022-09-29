@@ -49,7 +49,7 @@ namespace Domain.Executors.AllInOneVirtualAssistant
                 _orchestrator.MonthlySearchLimitReached += OnUpdateMonthlySearchLimitAsync;
                 _orchestrator.UpdatedSearchUrlsProgress += OnUpdateSearchUrlsAsync;
 
-                SetupCheckOffHoursConnections(message);
+                // SetupCheckOffHoursConnections(message);
 
                 // pull any networking messages
                 await GetNetworkingSearchUrlsAsync(message);
@@ -78,13 +78,13 @@ namespace Domain.Executors.AllInOneVirtualAssistant
             return succeeded;
         }
 
-        private void SetupCheckOffHoursConnections(AllInOneVirtualAssistantMessageBody message)
-        {
-            if (message.CheckOffHoursNewConnections != null)
-            {
-                _orchestrator.OffHoursNewConnectionsDetected += OnOffHoursNewConnectionsDetected;
-            }
-        }
+        //private void SetupCheckOffHoursConnections(AllInOneVirtualAssistantMessageBody message)
+        //{
+        //    if (message.CheckOffHoursNewConnections != null)
+        //    {
+        //        _orchestrator.OffHoursNewConnectionsDetected += OnOffHoursNewConnectionsDetected;
+        //    }
+        //}
 
         //private async Task GetFollowUpMessagesAsync(AllInOneVirtualAssistantMessageBody message)
         //{

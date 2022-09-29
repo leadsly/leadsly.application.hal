@@ -142,22 +142,22 @@ namespace Domain.Orchestrators
             //message.FollowUpMessages = new Queue<FollowUpMessageBody>(followUpMessages);
             // }
 
-            if (message.CheckOffHoursNewConnections != null)
-            {
-                // 1. check off hours connections
-                _orchestratorsFacade.HandleCheckOffHoursNewConnections(webDriver, message.CheckOffHoursNewConnections);
-            }
+            //if (message.CheckOffHoursNewConnections != null)
+            //{
+            //    // 1. check off hours connections
+            //    _orchestratorsFacade.HandleCheckOffHoursNewConnections(webDriver, message.CheckOffHoursNewConnections);
+            //}
 
-            // 2. start with monitor for new connections
+            // 1. start with monitor for new connections
             _orchestratorsFacade.HandleMonitorForNewConnections(webDriver, message);
 
-            // 3. then execute scan prospects for replies
+            // 2. then execute scan prospects for replies
             _orchestratorsFacade.HandleScanProspectsForReplies(webDriver, message);
 
-            // 4. run follow up messages
+            // 3. run follow up messages
             _orchestratorsFacade.HandleFollowUpMessages(webDriver, message);
 
-            // 5. run networking 
+            // 4. run networking 
             _orchestratorsFacade.HandleNetworking(webDriver, message);
         }
     }

@@ -1,5 +1,5 @@
-﻿using Domain.Models.Networking;
-using Domain.Models.ProspectList;
+﻿using Domain.Executors.AllInOneVirtualAssistant.Events;
+using Domain.Models.Networking;
 using Domain.Models.SendConnections;
 using Domain.MQ.Messages;
 using OpenQA.Selenium;
@@ -9,16 +9,11 @@ namespace Domain.InstructionSets.Interfaces
 {
     public interface INetworkingInstructionSet
     {
-        //public event PersistPrimaryProspectsEventHandler PersistPrimaryProspects;
-        //public event ConnectionsSentEventHandler ConnectionsSent;
-        //public event MonthlySearchLimitReachedEventHandler SearchLimitReached;
-        //public event UpdatedSearchUrlProgressEventHandler UpdatedSearchUrlsProgress;
         public int NumberOfConnectionsSent { get; set; }
         public bool MonthlySearchLimitReached { get; }
         public int TotalNumberOfSearchResults { get; }
-        //public IList<SearchUrlProgressModel> UpdatedSearchUrlsProgress { get; }
         public IList<SearchUrlProgressModel> GetUpdatedSearchUrls();
-        public List<PersistPrimaryProspectModel> GetPersistPrimaryProspects();
+        public event PersistPrimaryProspectsEventHandler PersistPrimaryProspects;
         public IList<ConnectionSentModel> GetConnectionsSent();
         public bool GetMonthlySearchLimitReached();
         public void ConnectWithProspectsForSearchUrl(IWebDriver webDriver, NetworkingMessageBody message, SearchUrlProgressModel searchUrlProgress, int totalResults);
