@@ -9,12 +9,20 @@ using Domain.Facades;
 using Domain.Facades.Interfaces;
 using Domain.InstructionSets;
 using Domain.InstructionSets.Interfaces;
+using Domain.Interactions.AllInOneVirtualAssistant.EnterFollowUpMessage;
+using Domain.Interactions.AllInOneVirtualAssistant.EnterFollowUpMessage.Interfaces;
+using Domain.Interactions.AllInOneVirtualAssistant.EnterProspectName;
+using Domain.Interactions.AllInOneVirtualAssistant.EnterProspectName.Interfaces;
 using Domain.Interactions.AllInOneVirtualAssistant.GetAllUnreadMessages;
 using Domain.Interactions.AllInOneVirtualAssistant.GetAllUnreadMessages.Interfaces;
 using Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessageContent;
 using Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessageContent.Interfaces;
 using Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessagesContent;
 using Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessagesContent.Interfaces;
+using Domain.Interactions.AllInOneVirtualAssistant.IsProspectInRecentlyAdded;
+using Domain.Interactions.AllInOneVirtualAssistant.IsProspectInRecentlyAdded.Interfaces;
+using Domain.Interactions.AllInOneVirtualAssistant.ShouldSendFollowUpMessage;
+using Domain.Interactions.AllInOneVirtualAssistant.ShouldSendFollowUpMessage.Interfaces;
 using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince;
 using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince.Interfaces;
 using Domain.Interactions.DeepScanProspectsForReplies.CheckMessagesHistory;
@@ -229,6 +237,7 @@ namespace Hal.Configurations
             services.AddScoped<ICheckOffHoursNewConnectionsServicePOM, CheckOffHoursNewConnectionsServicePOM>();
             services.AddScoped<IMonitorForNewConnectionsServicePOM, MonitorForNewConnectionsServicePOM>();
             services.AddScoped<IMessageListBubbleServicePOM, MessageListBubbleServicePOM>();
+            services.AddScoped<IFollowUpMessageOnConnectionsServicePOM, FollowUpMessageOnConnectionsServicePOM>();
 
             return services;
         }
@@ -399,6 +408,11 @@ namespace Hal.Configurations
             services.AddScoped<IGetUnreadMessageContentInteractionHandler, GetUnreadMessageContentInteractionHandler>();
             services.AddScoped<IGetUnreadMessagesContentInteractionHandler, GetUnreadMessagesContentInteractionHandler>();
             services.AddScoped<IGetUnreadMessagesContentInteractionHandler, GetUnreadMessagesContentInteractionHandler>();
+
+            services.AddScoped<IEnterFollowUpMessageInteractionHandler, EnterFollowUpMessageInteractionHandler>();
+            services.AddScoped<IEnterProspectNameIntoSearchInteractionHandler, EnterProspectNameIntoSearchInteractionHandler>();
+            services.AddScoped<ICheckIfProspectIsInRecentlyAddedListInteractionHandler, CheckIfProspectIsInRecentlyAddedListInteractionHandler>();
+            services.AddScoped<IShouldSendFollowUpMessageInteractionHandler, ShouldSendFollowUpMessageInteractionHandler>();
 
             ////////////////////////////////////////////////////////////
             /// Shared Interactions

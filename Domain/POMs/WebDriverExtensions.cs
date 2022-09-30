@@ -1,6 +1,7 @@
 ﻿using Domain.Services.Interfaces;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.Extensions;
+using System;
 
 namespace Domain.POMs
 {
@@ -54,6 +55,23 @@ namespace Domain.POMs
                                             "}                                        " +
                                             "return false;                            "
                                             , element);
+        }
+
+        public static void ScrollIntoView(this IWebDriver webDriver, IWebElement webElement)
+        {
+            try
+            {
+                if (webElement != null)
+                {
+                    IJavaScriptExecutor js = (IJavaScriptExecutor)webDriver;
+                    // accounts for navbar
+                    js.ExecuteScript("window.scroll({ top: arguments[0], left: arguments[1], behavior: 'smooth' });", webElement.Location.X, webElement.Location.Y - 140);
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
         }
     }
 }

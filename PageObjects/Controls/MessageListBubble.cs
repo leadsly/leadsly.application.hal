@@ -29,6 +29,7 @@ namespace PageObjects.Controls
         private const string MinimizedConversationItemProspectName_CssLocator = ".msg-overlay-conversation-bubble-header--fade-in h2";
         private const string InactiveMessageWindow_ClassNameLocator = "msg-overlay-conversation-bubble--default-inactive";
         private const string BubbleMessageListItemProspectName_CssLocator = ".msg-conversation-listitem__link h3";
+        private const string ConversationPopUpInput_ClassNameSelector = "msg-form__contenteditable";
 
         private IWebElement? MessageListBubblesElement { get; set; }
 
@@ -247,6 +248,33 @@ namespace PageObjects.Controls
             bool succeeded = _webDriverUtilities.HandleClickElement(conversationListItem);
 
             return succeeded;
+        }
+
+        public IWebElement GetEnterMessageInputField(IWebDriver webDriver, IWebElement conversationPopUp)
+        {
+            IWebElement inputDiv = EnterMessageInputDiv(conversationPopUp);
+
+            return inputDiv;
+        }
+
+        private IWebElement EnterMessageInputDiv(IWebElement conversationPopup)
+        {
+            IWebElement div = default;
+            try
+            {
+                div = conversationPopup.FindElement(By.ClassName(ConversationPopUpInput_ClassNameSelector));
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            return div;
+        }
+
+        public bool ClickSendMessage(IWebDriver webDriver, IWebElement conversationPopUp)
+        {
+            throw new NotImplementedException();
         }
     }
 }

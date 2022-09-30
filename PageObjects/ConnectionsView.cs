@@ -198,5 +198,31 @@ namespace PageObjects
             return _conversationCards.GetAllConversationCloseButtons(webDriver);
         }
 
+        public bool ClickMessage(IWebElement prospect)
+        {
+            IWebElement messageButton = MessageButton(prospect);
+
+            if (messageButton == null)
+            {
+                return false;
+            }
+
+            return _webDriverUtilities.HandleClickElement(messageButton);
+        }
+
+        private IWebElement MessageButton(IWebElement prospect)
+        {
+            IWebElement messageButton = default;
+            try
+            {
+                messageButton = prospect.FindElement(By.CssSelector(".mn-connection-card__action-container button"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Could not locate message button");
+            }
+
+            return messageButton;
+        }
     }
 }

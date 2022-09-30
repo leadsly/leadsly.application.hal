@@ -17,5 +17,7 @@ namespace Domain.POMs.Controls
         bool IsMinimized(IWebElement conversationItem);
         string GetProspectNameFromMinimizedConversationItem(IWebElement conversationListItem);
         bool ClickMinimizedConversation(IWebElement conversationListItem);
+        IWebElement GetEnterMessageInputField(IWebDriver webDriver, IWebElement conversationPopUp);
+        bool ClickSendMessage(IWebDriver webDriver, IWebElement conversationPopUp);
     }
 }

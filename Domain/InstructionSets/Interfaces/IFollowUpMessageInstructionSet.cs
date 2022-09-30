@@ -8,5 +8,6 @@ namespace Domain.InstructionSets.Interfaces
     {
         public SentFollowUpMessageModel GetSentFollowUpMessage();
         public void SendFollowUpMessage(IWebDriver webDriver, FollowUpMessageBody message);
+        public void SendFollowUpMessage_AllInOne(IWebDriver webDriver, FollowUpMessageBody message);
     }
 }

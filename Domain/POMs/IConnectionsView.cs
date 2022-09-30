@@ -16,5 +16,7 @@ namespace Domain.POMs
 
         string GetProfileUrlFromLiTag(IWebElement recentlyAddedProspect);
         IReadOnlyCollection<IWebElement> GetAllConversationsCloseButtons(IWebDriver webDriver);
+
+        bool ClickMessage(IWebElement prospect);
     }
 }

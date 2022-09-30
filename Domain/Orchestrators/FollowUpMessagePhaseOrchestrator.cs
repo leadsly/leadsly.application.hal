@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Domain.Orchestrators
 {
@@ -82,21 +81,11 @@ namespace Domain.Orchestrators
                 int length = followUpMessages.Count;
                 try
                 {
-                    if (followUpMessages.Any() == true)
-                    {
-                        string pageUrl = followUpMessages.Peek().PageUrl;
-                        if (PrepareBrowserWindow(webDriver, pageUrl) == false)
-                        {
-                            return;
-                        }
-                    }
-
                     for (int i = 0; i < length; i++)
                     {
                         FollowUpMessageBody followUpMessage = followUpMessages.Dequeue();
 
                         SendFollowUpMessage(webDriver, followUpMessage);
-
                     }
                 }
                 finally
@@ -112,7 +101,7 @@ namespace Domain.Orchestrators
         {
             try
             {
-                _instructionSet.SendFollowUpMessage(webDriver, message);
+                _instructionSet.SendFollowUpMessage_AllInOne(webDriver, message);
 
                 SentFollowUpMessageModel sentFollowUpMessage = GetSentFollowUpMessage();
                 if (sentFollowUpMessage != null)
@@ -133,61 +122,5 @@ namespace Domain.Orchestrators
                 this.FollowUpMessagesSent.Invoke(this, new FollowUpMessagesSentEventArgs(message, SentFollowUpMessages));
             }
         }
-
-        //private void SendFollowUpMessage(IWebDriver webDriver, FollowUpMessageBody message)
-        //{
-        //    bool createNewMessageSucceeded = CreateNewMessageInteraction(webDriver);
-        //    if (createNewMessageSucceeded == false)
-        //    {
-        //        return;
-        //    }
-
-        //    bool enterProspectNameSucceeded = EnterProspectNameInteraction(webDriver, message.ProspectName);
-        //    if (enterProspectNameSucceeded == false)
-        //    {
-        //        return;
-        //    }
-
-        //    bool enterMessageSucceeded = EnterMessageInteraction(webDriver, message.Content, message.OrderNum);
-        //    if (enterMessageSucceeded == false)
-        //    {
-        //        return;
-        //    }
-
-        //    SentFollowUpMessage = _interactionFacade.SentFollowUpMessage;
-        //}
-
-        //private bool CreateNewMessageInteraction(IWebDriver webDriver)
-        //{
-        //    InteractionBase interaction = new CreateNewMessageInteraction
-        //    {
-        //        WebDriver = webDriver
-        //    };
-
-        //    return _interactionFacade.HandleCreateNewMessageInteraction(interaction);
-        //}
-
-        //private bool EnterProspectNameInteraction(IWebDriver webDriver, string prospectName)
-        //{
-        //    InteractionBase interaction = new EnterProspectNameInteraction
-        //    {
-        //        ProspectName = prospectName,
-        //        WebDriver = webDriver
-        //    };
-
-        //    return _interactionFacade.HandleEnterProspectNameInteraction(interaction);
-        //}
-
-        //private bool EnterMessageInteraction(IWebDriver webDriver, string content, int orderNum)
-        //{
-        //    InteractionBase interaction = new EnterMessageInteraction
-        //    {
-        //        Content = content,
-        //        WebDriver = webDriver,
-        //        OrderNum = orderNum
-        //    };
-
-        //    return _interactionFacade.HandleEnterMessageInteraction(interaction);
-        //}
     }
 }
