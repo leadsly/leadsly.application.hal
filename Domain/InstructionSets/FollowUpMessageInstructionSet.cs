@@ -1,9 +1,12 @@
-﻿using Domain.Facades.Interfaces;
+﻿using Domain.Executors.AllInOneVirtualAssistant.Events;
+using Domain.Facades.Interfaces;
 using Domain.InstructionSets.Interfaces;
 using Domain.Interactions;
+using Domain.Interactions.AllInOneVirtualAssistant.CleanUpUiState;
 using Domain.Interactions.AllInOneVirtualAssistant.EnterFollowUpMessage;
 using Domain.Interactions.AllInOneVirtualAssistant.EnterProspectName;
 using Domain.Interactions.AllInOneVirtualAssistant.IsProspectInRecentlyAdded;
+using Domain.Interactions.AllInOneVirtualAssistant.PrepareProspectForFollowUp;
 using Domain.Interactions.AllInOneVirtualAssistant.ShouldSendFollowUpMessage;
 using Domain.Interactions.FollowUpMessage.CreateNewMessage;
 using Domain.Interactions.FollowUpMessage.EnterMessage;
@@ -13,6 +16,7 @@ using Domain.Models.FollowUpMessage;
 using Domain.MQ.Messages;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
+using System.Collections.Generic;
 
 namespace Domain.InstructionSets
 {
@@ -28,6 +32,9 @@ namespace Domain.InstructionSets
 
         private readonly IFollowUpMessageInteractionFacade _interactionFacade;
         private readonly ILogger<FollowUpMessageInstructionSet> _logger;
+
+        public event ProspectsThatRepliedEventHandler ProspectsThatRepliedDetected;
+
         private SentFollowUpMessageModel SentFollowUpMessage { get; set; }
         public SentFollowUpMessageModel GetSentFollowUpMessage()
         {
@@ -59,89 +66,144 @@ namespace Domain.InstructionSets
         public void SendFollowUpMessage_AllInOne(IWebDriver webDriver, FollowUpMessageBody message)
         {
             // 1. check if the prospect name is in the list of recently added connections
-            if (IsProspectInRecentlyAddedListInteraction(webDriver, message.ProspectName) == true)
+            if (IsProspectInRecentlyAddedListInteraction(webDriver, message) == true)
             {
-                IWebElement propsectFromTheHitlist = _interactionFacade.ProspectFromRecentlyAdded;
-                // 2. if it is click message
-                if (ShouldSendFollowUpMessageInteraction(webDriver, propsectFromTheHitlist, message) == true)
+                IWebElement prospectFromHitlist = _interactionFacade.ProspectFromRecentlyAdded;
+                // prepare prospect for followup message
+                if (PrepareProspectForFollowUpMessageInteraction(webDriver, prospectFromHitlist, message) == true)
                 {
                     IWebElement popupConversation = _interactionFacade.PopupConversation;
-                    if (EnterFollowUpMessageInteraction(webDriver, popupConversation, message) == false)
+                    if (ShouldSendFollowUpMessageInteraction(webDriver, popupConversation, message) == true)
                     {
+                        if (SendFollowUpMessageInteraction(webDriver, popupConversation, message) == false)
+                        {
+                            _logger.LogDebug("Successfully sent follow up message to {0}", message.ProspectName);
+                            SentFollowUpMessage = _interactionFacade.SentFollowUpMessage_AllInOne;
+                        }
 
-                    }
-
-                    // something went wrong, we will attempt to send follow up message next time
-                }
-                else
-                {
-                    if (_interactionFacade.DidProspectReply == true)
-                    {
-                        // we need to mark the prospect as complete, thery should get no more follow up messages
-                        // emit an event to update this prospects as replied
-                        ProspectRepliedModel prospectReplied = _interactionFacade.ProspectReplied;
-
+                        CleanUpFollowUpMessageUiStateInteraction(webDriver, popupConversation);
+                        return;
                     }
                     else
                     {
-                        // something went wrong
-                        _logger.LogError("Something went wrong when attempting to send a follow up message");
+                        if (_interactionFacade.DidProspectReply == true)
+                        {
+                            // we need to mark the prospect as complete, thery should get no more follow up messages
+                            // emit an event to update this prospects as replied
+                            OutputProspectThatReplied(message);
+                        }
+                        else
+                        {
+                            // something went wrong
+                            _logger.LogError("Something went wrong when attempting to send a follow up message");
+                        }
+
+                        CleanUpFollowUpMessageUiStateInteraction(webDriver, popupConversation);
+                        return;
                     }
                 }
+
+                CleanUpFollowUpMessageUiStateInteraction(webDriver);
             }
             else
             {
-                if (EnterProspectsNameIntoSearchByNameFieldInteraction(webDriver, message.ProspectName) == true)
+                if (EnterProspectsNameIntoSearchByNameFieldInteraction(webDriver, message) == true)
                 {
-                    IWebElement propsectFromTheHitlist = _interactionFacade.ProspectFromRecentlyAdded;
-                    // 2. if it is click message
-                    if (ShouldSendFollowUpMessageInteraction(webDriver, propsectFromTheHitlist, message) == true)
+                    if (IsProspectInRecentlyAddedListInteraction(webDriver, message, true) == true)
                     {
-                        IWebElement popupConversation = _interactionFacade.PopupConversation;
-                        if (EnterFollowUpMessageInteraction(webDriver, popupConversation, message) == false)
+                        IWebElement prospectFromHitlist = _interactionFacade.ProspectFromRecentlyAdded;
+                        // prepare prospect for followup message
+                        if (PrepareProspectForFollowUpMessageInteraction(webDriver, prospectFromHitlist, message) == true)
                         {
+                            IWebElement popupConversation = _interactionFacade.PopupConversation;
+                            if (ShouldSendFollowUpMessageInteraction(webDriver, popupConversation, message) == true)
+                            {
+                                if (SendFollowUpMessageInteraction(webDriver, popupConversation, message) == false)
+                                {
+                                    _logger.LogDebug("Successfully sent follow up message to {0}", message.ProspectName);
+                                    SentFollowUpMessage = _interactionFacade.SentFollowUpMessage_AllInOne;
+                                }
 
+                                CleanUpFollowUpMessageUiStateInteraction(webDriver, popupConversation);
+                                return;
+                            }
+                            else
+                            {
+                                if (_interactionFacade.DidProspectReply == true)
+                                {
+                                    // we need to mark the prospect as complete, thery should get no more follow up messages
+                                    // emit an event to update this prospects as replied
+                                    OutputProspectThatReplied(message);
+                                }
+                                else
+                                {
+                                    // something went wrong
+                                    _logger.LogError("Something went wrong when attempting to send a follow up message");
+                                }
+
+                                CleanUpFollowUpMessageUiStateInteraction(webDriver, popupConversation);
+                                return;
+                            }
                         }
-
-                        // something went wrong, we will attempt to send follow up message next time
-                    }
-                    else
-                    {
-                        // we need to mark the prospect as complete, thery should get no more follow up messages   
+                        else
+                        {
+                            CleanUpFollowUpMessageUiStateInteraction(webDriver);
+                            return;
+                        }
                     }
                 }
 
-                // something went wrong, we will attempt to send follow up message next time
+                CleanUpFollowUpMessageUiStateInteraction(webDriver);
             }
-
-
-            // a. If this is the first follow up message going out enter in the message and click send
-
-            // b. then close the message popup window
-
-            // c. if this is not the first follow up message, grab the last message from the conversation list and check to see if it was sent from the prospect
-
-            // d. if the last message was sent from the prospect it means we have a reply, do not send a follow up message
-
-            // e . if the last message was NOT sent from the prospect, check if it matches the last message we sent
-
-            // f . if it does match the last follow up message we sent, then send the follow up message, else do not send
-
-            // 3. if it is not enter in the prospects name in the search by name input field
         }
 
-        private bool IsProspectInRecentlyAddedListInteraction(IWebDriver webDriver, string prospectName)
+        private void OutputProspectThatReplied(FollowUpMessageBody message)
+        {
+            ProspectRepliedModel prospectReplied = _interactionFacade.ProspectReplied;
+            if (prospectReplied != null)
+            {
+                _logger.LogInformation("Prospect {0} has replied or we need to mark this prospect as complete.", message.ProspectName);
+                ProspectsThatRepliedDetected.Invoke(this, new ProspectsThatRepliedEventArgs(message, new List<ProspectRepliedModel>() { prospectReplied }));
+            }
+        }
+
+        private bool PrepareProspectForFollowUpMessageInteraction(IWebDriver webDriver, IWebElement prospectFromTheHitlist, FollowUpMessageBody message)
+        {
+            InteractionBase interaction = new PrepareProspectForFollowUpMessageInteraction
+            {
+                WebDriver = webDriver,
+                ProspectFromTheHitlist = prospectFromTheHitlist,
+                ProspectName = message.ProspectName
+            };
+
+            return _interactionFacade.HandlePrepareProspectForFollowUpMessageInteraction(interaction);
+        }
+
+        private bool CleanUpFollowUpMessageUiStateInteraction(IWebDriver webDriver, IWebElement conversationPopup = null)
+        {
+            InteractionBase interaction = new CleanUpFollowUpMessageUiStateInteraction
+            {
+                WebDriver = webDriver,
+                ConversationPopup = conversationPopup
+            };
+
+            return _interactionFacade.HandleCleanUpFollowUpMessageUiStateInteraction(interaction);
+        }
+
+        private bool IsProspectInRecentlyAddedListInteraction(IWebDriver webDriver, FollowUpMessageBody message, bool isFilteredByProspectName = false)
         {
             InteractionBase interaction = new CheckIfProspectIsInRecentlyAddedListInteraction
             {
                 WebDriver = webDriver,
-                ProspectName = prospectName
+                ProspectName = message.ProspectName,
+                ProfileUrl = message.ProspectProfileUrl,
+                IsFilteredByProspectName = isFilteredByProspectName
             };
 
             return _interactionFacade.HandleCheckIfProspectExistsInRecentlyAddedInteraction(interaction);
         }
 
-        private bool ShouldSendFollowUpMessageInteraction(IWebDriver webDriver, IWebElement prospectFromTheHitlist, FollowUpMessageBody message)
+        private bool ShouldSendFollowUpMessageInteraction(IWebDriver webDriver, IWebElement conversationPopup, FollowUpMessageBody message)
         {
 
             InteractionBase interaction = new ShouldSendFollowUpMessageInteraction
@@ -149,16 +211,16 @@ namespace Domain.InstructionSets
                 WebDriver = webDriver,
                 PreviousMessageContent = message.PreviousMessageContent,
                 ProspectName = message.ProspectName,
-                Prospect = prospectFromTheHitlist,
+                ConversationPopup = conversationPopup,
                 CampaignProspectId = message.CampaignProspectId
             };
 
             return _interactionFacade.HandleShouldSendFollowUpMessageInteraction(interaction);
         }
 
-        private bool EnterFollowUpMessageInteraction(IWebDriver webDriver, IWebElement popupConversation, FollowUpMessageBody message)
+        private bool SendFollowUpMessageInteraction(IWebDriver webDriver, IWebElement popupConversation, FollowUpMessageBody message)
         {
-            InteractionBase interaction = new EnterFollowUpMessageInteraction
+            InteractionBase interaction = new SendFollowUpMessageInteraction
             {
                 WebDriver = webDriver,
                 Content = message.Content,
@@ -166,15 +228,15 @@ namespace Domain.InstructionSets
                 PopUpConversation = popupConversation
             };
 
-            return _interactionFacade.HandleEnterFollowUpMessageInteraction(interaction);
+            return _interactionFacade.HandleSendFollowUpMessageInteraction(interaction);
         }
 
-        private bool EnterProspectsNameIntoSearchByNameFieldInteraction(IWebDriver webDriver, string prospectName)
+        private bool EnterProspectsNameIntoSearchByNameFieldInteraction(IWebDriver webDriver, FollowUpMessageBody message)
         {
             InteractionBase interaction = new EnterProspectNameIntoSearchInteraction
             {
                 WebDriver = webDriver,
-                ProspectName = prospectName
+                ProspectName = message.ProspectName
             };
 
             return _interactionFacade.HandleEnterProspectNameIntoSearchByNameFieldInteraction(interaction);

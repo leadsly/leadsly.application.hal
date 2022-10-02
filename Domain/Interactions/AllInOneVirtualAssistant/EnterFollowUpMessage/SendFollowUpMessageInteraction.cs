@@ -2,7 +2,7 @@
 
 namespace Domain.Interactions.AllInOneVirtualAssistant.EnterFollowUpMessage
 {
-    public class EnterFollowUpMessageInteraction : InteractionBase
+    public class SendFollowUpMessageInteraction : InteractionBase
     {
         public string Content { get; set; }
         public int OrderNum { get; set; }

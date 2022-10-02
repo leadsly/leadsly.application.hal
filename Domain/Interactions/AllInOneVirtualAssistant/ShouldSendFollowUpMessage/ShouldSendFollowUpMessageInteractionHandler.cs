@@ -23,6 +23,8 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.ShouldSendFollowUpMessage
         private readonly ILogger<ShouldSendFollowUpMessageInteractionHandler> _logger;
         private readonly ITimestampService _timestampService;
         private readonly IFollowUpMessageOnConnectionsServicePOM _service;
+
+        private const string DefaultLastReplyMessage = "<LinkedIn user most likely sent ad hoc message between follow ups. We consider it as user took follow up into its own hands. No more follow ups were sent>";
         private ProspectRepliedModel Prospect { get; set; }
         private bool _prospectReplied;
         public bool DidProspectReply
@@ -39,19 +41,10 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.ShouldSendFollowUpMessage
             }
         }
 
-        public IWebElement PopupConversation { get; private set; }
-
         public bool HandleInteraction(InteractionBase interaction)
         {
             ShouldSendFollowUpMessageInteraction shouldSendInteraction = interaction as ShouldSendFollowUpMessageInteraction;
             IWebDriver webDriver = shouldSendInteraction.WebDriver;
-            // a. If this is the first follow up message going out enter in the message and click send
-            if (_service.ClickMessageProspect(webDriver, shouldSendInteraction.Prospect) == false)
-            {
-                _logger.LogError("Could not click on Message prospect");
-                return false;
-            }
-
             if (string.IsNullOrEmpty(shouldSendInteraction.PreviousMessageContent) == true)
             {
                 _logger.LogInformation("This is the first follow up message that is going out.");
@@ -59,15 +52,13 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.ShouldSendFollowUpMessage
             }
             else
             {
-                IWebElement popupConversation = _service.GetPopUpConversation(webDriver, shouldSendInteraction.ProspectName);
+                IWebElement conversationPopup = shouldSendInteraction.ConversationPopup;
 
-                if (popupConversation != null)
+                if (conversationPopup != null)
                 {
-                    PopupConversation = popupConversation;
-
-                    if (_service.IsThereConversationHistory(popupConversation) == true)
+                    if (_service.IsThereConversationHistory(conversationPopup) == true)
                     {
-                        // c. if this is not the first follow up message, grab the last message from the conversation list and check to see if it was sent from the prospect
+                        // c. since this is not the first follow up message, grab the last message from the conversation list and check to see if it was sent from the prospect
                         IWebElement lastMessage = _service.Messages.LastOrDefault();
                         if (lastMessage != null)
                         {
@@ -76,20 +67,9 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.ShouldSendFollowUpMessage
                             {
                                 return false;
                             }
-                            else if (_service.WasLastMessageSentByProspect(lastMessage, shouldSendInteraction.ProspectName) == true)
+                            else if (wasLastMessageSentByProspect == true)
                             {
-                                // we've gotten a reply, we need to mark this prospect as complete. Do NOT send anymore follow up messages
-                                ProspectRepliedModel prospect = new()
-                                {
-                                    ResponseMessageTimestamp = _timestampService.TimestampNow(),
-                                    CampaignProspectId = shouldSendInteraction.CampaignProspectId,
-                                    ResponseMessage = lastMessage.Text,
-                                    Name = shouldSendInteraction.ProspectName
-                                };
-
-                                Prospect = prospect;
-                                DidProspectReply = true;
-
+                                TreatProspectAsComplete(shouldSendInteraction, lastMessage.Text);
                                 return false;
                             }
                             else
@@ -98,14 +78,18 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.ShouldSendFollowUpMessage
                                 // check if the contents of the last follow up message match the contents of the last
                                 if (messagesMatch == null)
                                 {
+                                    _logger.LogWarning("Could not determine if last message in the conversation history matched the previously sent message");
                                     return false;
                                 }
                                 else if (messagesMatch == true)
                                 {
+                                    _logger.LogDebug("Last message in the conversation history matched last sent message, proceeding with sending the next follow up message");
                                     return true;
                                 }
                                 else
                                 {
+                                    _logger.LogWarning("Last message in the conversation history did not match last sent by hal message and it was not sent by the prospect. It mustve been sent by a human. We will not send any more follow up messages");
+                                    TreatProspectAsComplete(shouldSendInteraction, string.Empty);
                                     return false;
                                 }
                             }
@@ -126,6 +110,21 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.ShouldSendFollowUpMessage
                     return false;
                 }
             }
+        }
+
+        private void TreatProspectAsComplete(ShouldSendFollowUpMessageInteraction shouldSendInteraction, string responseMessage)
+        {
+            // we've gotten a reply, we need to mark this prospect as complete. Do NOT send anymore follow up messages
+            ProspectRepliedModel prospect = new()
+            {
+                ResponseMessageTimestamp = _timestampService.TimestampNow(),
+                CampaignProspectId = shouldSendInteraction.CampaignProspectId,
+                ResponseMessage = string.IsNullOrEmpty(responseMessage) ? responseMessage : DefaultLastReplyMessage,
+                Name = shouldSendInteraction.ProspectName
+            };
+
+            Prospect = prospect;
+            DidProspectReply = true;
         }
 
         public ProspectRepliedModel GetProspect()

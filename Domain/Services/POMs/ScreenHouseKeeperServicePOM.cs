@@ -44,5 +44,25 @@ namespace Domain.Services.POMs
         {
             return _conversationCards.GetAllConversationCloseButtons(webDriver);
         }
+
+        public bool CloseCurrentlyFocusedConversation(IWebElement currentPopUpConversation)
+        {
+            bool succeeded = false;
+            IWebElement closeButton = _conversationCards.GetCloseConversationButton(currentPopUpConversation);
+            if (closeButton != null)
+            {
+                try
+                {
+                    closeButton.Click();
+                    succeeded = true;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("Failed to click close button on currently active conversation");
+                }
+            }
+
+            return succeeded;
+        }
     }
 }

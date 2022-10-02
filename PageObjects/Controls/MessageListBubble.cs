@@ -30,6 +30,7 @@ namespace PageObjects.Controls
         private const string InactiveMessageWindow_ClassNameLocator = "msg-overlay-conversation-bubble--default-inactive";
         private const string BubbleMessageListItemProspectName_CssLocator = ".msg-conversation-listitem__link h3";
         private const string ConversationPopUpInput_ClassNameSelector = "msg-form__contenteditable";
+        private const string SendMessageButton_ClassNameSelector = "msg-form__send-button";
 
         private IWebElement? MessageListBubblesElement { get; set; }
 
@@ -266,7 +267,7 @@ namespace PageObjects.Controls
             }
             catch (Exception ex)
             {
-
+                _logger.LogDebug("Failed to locate the input div for the conversation popup");
             }
 
             return div;
@@ -274,7 +275,33 @@ namespace PageObjects.Controls
 
         public bool ClickSendMessage(IWebDriver webDriver, IWebElement conversationPopUp)
         {
-            throw new NotImplementedException();
+            IWebElement button = _webDriverUtilities.WaitUntilNotNull(SendButton, webDriver, 10);
+            if (button == null)
+            {
+                return false;
+            }
+
+            if (button.Enabled == false)
+            {
+                _logger.LogError("The send button is disabled. This means we cannot interact with it. Was the follow up message entered?");
+                return false;
+            }
+
+            return _webDriverUtilities.HandleClickElement(button);
+        }
+
+        private IWebElement SendButton(IWebDriver webDriver)
+        {
+            IWebElement button = default;
+            try
+            {
+                button = webDriver.FindElement(By.ClassName(SendMessageButton_ClassNameSelector));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("Could not locate the 'Send' button to send follow up message");
+            }
+            return button;
         }
     }
 }

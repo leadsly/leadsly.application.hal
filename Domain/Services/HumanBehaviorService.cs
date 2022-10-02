@@ -16,6 +16,7 @@ namespace Domain.Services
 
         private readonly Random _rnd;
         private readonly ILogger<HumanBehaviorService> _logger;
+        private const string ErrorString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
         public void RandomClickElement(IWebElement webElement)
         {
@@ -70,7 +71,9 @@ namespace Domain.Services
             try
             {
                 int randomWait = _rnd.Next(minMiliseconds, maxMiliseconds);
-                sw.Start();
+
+                ErrorFactor(element, minMiliseconds, maxMiliseconds);
+
                 element.SendKeys(value.ToString());
                 while (sw.Elapsed.TotalMilliseconds < randomWait)
                 {
@@ -82,6 +85,45 @@ namespace Domain.Services
             {
                 _logger.LogWarning(ex, "Failed to successfully enter in provided value into the field. Value: {value}", value);
             }
+        }
+
+        private bool ErrorFactor(IWebElement element, int minMiliseconds, int maxMiliseconds)
+        {
+            Stopwatch sw = new Stopwatch();
+            bool errorFactored = false;
+            try
+            {
+                int randomWait = _rnd.Next(minMiliseconds, maxMiliseconds);
+                int random = _rnd.Next(1, 10);
+                sw.Start();
+
+                if (random == 2 || random == 7)
+                {
+                    char error = GetRandomCharacter();
+                    element.SendKeys(error.ToString());
+                }
+
+                while (sw.Elapsed.TotalMilliseconds < randomWait)
+                {
+                    continue;
+                }
+
+                sw.Restart();
+
+                element.SendKeys(Keys.Backspace);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to enter in error factor");
+            }
+
+            return errorFactored;
+        }
+
+        private char GetRandomCharacter()
+        {
+            int index = _rnd.Next(ErrorString.Length);
+            return ErrorString[index];
         }
 
         private void RandomWaitTime(int number)

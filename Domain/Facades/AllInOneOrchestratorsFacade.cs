@@ -11,23 +11,17 @@ namespace Domain.Facades
     public class AllInOneOrchestratorsFacade : IAllInOneOrchestratorsFacade
     {
         public AllInOneOrchestratorsFacade(
-            ICheckOffHoursNewConnectionsPhaseOrchestrator offHoursOrchestrator,
-            IDeepScanProspectsForRepliesPhaseOrchestrator deepScanOrchestrator,
             IFollowUpMessagePhaseOrchestrator followUpOrchestrator,
             IMonitorForNewConnectionsPhaseOrchestrator monitorForNewConnectionsOrchestrator,
             INetworkingPhaseOrchestrator networkingOrchestrator,
             IScanProspectsForRepliesPhaseOrchestrator scanProspectsForRepliesOrchestrator)
         {
-            _offHOursOrchestrator = offHoursOrchestrator;
-            _deepScanOrchestrator = deepScanOrchestrator;
             _followUpOrchestrator = followUpOrchestrator;
             _monitorForNewConnectionsOrchestrator = monitorForNewConnectionsOrchestrator;
             _networkingOrchestrator = networkingOrchestrator;
             _scanProspectsForRepliesOrchestrator = scanProspectsForRepliesOrchestrator;
         }
 
-        private readonly ICheckOffHoursNewConnectionsPhaseOrchestrator _offHOursOrchestrator;
-        private readonly IDeepScanProspectsForRepliesPhaseOrchestrator _deepScanOrchestrator;
         private readonly IFollowUpMessagePhaseOrchestrator _followUpOrchestrator;
         private readonly IMonitorForNewConnectionsPhaseOrchestrator _monitorForNewConnectionsOrchestrator;
         private readonly INetworkingPhaseOrchestrator _networkingOrchestrator;
@@ -57,16 +51,10 @@ namespace Domain.Facades
             remove => _monitorForNewConnectionsOrchestrator.UpdateRecentlyAddedProspects -= value;
         }
 
-        public event OffHoursNewConnectionsEventHandler OffHoursNewConnectionsDetected
-        {
-            add => _offHOursOrchestrator.OffHoursNewConnectionsDetected += value;
-            remove => _offHOursOrchestrator.OffHoursNewConnectionsDetected -= value;
-        }
-
         public event ProspectsThatRepliedEventHandler ProspectsThatRepliedDetected
         {
-            add => _deepScanOrchestrator.ProspectsThatRepliedDetected += value;
-            remove => _deepScanOrchestrator.ProspectsThatRepliedDetected -= value;
+            add => _followUpOrchestrator.ProspectsThatRepliedDetected += value;
+            remove => _followUpOrchestrator.ProspectsThatRepliedDetected -= value;
         }
 
         public event PersistPrimaryProspectsEventHandler PersistPrimaryProspects
@@ -91,16 +79,6 @@ namespace Domain.Facades
         {
             add => _networkingOrchestrator.UpdatedSearchUrlsProgress += value;
             remove => _networkingOrchestrator.UpdatedSearchUrlsProgress -= value;
-        }
-
-        public void HandleCheckOffHoursNewConnections(IWebDriver webDriver, CheckOffHoursNewConnectionsBody message)
-        {
-            _offHOursOrchestrator.Execute(webDriver, message);
-        }
-
-        public void HandleDeepScanProspectsForReplies(IWebDriver webDriver, DeepScanProspectsForRepliesBody message)
-        {
-            _deepScanOrchestrator.Execute(webDriver, message);
         }
 
         public void HandleFollowUpMessages(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message)

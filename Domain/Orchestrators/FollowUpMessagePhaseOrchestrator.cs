@@ -30,6 +30,12 @@ namespace Domain.Orchestrators
         private readonly IWebDriverProvider _webDriverProvider;
         private IList<SentFollowUpMessageModel> SentFollowUpMessages { get; set; } = new List<SentFollowUpMessageModel>();
         public event FollowUpMessagesSentEventHandler FollowUpMessagesSent;
+        public event ProspectsThatRepliedEventHandler ProspectsThatRepliedDetected
+        {
+            add => _instructionSet.ProspectsThatRepliedDetected += value;
+            remove => _instructionSet.ProspectsThatRepliedDetected -= value;
+        }
+
         public SentFollowUpMessageModel GetSentFollowUpMessage() => _instructionSet.GetSentFollowUpMessage();
 
         public IList<SentFollowUpMessageModel> GetSentFollowUpMessages()

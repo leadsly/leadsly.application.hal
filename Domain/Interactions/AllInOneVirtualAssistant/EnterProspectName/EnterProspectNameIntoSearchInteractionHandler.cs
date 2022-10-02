@@ -18,7 +18,16 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.EnterProspectName
         private readonly IFollowUpMessageOnConnectionsServicePOM _service;
         public bool HandleInteraction(InteractionBase interaction)
         {
-            throw new System.NotImplementedException();
+            EnterProspectNameIntoSearchInteraction enterProspectInteraction = interaction as EnterProspectNameIntoSearchInteraction;
+            if (_service.EnterProspectName(enterProspectInteraction.WebDriver, enterProspectInteraction.ProspectName) == false)
+            {
+                // handle any failures if desired 
+
+
+                return false;
+            }
+
+            return true;
         }
     }
 }

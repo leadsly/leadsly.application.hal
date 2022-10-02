@@ -9,7 +9,7 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.IsProspectInRecentlyAdded
     public class CheckIfProspectIsInRecentlyAddedListInteractionHandler : ICheckIfProspectIsInRecentlyAddedListInteractionHandler
     {
         public CheckIfProspectIsInRecentlyAddedListInteractionHandler(
-            ILogger<EnterFollowUpMessageInteractionHandler> logger,
+            ILogger<SendFollowUpMessageInteractionHandler> logger,
             IFollowUpMessageOnConnectionsServicePOM service)
 
         {
@@ -17,19 +17,20 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.IsProspectInRecentlyAdded
             _service = service;
         }
 
-        private readonly ILogger<EnterFollowUpMessageInteractionHandler> _logger;
+        private readonly ILogger<SendFollowUpMessageInteractionHandler> _logger;
         private readonly IFollowUpMessageOnConnectionsServicePOM _service;
         public IWebElement ProspectFromRecentlyAdded { get; private set; }
 
         public bool HandleInteraction(InteractionBase interaction)
         {
             CheckIfProspectIsInRecentlyAddedListInteraction prospectExistsInteraction = interaction as CheckIfProspectIsInRecentlyAddedListInteraction;
-            IWebElement prospectFromRecentlyAdded = _service.GetProspectFromRecentlyAdded(prospectExistsInteraction.WebDriver, prospectExistsInteraction.ProspectName);
-            if (prospectFromRecentlyAdded == null)
+
+            ProspectFromRecentlyAdded = _service.GetProspectFromRecentlyAdded(prospectExistsInteraction.WebDriver, prospectExistsInteraction.ProspectName, prospectExistsInteraction.ProfileUrl, prospectExistsInteraction.IsFilteredByProspectName);
+            if (ProspectFromRecentlyAdded == null)
             {
                 return false;
             }
-            ProspectFromRecentlyAdded = prospectFromRecentlyAdded;
+
             return true;
         }
     }

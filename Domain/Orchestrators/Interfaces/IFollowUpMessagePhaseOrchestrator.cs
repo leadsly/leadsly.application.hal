@@ -9,6 +9,7 @@ namespace Domain.Orchestrators.Interfaces
     public interface IFollowUpMessagePhaseOrchestrator
     {
         public event FollowUpMessagesSentEventHandler FollowUpMessagesSent;
+        public event ProspectsThatRepliedEventHandler ProspectsThatRepliedDetected;
         public SentFollowUpMessageModel GetSentFollowUpMessage();
         public IList<SentFollowUpMessageModel> GetSentFollowUpMessages();
         public void Execute(FollowUpMessageBody message);

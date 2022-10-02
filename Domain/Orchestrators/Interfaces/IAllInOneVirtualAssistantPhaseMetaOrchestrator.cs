@@ -8,7 +8,6 @@ namespace Domain.Orchestrators.Interfaces
     public interface IAllInOneVirtualAssistantPhaseMetaOrchestrator
     {
         public event NewRecentlyAddedProspectsDetectedEventHandler NewConnectionsDetected;
-        public event OffHoursNewConnectionsEventHandler OffHoursNewConnectionsDetected;
         public event NewMessagesReceivedEventHandler NewMessagesReceived;
         public event UpdateRecentlyAddedProspectsEventHandler UpdateRecentlyAddedProspects;
         public event ProspectsThatRepliedEventHandler ProspectsThatRepliedDetected;

@@ -1,8 +1,10 @@
 ﻿using Domain.Facades.Interfaces;
 using Domain.Interactions;
+using Domain.Interactions.AllInOneVirtualAssistant.CleanUpUiState.Interface;
 using Domain.Interactions.AllInOneVirtualAssistant.EnterFollowUpMessage.Interfaces;
 using Domain.Interactions.AllInOneVirtualAssistant.EnterProspectName.Interfaces;
 using Domain.Interactions.AllInOneVirtualAssistant.IsProspectInRecentlyAdded.Interfaces;
+using Domain.Interactions.AllInOneVirtualAssistant.PrepareProspectForFollowUp.Interfaces;
 using Domain.Interactions.AllInOneVirtualAssistant.ShouldSendFollowUpMessage.Interfaces;
 using Domain.Interactions.FollowUpMessage.CreateNewMessage.Interfaces;
 using Domain.Interactions.FollowUpMessage.EnterMessage.Interfaces;
@@ -19,34 +21,40 @@ namespace Domain.Facades
             ICreateNewMessageInteractionHandler createNewMessageHandler,
             IEnterMessageInteractionHandler enterMessageHandler,
             IEnterProspectNameInteractionHandler enterProspectNameHandler,
-            IEnterFollowUpMessageInteractionHandler enterFollowUpMessageHandler,
+            ISendFollowUpMessageInteractionHandler sendFollowUpMessageHandler,
+            ICleanUpFollowUpMessageUiStateInteractionHandler cleanUpFollowUpMessageUiStateHandler,
             IEnterProspectNameIntoSearchInteractionHandler enterProspectNameIntoSearchHandler,
             ICheckIfProspectIsInRecentlyAddedListInteractionHandler checkIfProspectIsInRecentlyAddedHandler,
-            IShouldSendFollowUpMessageInteractionHandler shouldSendFollowUpMessageHandler
+            IShouldSendFollowUpMessageInteractionHandler shouldSendFollowUpMessageHandler,
+            IPrepareProspectForFollowUpMessageInteractionHandler prepareProspectForFollowUpMessageInteractionHandler
             )
         {
+            _prepareProspectForFollowUpMessageInteractionHandler = prepareProspectForFollowUpMessageInteractionHandler;
             _createNewMessageHandler = createNewMessageHandler;
             _enterMessageHandler = enterMessageHandler;
             _enterProspectNameHandler = enterProspectNameHandler;
-            _enterFollowUpMessageHandler = enterFollowUpMessageHandler;
+            _sendFollowUpMessageHandler = sendFollowUpMessageHandler;
             _enterProspectNameIntoSearchHandler = enterProspectNameIntoSearchHandler;
             _checkIfProspectIsInRecentlyAddedHandler = checkIfProspectIsInRecentlyAddedHandler;
             _shouldSendFollowUpMessageHandler = shouldSendFollowUpMessageHandler;
+            _cleanUpFollowUpMessageUiStateHandler = cleanUpFollowUpMessageUiStateHandler;
         }
 
+        private readonly IPrepareProspectForFollowUpMessageInteractionHandler _prepareProspectForFollowUpMessageInteractionHandler;
         private readonly ICreateNewMessageInteractionHandler _createNewMessageHandler;
         private readonly IEnterMessageInteractionHandler _enterMessageHandler;
         private readonly IEnterProspectNameInteractionHandler _enterProspectNameHandler;
-        private readonly IEnterFollowUpMessageInteractionHandler _enterFollowUpMessageHandler;
+        private readonly ISendFollowUpMessageInteractionHandler _sendFollowUpMessageHandler;
         private readonly IEnterProspectNameIntoSearchInteractionHandler _enterProspectNameIntoSearchHandler;
         private readonly ICheckIfProspectIsInRecentlyAddedListInteractionHandler _checkIfProspectIsInRecentlyAddedHandler;
         private readonly IShouldSendFollowUpMessageInteractionHandler _shouldSendFollowUpMessageHandler;
+        private readonly ICleanUpFollowUpMessageUiStateInteractionHandler _cleanUpFollowUpMessageUiStateHandler;
 
         public SentFollowUpMessageModel SentFollowUpMessage => _enterMessageHandler.GetSentFollowUpMessageModel();
-
+        public SentFollowUpMessageModel SentFollowUpMessage_AllInOne => _sendFollowUpMessageHandler.GetSentFollowUpMessageModel();
         public bool DidProspectReply => _shouldSendFollowUpMessageHandler.DidProspectReply;
 
-        public IWebElement PopupConversation => _shouldSendFollowUpMessageHandler.PopupConversation;
+        public IWebElement PopupConversation => _prepareProspectForFollowUpMessageInteractionHandler.PopupConversation;
 
         public ProspectRepliedModel ProspectReplied => _shouldSendFollowUpMessageHandler.GetProspect();
 
@@ -77,14 +85,24 @@ namespace Domain.Facades
             return _shouldSendFollowUpMessageHandler.HandleInteraction(interaction);
         }
 
-        public bool HandleEnterFollowUpMessageInteraction(InteractionBase interaction)
+        public bool HandleSendFollowUpMessageInteraction(InteractionBase interaction)
         {
-            return _enterFollowUpMessageHandler.HandleInteraction(interaction);
+            return _sendFollowUpMessageHandler.HandleInteraction(interaction);
         }
 
         public bool HandleEnterProspectNameIntoSearchByNameFieldInteraction(InteractionBase interaction)
         {
             return _enterProspectNameIntoSearchHandler.HandleInteraction(interaction);
+        }
+
+        public bool HandlePrepareProspectForFollowUpMessageInteraction(InteractionBase interaction)
+        {
+            return _prepareProspectForFollowUpMessageInteractionHandler.HandleInteraction(interaction);
+        }
+
+        public bool HandleCleanUpFollowUpMessageUiStateInteraction(InteractionBase interaction)
+        {
+            return _cleanUpFollowUpMessageUiStateHandler.HandleInteraction(interaction);
         }
     }
 }

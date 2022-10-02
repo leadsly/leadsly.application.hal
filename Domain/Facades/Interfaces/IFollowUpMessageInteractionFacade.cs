@@ -8,6 +8,7 @@ namespace Domain.Facades.Interfaces
     public interface IFollowUpMessageInteractionFacade
     {
         public SentFollowUpMessageModel SentFollowUpMessage { get; }
+        public SentFollowUpMessageModel SentFollowUpMessage_AllInOne { get; }
         public bool DidProspectReply { get; }
         public IWebElement ProspectFromRecentlyAdded { get; }
         public IWebElement PopupConversation { get; }
@@ -17,7 +18,9 @@ namespace Domain.Facades.Interfaces
         bool HandleEnterProspectNameInteraction(InteractionBase interaction);
         bool HandleCheckIfProspectExistsInRecentlyAddedInteraction(InteractionBase interaction);
         bool HandleShouldSendFollowUpMessageInteraction(InteractionBase interaction);
-        bool HandleEnterFollowUpMessageInteraction(InteractionBase interaction);
+        bool HandleSendFollowUpMessageInteraction(InteractionBase interaction);
         bool HandleEnterProspectNameIntoSearchByNameFieldInteraction(InteractionBase interaction);
+        bool HandlePrepareProspectForFollowUpMessageInteraction(InteractionBase interaction);
+        bool HandleCleanUpFollowUpMessageUiStateInteraction(InteractionBase interaction);
     }
 }

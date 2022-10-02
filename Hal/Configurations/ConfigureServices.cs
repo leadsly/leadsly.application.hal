@@ -9,6 +9,8 @@ using Domain.Facades;
 using Domain.Facades.Interfaces;
 using Domain.InstructionSets;
 using Domain.InstructionSets.Interfaces;
+using Domain.Interactions.AllInOneVirtualAssistant.CleanUpUiState;
+using Domain.Interactions.AllInOneVirtualAssistant.CleanUpUiState.Interface;
 using Domain.Interactions.AllInOneVirtualAssistant.EnterFollowUpMessage;
 using Domain.Interactions.AllInOneVirtualAssistant.EnterFollowUpMessage.Interfaces;
 using Domain.Interactions.AllInOneVirtualAssistant.EnterProspectName;
@@ -21,6 +23,8 @@ using Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessagesContent;
 using Domain.Interactions.AllInOneVirtualAssistant.GetUnreadMessagesContent.Interfaces;
 using Domain.Interactions.AllInOneVirtualAssistant.IsProspectInRecentlyAdded;
 using Domain.Interactions.AllInOneVirtualAssistant.IsProspectInRecentlyAdded.Interfaces;
+using Domain.Interactions.AllInOneVirtualAssistant.PrepareProspectForFollowUp;
+using Domain.Interactions.AllInOneVirtualAssistant.PrepareProspectForFollowUp.Interfaces;
 using Domain.Interactions.AllInOneVirtualAssistant.ShouldSendFollowUpMessage;
 using Domain.Interactions.AllInOneVirtualAssistant.ShouldSendFollowUpMessage.Interfaces;
 using Domain.Interactions.CheckOffHoursNewConnections.GetAllRecentlyAddedSince;
@@ -408,11 +412,12 @@ namespace Hal.Configurations
             services.AddScoped<IGetUnreadMessageContentInteractionHandler, GetUnreadMessageContentInteractionHandler>();
             services.AddScoped<IGetUnreadMessagesContentInteractionHandler, GetUnreadMessagesContentInteractionHandler>();
             services.AddScoped<IGetUnreadMessagesContentInteractionHandler, GetUnreadMessagesContentInteractionHandler>();
-
-            services.AddScoped<IEnterFollowUpMessageInteractionHandler, EnterFollowUpMessageInteractionHandler>();
+            services.AddScoped<ISendFollowUpMessageInteractionHandler, SendFollowUpMessageInteractionHandler>();
             services.AddScoped<IEnterProspectNameIntoSearchInteractionHandler, EnterProspectNameIntoSearchInteractionHandler>();
             services.AddScoped<ICheckIfProspectIsInRecentlyAddedListInteractionHandler, CheckIfProspectIsInRecentlyAddedListInteractionHandler>();
             services.AddScoped<IShouldSendFollowUpMessageInteractionHandler, ShouldSendFollowUpMessageInteractionHandler>();
+            services.AddScoped<IPrepareProspectForFollowUpMessageInteractionHandler, PrepareProspectForFollowUpMessageInteractionHandler>();
+            services.AddScoped<ICleanUpFollowUpMessageUiStateInteractionHandler, CleanUpFollowUpMessageUiStateInteractionHandler>();
 
             ////////////////////////////////////////////////////////////
             /// Shared Interactions

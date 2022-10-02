@@ -49,12 +49,6 @@ namespace Domain.Orchestrators
             remove => _orchestratorsFacade.UpdateRecentlyAddedProspects -= value;
         }
 
-        public event OffHoursNewConnectionsEventHandler OffHoursNewConnectionsDetected
-        {
-            add => _orchestratorsFacade.OffHoursNewConnectionsDetected += value;
-            remove => _orchestratorsFacade.OffHoursNewConnectionsDetected -= value;
-        }
-
         public event ProspectsThatRepliedEventHandler ProspectsThatRepliedDetected
         {
             add => _orchestratorsFacade.ProspectsThatRepliedDetected += value;
