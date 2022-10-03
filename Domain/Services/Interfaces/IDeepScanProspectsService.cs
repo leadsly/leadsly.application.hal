@@ -10,7 +10,7 @@ namespace Domain.Services.Interfaces
     public interface IDeepScanProspectsService
     {
         Task<NetworkProspectsResponse> GetAllProspectsFromActiveCampaignsAsync(DeepScanProspectsForRepliesBody message, CancellationToken ct = default);
-        Task ProcessCampaignProspectsThatRepliedAsync(IList<ProspectRepliedModel> prospects, DeepScanProspectsForRepliesBody message, CancellationToken ct = default);
+        Task ProcessCampaignProspectsThatRepliedAsync(IList<ProspectRepliedModel> prospects, PublishMessageBody message, CancellationToken ct = default);
 
     }
 }

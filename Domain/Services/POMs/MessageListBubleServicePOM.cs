@@ -71,7 +71,7 @@ namespace Domain.Services.POMs
                     }
                     else
                     {
-                        string prospectName = _pom.GetProspectNameFromConversationItem(openedConversation);
+                        string prospectName = _pom.GetProspectNameFromConversationPopup(openedConversation);
                         if (prospectName == clickedProspectName)
                         {
                             // this means we've already have the current conversation active
@@ -162,7 +162,7 @@ namespace Domain.Services.POMs
         public string ProspectNameFromMessage(IWebElement element)
         {
             _humanBehaviorService.RandomWaitMilliSeconds(700, 900);
-            return _pom.GetProspectNameFromConversationItem(element);
+            return _pom.GetProspectNameFromConversationPopup(element);
         }
     }
 }

@@ -45,6 +45,9 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.PrepareProspectForFollowU
                 return false;
             }
 
+            // human behavior, accidental click
+            _service.ClickElipses(prospectFromTheHitlist);
+
             if (_service.ClickMessageProspect(webDriver, prospectFromTheHitlist) == false)
             {
                 _logger.LogError("Could not click 'Message' on the prospect in the Recently Added list");

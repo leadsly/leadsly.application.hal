@@ -11,10 +11,13 @@ namespace Domain.POMs
         IList<IWebElement> GetRecentlyAddedFiltered(IWebDriver webDriver);
         IWebElement GetTimeTag(IWebElement recentlyAddedProspect);
         string GetNameFromLiTag(IWebElement recentlyAddedProspect);
+        string GetNameFromLiTag(IWebDriver webDriver, IWebElement liTag);
         string GetProfileUrlFromLiTag(IWebElement recentlyAddedProspect);
         IReadOnlyCollection<IWebElement> GetAllConversationsCloseButtons(IWebDriver webDriver);
         bool ClickMessage(IWebElement prospect);
         IWebElement GetProspectSearchInputField(IWebDriver webDriver);
         bool ClickProspectSearchInputField(IWebDriver webDriver);
+        IWebElement GetElipsesButton(IWebElement prospect);
+        RecentlyAddedResults DetermineRecentlyAddedResults(IWebDriver webDriver);
     }
 }

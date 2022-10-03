@@ -73,5 +73,26 @@ namespace Domain.POMs
 
             }
         }
+
+        public static bool HandleClickElement(this IWebDriver webDriver, IWebElement element)
+        {
+            bool succeeded = false;
+            if (element == null)
+            {
+                return succeeded;
+            }
+
+            try
+            {
+                element.Click();
+                succeeded = true;
+            }
+            catch (Exception ex)
+            {
+                succeeded = false;
+            }
+
+            return succeeded;
+        }
     }
 }

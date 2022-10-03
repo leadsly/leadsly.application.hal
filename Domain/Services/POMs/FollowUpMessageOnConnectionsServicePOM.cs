@@ -1,9 +1,11 @@
 ﻿using Domain.POMs;
 using Domain.POMs.Controls;
+using Domain.Providers.Interfaces;
 using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.POMs;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -15,23 +17,37 @@ namespace Domain.Services.POMs
             ILogger<FollowUpMessageOnConnectionsServicePOM> logger,
             IHumanBehaviorService humanBehaviorService,
             IMessageListBubble messageBubblePOM,
+            IWebDriverProvider webDriverProvider,
+            Random random,
             IConnectionsView connectionsView)
         {
             _logger = logger;
+            _webDriverProvider = webDriverProvider;
             _humanBehaviorService = humanBehaviorService;
             _messageBubblePOM = messageBubblePOM;
             _connectionsView = connectionsView;
+            _rnd = random;
         }
 
         private readonly ILogger<FollowUpMessageOnConnectionsServicePOM> _logger;
+        private readonly IWebDriverProvider _webDriverProvider;
         private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly IMessageListBubble _messageBubblePOM;
         private readonly IConnectionsView _connectionsView;
+        private readonly Random _rnd;
 
         public IList<IWebElement> Messages { get; private set; }
 
         public IWebElement GetProspectFromRecentlyAdded(IWebDriver webDriver, string prospectName, string prospectProfileUrl, bool isListFiltered)
         {
+            RecentlyAddedResults result = _connectionsView.DetermineRecentlyAddedResults(webDriver);
+
+            if (result == RecentlyAddedResults.Unknown || result == RecentlyAddedResults.NoResults)
+            {
+                _logger.LogDebug("No results found in recently added list for prospect {0}.", prospectName);
+                return null;
+            }
+
             IList<IWebElement> recentlyAdded = default;
             if (isListFiltered == true)
             {
@@ -48,18 +64,18 @@ namespace Domain.Services.POMs
                 return null;
             }
 
-            if (recentlyAdded.Any(x => _connectionsView.GetNameFromLiTag(x).Contains(prospectName)) == true)
+            if (recentlyAdded.Any(x => _connectionsView.GetNameFromLiTag(webDriver, x).Contains(prospectName)) == true)
             {
                 // scroll prospect into view
                 IWebElement prospectFound = default;
-                if (recentlyAdded.Count(x => _connectionsView.GetNameFromLiTag(x).Contains(prospectName)) > 1)
+                if (recentlyAdded.Count(x => _connectionsView.GetNameFromLiTag(webDriver, x).Contains(prospectName)) > 1)
                 {
                     // we have multiple results. Lets compare linkedin profiles to ensure we're getting the right one
-                    prospectFound = recentlyAdded.Where(x => _connectionsView.GetNameFromLiTag(x).Contains(prospectName)).FirstOrDefault(x => _connectionsView.GetProfileUrlFromLiTag(x).Contains(prospectProfileUrl));
+                    prospectFound = recentlyAdded.Where(x => _connectionsView.GetNameFromLiTag(webDriver, x).Contains(prospectName)).FirstOrDefault(x => _connectionsView.GetProfileUrlFromLiTag(x).Contains(prospectProfileUrl));
                 }
                 else
                 {
-                    prospectFound = recentlyAdded.First(x => _connectionsView.GetNameFromLiTag(x) == prospectName);
+                    prospectFound = recentlyAdded.First(x => _connectionsView.GetNameFromLiTag(webDriver, x) == prospectName);
                 }
 
                 if (webDriver.IsElementVisible(prospectFound) == false)
@@ -77,6 +93,10 @@ namespace Domain.Services.POMs
 
         public bool ClickMessageProspect(IWebDriver webDriver, IWebElement prospect)
         {
+            _humanBehaviorService.RandomWaitMilliSeconds(1000, 2000);
+            IWebElement connectionsHeader = _connectionsView.GetConnectionsHeader(webDriver);
+            _humanBehaviorService.RandomClickElement(connectionsHeader);
+
             if (webDriver.IsElementVisible(prospect) == false)
             {
                 webDriver.ScrollIntoView(prospect);
@@ -87,8 +107,15 @@ namespace Domain.Services.POMs
 
         public bool? DoesLastMessageMatchPreviouslySentMessage(IWebElement lastMessage, string previousMessageContent)
         {
-            string lastMessageContent = lastMessage.Text;
-            if (string.IsNullOrEmpty(lastMessageContent) == false)
+            IWebElement lastMessageP = LastMessagePElement(lastMessage);
+
+            if (lastMessageP == null)
+            {
+                return null;
+            }
+
+            string lastMessageContent = lastMessageP.Text;
+            if (string.IsNullOrEmpty(lastMessageContent) == true)
             {
                 return null;
             }
@@ -96,21 +123,38 @@ namespace Domain.Services.POMs
             return lastMessageContent == previousMessageContent;
         }
 
+        private IWebElement LastMessagePElement(IWebElement lastMessageListItem)
+        {
+            IWebElement lastMessagePElement = default;
+            try
+            {
+                lastMessagePElement = lastMessageListItem.FindElement(By.CssSelector("p"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("Unable to find last message p element");
+            }
+
+            return lastMessagePElement;
+        }
+
         public bool? WasLastMessageSentByProspect(IWebElement lastMessage, string prospectName)
         {
-            string messageSentBy = _messageBubblePOM.GetProspectNameFromConversationItem(lastMessage);
+            string messageSentBy = _messageBubblePOM.GetProspectNameFromConversationListItem(lastMessage);
             if (string.IsNullOrEmpty(messageSentBy) == true)
             {
                 _logger.LogWarning("Could not determine who sent the last message");
                 return null;
             }
 
+            messageSentBy = messageSentBy.RemoveEmojis();
+
             return messageSentBy == prospectName;
         }
 
         public bool IsThereConversationHistory(IWebElement conversation)
         {
-            Messages = _messageBubblePOM.GetMessageContents(conversation);
+            Messages = _messageBubblePOM.GetMessageListItems(conversation);
             return Messages.Count != 0;
         }
 
@@ -140,7 +184,7 @@ namespace Domain.Services.POMs
                 }
                 else
                 {
-                    string prospectName = _messageBubblePOM.GetProspectNameFromConversationItem(popUpConversation);
+                    string prospectName = _messageBubblePOM.GetProspectNameFromConversationPopup(popUpConversation);
                     if (prospectName.Contains(prospectNameIn))
                     {
                         // this means we've already have the current conversation active
@@ -162,6 +206,9 @@ namespace Domain.Services.POMs
             {
                 return false;
             }
+
+            webDriver.HandleClickElement(messageInputField);
+            _humanBehaviorService.RandomWaitMilliSeconds(800, 1050);
 
             foreach (char character in content)
             {
@@ -202,7 +249,9 @@ namespace Domain.Services.POMs
             // this could mean that linkedin has removed spaces for us. Clear the field and try again
             if (actualValue.Contains(' ') == false)
             {
-                // add a space between first and last name
+                _logger.LogDebug("Prospect's name that was entered did not contain any spaces. Entered value is {0}", actualValue);
+                _humanBehaviorService.DeleteValue(inputField, actualValue, 100, 250);
+                return false;
             }
 
             if (actualValue != prospectName)
@@ -227,10 +276,31 @@ namespace Domain.Services.POMs
             bool succeeded = false;
             try
             {
+                _connectionsView.ClickProspectSearchInputField(webDriver);
                 // use backspace sometimes, or ctrl + a + del
 
-                inputField.Clear();
-                succeeded = true;
+                string enteredValue = inputField.GetAttribute("value");
+                if (string.IsNullOrEmpty(enteredValue) == false)
+                {
+                    _humanBehaviorService.RandomWaitMilliSeconds(950, 1200);
+                    _humanBehaviorService.DeleteValue(inputField, enteredValue, 50, 350);
+                }
+
+                string valueAfterDelete = inputField.GetAttribute("value");
+                if (string.IsNullOrEmpty(valueAfterDelete) == false)
+                {
+                    _logger.LogError("The search recently added prospects input field has not been successfully cleared");
+                    _connectionsView.ClickProspectSearchInputField(webDriver);
+                    _humanBehaviorService.RandomWaitMilliSeconds(950, 1200);
+                    _humanBehaviorService.DeleteValue(inputField, enteredValue, 50, 350);
+
+                    valueAfterDelete = inputField.GetAttribute("value");
+                    succeeded = string.IsNullOrEmpty(valueAfterDelete) != false;
+                }
+                else
+                {
+                    succeeded = true;
+                }
             }
             catch
             {
@@ -238,6 +308,39 @@ namespace Domain.Services.POMs
             }
 
             return succeeded;
+        }
+
+        public bool EnsureRecentlyAddedHitlistRendered(IWebDriver webDriver)
+        {
+            bool succeeded = false;
+            _humanBehaviorService.RandomWaitMilliSeconds(1240, 1950);
+
+            RecentlyAddedResults result = _connectionsView.DetermineRecentlyAddedResults(webDriver);
+            if (result != RecentlyAddedResults.HitList)
+            {
+                // just do a simple refresh
+                succeeded = _webDriverProvider.Refresh(webDriver);
+            }
+            else
+            {
+                succeeded = true;
+            }
+
+            return succeeded;
+        }
+
+        public void ClickElipses(IWebElement prospect)
+        {
+            _humanBehaviorService.RandomWaitMilliSeconds(750, 950);
+
+            IWebElement elipsesButton = _connectionsView.GetElipsesButton(prospect);
+            _humanBehaviorService.RandomClickElement(elipsesButton);
+            _humanBehaviorService.RandomWaitMilliSeconds(1010, 1250);
+            int number = _rnd.Next(1, 5);
+            if (number == 3)
+            {
+                _humanBehaviorService.RandomClickElement(elipsesButton);
+            }
         }
     }
 }

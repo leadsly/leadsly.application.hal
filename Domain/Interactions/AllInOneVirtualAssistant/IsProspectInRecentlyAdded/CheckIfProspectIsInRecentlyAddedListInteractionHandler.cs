@@ -1,5 +1,6 @@
 ﻿using Domain.Interactions.AllInOneVirtualAssistant.EnterFollowUpMessage;
 using Domain.Interactions.AllInOneVirtualAssistant.IsProspectInRecentlyAdded.Interfaces;
+using Domain.Services.Interfaces;
 using Domain.Services.Interfaces.POMs;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
@@ -10,13 +11,16 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.IsProspectInRecentlyAdded
     {
         public CheckIfProspectIsInRecentlyAddedListInteractionHandler(
             ILogger<SendFollowUpMessageInteractionHandler> logger,
+            IHumanBehaviorService humanBehaviorService,
             IFollowUpMessageOnConnectionsServicePOM service)
 
         {
+            _humanBehaviorService = humanBehaviorService;
             _logger = logger;
             _service = service;
         }
 
+        private readonly IHumanBehaviorService _humanBehaviorService;
         private readonly ILogger<SendFollowUpMessageInteractionHandler> _logger;
         private readonly IFollowUpMessageOnConnectionsServicePOM _service;
         public IWebElement ProspectFromRecentlyAdded { get; private set; }
@@ -24,8 +28,9 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.IsProspectInRecentlyAdded
         public bool HandleInteraction(InteractionBase interaction)
         {
             CheckIfProspectIsInRecentlyAddedListInteraction prospectExistsInteraction = interaction as CheckIfProspectIsInRecentlyAddedListInteraction;
+            IWebDriver webDriver = prospectExistsInteraction.WebDriver;
 
-            ProspectFromRecentlyAdded = _service.GetProspectFromRecentlyAdded(prospectExistsInteraction.WebDriver, prospectExistsInteraction.ProspectName, prospectExistsInteraction.ProfileUrl, prospectExistsInteraction.IsFilteredByProspectName);
+            ProspectFromRecentlyAdded = _service.GetProspectFromRecentlyAdded(webDriver, prospectExistsInteraction.ProspectName, prospectExistsInteraction.ProfileUrl, prospectExistsInteraction.IsFilteredByProspectName);
             if (ProspectFromRecentlyAdded == null)
             {
                 return false;

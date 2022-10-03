@@ -22,14 +22,14 @@ namespace Domain.Services
         {
             _logger.LogTrace("[RandomClickElement] Random click element is executing");
 
-            int number = _rnd.Next(1, 5);
+            int number = _rnd.Next(1, 10);
 
             try
             {
                 if (webElement != null)
                 {
                     _logger.LogTrace("[RandomClickElement]: The passed in element is not null. This means the element is found.");
-                    if (number == 1 || number == 2 || number == 3 || number == 5)
+                    if (number == 2 || number == 3 || number == 4 || number == 7 || number == 8)
                     {
                         webElement.Click();
                         _logger.LogInformation($"Executing random click. Number is equal to {number}. This means we're clicking the passed in element");
@@ -65,6 +65,56 @@ namespace Domain.Services
             }
         }
 
+        public void DeleteValue(IWebElement element, string valueToDelete, int minMiliseconds, int maxMiliseconds)
+        {
+            Stopwatch sw = new Stopwatch();
+            int random = _rnd.Next(1, 10);
+            try
+            {
+                if (random == 1 || random == 2 || random == 7 || random == 8)
+                {
+                    DeleteValue_CTRL_A_DEL(element);
+                }
+                else if (random == 5 || random == 9 || random == 10 || random == 3 || random == 4)
+                {
+                    DeleteValue_Backspace(element, valueToDelete, minMiliseconds, maxMiliseconds);
+                }
+                else
+                {
+                    element.Clear();
+                }
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Failed to successfully send Backspace key to the input field");
+            }
+        }
+
+        private void DeleteValue_Backspace(IWebElement element, string valueToDelete, int minMiliseconds, int maxMiliseconds)
+        {
+            Stopwatch sw = new Stopwatch();
+
+            foreach (char character in valueToDelete)
+            {
+                int randomWait = _rnd.Next(minMiliseconds, maxMiliseconds);
+
+                element.SendKeys(Keys.Backspace);
+
+                sw.Start();
+                while (sw.Elapsed.TotalMilliseconds < randomWait)
+                {
+                    continue;
+                }
+                sw.Restart();
+            }
+        }
+
+        private void DeleteValue_CTRL_A_DEL(IWebElement inputField)
+        {
+            inputField.SendKeys(Keys.Control + "a" + Keys.Delete);
+        }
+
         public void EnterValue(IWebElement element, char value, int minMiliseconds, int maxMiliseconds)
         {
             Stopwatch sw = new Stopwatch();
@@ -73,7 +123,7 @@ namespace Domain.Services
                 int randomWait = _rnd.Next(minMiliseconds, maxMiliseconds);
 
                 ErrorFactor(element, minMiliseconds, maxMiliseconds);
-
+                sw.Start();
                 element.SendKeys(value.ToString());
                 while (sw.Elapsed.TotalMilliseconds < randomWait)
                 {
@@ -94,23 +144,23 @@ namespace Domain.Services
             try
             {
                 int randomWait = _rnd.Next(minMiliseconds, maxMiliseconds);
-                int random = _rnd.Next(1, 10);
+                int random = _rnd.Next(1, 13);
                 sw.Start();
 
                 if (random == 2 || random == 7)
                 {
                     char error = GetRandomCharacter();
                     element.SendKeys(error.ToString());
-                }
 
-                while (sw.Elapsed.TotalMilliseconds < randomWait)
-                {
-                    continue;
+                    while (sw.Elapsed.TotalMilliseconds < randomWait)
+                    {
+                        continue;
+                    }
+
+                    element.SendKeys(Keys.Backspace);
                 }
 
                 sw.Restart();
-
-                element.SendKeys(Keys.Backspace);
             }
             catch (Exception ex)
             {

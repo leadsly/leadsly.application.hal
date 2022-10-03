@@ -1,4 +1,5 @@
-﻿using Domain.POMs;
+﻿using Domain;
+using Domain.POMs;
 using Domain.POMs.Controls;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
@@ -23,13 +24,16 @@ namespace PageObjects
         private readonly IConversationCards _conversationCards;
 
         private const string ProspectSearchInputFieldId = "mn-connections-search-input";
+        private const string RecentlyAddedFiltered_CssSelector = ".scaffold-layout__main section > ul";
+        private const string RecentlyAddedNoSearchResults_ClassNameSelector = "mn-connections__empty-search";
+        private const string RecentlyAddedSearchResults_CssSelector = ".scaffold-finite-scroll__content ul";
 
         private IWebElement RecentlyAddedUlTag(IWebDriver webDriver)
         {
             IWebElement recentlyAdded = default;
             try
             {
-                recentlyAdded = webDriver.FindElement(By.CssSelector(".scaffold-finite-scroll__content ul"));
+                recentlyAdded = webDriver.FindElement(By.CssSelector(RecentlyAddedSearchResults_CssSelector));
             }
             catch (Exception ex)
             {
@@ -43,7 +47,7 @@ namespace PageObjects
             IWebElement recentlyAddedFiltered = default;
             try
             {
-                recentlyAddedFiltered = webDriver.FindElement(By.CssSelector(".scaffold-layout__main ul"));
+                recentlyAddedFiltered = webDriver.FindElement(By.CssSelector(RecentlyAddedFiltered_CssSelector));
             }
             catch (Exception ex)
             {
@@ -84,6 +88,32 @@ namespace PageObjects
             }
 
             return prospectName;
+        }
+
+        public string GetNameFromLiTag(IWebDriver webDriver, IWebElement liTag)
+        {
+            string prospectName = string.Empty;
+            IWebElement span = _webDriverUtilities.WaitUntilNotNull(ProspectNameSpan, liTag, webDriver, 10);
+            if (span != null)
+            {
+                prospectName = span.Text;
+            }
+
+            return prospectName;
+        }
+
+        private IWebElement ProspectNameSpan(IWebElement liTag)
+        {
+            IWebElement span = default;
+            try
+            {
+                span = liTag.FindElement(By.ClassName("mn-connection-card__name"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("Could not locate the span element that contains prospects name");
+            }
+            return span;
         }
 
         public string GetProfileUrlFromLiTag(IWebElement liTag)
@@ -227,6 +257,26 @@ namespace PageObjects
             return _webDriverUtilities.HandleClickElement(messageButton);
         }
 
+        public IWebElement GetElipsesButton(IWebElement prospect)
+        {
+            IWebElement elipsesButton = ElipsesDropDownButton(prospect);
+            return elipsesButton;
+        }
+
+        private IWebElement ElipsesDropDownButton(IWebElement prospect)
+        {
+            IWebElement elipsesButton = default;
+            try
+            {
+                elipsesButton = prospect.FindElement(By.ClassName("artdeco-dropdown__trigger"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Failed to locate elipses drop down button");
+            }
+            return elipsesButton;
+        }
+
         private IWebElement MessageButton(IWebElement prospect)
         {
             IWebElement messageButton = default;
@@ -267,6 +317,97 @@ namespace PageObjects
         {
             IWebElement inputField = _webDriverUtilities.WaitUntilNotNull(ProspectSearchInputField, webDriver, 10);
             return _webDriverUtilities.HandleClickElement(inputField);
+        }
+
+        public RecentlyAddedResults DetermineRecentlyAddedResults(IWebDriver webDriver)
+        {
+            _logger.LogInformation("Determining recently added view. This is used to determine if the recently added list contains hitlist results, filtered results or no results");
+            RecentlyAddedResults result = RecentlyAddedResults.None;
+            try
+            {
+                WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(30));
+                wait.Until(drv =>
+                {
+                    result = RecentlyAddedRenderedResultsView(drv);
+                    return result != RecentlyAddedResults.Unknown;
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("WebDrivers wait method timedout. This means that the maximum allowed wait time elapsed and the element was not found. Wait time in seconds: ", 30);
+            }
+            return result;
+        }
+
+        private RecentlyAddedResults RecentlyAddedRenderedResultsView(IWebDriver webDriver)
+        {
+            IWebElement recentlyAddedFilteredHitlist = _webDriverUtilities.WaitUntilNotNull(RecentlyAddedFilteredResultsView, webDriver, 3);
+            if (recentlyAddedFilteredHitlist != null)
+            {
+                _logger.LogDebug("Recently added filtered hitlist");
+                if (recentlyAddedFilteredHitlist.Displayed)
+                {
+                    return RecentlyAddedResults.FilteredHitList;
+                }
+            }
+
+            IWebElement noRecentlyAddedResultsViewRendered = _webDriverUtilities.WaitUntilNotNull(NoRecentlyAddedResultsView, webDriver, 3);
+            if (noRecentlyAddedResultsViewRendered != null)
+            {
+                _logger.LogDebug("RecentlyAddedResultsView found 'No Search Results' view");
+                return RecentlyAddedResults.NoResults;
+            }
+
+            IWebElement recentlyAddedHitlist = _webDriverUtilities.WaitUntilNotNull(RecentlyAddedResultsView, webDriver, 3);
+            if (recentlyAddedHitlist != null)
+            {
+                _logger.LogDebug("RecentlyAddedResultsView found recently added hitlist");
+                return RecentlyAddedResults.HitList;
+            }
+
+            return RecentlyAddedResults.Unknown;
+        }
+
+        private IWebElement NoRecentlyAddedResultsView(IWebDriver webDriver)
+        {
+            IWebElement noRecentlyAddedResultsView = default;
+            try
+            {
+                noRecentlyAddedResultsView = webDriver.FindElement(By.ClassName(RecentlyAddedNoSearchResults_ClassNameSelector));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("The recently added results view did NOT render 'We couldn't find any connections' view");
+            }
+            return noRecentlyAddedResultsView;
+        }
+
+        private IWebElement RecentlyAddedFilteredResultsView(IWebDriver webDriver)
+        {
+            IWebElement recentlyAddedFilteredResultsView = default;
+            try
+            {
+                recentlyAddedFilteredResultsView = webDriver.FindElement(By.CssSelector(RecentlyAddedFiltered_CssSelector));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("The recently added results view did NOT render filtered results");
+            }
+            return recentlyAddedFilteredResultsView;
+        }
+
+        private IWebElement RecentlyAddedResultsView(IWebDriver webDriver)
+        {
+            IWebElement recentlyAddedResultsView = default;
+            try
+            {
+                recentlyAddedResultsView = webDriver.FindElement(By.CssSelector(RecentlyAddedSearchResults_CssSelector));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("The recently added results view did NOT render full results");
+            }
+            return recentlyAddedResultsView;
         }
     }
 }

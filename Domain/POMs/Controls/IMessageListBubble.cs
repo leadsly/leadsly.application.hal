@@ -10,8 +10,10 @@ namespace Domain.POMs.Controls
         bool UnreadMessageNotificationExists(IWebElement conversationListItem);
         bool ClickConverstaionListItem(IWebElement element);
         bool WaitUntilConversationIsDisplayed(IWebElement messageBubble, IWebDriver webDriver);
-        IList<IWebElement> GetMessageContents(IWebElement conversationPopUp);
-        string GetProspectNameFromConversationItem(IWebElement conversationListItem);
+        public IList<IWebElement> GetMessageContents(IWebElement conversationPopUp);
+        public IList<IWebElement> GetMessageListItems(IWebElement conversationPopUp);
+        string GetProspectNameFromConversationPopup(IWebElement conversationPopUp);
+        string GetProspectNameFromConversationListItem(IWebElement conversationListItem);
         IList<IWebElement> GetOpenConversationItems(IWebDriver webDriver);
         string GetProspectNameFromMessageBubble(IWebElement messageBubbleListItem);
         bool IsMinimized(IWebElement conversationItem);

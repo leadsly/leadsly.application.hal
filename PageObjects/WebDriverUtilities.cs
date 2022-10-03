@@ -32,6 +32,26 @@ namespace PageObjects
             }
             return elementToFind;
         }
+
+        public IWebElement WaitUntilNotNull(Func<IWebElement, IWebElement> searchFunc, IWebElement startingElement, IWebDriver webDriver, int waitTimeInSeconds)
+        {
+            IWebElement elementToFind = default;
+            try
+            {
+                WebDriverWait wait = new WebDriverWait(webDriver, TimeSpan.FromSeconds(waitTimeInSeconds));
+                wait.Until(drv =>
+                {
+                    elementToFind = searchFunc(startingElement);
+                    return elementToFind != null;
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("WebDrivers wait method timedout. This means that the maximum allowed wait time elapsed and the element was not found. Wait time in seconds {waitTimeInSeconds}", waitTimeInSeconds);
+            }
+            return elementToFind;
+        }
+
         public IReadOnlyCollection<IWebElement> WaitUntilNotNull(Func<IWebDriver, IReadOnlyCollection<IWebElement>> searchFunc, IWebDriver webDriver, int waitTimeInSeconds)
         {
             IReadOnlyCollection<IWebElement> elementsToFind = default;

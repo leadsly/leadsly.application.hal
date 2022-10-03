@@ -92,12 +92,12 @@ namespace Domain.Orchestrators
                         FollowUpMessageBody followUpMessage = followUpMessages.Dequeue();
 
                         SendFollowUpMessage(webDriver, followUpMessage);
+
+                        OutputFollowUpMessagesSent(followUpMessage);
                     }
                 }
                 finally
                 {
-                    OutputFollowUpMessagesSent(message);
-
                     SwitchBackToMainTab(webDriver);
                 }
             }
@@ -121,7 +121,7 @@ namespace Domain.Orchestrators
             }
         }
 
-        private void OutputFollowUpMessagesSent(AllInOneVirtualAssistantMessageBody message)
+        private void OutputFollowUpMessagesSent(FollowUpMessageBody message)
         {
             if (SentFollowUpMessages != null && SentFollowUpMessages.Count > 0)
             {

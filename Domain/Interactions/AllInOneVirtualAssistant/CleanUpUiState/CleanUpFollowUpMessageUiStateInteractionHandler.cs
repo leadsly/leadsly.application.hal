@@ -31,10 +31,19 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.CleanUpUiState
                 _screenHouseKeeperService.CloseCurrentlyFocusedConversation(conversationPopup);
             }
 
-            _service.ClearProspectFilterInputField(webDriver);
-
-            // check if recently added results are back if not refresh
-
+            if (_service.ClearProspectFilterInputField(webDriver) == false)
+            {
+                // try one more time
+                _service.ClearProspectFilterInputField(webDriver);
+            }
+            else
+            {
+                // verify that the full recently added prospect list is rendered
+                if (_service.EnsureRecentlyAddedHitlistRendered(webDriver) == false)
+                {
+                    return false;
+                }
+            }
 
             return true;
         }

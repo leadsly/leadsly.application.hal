@@ -65,7 +65,7 @@ namespace Domain.Services
             return networkProspects;
         }
 
-        public async Task ProcessCampaignProspectsThatRepliedAsync(IList<ProspectRepliedModel> prospects, DeepScanProspectsForRepliesBody message, CancellationToken ct = default)
+        public async Task ProcessCampaignProspectsThatRepliedAsync(IList<ProspectRepliedModel> prospects, PublishMessageBody message, CancellationToken ct = default)
         {
             ProspectsRepliedRequest request = new()
             {

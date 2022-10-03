@@ -207,9 +207,8 @@ namespace Domain.Services
 
         public async Task ProcessCampaignProspectsThatRepliedAsync(IList<ProspectRepliedModel> prospects, PublishMessageBody message, CancellationToken ct = default)
         {
-            _logger.LogTrace("Executing {0}. This is for {1}", nameof(ProcessSentFollowUpMessageAsync), nameof(DeepScanProspectsForRepliesBody));
-            DeepScanProspectsForRepliesBody deepScanProspectsMessage = message as DeepScanProspectsForRepliesBody;
-            await _deepScanProspectsService.ProcessCampaignProspectsThatRepliedAsync(prospects, deepScanProspectsMessage, ct);
+            _logger.LogTrace("Executing {0}. This is for {1}", nameof(ProcessSentFollowUpMessageAsync), nameof(AllInOneVirtualAssistantMessageBody));
+            await _deepScanProspectsService.ProcessCampaignProspectsThatRepliedAsync(prospects, message, ct);
         }
 
         #endregion

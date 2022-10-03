@@ -119,7 +119,7 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.ShouldSendFollowUpMessage
             {
                 ResponseMessageTimestamp = _timestampService.TimestampNow(),
                 CampaignProspectId = shouldSendInteraction.CampaignProspectId,
-                ResponseMessage = string.IsNullOrEmpty(responseMessage) ? responseMessage : DefaultLastReplyMessage,
+                ResponseMessage = string.IsNullOrEmpty(responseMessage) == false ? responseMessage : DefaultLastReplyMessage,
                 Name = shouldSendInteraction.ProspectName
             };
 

@@ -66,13 +66,14 @@ namespace Domain.InstructionSets
         public void SendFollowUpMessage_AllInOne(IWebDriver webDriver, FollowUpMessageBody message)
         {
             // 1. check if the prospect name is in the list of recently added connections
+            IWebElement popupConversation = default;
             if (IsProspectInRecentlyAddedListInteraction(webDriver, message) == true)
             {
                 IWebElement prospectFromHitlist = _interactionFacade.ProspectFromRecentlyAdded;
                 // prepare prospect for followup message
                 if (PrepareProspectForFollowUpMessageInteraction(webDriver, prospectFromHitlist, message) == true)
                 {
-                    IWebElement popupConversation = _interactionFacade.PopupConversation;
+                    popupConversation = _interactionFacade.PopupConversation;
                     if (ShouldSendFollowUpMessageInteraction(webDriver, popupConversation, message) == true)
                     {
                         if (SendFollowUpMessageInteraction(webDriver, popupConversation, message) == false)
@@ -80,9 +81,6 @@ namespace Domain.InstructionSets
                             _logger.LogDebug("Successfully sent follow up message to {0}", message.ProspectName);
                             SentFollowUpMessage = _interactionFacade.SentFollowUpMessage_AllInOne;
                         }
-
-                        CleanUpFollowUpMessageUiStateInteraction(webDriver, popupConversation);
-                        return;
                     }
                     else
                     {
@@ -97,13 +95,8 @@ namespace Domain.InstructionSets
                             // something went wrong
                             _logger.LogError("Something went wrong when attempting to send a follow up message");
                         }
-
-                        CleanUpFollowUpMessageUiStateInteraction(webDriver, popupConversation);
-                        return;
                     }
                 }
-
-                CleanUpFollowUpMessageUiStateInteraction(webDriver);
             }
             else
             {
@@ -115,17 +108,14 @@ namespace Domain.InstructionSets
                         // prepare prospect for followup message
                         if (PrepareProspectForFollowUpMessageInteraction(webDriver, prospectFromHitlist, message) == true)
                         {
-                            IWebElement popupConversation = _interactionFacade.PopupConversation;
+                            popupConversation = _interactionFacade.PopupConversation;
                             if (ShouldSendFollowUpMessageInteraction(webDriver, popupConversation, message) == true)
                             {
-                                if (SendFollowUpMessageInteraction(webDriver, popupConversation, message) == false)
+                                if (SendFollowUpMessageInteraction(webDriver, popupConversation, message) == true)
                                 {
                                     _logger.LogDebug("Successfully sent follow up message to {0}", message.ProspectName);
                                     SentFollowUpMessage = _interactionFacade.SentFollowUpMessage_AllInOne;
                                 }
-
-                                CleanUpFollowUpMessageUiStateInteraction(webDriver, popupConversation);
-                                return;
                             }
                             else
                             {
@@ -140,21 +130,13 @@ namespace Domain.InstructionSets
                                     // something went wrong
                                     _logger.LogError("Something went wrong when attempting to send a follow up message");
                                 }
-
-                                CleanUpFollowUpMessageUiStateInteraction(webDriver, popupConversation);
-                                return;
                             }
-                        }
-                        else
-                        {
-                            CleanUpFollowUpMessageUiStateInteraction(webDriver);
-                            return;
                         }
                     }
                 }
-
-                CleanUpFollowUpMessageUiStateInteraction(webDriver);
             }
+
+            CleanUpFollowUpMessageUiStateInteraction(webDriver, popupConversation);
         }
 
         private void OutputProspectThatReplied(FollowUpMessageBody message)

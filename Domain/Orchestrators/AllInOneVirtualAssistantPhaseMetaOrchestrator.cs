@@ -6,6 +6,7 @@ using Domain.MQ.Messages;
 using Domain.Orchestrators.Interfaces;
 using Domain.Providers.Interfaces;
 using Leadsly.Application.Model;
+using Leadsly.Application.Model.Responses;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
@@ -121,6 +122,10 @@ namespace Domain.Orchestrators
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected exception occured while executing {0} phase", nameof(AllInOneVirtualAssistantMessageBody));
+            }
+            finally
+            {
+                _webDriverProvider.CloseBrowser<IOperationResponse>(BrowserPurpose.AllInOne);
             }
         }
 

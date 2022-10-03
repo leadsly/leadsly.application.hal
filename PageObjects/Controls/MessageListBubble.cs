@@ -25,6 +25,7 @@ namespace PageObjects.Controls
         private const string NewNotification_ClassNameLocator = "notification-badge--show";
         private const string ConversationWrapper_ClassNameLocator = "msg-convo-wrapper";
         private const string ConversationItemParagraphs_CssLocator = ".msg-s-event__content > p";
+        private const string ConversationListItems_ClassNameLocator = "msg-s-event-listitem";
         private const string OpenedConversationItemProspectName_CssLocator = ".msg-overlay-conversation-bubble-header--fade-in h2 span";
         private const string MinimizedConversationItemProspectName_CssLocator = ".msg-overlay-conversation-bubble-header--fade-in h2";
         private const string InactiveMessageWindow_ClassNameLocator = "msg-overlay-conversation-bubble--default-inactive";
@@ -156,15 +157,26 @@ namespace PageObjects.Controls
 
         public IList<IWebElement> GetMessageContents(IWebElement conversationPopUp)
         {
-            IList<IWebElement> messageContents = new List<IWebElement>();
             IReadOnlyCollection<IWebElement> messagesDivs = MessagesPs(conversationPopUp);
             if (messagesDivs == null)
             {
                 _logger.LogDebug("Failed to retrieve contents of the currently active message");
-                return messageContents;
+                return new List<IWebElement>();
             }
             _logger.LogDebug("Retrieved contents of the currently active message");
             return messagesDivs.ToList();
+        }
+
+        public IList<IWebElement> GetMessageListItems(IWebElement conversationPopUp)
+        {
+            IReadOnlyCollection<IWebElement> messageListItemsElements = MessagesListItems(conversationPopUp);
+            if (messageListItemsElements == null)
+            {
+                _logger.LogDebug("Failed to retrieve contents of the currently active message");
+                return new List<IWebElement>();
+            }
+            _logger.LogDebug("Retrieved contents of the currently active message");
+            return messageListItemsElements.ToList();
         }
 
         private IReadOnlyCollection<IWebElement> MessagesPs(IWebElement conversationPopUp)
@@ -181,18 +193,48 @@ namespace PageObjects.Controls
             return paragraphs;
         }
 
-        public string GetProspectNameFromConversationItem(IWebElement conversationListItem)
+        private IReadOnlyCollection<IWebElement> MessagesListItems(IWebElement conversationPopUp)
+        {
+            IReadOnlyCollection<IWebElement> paragraphs = default;
+            try
+            {
+                paragraphs = conversationPopUp.FindElements(By.CssSelector(".msg-s-event-listitem"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to locate any paragraphs for this conversation");
+            }
+            return paragraphs;
+        }
+
+        public string GetProspectNameFromConversationPopup(IWebElement conversationPopUp)
         {
             string prospectName = string.Empty;
             try
             {
-                IWebElement spanElement = conversationListItem.FindElement(By.CssSelector(OpenedConversationItemProspectName_CssLocator));
+                IWebElement spanElement = conversationPopUp.FindElement(By.CssSelector(OpenedConversationItemProspectName_CssLocator));
                 prospectName = spanElement.Text;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to extract prospects name from conversation list item");
             }
+            return prospectName;
+        }
+
+        public string GetProspectNameFromConversationListItem(IWebElement conversationListItem)
+        {
+            string prospectName = string.Empty;
+            try
+            {
+                IWebElement prospectNameSpan = conversationListItem.FindElement(By.ClassName("msg-s-message-group__profile-link"));
+                prospectName = prospectNameSpan?.Text;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Unable to locate prospects name from conversation list item");
+            }
+
             return prospectName;
         }
 
@@ -303,5 +345,6 @@ namespace PageObjects.Controls
             }
             return button;
         }
+
     }
 }

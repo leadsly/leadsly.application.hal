@@ -7,8 +7,6 @@ namespace Domain.Services.Interfaces.POMs
     {
         bool CloseConversation(IWebElement closeButton);
         bool CloseCurrentlyFocusedConversation(IWebElement currentPopUpConversation);
-
         IReadOnlyCollection<IWebElement> GetAllConversationCardsCloseButtons(IWebDriver webDriver);
-
     }
 }

@@ -14,5 +14,6 @@ namespace Domain.Services.Interfaces
 
         void EnterValues(IWebElement element, string value, int minMiliseconds, int maxMiliseconds);
         void EnterValue(IWebElement element, char value, int minMiliseconds, int maxMiliseconds);
+        void DeleteValue(IWebElement element, string valueToDelete, int minMiliseconds, int maxMiliseconds);
     }
 }

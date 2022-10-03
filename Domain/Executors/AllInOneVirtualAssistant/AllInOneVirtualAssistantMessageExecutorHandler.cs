@@ -49,6 +49,7 @@ namespace Domain.Executors.AllInOneVirtualAssistant
                 _orchestrator.ConnectionsSent += OnProcessSentConnectionsAsync;
                 _orchestrator.MonthlySearchLimitReached += OnUpdateMonthlySearchLimitAsync;
                 _orchestrator.UpdatedSearchUrlsProgress += OnUpdateSearchUrlsAsync;
+                _orchestrator.ProspectsThatRepliedDetected += OnProspectsThatRepliesDetected;
 
                 // SetupCheckOffHoursConnections(message);
 
@@ -214,7 +215,7 @@ namespace Domain.Executors.AllInOneVirtualAssistant
 
         private async Task OnProspectsThatRepliesDetected(object sender, ProspectsThatRepliedEventArgs e)
         {
-            _logger.LogInformation("Executing {0}. Preparing request to update all of the prospects who replied. HalId {1}. This is executed from {2} ", nameof(AllInOneVirtualAssistantMessageBody), e.Message.HalId, nameof(DeepScanProspectsForRepliesBody));
+            _logger.LogInformation("Executing {0}. Preparing request to update all of the prospects who replied. HalId {1}. This is executed from {2} ", nameof(AllInOneVirtualAssistantMessageBody), e.Message.HalId, nameof(FollowUpMessageBody));
             await _service.ProcessCampaignProspectsThatRepliedAsync(e.Prospects, e.Message);
         }
 
