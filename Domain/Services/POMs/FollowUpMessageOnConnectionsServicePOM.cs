@@ -48,15 +48,7 @@ namespace Domain.Services.POMs
                 return null;
             }
 
-            IList<IWebElement> recentlyAdded = default;
-            if (isListFiltered == true)
-            {
-                recentlyAdded = _connectionsView.GetRecentlyAddedFiltered(webDriver);
-            }
-            else
-            {
-                recentlyAdded = _connectionsView.GetRecentlyAdded(webDriver);
-            }
+            IList<IWebElement> recentlyAdded = isListFiltered ? _connectionsView.GetRecentlyAddedFiltered(webDriver) : _connectionsView.GetRecentlyAdded(webDriver);
 
             if (recentlyAdded == null)
             {
@@ -64,18 +56,24 @@ namespace Domain.Services.POMs
                 return null;
             }
 
-            if (recentlyAdded.Any(x => _connectionsView.GetNameFromLiTag(webDriver, x).Contains(prospectName)) == true)
+            if (AreListElementsStale(recentlyAdded, webDriver) == true)
+            {
+                _humanBehaviorService.RandomWaitMilliSeconds(600, 960);
+                recentlyAdded = isListFiltered ? _connectionsView.GetRecentlyAddedFiltered(webDriver) : _connectionsView.GetRecentlyAdded(webDriver);
+            }
+
+            if (recentlyAdded.Any(x => _connectionsView.GetNameFromLiTag(webDriver)?.RemoveEmojis() == prospectName) == true)
             {
                 // scroll prospect into view
                 IWebElement prospectFound = default;
-                if (recentlyAdded.Count(x => _connectionsView.GetNameFromLiTag(webDriver, x).Contains(prospectName)) > 1)
+                if (recentlyAdded.Count(x => _connectionsView.GetNameFromLiTag(webDriver)?.RemoveEmojis() == prospectName) > 1)
                 {
                     // we have multiple results. Lets compare linkedin profiles to ensure we're getting the right one
-                    prospectFound = recentlyAdded.Where(x => _connectionsView.GetNameFromLiTag(webDriver, x).Contains(prospectName)).FirstOrDefault(x => _connectionsView.GetProfileUrlFromLiTag(x).Contains(prospectProfileUrl));
+                    prospectFound = recentlyAdded.Where(x => _connectionsView.GetNameFromLiTag(webDriver)?.RemoveEmojis() == prospectName).FirstOrDefault(x => _connectionsView.GetProfileUrlFromLiTag(x).Contains(prospectProfileUrl));
                 }
                 else
                 {
-                    prospectFound = recentlyAdded.First(x => _connectionsView.GetNameFromLiTag(webDriver, x) == prospectName);
+                    prospectFound = recentlyAdded.First(x => _connectionsView.GetNameFromLiTag(webDriver)?.RemoveEmojis() == prospectName);
                 }
 
                 if (webDriver.IsElementVisible(prospectFound) == false)
@@ -89,6 +87,21 @@ namespace Domain.Services.POMs
             {
                 return null;
             }
+        }
+
+        private bool AreListElementsStale(IList<IWebElement> recentlyAdded, IWebDriver webDriver)
+        {
+            bool isStale = false;
+            try
+            {
+                recentlyAdded.Select(x => _connectionsView.GetNameFromLiTag(webDriver));
+            }
+            catch (StaleElementReferenceException ex)
+            {
+                // re-grab the list
+                isStale = true;
+            }
+            return isStale;
         }
 
         public bool ClickMessageProspect(IWebDriver webDriver, IWebElement prospect)
@@ -221,7 +234,7 @@ namespace Domain.Services.POMs
                 return false;
             }
 
-            _humanBehaviorService.RandomWaitMilliSeconds(400, 750);
+            _humanBehaviorService.RandomWaitMilliSeconds(600, 3500);
 
             return true;
         }
@@ -240,7 +253,7 @@ namespace Domain.Services.POMs
 
             foreach (char character in prospectName)
             {
-                _humanBehaviorService.EnterValue(inputField, character, 150, 400);
+                _humanBehaviorService.EnterValue(inputField, character, 150, 350);
             }
 
             // just ensure the name entered is the expected name
@@ -249,6 +262,7 @@ namespace Domain.Services.POMs
             // this could mean that linkedin has removed spaces for us. Clear the field and try again
             if (actualValue.Contains(' ') == false)
             {
+                _humanBehaviorService.RandomWaitMilliSeconds(700, 950);
                 _logger.LogDebug("Prospect's name that was entered did not contain any spaces. Entered value is {0}", actualValue);
                 _humanBehaviorService.DeleteValue(inputField, actualValue, 100, 250);
                 return false;
@@ -259,6 +273,9 @@ namespace Domain.Services.POMs
                 _logger.LogWarning("The prospect name that was entered {0}, did not equal to what the input field received {1}", prospectName, actualValue);
                 return false;
             }
+
+            // wait until filtered results are displayed
+            _humanBehaviorService.RandomWaitMilliSeconds(1500, 2500);
 
             return true;
         }
@@ -320,6 +337,7 @@ namespace Domain.Services.POMs
             {
                 // just do a simple refresh
                 succeeded = _webDriverProvider.Refresh(webDriver);
+                _humanBehaviorService.RandomWaitMilliSeconds(1240, 1950);
             }
             else
             {

@@ -25,7 +25,7 @@ namespace Domain.Interactions.Shared.CloseAllConversations
             CloseAllConversationsInteraction closeAllConversationsInteraction = interaction as CloseAllConversationsInteraction;
             _logger.LogInformation("Executing CloseAllConversationsInteraction.");
             IList<bool> succeeded = new List<bool>();
-            IReadOnlyCollection<IWebElement> closeButtons = _screenService.GetAllConversationCardsCloseButtons(closeAllConversationsInteraction.WebDriver);
+            IList<IWebElement> closeButtons = _screenService.GetAllConversationCardsCloseButtons(closeAllConversationsInteraction.WebDriver);
             foreach (IWebElement closeButton in closeButtons)
             {
                 succeeded.Add(_screenService.CloseConversation(closeButton));

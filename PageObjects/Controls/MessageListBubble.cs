@@ -1,4 +1,5 @@
-﻿using Domain.POMs.Controls;
+﻿using Domain;
+using Domain.POMs.Controls;
 using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 using System;
@@ -213,7 +214,7 @@ namespace PageObjects.Controls
             try
             {
                 IWebElement spanElement = conversationPopUp.FindElement(By.CssSelector(OpenedConversationItemProspectName_CssLocator));
-                prospectName = spanElement.Text;
+                prospectName = spanElement.Text.RemoveEmojis();
             }
             catch (Exception ex)
             {

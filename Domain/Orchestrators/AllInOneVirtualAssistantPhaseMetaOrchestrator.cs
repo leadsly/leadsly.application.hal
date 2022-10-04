@@ -131,22 +131,6 @@ namespace Domain.Orchestrators
 
         private void BeginVirtualAssistantWork(IWebDriver webDriver, AllInOneVirtualAssistantMessageBody message)
         {
-            //if (message.DeepScanProspectsForReplies != null)
-            //{
-            // 1. deep scan prospects for replies
-            // _orchestratorsFacade.HandleDeepScanProspectsForReplies(webDriver, message.DeepScanProspectsForReplies);
-
-            //// before the follow up message is sent out lets make sure that deepscanprospectsfor replies did not find the prospect in our inbox and one that has replied already
-            //IEnumerable<FollowUpMessageBody> followUpMessages = message.FollowUpMessages.Where(f => _orchestratorsFacade.ProspectsThatReplied.Any(x => x.Name == f.ProspectName) == false);
-            //message.FollowUpMessages = new Queue<FollowUpMessageBody>(followUpMessages);
-            // }
-
-            //if (message.CheckOffHoursNewConnections != null)
-            //{
-            //    // 1. check off hours connections
-            //    _orchestratorsFacade.HandleCheckOffHoursNewConnections(webDriver, message.CheckOffHoursNewConnections);
-            //}
-
             // 1. start with monitor for new connections
             _orchestratorsFacade.HandleMonitorForNewConnections(webDriver, message);
 

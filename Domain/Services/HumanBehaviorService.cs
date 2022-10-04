@@ -144,10 +144,10 @@ namespace Domain.Services
             try
             {
                 int randomWait = _rnd.Next(minMiliseconds, maxMiliseconds);
-                int random = _rnd.Next(1, 13);
+                int random = _rnd.Next(1, 15);
                 sw.Start();
 
-                if (random == 2 || random == 7)
+                if (random == 5 || random == 13)
                 {
                     char error = GetRandomCharacter();
                     element.SendKeys(error.ToString());

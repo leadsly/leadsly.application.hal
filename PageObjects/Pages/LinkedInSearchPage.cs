@@ -279,6 +279,8 @@ namespace PageObjects.Pages
             if (webDriver.IsElementVisible(actionButton) == false)
             {
                 _webDriverUtilities.ScrollIntoView(actionButton, webDriver);
+
+                _humanBehaviorService.RandomWaitMilliSeconds(950, 1670);
             }
 
             _logger.LogDebug("[SendConnectionRequest] Action button was found.");

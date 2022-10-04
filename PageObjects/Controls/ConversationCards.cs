@@ -2,12 +2,21 @@
 using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PageObjects.Controls
 {
     public class ConversationCards : IConversationCards
     {
-        private IReadOnlyCollection<IWebElement> ConversationCardsCloseButtons(IWebDriver webDriver)
+        public ConversationCards(
+            IWebDriverUtilities webDriverUtilities)
+        {
+            _webDriverUtilities = webDriverUtilities;
+        }
+
+        private readonly IWebDriverUtilities _webDriverUtilities;
+
+        private IList<IWebElement> ConversationCardsCloseButtons(IWebDriver webDriver)
         {
             IReadOnlyCollection<IWebElement> conversationCardsCloseButtons = default;
             try
@@ -24,7 +33,7 @@ namespace PageObjects.Controls
             {
                 try
                 {
-                    conversationCardsCloseButtons = webDriver.FindElements(By.XPath("//div[contains(@class, 'msg-convo-wrapper')] //descendant:: li-icon[@type='cancel-icon']/ancestor::button"));
+                    conversationCardsCloseButtons = webDriver.FindElements(By.XPath("//div[contains(@class, 'msg-convo-wrapper')] //descendant::li-icon[@type='cancel-icon']/ancestor::button"));
                 }
                 catch (Exception ex)
                 {
@@ -32,16 +41,30 @@ namespace PageObjects.Controls
                 }
             }
 
-            return conversationCardsCloseButtons;
+            if (conversationCardsCloseButtons == null || conversationCardsCloseButtons.Count == 0)
+            {
+                try
+                {
+                    conversationCardsCloseButtons = webDriver.FindElements(By.XPath("//div[contains(@class, 'msg-convo-wrapper')] //descendant::li-icon[@type='close']/ancestor::button"));
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
+
+            return conversationCardsCloseButtons.ToList();
         }
 
-        public IReadOnlyCollection<IWebElement> GetAllConversationCloseButtons(IWebDriver webDriver)
+        public IList<IWebElement> GetAllConversationCloseButtons(IWebDriver webDriver)
         {
-            return ConversationCardsCloseButtons(webDriver);
+            IList<IWebElement> closeButtons = _webDriverUtilities.WaitUntilNotNull(ConversationCardsCloseButtons, webDriver, 10);
+            return closeButtons;
         }
 
-        public IWebElement GetCloseConversationButton(IWebElement conversationPopup)
+        public IWebElement GetCloseConversationButton(IWebDriver webDriver, IWebElement conversationPopup)
         {
+            IWebElement closeConversationButton = _webDriverUtilities.WaitUntilNotNull(CloseConversationButton, conversationPopup, webDriver, 5);
             return CloseConversationButton(conversationPopup);
         }
 
@@ -61,7 +84,19 @@ namespace PageObjects.Controls
             {
                 try
                 {
-                    closeButton = conversationPopup.FindElement(By.XPath("//div[contains(@class, 'msg-convo-wrapper')] //descendant:: li-icon[@type='cancel-icon']/ancestor::button"));
+                    closeButton = conversationPopup.FindElement(By.XPath("//div[contains(@class, 'msg-convo-wrapper')] //descendant::li-icon[@type='cancel-icon']/ancestor::button"));
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
+
+            if (closeButton == null)
+            {
+                try
+                {
+                    closeButton = conversationPopup.FindElement(By.XPath("//div[contains(@class, 'msg-convo-wrapper')] //descendant::li-icon[@type='close']/ancestor::button"));
                 }
                 catch (Exception ex)
                 {

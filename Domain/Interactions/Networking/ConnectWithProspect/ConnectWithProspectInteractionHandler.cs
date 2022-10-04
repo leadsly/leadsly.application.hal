@@ -43,7 +43,7 @@ namespace Domain.Interactions.Networking.ConnectWithProspect
             {
                 _logger.LogDebug("Sending connection to the given prospect failed.");
                 // if there was a failure attempt to close modal dialog if it is open
-                _humanBehaviorService.RandomWaitMilliSeconds(850, 2000);
+                _humanBehaviorService.RandomWaitMilliSeconds(850, 1800);
                 _searchPageDialogManager.TryCloseModal(connectWithProspectInteraction.WebDriver);
 
                 return false;
@@ -74,6 +74,9 @@ namespace Domain.Interactions.Networking.ConnectWithProspect
             // check if there were any pop up messages displayed that would indicate an error occured or if the connect button still says connect vs pending
             if (_linkedInSearchPage.AnyErrorPopUpMessages(webDriver) == true)
             {
+                // if there are errors wait for a little bit before dismissing the modal
+                _humanBehaviorService.RandomWaitMilliSeconds(1500, 2500);
+
                 // close the toast
                 _linkedInSearchPage.CloseErrorPopUpMessage(webDriver);
 

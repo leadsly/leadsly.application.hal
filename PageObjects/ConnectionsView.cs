@@ -90,24 +90,24 @@ namespace PageObjects
             return prospectName;
         }
 
-        public string GetNameFromLiTag(IWebDriver webDriver, IWebElement liTag)
+        public string GetNameFromLiTag(IWebDriver webDriver)
         {
             string prospectName = string.Empty;
-            IWebElement span = _webDriverUtilities.WaitUntilNotNull(ProspectNameSpan, liTag, webDriver, 10);
+            IWebElement span = _webDriverUtilities.WaitUntilNotNull(ProspectNameSpan, webDriver, 10);
             if (span != null)
             {
-                prospectName = span.Text;
+                prospectName = span.Text.RemoveEmojis();
             }
 
             return prospectName;
         }
 
-        private IWebElement ProspectNameSpan(IWebElement liTag)
+        private IWebElement ProspectNameSpan(IWebDriver webDriver)
         {
             IWebElement span = default;
             try
             {
-                span = liTag.FindElement(By.ClassName("mn-connection-card__name"));
+                span = webDriver.FindElement(By.ClassName("mn-connection-card__name"));
             }
             catch (Exception ex)
             {
@@ -240,7 +240,7 @@ namespace PageObjects
             return result;
         }
 
-        public IReadOnlyCollection<IWebElement> GetAllConversationsCloseButtons(IWebDriver webDriver)
+        public IList<IWebElement> GetAllConversationsCloseButtons(IWebDriver webDriver)
         {
             return _conversationCards.GetAllConversationCloseButtons(webDriver);
         }

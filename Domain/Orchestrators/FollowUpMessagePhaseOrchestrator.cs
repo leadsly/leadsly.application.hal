@@ -85,20 +85,13 @@ namespace Domain.Orchestrators
             {
                 Queue<FollowUpMessageBody> followUpMessages = message.FollowUpMessages;
                 int length = followUpMessages.Count;
-                try
+                for (int i = 0; i < length; i++)
                 {
-                    for (int i = 0; i < length; i++)
-                    {
-                        FollowUpMessageBody followUpMessage = followUpMessages.Dequeue();
+                    FollowUpMessageBody followUpMessage = followUpMessages.Dequeue();
 
-                        SendFollowUpMessage(webDriver, followUpMessage);
+                    SendFollowUpMessage(webDriver, followUpMessage);
 
-                        OutputFollowUpMessagesSent(followUpMessage);
-                    }
-                }
-                finally
-                {
-                    SwitchBackToMainTab(webDriver);
+                    OutputFollowUpMessagesSent(followUpMessage);
                 }
             }
         }

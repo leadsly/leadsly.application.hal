@@ -28,7 +28,7 @@ namespace Domain.Interactions.AllInOneVirtualAssistant.CleanUpUiState
             IWebDriver webDriver = cleanUpInteraction.WebDriver;
             if (conversationPopup != null)
             {
-                _screenHouseKeeperService.CloseCurrentlyFocusedConversation(conversationPopup);
+                _screenHouseKeeperService.CloseCurrentlyFocusedConversation(webDriver, conversationPopup);
             }
 
             if (_service.ClearProspectFilterInputField(webDriver) == false)

@@ -6,7 +6,7 @@ namespace Domain.Services.Interfaces.POMs
     public interface IScreenHouseKeeperServicePOM
     {
         bool CloseConversation(IWebElement closeButton);
-        bool CloseCurrentlyFocusedConversation(IWebElement currentPopUpConversation);
-        IReadOnlyCollection<IWebElement> GetAllConversationCardsCloseButtons(IWebDriver webDriver);
+        bool CloseCurrentlyFocusedConversation(IWebDriver webDRiver, IWebElement currentPopUpConversation);
+        IList<IWebElement> GetAllConversationCardsCloseButtons(IWebDriver webDriver);
     }
 }

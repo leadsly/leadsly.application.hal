@@ -11,9 +11,9 @@ namespace Domain.POMs
         IList<IWebElement> GetRecentlyAddedFiltered(IWebDriver webDriver);
         IWebElement GetTimeTag(IWebElement recentlyAddedProspect);
         string GetNameFromLiTag(IWebElement recentlyAddedProspect);
-        string GetNameFromLiTag(IWebDriver webDriver, IWebElement liTag);
+        string GetNameFromLiTag(IWebDriver webDriver);
         string GetProfileUrlFromLiTag(IWebElement recentlyAddedProspect);
-        IReadOnlyCollection<IWebElement> GetAllConversationsCloseButtons(IWebDriver webDriver);
+        IList<IWebElement> GetAllConversationsCloseButtons(IWebDriver webDriver);
         bool ClickMessage(IWebElement prospect);
         IWebElement GetProspectSearchInputField(IWebDriver webDriver);
         bool ClickProspectSearchInputField(IWebDriver webDriver);

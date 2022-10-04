@@ -40,15 +40,15 @@ namespace Domain.Services.POMs
             return closedSuccessfully;
         }
 
-        public IReadOnlyCollection<IWebElement> GetAllConversationCardsCloseButtons(IWebDriver webDriver)
+        public IList<IWebElement> GetAllConversationCardsCloseButtons(IWebDriver webDriver)
         {
             return _conversationCards.GetAllConversationCloseButtons(webDriver);
         }
 
-        public bool CloseCurrentlyFocusedConversation(IWebElement currentPopUpConversation)
+        public bool CloseCurrentlyFocusedConversation(IWebDriver webDriver, IWebElement currentPopUpConversation)
         {
             bool succeeded = false;
-            IWebElement closeButton = _conversationCards.GetCloseConversationButton(currentPopUpConversation);
+            IWebElement closeButton = _conversationCards.GetCloseConversationButton(webDriver, currentPopUpConversation);
             if (closeButton != null)
             {
                 try
